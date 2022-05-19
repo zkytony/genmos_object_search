@@ -12,5 +12,11 @@ catkin_python_setup()
 add_executable(sloop_main src/sloop_ros/sloop_main)
 target_link_libraries(sloop_main ${catkin_LIBRARIES})
 
+add_executable(sloop_belief src/sloop_ros/sloop_belief)
+target_link_libraries(sloop_belief ${catkin_LIBRARIES})
+
+catkin_install_python(PROGRAMS scripts/sloop_planning
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 include_directories(
   ${catkin_INCLUDE_DIRS})
