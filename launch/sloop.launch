@@ -11,5 +11,6 @@
 
   <node pkg="sloop_ros" type="sloop_planning"
         name="sloop_planning" ns="$(arg robot)" output="screen">
+    <param name="belief_topic" value="belief"/>
   </node>
 </launch>
