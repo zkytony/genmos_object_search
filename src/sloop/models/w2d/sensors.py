@@ -17,10 +17,11 @@ import random
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-from ..utils.math import (to_rad, to_deg, R2d,
-                          euclidean_dist, pol2cart,
-                          in_range_inclusive, closest,
-                          law_of_cos, inverse_law_of_cos)
+from sloop.utils.math import (to_rad, to_deg, R2d,
+                              euclidean_dist, pol2cart,
+                              in_range_inclusive, closest,
+                              law_of_cos, inverse_law_of_cos)
+from ..common import SensorModel
 
 def yaw_facing(robot_pos, target_pos, angles=None):
     rx, ry = robot_pos

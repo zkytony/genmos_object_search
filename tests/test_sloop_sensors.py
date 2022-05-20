@@ -18,8 +18,8 @@ import math
 import matplotlib.pyplot as plt
 from sloop.models.w2d.sensors import FanSensor, pitch_facing
 from sloop.models.w3d.sensors import FrustumCamera, FanSensor3D
-from cospomdp.utils.math import to_rad
-from cospomdp.utils.plotting import plot_pose
+from sloop.utils.math import to_rad
+from sloop.utils.plotting import plot_pose
 
 @pytest.fixture
 def fansensor():

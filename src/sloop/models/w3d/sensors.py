@@ -17,12 +17,13 @@ import random
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-from ..utils.math import (to_rad, to_deg, R2d,
-                          euclidean_dist, pol2cart,
-                          vec, R_quat, R_euler, T, R_y,
-                          in_range_inclusive, closest,
-                          law_of_cos, inverse_law_of_cos)
-
+from sloop.utils.math import (to_rad, to_deg, R2d,
+                              euclidean_dist,
+                              vec, R_quat, R_euler, T, R_y,
+                              in_range_inclusive, closest,
+                              law_of_cos, inverse_law_of_cos)
+from ..common import SensorModel
+from ..w2d.sensors import FanSensor
 
 class FrustumCamera(SensorModel):
 
