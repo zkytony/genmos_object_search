@@ -1,7 +1,1 @@
-This is an extraction (with modifications) of [the original sloop package](https://github.com/h2r/sloop)
-for the paper
-[Spatial Language Understanding for Object Search in Partially Observed City-scale Environments](https://arxiv.org/abs/2012.02705)
-(RO-MAN 2021).
-
-It gets the idea of SLOOP, while making it more concise and extensible for use on robots.
-It also allows considering correlations, following [COS-POMDP](https://kaiyuzheng.me/documents/papers/cospomdp-icra22-full.pdf).
+This package implements SLOOP, while integrating key parts of COS-POMDP, including the hierarchical planning algorithm.
