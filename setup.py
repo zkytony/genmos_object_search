@@ -26,6 +26,8 @@ else:
           install_requires=[
               'pyyaml',
               'numpy',
+              'pomdp-py',
+              'pandas'
           ],
           author='Kaiyu Zheng',
           author_email='kaiyutony@gmail.com'

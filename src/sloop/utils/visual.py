@@ -33,6 +33,12 @@ class Visualizer2D:
         """
         2D visualizer using pygame.
 
+        Usage:
+        >>>> viz = create Visualizer2D(...)
+        >>>> img = viz.render(...)
+        >>>> viz.show_img(img)
+
+
         config entries:
         - res: resolution
         - region: an object with properties width, length, obstacles

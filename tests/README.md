@@ -4,7 +4,7 @@
 
 ### install these tools
 ```
-pip install pytest-testmon
+pip install pytest-testmonn
 pip install pytest-watch
 ```
 
