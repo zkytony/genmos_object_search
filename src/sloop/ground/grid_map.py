@@ -38,34 +38,22 @@ class GridMap:
     """
 
     def __init__(self, width, length, obstacles,
-                 unknown=None, name="grid_map",
-                 ranges_in_thor=None, grid_size=None):
+                 unknown=None, name="grid_map"):
         """
-        xpos (list): list of x coordinates for free cells
-        ypos (list): list of y coordinates for free cells
         obstacles (set): a set of locations for the obstacles
         unknown (set): locations that have unknown properties.
             If None, then this set will be empty; The free locations
             of a grid map is
                 ALL_CELLS(width, length) - obstacles - unknown
-
-        ranges_in_thor (tuple): A tuple (thor_gx_range, thor_gy_range)
-            where thor_gx_range are the min max range for grid x coordiates in thor
-            where thor_gy_range are the min max range for grid y coordiates in thor
-            Note that thor grid coordinates do not originate in (0,0) but at some other
-                point determined by Unity.
         """
         self.width = width
         self.length = length
         self.name = name
-        self.ranges_in_thor = ranges_in_thor
-        self.grid_size = grid_size
         self.update(obstacles, unknown=unknown)
 
         # Caches the computations
         self._geodesic_dist_cache = {}
         self._blocked_cache = {}
-
 
     def update(self, obstacles, unknown=None):
         all_positions = {(x,y) for x in range(self.width)
@@ -76,82 +64,6 @@ class GridMap:
             unknown = set()
         self.unknown = unknown
         self.free_locations = all_positions - self.obstacles - self.unknown
-
-
-    @staticmethod
-    def to_grid_yaw(thor_yaw):
-        """
-        Transform theta (degrees) from ai2thor coordinate system to gridmap coordinate system.
-        In thor, 0 degree is +z, clockwise rotation.
-        In grid map, 0 degree is +x, counterclockwise rotation;"""
-        return 90 - thor_yaw
-
-    @staticmethod
-    def to_thor_yaw(grid_yaw):
-        return 90 - grid_yaw
-
-    @staticmethod
-    def to_grid_dyaw(thor_dyaw):
-        """
-        Transform CHANGE in theta (DEGREES) from ai2thor coordinate system to gridmap coordinate system.
-        ai2thor: clockwise; gridmap: counterclockwise
-        """
-        return -thor_dyaw
-
-    @staticmethod
-    def to_thor_dyaw(grid_dyaw):
-        return -grid_dyaw
-
-    def to_thor_pose(self, x, y, th):
-        """Given a point (x, y) in the grid map and th (degrees),
-        convert it to a tuple (thor_x, thor_y, degrees_th)"""
-        return (*self.to_thor_pos(x, y), self.to_thor_yaw(th))
-
-    def to_thor_pos(self, x, y):
-        """
-        Given a point (x,y) in the grid map, convert it to (x,z) in
-        the THOR coordinte system (grid size is accounted for).
-        If grid_size is None, will return the integers
-        for the corresponding coordinate.
-        """
-        # Note that y is z in Unity
-        thor_gx_min, thor_gx_max = self.ranges_in_thor[0]
-        thor_gy_min, thor_gy_max = self.ranges_in_thor[1]
-        thor_gx = remap(x, 0, self.width, thor_gx_min, thor_gx_max)
-        thor_gy = remap(y, 0, self.length, thor_gy_min, thor_gy_max)
-        if self.grid_size is not None:
-            # Snap to grid
-            return (self.grid_size * round((thor_gx * self.grid_size) / self.grid_size),
-                    self.grid_size * round((thor_gy * self.grid_size) / self.grid_size))
-        else:
-            return (thor_gx, thor_gy)
-
-    def to_grid_pose(self, thor_x, thor_z, thor_th, avoid_obstacle=False):
-        return (*self.to_grid_pos(thor_x, thor_z, avoid_obstacle=avoid_obstacle),
-                self.to_grid_yaw(thor_th))
-
-    def to_grid_pos(self, thor_x, thor_z, avoid_obstacle=False):
-        """
-        Convert thor location to grid map location. If grid_size is specified,
-        then will regard thor_x, thor_z as the original Unity coordinates.
-        If not, then will regard them as grid indices but with origin not at (0,0).
-        """
-        if self.grid_size is not None:
-            thor_gx = int(round(thor_x / self.grid_size))
-            thor_gy = int(round(thor_z / self.grid_size))
-        else:
-            thor_gx = thor_x
-            thor_gy = thor_z
-
-        # remap coordinates to be nonnegative (origin AT (0,0))
-        thor_gx_min, thor_gx_max = self.ranges_in_thor[0]
-        thor_gy_min, thor_gy_max = self.ranges_in_thor[1]
-        gx = int(remap(thor_gx, thor_gx_min, thor_gx_max, 0, self.width, enforce=True))
-        gy = int(remap(thor_gy, thor_gy_min, thor_gy_max, 0, self.length, enforce=True))
-        if avoid_obstacle and (gx, gy) not in self.free_locations:
-            return self.closest_free_cell((gx, gy))
-        else:
-            return gx, gy
 
     def free_region(self, x, y):
         """Given (x,y) location, return a set of locations
