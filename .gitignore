@@ -89,3 +89,5 @@ spot/ros_ws/src/rbd_spot_perception/maps/*.yaml
 
 # bag files (too large)
 *.bag
+
+venv/
