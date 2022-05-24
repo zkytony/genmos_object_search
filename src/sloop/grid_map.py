@@ -20,7 +20,7 @@ import json
 import sys
 import numpy as np
 from collections import deque
-from ..utils.math import remap, to_degrees, euclidean_dist
+from .utils.math import remap, to_degrees, euclidean_dist
 
 def neighbors(x,y):
     return [(x+1, y), (x-1,y),

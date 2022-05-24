@@ -1,10 +1,10 @@
 import pomdp_py
-from ..common import RobotStatus
+from sloop.common import RobotStatus
 
 class TopoObjectState(pomdp_py.ObjectState):
     def __init__(self, objid, objclass, topo_nid):
-        super().__init__(self, objclass, {"id": objid,
-                                          "topo_nid": topo_nid})
+        super().__init__(objclass, {"id": objid,
+                                    "topo_nid": topo_nid})
 
 class TopoRobotState(pomdp_py.ObjectState):
     def __init__(self,

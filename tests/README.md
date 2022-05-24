@@ -16,7 +16,7 @@ a subset of other tests will be re-run.
 
 Before you run `ptw` for the first time, run
 ```
-pytest --testmon
+pytest --testimony
 ```
 to build a `.testmondata` file for your project.
 

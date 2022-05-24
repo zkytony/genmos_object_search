@@ -1,6 +1,6 @@
 import time
 from sloop.utils.visual import GridMapVisualizer
-from sloop.ground.grid_map import GridMap
+from sloop.grid_map import GridMap
 
 def test_gridmap_visuailzer():
     grid_map = GridMap(5, 5,

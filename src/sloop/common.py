@@ -1,3 +1,6 @@
+from dataclasses import dataclass, field
+from typing import Tuple
+
 @dataclass(init=True, frozen=True, eq=True, unsafe_hash=True)
 class RobotStatus:
     found_objects: Tuple = field(default_factory=lambda: tuple())
