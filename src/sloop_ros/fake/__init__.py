@@ -2,4 +2,6 @@
 from .models import (FakeTransitionModel,
                      FakeObservationModel,
                      FakeRewardModel,
-                     FakePolicyModel)
+                     FakePolicyModel,
+                     FakeBelief)
+from .agent import FakeAgent

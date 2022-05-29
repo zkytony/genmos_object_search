@@ -1,5 +1,9 @@
-module: sloop_ros.fake
-transition_model: FakeTransitionModel
-observation_model: FakeObservationModel
-reward_model: FakeRewardModel
-policy_model: FakePolicyModel
+transition_model: sloop_ros.fake.FakeTransitionModel
+observation_model: sloop_ros.fake.FakeObservationModel
+reward_model: sloop_ros.fake.FakeRewardModel
+policy_model: sloop_ros.fake.FakePolicyModel
+belief_dist: sloop_ros.fake.FakeBelief
+belief_params:
+  init_belief: uniform
+agent: sloop_ros.fake.FakeAgent
+planner: pomdp_py.POUCT

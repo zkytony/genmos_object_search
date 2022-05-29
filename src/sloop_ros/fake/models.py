@@ -41,3 +41,22 @@ class FakePolicyModel(pomdp_py.RolloutPolicy):
 
     def rollout(self, state, *args):
         return self.sample(state)
+
+
+class FakeBelief(pomdp_py.GenerativeDistribution):
+    STATES = {"love", "hate", "no_feeling"}
+    def __init__(self, init_belief="uniform"):
+        print("Hello! I am a fake belief.")
+
+    def random(self):
+        return pomdp_py.SimpleState(random.sample(FakeBelief.STATES, 1)[0])
+
+    def mpe(self):
+        raise NotImplementedError("bye!")
+
+    def __getitem__(self, s):
+        return 1.0 / len(FakeBelief.STATES)
+
+    def __iter__(self):
+        return iter([pomdp_py.SimpleState(n)
+                     for n in FakeBelief.STATES])

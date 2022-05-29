@@ -16,6 +16,7 @@ def main():
     planner = create_planner(config)
     agent.setup()  # sets up the subscribers, publishers etc.
     agent.set_planner(planner)
+    print("Running")
     rospy.spin()
 
 if __name__ == "__main__":
