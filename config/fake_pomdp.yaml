@@ -1,0 +1,5 @@
+module: sloop_ros.fake
+transition_model: FakeTransitionModel
+observation_model: FakeObservationModel
+reward_model: FakeRewardModel
+policy_model: FakePolicyModel

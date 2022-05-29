@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+import rospy
+from sloop_ros.core import (create_models,
+                            initialize_belief,
+                            create_agent,
+                            create_planner,
+                            plan_next)
+
+def main():
+    rospy.init_node(f"run_pomdp_agent")
+    pomdp_name = rospy.get_param("~pomdp_name")
+    config = rospy.get_param(f"~config")  # access parameters together as a dictionary
+    models = create_models(config)
+    belief = initialize_belief(config)
+    agent = create_agent(belief, models, config)
+    planner = create_planner(config)
+    agent.setup()  # sets up the subscribers, publishers etc.
+    agent.set_planner(planner)
+    rospy.spin()
+
+if __name__ == "__main__":
+    main()

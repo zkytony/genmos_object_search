@@ -1,0 +1,13 @@
+<launch>
+
+  <node name="run_pomdp_agent_fake"
+        pkg="sloop_ros"
+        type="run_pomdp_agent"
+        output="screen">
+    <param name="~pomdp_name" value="fake"/>
+    <rosparam param="config"
+              command="load"
+              file="$(find sloop_ros)/config/fake_pomdp.yaml"/>
+  </node>
+
+</launch>
