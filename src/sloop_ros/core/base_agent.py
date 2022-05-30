@@ -1,7 +1,6 @@
 import rospy
 import actionlib
 import pomdp_py
-from dataclasses import dataclass
 from sloop_ros.utils.misc import tobeoverriden
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,

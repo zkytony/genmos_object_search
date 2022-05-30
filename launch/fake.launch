@@ -5,7 +5,7 @@
         type="run_pomdp_agent"
         output="screen">
     <param name="~pomdp_name" value="fake"/>
-    <rosparam param="config"
+    <rosparam param="~config"
               command="load"
               file="$(find sloop_ros)/config/fake_pomdp.yaml"/>
   </node>
