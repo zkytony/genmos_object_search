@@ -35,8 +35,9 @@ def create_agent(belief, models, config):
     return sloop_agent
 
 
-def create_planner(config):
-    planner = import_class(config["planner"])(**config.get("planner_config", {}))
+def create_planner(config, **kwargs):
+    planner = import_class(config["planner"])(**config.get("planner_config", {}),
+                                              **kwargs)
     return planner
 
 def initialize_belief(config):

@@ -46,6 +46,7 @@ class BaseAgent(pomdp_py.Agent):
 
         # This will always be equal to the last planned action
         self._last_action = None
+        self._debug_planner = kwargs.get("debug_planning", True)
 
     def setup(self):
         """Override this function to create make your agent
@@ -66,20 +67,17 @@ class BaseAgent(pomdp_py.Agent):
         self._observation_subscriber = rospy.Subscriber(
             self._observation_topic, DefaultObservation, self._observation_cb)
 
-
     @tobeoverriden
     def _observation_cb(self, observation_msg):
         """Override this function to handle different observation types"""
-        rospy.loginfo(f"Observation received: {observation}")
+        rospy.loginfo(f"Observation received: {observation_msg}")
         observation = self.interpret_observation_msg(observation_msg)
         self.belief.update(self, observation, self._last_action)
-
 
     @tobeoverriden
     def interpret_observation_msg(self, observation_msg):
         """Given a ROS message, return a pomdp_py.Observation"""
         return pomdp_py.SimpleObservation(observation_msg.data)
-
 
     def run(self):
         """Blocking call"""
@@ -98,7 +96,6 @@ class BaseAgent(pomdp_py.Agent):
         rospy.loginfo("Running agent {}".format(self.__class__.__name__))
         rospy.spin()
 
-
     def plan(self, goal):
         result = PlanNextStepResult()
         if self._planner is None:
@@ -107,19 +104,19 @@ class BaseAgent(pomdp_py.Agent):
             self.plan_server.set_rejected(result)
             self._last_action = None
         else:
-            action = self._planner.plan(self.belief)
-            action_msg = action.to_ros_msg(goal.goal_id)
+            action = self._planner.plan(self)
+            if self._debug_planning:
+                self._debug_planning()
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
-            self._last_action = action
+            action_msg = action.to_ros_msg(goal.goal_id)
             self._action_publisher.publish(action_msg)
+            self._last_action = action
             result.status = GoalStatus.SUCCEEDED
-            self.plan_server.set_succeeded(result)
-
+            self._plan_server.set_succeeded(result)
 
     def set_planner(self, planner):
         self._planner = planner
-
 
     def _setup_help_message(self):
         message = "The following objects should not be None:\n"
@@ -132,3 +129,14 @@ class BaseAgent(pomdp_py.Agent):
         if self._observation_subscriber is None:
             message += "- self._observation_subscriber\n"
         return message
+
+    def _debug_planning(self):
+        """
+        Function called when planner successfully returns
+        an action. Override this function if you would like
+        different behavior after plan success.
+        """
+        if isinstance(self._planner, pomdp_py.POUCT)\
+           or isinstance(self._planner, pomdp_py.POMCP):
+            dd = pomdp_py.utils.TreeDebugger(self.tree)
+            dd.p(1)

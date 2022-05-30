@@ -1,6 +1,11 @@
 import pomdp_py
 import random
 from sloop_ros.core.base_belief import BaseBelief
+from sloop_ros.core.base_action import BaseAction
+
+class FakeAction(BaseAction):
+    pass
+
 
 class FakeTransitionModel(pomdp_py.TransitionModel):
     def probability(self, next_state, state, action):
@@ -21,7 +26,7 @@ class FakeObservationModel(pomdp_py.ObservationModel):
             return 1e-9
 
     def sample(self, next_state, action):
-        return pomdp_py.SimpleObservation(state.data)
+        return pomdp_py.SimpleObservation(next_state.data)
 
 
 class FakeRewardModel(pomdp_py.RewardModel):
@@ -32,12 +37,12 @@ class FakeRewardModel(pomdp_py.RewardModel):
             return -5
 
 class FakePolicyModel(pomdp_py.RolloutPolicy):
-    ACTIONS = {pomdp_py.SimpleAction(n)
-               for n in {"left", "right"}}
+    ACTIONS = [FakeAction("left"),
+               FakeAction("right")]
     def sample(self, state):
-        return random.sample(self.get_all_actions(), 1)[0]
+        return random.sample(self.get_all_actions(state=state), 1)[0]
 
-    def get_all_action(self, state=None, history=None):
+    def get_all_actions(self, state=None, history=None):
         return FakePolicyModel.ACTIONS
 
     def rollout(self, state, *args):
@@ -45,7 +50,9 @@ class FakePolicyModel(pomdp_py.RolloutPolicy):
 
 
 class FakeBelief(BaseBelief):
-    STATES = ["love", "hate", "no_feeling"]
+    STATES = [pomdp_py.SimpleState("love"),
+              pomdp_py.SimpleState("hate"),
+              pomdp_py.SimpleState("no_feeling")]
     def __init__(self, init_belief="uniform"):
         print("Hello! I am a fake belief.")
 
