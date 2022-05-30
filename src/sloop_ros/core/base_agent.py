@@ -13,14 +13,16 @@ from actionlib_msgs.msg import GoalStatus
 class BaseAgent(pomdp_py.Agent):
     """
     A base agent serves:
-    - /plan
+    - ~plan
 
     subscribes to:
-    - /observation
+    - ~observation
 
     publishes:
-    - /action
-    - /belief
+    - ~action
+    - ~belief
+
+    See scripts/run_pomdp_agent for how this is used.
     """
     def __init__(self, belief, models, **kwargs):
         super().__init__(belief,
