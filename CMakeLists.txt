@@ -3,7 +3,16 @@ project(sloop_ros)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs)
+  std_msgs
+  genmsg
+  actionlib_msgs)
+
+add_action_files(
+  DIRECTORY action
+  FILES PlanAction.action)
+
+generate_messages(
+  DEPENDENCIES actionlib_msgs)
 
 catkin_package()
 
