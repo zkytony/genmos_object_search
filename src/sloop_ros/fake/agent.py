@@ -1,3 +1,4 @@
+import rospy
 import pomdp_py
 from sloop_ros.core import BaseAgent
 

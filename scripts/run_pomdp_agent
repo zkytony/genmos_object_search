@@ -14,10 +14,9 @@ def main():
     belief = initialize_belief(config)
     agent = create_agent(belief, models, config)
     planner = create_planner(config)
-    agent.setup()  # sets up the subscribers, publishers etc.
     agent.set_planner(planner)
-    print("Running")
-    rospy.spin()
+    agent.setup()  # sets up the subscribers, publishers, services etc.
+    agent.run()
 
 if __name__ == "__main__":
     main()

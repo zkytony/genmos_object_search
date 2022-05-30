@@ -1,9 +1,0 @@
-# Requests an agent to plan the next action
-# define the goal; GoalID, GoalStatus are from actionlib_msgs
-actionlib_msgs/GoalID goal_id
----
-# define the result
-actionlib_msgs/GoalStatus status
----
-# define a feedback message
-actionlib_msgs/GoalStatus status

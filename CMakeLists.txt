@@ -13,14 +13,23 @@ catkin_python_setup()
 ## Declare ROS messages, services and actions ##
 ################################################
 
+add_message_files(
+  DIRECTORY msg
+  FILES
+  DefaultAction.msg
+  DefaultObservation.msg
+  DefaultBelief.msg)
+
 # Adding the action file for PlanAction
 add_action_files(
   DIRECTORY action
-  FILES PlanAction.action)
+  FILES PlanNextStep.action)
 
 # generate_messages must be called AFTER catkin_python_setup
 generate_messages(
-  DEPENDENCIES actionlib_msgs)
+  DEPENDENCIES
+  std_msgs
+  actionlib_msgs)
 
 
 ###################################

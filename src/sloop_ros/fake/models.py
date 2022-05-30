@@ -44,7 +44,7 @@ class FakePolicyModel(pomdp_py.RolloutPolicy):
 
 
 class FakeBelief(pomdp_py.GenerativeDistribution):
-    STATES = {"love", "hate", "no_feeling"}
+    STATES = ["love", "hate", "no_feeling"]
     def __init__(self, init_belief="uniform"):
         print("Hello! I am a fake belief.")
 

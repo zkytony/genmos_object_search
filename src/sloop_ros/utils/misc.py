@@ -8,3 +8,7 @@ def import_class(class_string):
     class_name = parts[-1]
     module = importlib.import_module(module_path)
     return getattr(module, class_name)
+
+
+def tobeoverriden(f):
+    return f
