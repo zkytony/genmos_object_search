@@ -7,24 +7,31 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   actionlib_msgs)
 
+catkin_python_setup()
+
+################################################
+## Declare ROS messages, services and actions ##
+################################################
+
+# Adding the action file for PlanAction
 add_action_files(
   DIRECTORY action
   FILES PlanAction.action)
 
+# generate_messages must be called AFTER catkin_python_setup
 generate_messages(
   DEPENDENCIES actionlib_msgs)
 
-catkin_package()
 
-catkin_python_setup()
+###################################
+## catkin specific configuration ##
+###################################
+catkin_package(
+  CATKIN_DEPENDS actionlib_msgs)
 
-add_executable(sloop_main src/sloop_ros/sloop_main)
-target_link_libraries(sloop_main ${catkin_LIBRARIES})
 
-add_executable(sloop_belief src/sloop_ros/sloop_belief)
-target_link_libraries(sloop_belief ${catkin_LIBRARIES})
-
-catkin_install_python(PROGRAMS scripts/sloop_planning
+############ Executables ##############
+catkin_install_python(PROGRAMS scripts/run_pomdp_agent
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 include_directories(
