@@ -1,6 +1,6 @@
 # tests for sloop_ros
 
-## How to run tests
+## How to Run Python Tests
 
 ### install these tools
 ```
@@ -35,3 +35,39 @@ of the tests will be re-run.
 
 Of course you can't just run `ptw` because it
 ignores testmon stuff.
+
+
+## How to Test ROS components
+
+### Publish Action Goal on Terminal (Test Plan)
+Look at [documentations here](http://wiki.ros.org/actionlib_tutorials/Tutorials/Calling%20Action%20Server%20without%20Action%20Client).
+Basically, do something like
+```
+rostopic pub /run_pomdp_agent_fake/plan/goal sloop_ros/PlanNextStepActionGoal "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+goal_id:
+  stamp:
+    secs: 0
+    nsecs: 0
+  id: ''
+goal:
+  goal_id:
+    stamp:
+      secs: 0
+      nsecs: 0
+    id: ''"
+```
+TAB completion is your friend.
+
+### Publish Observation (Test Belief Update)
+Similar to above, you can publish an observation as follows
+```
+$ rostopic pub /run_pomdp_agentobservation sloop_ros/DefaultObservation "stamp:eader:
+  secs: 0
+  nsecs: 0
+data: 'HELLO!'"
+```
