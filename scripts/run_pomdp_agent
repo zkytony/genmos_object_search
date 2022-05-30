@@ -17,7 +17,6 @@ def main():
     agent.set_planner(planner)
     agent.setup()  # sets up the subscribers, publishers, services etc.
     agent.run()
-    print("HELLO")
 
 if __name__ == "__main__":
     main()

@@ -37,24 +37,22 @@ class BaseAgent(pomdp_py.Agent):
         self._belief_publisher = None
         self._observation_subscriber = None
 
-        self._plan_service = kwargs.get("plan_service", "plan")
-        self._action_topic = kwargs.get("action_topic", "action")
-        self._belief_topic = kwargs.get("belief_topic", "belief")
-        self._observation_topic = kwargs.get("observation_topic", "observation")
+        self._plan_service = kwargs.get("plan_service", "~plan")  # would become <node_name>/plan
+        self._action_topic = kwargs.get("action_topic", "~action")
+        self._belief_topic = kwargs.get("belief_topic", "~belief")
+        self._observation_topic = kwargs.get("observation_topic", "~observation")
 
         self._belief_rate = kwargs.get("belief_publish_rate", 5)  # Hz
 
         # This will always be equal to the last planned action
         self._last_action = None
 
-
-    @tobeoverriden
     def setup(self):
         """Override this function to create make your agent
         work with different message types."""
         # Action server for DoPlan (perform one planning step)
         self._plan_server = actionlib.SimpleActionServer(
-            self._plan_service, PlanNextStepAction, self.plan)
+            self._plan_service, PlanNextStepAction, self.plan, auto_start=False)
 
         # Publishes most recent action
         self._action_publisher = rospy.Publisher(

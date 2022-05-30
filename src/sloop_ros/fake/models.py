@@ -1,5 +1,6 @@
 import pomdp_py
 import random
+from sloop_ros.core.base_belief import BaseBelief
 
 class FakeTransitionModel(pomdp_py.TransitionModel):
     def probability(self, next_state, state, action):
@@ -43,7 +44,7 @@ class FakePolicyModel(pomdp_py.RolloutPolicy):
         return self.sample(state)
 
 
-class FakeBelief(pomdp_py.GenerativeDistribution):
+class FakeBelief(BaseBelief):
     STATES = ["love", "hate", "no_feeling"]
     def __init__(self, init_belief="uniform"):
         print("Hello! I am a fake belief.")
