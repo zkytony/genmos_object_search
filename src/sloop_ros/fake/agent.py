@@ -1,6 +1,6 @@
 import rospy
 import pomdp_py
-from sloop_ros.core import BaseAgent
+from sloop_ros.core.base_agent import BaseAgent
 
 class FakeAgent(BaseAgent):
     def setup(self):
