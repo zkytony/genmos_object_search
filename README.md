@@ -60,4 +60,6 @@ KeyError: 'scale'
 ```
 I have no clue.
 
-**Work around:** Don't import `matplotlib.plt` (so don't import `pomdp_py`) in the executable script.
+I cannot reproduce this issue in a fresh workspace.
+
+This error went away after I did `pip uninstall matplotlib`.
