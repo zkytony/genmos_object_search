@@ -94,3 +94,4 @@ venv/
 
 # SL_OSM_Dataset
 data/SL_OSM_Dataset*
+models/*foref*
