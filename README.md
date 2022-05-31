@@ -4,6 +4,15 @@ ROS Package for SLOOP (Spatial Language Understanding Object-Oriented POMDP)
 
 # Build
 
+This is a ROS package; Therefore, it is expected to operate within a ROS workspace.
+
+Before building this package, make sure you have activated a virtualenv. Then, run
+```
+source install_dependencies.bash
+```
+to install python dependencies.
+
+
 ## As part of robotdev/spot
 (Optional) To enable rtags indexing in emacs (for C++):
 ```
