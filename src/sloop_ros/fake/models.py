@@ -2,6 +2,7 @@ import pomdp_py
 import random
 from sloop_ros.core.base_belief import BaseBelief
 from sloop_ros.core.base_action import BaseAction
+from sloop_ros.core.base_models import BaseObservationModel, BasePolicyModel
 
 class FakeAction(BaseAction):
     pass
@@ -18,7 +19,7 @@ class FakeTransitionModel(pomdp_py.TransitionModel):
         return pomdp_py.SimpleState(state.data)
 
 
-class FakeObservationModel(pomdp_py.ObservationModel):
+class FakeObservationModel(BaseObservationModel):
     def probability(self, observation, next_state, action):
         if observation.data == next_state.data:
             return 1.0 - 1e-9
@@ -36,7 +37,7 @@ class FakeRewardModel(pomdp_py.RewardModel):
         else:
             return -5
 
-class FakePolicyModel(pomdp_py.RolloutPolicy):
+class FakePolicyModel(BasePolicyModel):
     ACTIONS = [FakeAction("left"),
                FakeAction("right")]
     def sample(self, state):

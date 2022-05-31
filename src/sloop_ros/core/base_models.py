@@ -14,7 +14,7 @@ class BaseObservationModel(pomdp_py.ObservationModel):
         return pomdp_py.SimpleObservation(observation_msg.data)
 
 
-class BasePolicyModel(pomdp_py.PolicyModel):
+class BasePolicyModel(pomdp_py.RolloutPolicy):
     @property
     def ros_action_msg_type(self):
         return DefaultAction
