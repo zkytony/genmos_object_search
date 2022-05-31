@@ -3,6 +3,11 @@ import torch
 import os, sys
 os.environ["SPACY_WARNING_IGNORE"] = "W008"
 
+import spacy
+import json
+import random
+from pprint import pprint
+
 from sloop.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
 from sloop.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
 
@@ -14,10 +19,7 @@ from sloop.oopomdp.env.env import make_laser_sensor, equip_sensors
 from sloop.oopomdp.models.transition_model import RobotTransitionModel
 from sloop.models.heuristics.rules import BASIC_RULES, ForefRule
 from sloop.models.heuristics.model import KeywordModel, RuleBasedModel, MixtureSLUModel
-import spacy
-import json
-import random
-from pprint import pprint
+
 
 def input_default(prompt, default_val):
     val = input("%s [%s]: " % (prompt, str(default_val)))

@@ -1,12 +1,12 @@
+import pandas as pd
+import yaml
+import matplotlib.pyplot as plt
 from sciex import Experiment, Trial, Event, Result,\
     YamlResult, PklResult, PostProcessingResult
 from .result_types import RewardsResult, StatesResult
 from .plotting import *
 from .pd_utils import *
 from .constants import *
-import pandas as pd
-import yaml
-import matplotlib.pyplot as plt
 
 class LangResult(YamlResult):
     """Results that are related to language characteristics"""

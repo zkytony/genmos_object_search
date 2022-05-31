@@ -1,3 +1,6 @@
+# Trial used for the experiment where spatial language
+# is given as a prior.
+
 import random
 import pomdp_py
 import time
@@ -12,6 +15,7 @@ from sloop.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
 from sloop.datasets.utils import euclidean_dist
 from .constants import obj_letter_map, obj_id_map
 
+######################### UTILITY FUNCTIONS #####################################
 def get_id(obj_symbol):
     return obj_id_map[obj_letter_map[obj_symbol]]
 
@@ -108,7 +112,7 @@ def get_prior(prior_type, model, query, map_name, mapinfo,
 
     return prior, metadata
 
-
+############## SloopPriorTrial #####################################################
 class SloopPriorTrial(Trial):
     RESULT_TYPES = [RewardsResult, StatesResult, PriorQualityResult, LangResult]
     def __init__(self, name, config, verbose=False):

@@ -1,10 +1,3 @@
-from sciex import Experiment, Trial, Event, Result,\
-    YamlResult, PklResult, PostProcessingResult
-import sloop.oopomdp.problem as mos
-from sloop.oopomdp.env.env import *
-from .plotting import *
-from sloop.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
-from sloop.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
 import numpy as np
 import math
 import json
@@ -14,10 +7,18 @@ import os
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-import cv2
 from matplotlib.font_manager import FontProperties
-from scipy import stats
 import pandas as pd
+from scipy import stats
+import cv2
+from sciex import Experiment, Trial, Event, Result,\
+    YamlResult, PklResult, PostProcessingResult
+import sloop.oopomdp.problem as mos
+from sloop.oopomdp.env.env import *
+from .plotting import *
+from sloop.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
+from sloop.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
+
 
 
 class PriorQualityResult(YamlResult):
