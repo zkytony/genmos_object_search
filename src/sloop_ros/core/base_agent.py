@@ -59,7 +59,9 @@ class BaseAgent(pomdp_py.Agent):
 
         # Publishes most recent action
         self._action_publisher = rospy.Publisher(
-            self._action_topic, DefaultAction, queue_size=10, latch=True)
+            self._action_topic,
+            self.policy_model.ros_action_msg_type,
+            queue_size=10, latch=True)
 
         # Publishes current belief
         self._belief_publisher = rospy.Publisher(
@@ -67,19 +69,16 @@ class BaseAgent(pomdp_py.Agent):
 
         # Subscribes to observation
         self._observation_subscriber = rospy.Subscriber(
-            self._observation_topic, DefaultObservation, self._observation_cb)
+            self._observation_topic,
+            self.observation_model.ros_observation_msg_type,
+            self._observation_cb)
 
     @tobeoverriden
     def _observation_cb(self, observation_msg):
         """Override this function to handle different observation types"""
         rospy.loginfo(f"Observation received: {observation_msg}")
-        observation = self.interpret_observation_msg(observation_msg)
+        observation = self.observation_model.interpret_observation_msg(observation_msg)
         self.belief.update(self, observation, self._last_action)
-
-    @tobeoverriden
-    def interpret_observation_msg(self, observation_msg):
-        """Given a ROS message, return a pomdp_py.Observation"""
-        return pomdp_py.SimpleObservation(observation_msg.data)
 
     def run(self):
         """Blocking call"""
