@@ -1,0 +1,68 @@
+# Train, test, validation maps
+train_maps: [cleveland, honolulu]
+val_maps: []
+test_maps: [washington_dc]
+
+# Parameters for getting training data
+data_params:
+  train:
+    # Radius of the positive sample augmentation region.
+    augment_radius: 0
+    # Rate of decay of confidence of the augmentation region.
+    augment_dfactor: null
+    # Fill in negative examples based on location coverage
+    fill_neg: false
+    # Number of random rotated examples to add.
+    rotate_amount: 30
+    # Balance the positive and negative examples
+    balance: true
+    # Instead of 1.0 or 0.0 hard values for the probabilities, add random noise within +/-<noise>
+    add_pr_noise: 0.15
+    # Use the antonym of the keyword as negative examples
+    antonym_as_neg: True
+
+  test:
+    rotate_amount: 0
+
+  val:
+    nothing: True
+    
+  # Shared parameters between train/test/val
+  shared:
+    # Desired map dimension
+    desired_dims: [28,28]
+
+
+# Parameters for the model
+model_params:
+  # There is nothing here yet
+  learning_rate: 0.00001
+
+# Learning parameters
+learning_params:
+
+  # percentage of train set to use as validation set (if val_maps is empty)
+  val_ratio: 0.2
+
+  num_epochs: 300
+
+  batch_size: 10
+
+  # Threshold for loss change. If absolute value of train loss change (between
+  # averages over two windows) is below this threshold, the training terminates.
+  loss_threshold: 0.00001
+
+  # Apply early stopping based on validation set loss
+  # Basically, stop training when the absolute value of validation loss change
+  # between avergaes over two windows increases.
+  early_stopping: true
+  # The "patience" to wait before evaluating the condition of early stopping and training
+  # loss convergence.
+  window: 20
+
+eval_params:
+  # Empty for now
+  nothing: true
+
+plot_params:
+  plot_amount: 20

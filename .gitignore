@@ -91,3 +91,6 @@ spot/ros_ws/src/rbd_spot_perception/maps/*.yaml
 *.bag
 
 venv/
+
+# SL_OSM_Dataset
+data/SL_OSM_Dataset*
