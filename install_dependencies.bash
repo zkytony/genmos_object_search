@@ -13,4 +13,6 @@ pip install nltk   # tested 3.7
 pip install spacy  # tested 3.3.0
 pip install torch  # tested 0.11.0
 pip install torchvision  # tested 0.12.0
+pip install sciex  # tested 0.3
+python -m spacy download en_core_web_md
 set +o xtrace
