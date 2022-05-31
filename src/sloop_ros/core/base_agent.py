@@ -3,10 +3,7 @@ import actionlib
 import pomdp_py
 from sloop_ros.utils.misc import tobeoverriden
 from sloop_ros.msg import (PlanNextStepAction,
-                           PlanNextStepResult,
-                           DefaultAction,
-                           DefaultObservation,
-                           DefaultBelief)
+                           PlanNextStepResult)
 from actionlib_msgs.msg import GoalStatus
 
 
@@ -65,7 +62,9 @@ class BaseAgent(pomdp_py.Agent):
 
         # Publishes current belief
         self._belief_publisher = rospy.Publisher(
-            self._belief_topic, DefaultBelief, queue_size=10, latch=True)
+            self._belief_topic,
+            self.belief.ros_belief_msg_type,
+            queue_size=10, latch=True)
 
         # Subscribes to observation
         self._observation_subscriber = rospy.Subscriber(

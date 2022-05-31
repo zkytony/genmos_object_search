@@ -20,3 +20,8 @@ class BaseBelief(pomdp_py.GenerativeDistribution):
         belief_msg.probs = [self[state]
                             for state in belief_msg.states]
         return belief_msg
+
+    @property
+    @tobeoverriden
+    def ros_belief_msg_type(self):
+        return DefaultBelief
