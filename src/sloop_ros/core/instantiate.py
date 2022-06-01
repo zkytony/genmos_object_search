@@ -17,10 +17,10 @@ def create_models(config):
     rewardmodel_class = import_class(config['reward_model'])
     policymodel_class = import_class(config['policy_model'])
 
-    transition_model = transmodel_class(config.get("transition_model_params", {}))
-    observation_model = obsrvmodel_class(config.get("observation_model_params", {}))
-    reward_model = rewardmodel_class(config.get("reward_model_params", {}))
-    policy_model = policymodel_class(config.get("policy_model_params", {}))
+    transition_model = transmodel_class(config)
+    observation_model = obsrvmodel_class(config)
+    reward_model = rewardmodel_class(config)
+    policy_model = policymodel_class(config)
 
     return Models(transition_model,
                   observation_model,
@@ -31,7 +31,7 @@ def create_agent(belief, models, config):
     agent_class = import_class(config["agent"])
     print(f"Creating Agent of class {agent_class}")
     sloop_agent = agent_class(
-        belief, models, config.get("agent_params", {}))
+        belief, models, config)
     return sloop_agent
 
 
