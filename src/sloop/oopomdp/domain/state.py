@@ -39,6 +39,19 @@ class TargetObjectState(pomdp_py.ObjectState):
 
 
 class RobotState(pomdp_py.ObjectState):
+    """
+    A generic robot state, not assuming particular
+    representation of its components. However, we
+    do assume that the robot carries a camera and
+    can point it to a certain direction. A robot state
+    is defined by:
+
+       the robot's id
+       the robot pose
+       objects found
+       camera_direction
+
+    """
     def __init__(self,
                  robot_id,
                  pose,
