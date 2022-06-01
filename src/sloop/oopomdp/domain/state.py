@@ -17,7 +17,12 @@ SLOOP and MOS3D's idea.
 import pomdp_py
 class TargetObjectState(pomdp_py.ObjectState):
     """A target object's state; The target object is located
-    at a location 'loc', with an ID, and a class."""
+    at a location 'loc', with an ID, and a class.
+
+    Note that we are being specific about "target object"
+    because in general, you don't have to require an object
+    location to be at a single location; the object could be
+    represented differently."""
     def __init__(self, objid, objclass, loc):
         super().__init__(objclass, {"loc": loc, "id": objid})
 
@@ -33,9 +38,9 @@ class TargetObjectState(pomdp_py.ObjectState):
         return self['id']
 
     def copy(self):
-        return ObjectState(self.id,
-                           self.objclass,
-                           self.loc)
+        return TargetObjectState(self.id,
+                                 self.objclass,
+                                 self.loc)
 
 
 class RobotState(pomdp_py.ObjectState):
