@@ -2,7 +2,7 @@
 import random
 import pomdp_py
 import time
-from sloop.oopomdp.problem import MosOOPOMDP, MosViz
+import sloop.oopomdp.problem as mos
 from sloop.oopomdp.example_worlds import random_world
 from sloop.oopomdp.env.env import (make_laser_sensor,
                                    make_proximity_sensor)
@@ -45,7 +45,7 @@ def setup_solve(problem,
     viz = None
     if visualize:
         # controllable=False means no keyboard control.
-        viz = MosViz(problem.env, controllable=False, bg_path=bg_path, res=15)
+        viz = mos.MosViz(problem.env, controllable=False, bg_path=bg_path, res=15)
         if viz.on_init() == False:
             raise Exception("Environment failed to initialize")
         viz.update(robot_id,
@@ -95,14 +95,14 @@ def solve(problem, planner,
         # Updates
         problem.agent.clear_history()  # truncate history
         problem.agent.update_history(real_action, real_observation)
-        belief_update(problem.agent, real_action, real_observation,
-                      problem.env.state.object_states[robot_id],
-                      planner)
+        mos.belief_update(problem.agent, real_action, real_observation,
+                          problem.env.state.object_states[robot_id],
+                          planner)
         _time_used += time.time() - _start
 
         # Info and render
         _total_reward += reward
-        if isinstance(real_action, FindAction):
+        if isinstance(real_action, mos.FindAction):
             _find_actions_count += 1
         print("==== Step %d ====" % (i+1))
         print("Action: %s" % str(real_action))
@@ -118,8 +118,8 @@ def solve(problem, planner,
             # This is used to show the sensing range; Not sampled
             # according to observation model.
             robot_pose = problem.env.state.object_states[robot_id].pose
-            viz_observation = MosOOObservation({})
-            if isinstance(real_action, LookAction) or isinstance(real_action, FindAction):
+            viz_observation = mos.MosOOObservation({})
+            if isinstance(real_action, mos.LookAction) or isinstance(real_action, mos.FindAction):
                 viz_observation = \
                     problem.env.sensors[robot_id].observe(robot_pose,
                                                           problem.env.state)
@@ -151,10 +151,10 @@ def solve(problem, planner,
 # Test
 def unittest(bg_path=None):
     # random world
-    grid_map, robot_char = random_world(20, 20, 20, 10)
+    grid_map, robot_char = random_world(20, 20, 7, 10)
     laserstr = make_laser_sensor(90, (1, 3), 0.5, False)
     proxstr = make_proximity_sensor(5, False)
-    problem = MosOOPOMDP(robot_char,  # r is the robot character
+    problem = mos.MosOOPOMDP(robot_char,  # r is the robot character
                          sigma=0.01,  # observation model parameter
                          epsilon=1.0, # observation model parameter
                          grid_map=grid_map,
