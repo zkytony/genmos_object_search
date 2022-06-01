@@ -21,7 +21,7 @@ class BaseAgent(pomdp_py.Agent):
 
     See scripts/run_pomdp_agent for how this is used.
     """
-    def __init__(self, belief, models, **kwargs):
+    def __init__(self, belief, models, config):
         super().__init__(belief,
                          models.policy_model,
                          transition_model=models.transition_model,
@@ -36,16 +36,16 @@ class BaseAgent(pomdp_py.Agent):
         self._belief_publisher = None
         self._observation_subscriber = None
 
-        self._plan_service = kwargs.get("plan_service", "~plan")  # would become <node_name>/plan
-        self._action_topic = kwargs.get("action_topic", "~action")
-        self._belief_topic = kwargs.get("belief_topic", "~belief")
-        self._observation_topic = kwargs.get("observation_topic", "~observation")
+        self._plan_service = config.get("plan_service", "~plan")  # would become <node_name>/plan
+        self._action_topic = config.get("action_topic", "~action")
+        self._belief_topic = config.get("belief_topic", "~belief")
+        self._observation_topic = config.get("observation_topic", "~observation")
 
-        self._belief_rate = kwargs.get("belief_publish_rate", 5)  # Hz
+        self._belief_rate = config.get("belief_publish_rate", 5)  # Hz
 
         # This will always be equal to the last planned action
         self._last_action = None
-        self._debug_planner = kwargs.get("debug_planning", True)
+        self._debug_planner = config.get("debug_planning", True)
 
     def setup(self):
         """Override this function to create make your agent
