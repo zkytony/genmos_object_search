@@ -211,6 +211,10 @@ class SloopPriorTrial(Trial):
             if _time_used > max_time:
                 break  # no more time to update.
 
+            # Print debugging info
+            dd = pomdp_py.utils.TreeDebugger(problem.agent.tree)
+            dd.p(1)
+
             # Execute action
             reward = problem.env.state_transition(real_action, execute=True,
                                                   robot_id=robot_id)
