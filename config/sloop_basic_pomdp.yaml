@@ -1,18 +1,28 @@
 # The original SLOOP: action spaces are low-level
 # on top of a grid map
-transition_model: sloop_ros.sloop_wrapper.JointTransitionModel
-transition_model_params:
-  robot_trans_model: sloop_ros.sloop_wrapper.LowLevelRobotTransModel2D
 
-observation_model: sloop_ros.sloop_wrapper.JointObservationModel
-reward_model: sloop_ros.sloop_wrapper.RewardModel
-policy_model: sloop_ros.sloop_wrapper.LowLevelPolicyModel2D
+# Transition Model
+transition_model: sloop_ros.generic.SLOOPTransitionModel
+robot_trans_model: default
 
-belief_dist: sloop_ros.sloop_wrapper.JointBelief
+# Observation Model
+observation_model: sloop_ros.basic.JointObservationModel
+
+# Reward Model
+reward_model: sloop_ros.basic.RewardModel
+
+# Policy Model
+policy_model: sloop_ros.basic.LowLevelPolicyModel2D
+
+# Belief
+belief_dist: sloop_ros.basic.JointBelief
 belief_params:
   init_belief: uniform
-  object_belief: sloop_ros.sloop_wrapper.LowLevelObjectBelief2D
-  robot_belief: sloop_ros.sloop_wrapper.ObservableRobotBelief2D
+  object_belief: sloop_ros.basic.LowLevelObjectBelief2D
+  robot_belief: sloop_ros.basic.ObservableRobotBelief2D
 
-agent: sloop_ros.sloop_wrapper.SLOOPBasicAgent
+# Agent
+agent: sloop_ros.basic.SLOOPBasicAgent
+
+# Planner
 planner: pomdp_py.POUCT
