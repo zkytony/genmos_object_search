@@ -1,16 +1,17 @@
-import torch
-import torch.nn as nn
-import numpy as np
-from torch.utils.data import DataLoader
-from sloop.datasets.dataloader import *
-from sloop.models.nn.plotting import *
-from sloop.models.nn.metrics import *
-from sloop.models.nn.loss_function import FoRefLoss, clamp_angle
 from pprint import pprint
 import matplotlib.pyplot as plt
 import sys
 import json
 import random
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+
+from sloop.osm.datasets.dataloader import *
+from .plotting import *
+from .metrics import *
+from .loss_function import FoRefLoss, clamp_angle
 
 
 class BaseModel(nn.Module):

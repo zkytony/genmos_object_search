@@ -13,10 +13,10 @@ import pandas as pd
 import math
 import random
 from torch.utils.data import Dataset
-from sloop.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
-from sloop.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
+from sloop.osm.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
+from sloop.osm.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
 from sloop.utils import json_safe
-from sloop.datasets.utils import *
+from sloop.osm.datasets.utils import *
 
 #### FIELDS ####
 class Field:

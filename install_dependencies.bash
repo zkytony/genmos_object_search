@@ -9,8 +9,8 @@ pip install 'scipy>=1.3.3'
 pip install 'seaborn>=0.11.0'
 # Note that we are trying out versions of the following packages
 pip install pomdp-py
+pip install 'spacy==2.2.4'  # tested 3.3.0
 pip install nltk   # tested 3.7
-pip install spacy  # tested 3.3.0
 pip install torch  # tested 0.11.0
 pip install torchvision  # tested 0.12.0
 pip install sciex  # tested 0.3

@@ -1,8 +1,8 @@
 # import matplotlib
 # matplotlib.use('GTK3Agg')
 import matplotlib.pyplot as plt
-from sloop.models.heuristics.rules import *
-from sloop.models.nn.plotting import plot_foref
+from .rules import *
+from ..nn.plotting import plot_foref
 import numpy as np
 import math
 

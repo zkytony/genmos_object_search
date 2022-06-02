@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import math
-from sloop.datasets.dataloader import FdFoRefAngle
+from sloop.osm.datasets.dataloader import FdFoRefAngle
 
 def clamp_angle_tensor(angle):
     """Given an arbitrary angle (tensor), return an equivalent angle

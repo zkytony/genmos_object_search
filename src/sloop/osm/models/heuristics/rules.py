@@ -5,7 +5,7 @@
 import math
 import numpy as np
 import scipy.stats
-from sloop.datasets.utils import euclidean_dist
+from sloop.osm.datasets.utils import euclidean_dist
 
 def combine_beliefs(belief1, belief2, method="product", normalize=True):
     result = dict(belief1)

@@ -5,14 +5,13 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from sloop.utils import json_safe
-from sloop.models.nn.base_model import BaseModel
-from sloop.models.nn.loss_function import FoRefAngleLoss, clamp_angle
-from sloop.models.nn.plotting import *
-from sloop.models.nn.metrics import *
-from sloop.models.heuristics.rules import ForefRule
-from sloop.models.heuristics.model import evaluate as rule_based_evaluate
-from sloop.models.heuristics.model import RuleBasedModel
-from sloop.models.nn.iter2.common import *
+from sloop.osm.models.nn.base_model import BaseModel
+from sloop.osm.models.nn.loss_function import FoRefAngleLoss, clamp_angle
+from sloop.osm.models.nn.plotting import *
+from sloop.osm.models.nn.metrics import *
+from sloop.osm.models.heuristics.rules import ForefRule
+from sloop.osm.models.heuristics.model import RuleBasedModel
+from sloop.osm.models.nn.iter2.common import *
 import numpy as np
 import json
 from pprint import pprint

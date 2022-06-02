@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sloop.datasets.dataloader import *
+from sloop.osm.datasets.dataloader import *
 
 def plot_foref(foref, ax, c1="magenta", c2="lime",
                width=3.0, label=None, plot_perp=True, alpha=1.0,
