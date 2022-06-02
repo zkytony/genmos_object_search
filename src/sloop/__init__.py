@@ -1,3 +1,3 @@
 import sys
-import sloop
-sys.modules['spatial_foref'] = sloop
+import sloop.osm
+sys.modules['spatial_foref'] = sloop.osm
