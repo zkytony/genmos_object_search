@@ -180,3 +180,10 @@ def hex_to_rgb(hx):
     g = int('0x'+hx[2:4], 16)
     b = int('0x'+hx[4:6], 16)
     return (r,g,b)
+
+
+def identity(x):
+    if x:
+        return 1.0 - 1e-12
+    else:
+        return 1e-12
