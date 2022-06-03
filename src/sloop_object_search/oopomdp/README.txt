@@ -1,4 +1,5 @@
-SLOOP object search OOPOMDP applied for OSM(-like) maps.
+The OOPOMDP for object search. Follows the Multi-Object Search (MOS)
+formulation, but more general, additionally with correlational observation
+model. We call this GMOS (Generalized-MOS).
 
-By "OSM(-like)" we mean 2D maps whose metadata
-(like landmarks) are structured as in SL_OSM_Dataset.
+(No SLOOP)
