@@ -40,7 +40,7 @@ class SpatialLanguageObservation(pomdp_py.Observation):
         return f"SpatialLanguageObservation({str(self)})"
 
 
-def parse(query, map_name, **kwargs):
+def parse(query, map_name, spatial_keywords=SPATIAL_KEYWORDS, **kwargs):
     """
     A wrapper around the 'parse' function in sloop.parsing.parser,
     which parses a given spatial language using spacy. This function
@@ -77,7 +77,7 @@ def parse(query, map_name, **kwargs):
         spacy_model = kwargs.get("spacy_model")
         if spacy_model is None:
             print("Loading spacy model...")
-            spacy_model = spacy.load("en_core_web_md")
+            spacy_model = spacy.load("en_core_web_lg")
             kwargs["spacy_model"] = spacy_model
         sg = sloop.parsing.parser.parse(query, map_name, **kwargs)
         sg_dict = sg.to_dict()
@@ -88,7 +88,6 @@ def parse(query, map_name, **kwargs):
     else:
         raise ValueError("Unable to understand input query %s" % str(query))
 
-    spatial_keywords = kwargs.get("spatial_keywords", SPATIAL_KEYWORDS)
     for i, rel in enumerate(sg_dict["relations"]):
         rel_phrase = rel[2]
         if rel_phrase is not None and\

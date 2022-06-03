@@ -16,8 +16,8 @@ import sloop_object_search.oopomdp.problem as mos
 from sloop_object_search.oopomdp.env.env import interpret as interpret_env
 from sloop_object_search.oopomdp.env.env import make_laser_sensor, equip_sensors
 from sloop_object_search.oopomdp.models.transition_model import RobotTransitionModel
-from sloop_object_search.models.heuristics.rules import BASIC_RULES, ForefRule
-from sloop_object_search.models.heuristics.model import KeywordModel, RuleBasedModel, MixtureSLUModel
+from sloop.osm.models.heuristics.rules import BASIC_RULES, ForefRule
+from sloop.osm.models.heuristics.model import KeywordModel, RuleBasedModel, MixtureSLUModel
 
 
 def input_default(prompt, default_val):
@@ -26,7 +26,7 @@ def input_default(prompt, default_val):
         val = default_val
     return val
 
-def load_files(sp="en_core_web_md"):
+def load_files(sp="en_core_web_lg"):
     print("Loading spacy model...")
     spacy_model = spacy.load(sp)
 
@@ -68,7 +68,7 @@ def run_with_hint(map_name, worldstr, hint, mapinfo,
             else:
                 model_keyword = "left"
             foref_model_path = os.path.join(
-                "..", "models",
+                "../../models",
                 "iter%s_%s:%s:%s"
                 % (iteration, model_name.replace("_", "-"),
                    model_keyword, map_name.replace("_", ",")),
@@ -87,14 +87,17 @@ def run_with_hint(map_name, worldstr, hint, mapinfo,
         pprint(list(rules.keys()))
 
         if prior_type == "rule":
-            model = RuleBasedModel(rules)
+            model = RuleBasedModel(rules, mapinfo,
+                                   foref_kwargs={"device": device,
+                                                 "mapsize": (28,28)},
+                                   foref_models=foref_models)
         else:
-            model = MixtureSLUModel(rules)
+            model = MixtureSLUModel(rules, mapinfo,
+                                    foref_kwargs={"device": device,
+                                                 "mapsize": (28,28)},
+                                    foref_models=foref_models)
         prior, metadata = get_prior(prior_type, model,
                                     hint, map_name, mapinfo,
-                                    foref_models=foref_models,
-                                    foref_kwargs={"device": device,
-                                                  "mapsize": (28,28)},
                                     **kwargs)
 
     else:
@@ -134,7 +137,7 @@ def run_with_hint(map_name, worldstr, hint, mapinfo,
     return results
 
 def input_problem_config(loaded_things):
-    map_name = input("map name: ")
+    map_name = "austin" #input("map name: ")
     if len(map_name.strip()) == 0:
         return None
 
@@ -143,8 +146,8 @@ def input_problem_config(loaded_things):
     mapinfo.load_by_name(map_name)
 
     # Create a random POMDP domain on the map
-    nobj = min(3, int(input_default("num objects, max 3", 2)))
-    sensor_range = int(input_default("Sensor range", 4))
+    nobj = 1#min(3, int(input_default("num objects, max 3", 2)))
+    sensor_range = 4#int(input_default("Sensor range", 4))
     dims = mapinfo.map_dims(map_name)
     all_locs = {(x,y)
                 for x in range(dims[0])
@@ -153,7 +156,7 @@ def input_problem_config(loaded_things):
     target_poses = []  # a list of (x,y) poses
     for i in range(nobj):
         obj_letter = target_objects[i]
-        obj_loc = input_default("x, y for object %s" % obj_letter, "random")
+        obj_loc = "random" #input_default("x, y for object %s" % obj_letter, "random")
         if obj_loc == "random":
             obj_loc = random.sample(all_locs - set(target_poses),1)[0]
         else:
@@ -180,7 +183,7 @@ def input_problem_config(loaded_things):
     viz.on_render()
 
     # Get inputs from user
-    hint = input("Hint: ")
+    hint = "The red car is behind Claudia Taylor Johnson Hall" #input("Hint: ")
     return [map_name, mapinfo, robot_pose, worldstr, sensor, hint]
 
 
@@ -198,7 +201,7 @@ if __name__ == "__main__":
             map_name, mapinfo, robot_pose, worldstr, sensor, hint\
                 = input_problem_config(loaded_things)
 
-        prior_type = input_default("Prior type", default_prior)
+        prior_type = "mixture" #input_default("Prior type", default_prior)
         run_with_hint(map_name, worldstr, hint, mapinfo,
                       sensor, prior_type, landmark_heights={},
                       **loaded_things)

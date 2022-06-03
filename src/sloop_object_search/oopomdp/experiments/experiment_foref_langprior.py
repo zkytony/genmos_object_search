@@ -4,7 +4,7 @@ from sloop_object_search.parsing.parser import parse, match_spatial_keyword
 from sloop_object_search.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
 from sloop_object_search.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
 from sloop_object_search.models.heuristics.model import KeywordModel, RuleBasedModel, GaussianPointModel, MixtureSLUModel
-from sloop_object_search.models.heuristics.rules import BASIC_RULES, ForefRule
+from sloop.osm.models.rules_object_search.models.heuristics.rules import BASIC_RULES, ForefRule
 from sloop_object_search.oopomdp.env.env import *
 from sloop_object_search.oopomdp.experiments.trial import *
 from sloop_object_search.oopomdp.experiments.constants import *

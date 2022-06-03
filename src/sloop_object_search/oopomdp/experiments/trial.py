@@ -5,6 +5,7 @@ import sloop_object_search.oopomdp.problem as mos
 from sloop_object_search.oopomdp.experiments.constants import *
 from sloop.osm.datasets.utils import euclidean_dist
 from sloop.osm.datasets import FILEPATHS
+import sloop.observation
 import random
 import pomdp_py
 import time
@@ -69,7 +70,14 @@ def create_world(width, length, robot_pose, landmark_poses, target_poses, target
 
 
 def get_prior(prior_type, model, query, map_name, mapinfo,
-              **kwargs):
+              spatial_keywords=[], symbol_to_synonyms={},
+              spacy_model=None):
+
+    # first obtain the spatial language observation
+    splang_observation = sloop.observation.parse(query, map_name,
+                                                spacy_model=spacy_model,
+                                                all_keywords=symbol_to_synonyms,
+                                                spatial_keywords=spatial_keywords)
 
     metadata = {}
     if prior_type == "uniform":
@@ -85,21 +93,21 @@ def get_prior(prior_type, model, query, map_name, mapinfo,
                  for symbol in prior}
 
     elif prior_type.startswith("keyword"):
-        prior, meta = model.interpret(query, map_name, mapinfo, **kwargs)
+        prior, meta = model.interpret(splang_observation)
         prior = {get_id(symbol):prior[symbol]
                  for symbol in prior}
         metadata.update(meta)
 
     elif prior_type.startswith("rule"):
         prior, meta =\
-            model.interpret(query, map_name, mapinfo, **kwargs)
+            model.interpret(splang_observation)
         prior = {get_id(symbol):prior[symbol]
                  for symbol in prior}
         metadata.update(meta)
 
     elif prior_type.startswith("mixture"):
         prior, meta =\
-            model.interpret(query, map_name, mapinfo, **kwargs)
+            model.interpret(splang_observation)
         prior = {get_id(symbol):prior[symbol]
                  for symbol in prior}
         metadata.update(meta)
