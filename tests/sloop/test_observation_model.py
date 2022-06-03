@@ -33,7 +33,7 @@ def unittest():
     print("Loading spacy model...")
     spacy_model = spacy.load("en_core_web_md")
 
-    lang = "The red car is in front of Support Building."
+    lang = "The red car is behind Support Building."
     splang_obz = sloop.observation.parse(lang, map_name,
                                          kwfile=FILEPATHS["symbol_to_synonyms"],
                                          spacy_model=spacy_model,

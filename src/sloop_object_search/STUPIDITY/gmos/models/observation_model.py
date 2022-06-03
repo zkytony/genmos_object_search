@@ -9,7 +9,7 @@ class ObjectDetectionModel:
     def __init__(self, objid):
         self.objid = objid
 
-    def probability(self, zi, si, srobot, action):
+    def probability(self, zi, si, srobot, action=None):
         """
         Args:
             zi: object observation
@@ -19,7 +19,7 @@ class ObjectDetectionModel:
         """
         raise NotImplementedError
 
-    def sample(self, si, srobot, action):
+    def sample(self, si, srobot, action=None):
         """
         Args:
             si: object state
