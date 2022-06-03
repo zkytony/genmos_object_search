@@ -56,7 +56,6 @@ def unittest():
                                               "behind": model.predict_foref},
                                 foref_kwargs={"device": device})
     result = splang_om.interpret(splang_obz)
-    import pdb; pdb.set_trace()
 
     foref = result[1]["forefs"][0][2]
     map_arr = make_context_img(mapinfo, map_name, landmark,

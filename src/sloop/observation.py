@@ -89,7 +89,6 @@ def parse(query, map_name, **kwargs):
         raise ValueError("Unable to understand input query %s" % str(query))
 
     spatial_keywords = kwargs.get("spatial_keywords", SPATIAL_KEYWORDS)
-    import pdb; pdb.set_trace()
     for i, rel in enumerate(sg_dict["relations"]):
         rel_phrase = rel[2]
         if rel_phrase is not None and\
