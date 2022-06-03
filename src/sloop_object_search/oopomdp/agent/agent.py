@@ -15,12 +15,69 @@ class MosAgent(pomdp_py.Agent):
     """One agent is one robot."""
     def __init__(self,
                  robot_id,
+                 target_object_ids,
                  init_robot_state,  # initial robot state (assuming robot state is observable perfectly)
+                 search_region,
+                 robot_trans_model,
+                 policy_model,
+                 detectors,
+                 reward_model,
+                 targets_belief_initializer,
+                 targets_belief_updater,
+                 belief_type="histogram",
+                 prior={},
+                 binit_args={},
+                 use_heuristic=True,
+                 no_look=False):
+        """
+        Args:
+            robot_id (any hashable)
+            target_object_ids (array-like): list of target object ids
+            init_robot_state (RobotState)
+            search_region (SearchRegion): possible locations for the target
+            robot_trans_model (RobotTransModel): transition model for the robot
+            policy_model (PolicyModel): policy model
+            detectors: Maps from DetectionModel Pr(zi | si, srobot')
+                Must contain an entry for the target object
+            belief_type: type of belief representation.
+            prior: Maps from search region location to a float.
+        # TODO: Add correlations
+        """
+        init_brobot = self._initialize_robot_belief(init_robot_state)
+        init_bobjects = targets_belief_initializer(target_object_ids, search_region,
+                                                   belief_type, prior,
+                                                   init_robot_state, **binit_args)
+        init_belief = MosJointBelief({**{robot_id: init_brobot},
+                                      **init_bobjects})
+        self.targets_belief_updater = targets_belief_initializer
+        transition_model = MosTransitionModel(target_object_ids,
+                                              robot_trans_model)
+        observation_model = MosObservationModel(...)
+        policy_model.set_observation_model(observation_model,
+                                           use_heuristic=use_heuristic)
+        super().__init__(init_belief, policy_model,
+                         transition_model, observation_model, reward_model)
+
+
+    def _initialize_robot_belief(self, init_robot_state):
+        """The robot state is known"""
+        return pomdp_py.Histogram({init_robot_state: 1.0})
+
+
+
+
+
+
+
+
+
+
+
+
+
                  object_ids,  # target object ids
                  dim,         # tuple (w,l) of the width (w) and length (l) of the gridworld search space.
-                 sensor,      # Sensor equipped on the robot
-                 sigma=0.01,     # parameter for observation model
-                 epsilon=1,   # parameter for observation model
+                 detection_models,      # Sensor equipped on the robot
                  belief_rep="histogram",  # belief representation, either "histogram" or "particles".
                  prior={},       # prior belief, as defined in belief.py:initialize_belief
                  num_particles=100,  # used if the belief representation is particles
@@ -29,7 +86,6 @@ class MosAgent(pomdp_py.Agent):
                  reward_small=1):   # Agent doesn't have look action -- an observation is received per move.
         self.robot_id = robot_id
         self._object_ids = object_ids
-        self.sensor = sensor
 
         # since the robot observes its own pose perfectly, it will have 100% prior
         # on this pose.
@@ -44,16 +100,13 @@ class MosAgent(pomdp_py.Agent):
                                         representation=belief_rep,
                                         robot_orientations={self.robot_id:rth},
                                         num_particles=num_particles)
-        transition_model = MosTransitionModel(dim,
-                                              {self.robot_id: self.sensor},
-                                              self._object_ids,
-                                              no_look=no_look)
-        observation_model = MosObservationModel(dim,
-                                                self.sensor,
-                                                self._object_ids,
-                                                sigma=sigma,
-                                                epsilon=epsilon,
-                                                no_look=no_look)
+        transition_model = GMosTransitionModel(dim,
+                                               detection_models,
+                                               self._object_ids,
+                                               no_look=no_look)
+        observation_model = GMosObservationModel(self.robot_id,
+                                                 detection_models,
+                                                 no_look=no_look)
         reward_model = GoalRewardModel(self._object_ids,
                                        robot_id=self.robot_id,
                                        small=reward_small)

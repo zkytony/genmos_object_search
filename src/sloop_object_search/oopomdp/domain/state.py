@@ -35,16 +35,15 @@ class ObjectState(pomdp_py.ObjectState):
         return self.attributes['id']
 
 class RobotState(pomdp_py.ObjectState):
-    def __init__(self, robot_id, pose, objects_found, camera_direction, collision=False):
+    def __init__(self, robot_id, pose, objects_found, camera_direction):
         """Note: camera_direction is None unless the robot is looking at a direction,
         in which case camera_direction is the string e.g. look+x, or 'look'"""
         super().__init__("robot", {"id":robot_id,
                                    "pose":pose,  # x,y,th
                                    "objects_found": objects_found,
-                                   "collision": collision,
                                    "camera_direction": camera_direction})
     def __str__(self):
-        return 'RobotState(%s,%s|%s|col:%s)' % (str(self.objclass), str(self.pose), str(self.objects_found), str(self.collision))
+        return 'RobotState(%s,%s|%s)' % (str(self.objclass), str(self.pose), str(self.objects_found))
     def __repr__(self):
         return str(self)
     @property
