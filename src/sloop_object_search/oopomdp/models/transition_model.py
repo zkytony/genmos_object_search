@@ -17,16 +17,6 @@ from ..domain.action import *
 from sloop_object_search.utils.math import fround
 
 
-class RobotTransitionModel(pomdp_py.TransitionModel):
-    """Models Pr(sr' | s, a); Likely domain-specific"""
-    def __init__(self, robot_id):
-        self.robot_id = robot_id
-
-class ObjectTransitionModel(pomdp_py.TransitionModel):
-    """Models Pr(si' | s, a); Likely domain-specific"""
-    def __init__(self, objid):
-        self.objid = objid
-
 class StaticObjectTransitionModel(ObjectTransitionModel):
     """ static objects"""
     def probability(self, next_object_state, state, action):
@@ -53,29 +43,9 @@ class StaticObjectTransitionModel(ObjectTransitionModel):
         """
         return state.s(self.objid).copy()
 
-def robot_pose_transition2d(robot_pose, action):
-    """
-    Uses the transform_pose function to compute the next pose,
-    given a robot pose and an action.
 
-    Note: robot_pose is a 2D POMDP (gridmap) pose.
-
-    Args:
-        robot_pose (x, y, th)
-        action (Move2D)
-    """
-    rx, ry, rth = robot_pose
-    forward, angle = action.delta
-    nth = (rth + angle) % 360
-    nx = rx + forward*math.cos(to_rad(nth))
-    ny = ry + forward*math.sin(to_rad(nth))
-    return (nx, ny, nth)
-
-
-class RobotTransitionModel2D(RobotTransitionModel):
+class RobotTransitionModel(RobotTransitionModel):
     def __init__(self, robot_id, reachable_positions, detection_models):
-        """round_to: round the x, y coordinates to integer, floor integer,
-        or not rounding, when computing the next robot pose."""
         super().__init__(robot_id)
         self.reachable_positions = reachable_positions
         self.detection_models = detection_models
@@ -92,17 +62,15 @@ class RobotTransitionModel2D(RobotTransitionModel):
         next_camera_direction = srobot.camera_direction
 
         if isinstance(action, MotionAction):
-            np = robot_pose_transition2d(current_robot_pose, action)
-            next_robot_pose = fround("int", np)
-            if next_robot_pose[:2] not in self.reachable_positions:
-                next_robot_pose = current_robot_pose
+            next_robot_pose = self.motion_transition(srobot, action)
 
         elif isinstance(action, LookAction):
             next_camera_direction = action.name
 
         elif isinstance(action, FindAction):
-            next_objects_found = tuple(set(next_objects_found)
-                                       | set(objects_in_range(current_robot_pose, state)))
+            next_objects_found = tuple(
+                set(next_objects_found)
+                | set(objects_in_range(current_robot_pose, state)))
 
         return RobotState(self.robot_id,
                           next_robot_pose,
@@ -117,11 +85,29 @@ class RobotTransitionModel2D(RobotTransitionModel):
                 objects_in_range.append(objid)
         return objects_in_range
 
+    def motion_transition(self, srobot, action):
+        raise NotImplementedError
 
-class MosTransitionModel(pomdp_py.OOTransitionModel):
-    def __init__(self, target_object_ids,
-                 robot_transition_model):
-        transition_models = {objid: StaticObjectTransitionModel(objid)
-                             for objid in target_object_ids}
-        transition_models[robot_id] = robot_transition_model
-        super().__init__(transition_models)
+
+class RobotTransBasic2D(RobotTransitionModel):
+    """robot movements over 2D grid"""
+    def motion_transition(self, srobot, action):
+        rx, ry, rth = robot_pose
+
+        if action.scheme == "xy":
+            dx, dy, th = action.motion
+            rx += dx
+            ry += dy
+            rth = th
+        elif action.scheme == "vw":
+            # odometry motion model
+            forward, angle = action.motion
+            rth += angle  # angle (radian)
+            rx = rx + forward*math.cos(nth)
+            ry = ry + forward*math.sin(nth)
+            rth = rth % (2*math.pi)
+        rx, ry = fround("int", rx, ry)
+        if (rx, ry) in self.grid_map.free_locations:
+            return (rx, ry, rth)
+        else:
+            return srobot['pose']

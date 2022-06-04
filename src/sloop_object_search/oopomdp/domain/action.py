@@ -1,42 +1,33 @@
 """
-Defines the Action for the 2D Multi-Object Search domain;
-
-Action space:
-
-    Motion :math:`\cup` Look :math:`\cup` Find
-
-* Motion Actions scheme 1: South, East, West, North.
-* Motion Actions scheme 2: Left 45deg, Right 45deg, Forward
-* Look: Interprets sensor input as observation
-* Find: Marks objects observed in the last Look action as
-  (differs from original paper; reduces action space)
-
-It is possible to force "Look" after every N/S/E/W action;
-then the Look action could be dropped. This is optional behavior.
+SLOOP action. Here, we provide a few generic
+action types, useful for multi-object search
+However, no specific implementation is provided, as that
+is the job of individual domains
 """
+
 import pomdp_py
-import math
 
-###### Actions ######
-class MosAction(pomdp_py.Action):
-    """Mos action; Simple named action."""
-    def __init__(self, name):
-        self.name = name
-    def __hash__(self):
-        return hash(self.name)
-    def __eq__(self, other):
-        if isinstance(other, MosAction):
-            return self.name == other.name
-        elif type(other) == str:
-            return self.name == other
-    def __str__(self):
-        return self.name
+##################### Generic definitions ###########################
+class MotionAction(pomdp_py.SimpleAction):
+    """MotionAction moves the robot.
+    The specific definition is domain-dependent"""
     def __repr__(self):
-        return "MosAction(%s)" % self.name
+        return str(self)
 
+class FindAction(pomdp_py.SimpleAction):
+    def __init__(self):
+        super().__init__("find")
+    def __repr__(self):
+        return str(self)
+
+class LookAction(pomdp_py.SimpleAction):
+    def __init__(self):
+        super().__init__("look")
+
+##################### 2D Motion Action ##############################
 MOTION_SCHEME="vw"  # can be either xy or vw
 STEP_SIZE=3
-class MotionAction(MosAction):
+class MotionAction2D(MotionAction):
     # scheme 1 (vx,vy,th)
     EAST = (STEP_SIZE, 0, 0)  # x is horizontal; x+ is right. y is vertical; y+ is down.
     WEST = (-STEP_SIZE, 0, math.pi)
@@ -67,12 +58,12 @@ class MotionAction(MosAction):
             raise ValueError("Invalid motion scheme %s" % scheme)
 
         if scheme == "xy":
-            if motion not in {MotionAction.EAST, MotionAction.WEST,
-                              MotionAction.NORTH, MotionAction.SOUTH}:
+            if motion not in {MotionAction2D.EAST, MotionAction2D.WEST,
+                              MotionAction2D.NORTH, MotionAction2D.SOUTH}:
                 raise ValueError("Invalid move motion %s" % motion)
         else:
-            if motion not in {MotionAction.FORWARD, MotionAction.BACKWARD,
-                              MotionAction.LEFT, MotionAction.RIGHT}:
+            if motion not in {MotionAction2D.FORWARD, MotionAction2D.BACKWARD,
+                              MotionAction2D.LEFT, MotionAction2D.RIGHT}:
                 raise ValueError("Invalid move motion %s" % motion)
 
         self.motion = motion
@@ -83,23 +74,14 @@ class MotionAction(MosAction):
         super().__init__("move-%s-%s" % (scheme, motion_name))
 
 # Define some constant actions
-MoveEast = MotionAction(MotionAction.EAST, scheme="xy", motion_name="East")
-MoveWest = MotionAction(MotionAction.WEST, scheme="xy", motion_name="West")
-MoveNorth = MotionAction(MotionAction.NORTH, scheme="xy", motion_name="North")
-MoveSouth = MotionAction(MotionAction.SOUTH, scheme="xy", motion_name="South")
-MoveForward = MotionAction(MotionAction.FORWARD, scheme="vw", motion_name="Forward")
-MoveBackward = MotionAction(MotionAction.BACKWARD, scheme="vw", motion_name="Backward")
-MoveLeft = MotionAction(MotionAction.LEFT, scheme="vw", motion_name="TurnLeft")
-MoveRight = MotionAction(MotionAction.RIGHT, scheme="vw", motion_name="TurnRight")
-
-class LookAction(MosAction):
-    # For simplicity, this LookAction is not parameterized by direction
-    def __init__(self):
-        super().__init__("look")
-
-class FindAction(MosAction):
-    def __init__(self):
-        super().__init__("find")
+MoveEast = MotionAction2D(MotionAction2D.EAST, scheme="xy", motion_name="East")
+MoveWest = MotionAction2D(MotionAction2D.WEST, scheme="xy", motion_name="West")
+MoveNorth = MotionAction2D(MotionAction2D.NORTH, scheme="xy", motion_name="North")
+MoveSouth = MotionAction2D(MotionAction2D.SOUTH, scheme="xy", motion_name="South")
+MoveForward = MotionAction2D(MotionAction2D.FORWARD, scheme="vw", motion_name="Forward")
+MoveBackward = MotionAction2D(MotionAction2D.BACKWARD, scheme="vw", motion_name="Backward")
+MoveLeft = MotionAction2D(MotionAction2D.LEFT, scheme="vw", motion_name="TurnLeft")
+MoveRight = MotionAction2D(MotionAction2D.RIGHT, scheme="vw", motion_name="TurnRight")
 
 Look = LookAction()
 Find = FindAction()
