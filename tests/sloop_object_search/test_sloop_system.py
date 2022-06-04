@@ -2,24 +2,49 @@ test_config = {
     "map_name": "austin",
 
     "agent_config": {
-        "detectors": {
+        "agent_class": "SloopMosBasic2DAgent",  # This agent works in 2D grids
+        "action_scheme": "vw",
+        "no_look": False,
+        "belief": {
+            "representation": "histogram",
+            "prior": "uniform"
+        },
+        "objects": {
+            "targets": ["G"],
             "G": {
-                "class": "FanModelSimpleFP",
-                "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1))
+                "transition": {
+                    "class": "StaticObjectTransitionModel"
+                },
             },
             "B": {
-                "class": "FanModelSimpleFP",
-                "params": (dict(fov=90, min_range=0, max_range=3), (0.8, 0.1))
+                "transition": {
+                    "class": "StaticObjectTransitionModel"
+                }
             },
             "R": {
-                "class": "FanModelSimpleFP",
-                "params": (dict(fov=90, min_range=0, max_range=4), (0.9, 0.1))
+                "transition": {
+                    "class": "StaticObjectTransitionModel"
+                },
             },
         },
-        "no_look": False,
+        "robot": {
+            "id": "robot0",
+            "detectors": {
+                "G": {
+                    "class": "FanModelSimpleFP",
+                    "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1))
+                },
+                "B": {
+                    "class": "FanModelSimpleFP",
+                    "params": (dict(fov=90, min_range=0, max_range=3), (0.8, 0.1))
+                },
+                "R": {
+                    "class": "FanModelSimpleFP",
+                    "params": (dict(fov=90, min_range=0, max_range=4), (0.9, 0.1))
+                },
+            }
+        },
         "spacy_model": "en_web_core_lg",
-        "agent_class": "SloopMosBasicAgent",  # This agent works in 2D grids
-        "action_scheme": "vw"
     },
 
     "planner_config": {
