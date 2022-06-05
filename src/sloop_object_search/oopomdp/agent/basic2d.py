@@ -15,12 +15,23 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
             grid_map (GridMap): The map to search over. The map
                 should have a name.
         """
-        # Transition Model
+        # Prep work
         action_scheme = agent_config.get("action_scheme", "vw")
+        if action_scheme not in {"vw", "xy"}:
+            raise ValueError(f"Action scheme {action_scheme} is invalid.")
         no_look = agent_config.get("no_look", True)
+        detection_models = {}
+        for objid in robot["detectors"]:
+            detector_spec = robot["detectors"][objid]
+            detection_model = eval(detector_spec[objid]["class"])(
+                **detector_spec[objid]["params"]
+            )
+            detection_models[objid] = detection_model
+
+        # Transition Model
         robot_trans_model = RobotTransBasic2D(
-            action_scheme=action_scheme,
-            no_look=no_look)
+            robot["id"], grid_map.free_locations,
+            detection_models, action_scheme)
         robot = agent_config["robot"]
         objects = agent_config["objects"]
         transition_models = {robot["id"]: robot_trans_model}
@@ -35,13 +46,6 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
         )
 
         # Observation Model
-        detection_models = {}
-        for objid in robot["detectors"]:
-            detector_spec = robot["detectors"][objid]
-            detection_model = eval(detector_spec[objid]["class"])(
-                **detector_spec[objid]["params"]
-            )
-            detection_models[objid] = detection_model
         observation_model = GMosObservationModel(
             robot["id"], detection_models, no_look=no_look)
 

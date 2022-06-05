@@ -91,15 +91,19 @@ class RobotTransitionModel(RobotTransitionModel):
 
 class RobotTransBasic2D(RobotTransitionModel):
     """robot movements over 2D grid"""
+    def __init__(self, robot_id, reachable_positions, detection_models, action_scheme):
+        super().__init__(robot_id, reachable_positions, detection_models)
+        self.action_scheme = action_scheme
+
     def motion_transition(self, srobot, action):
         rx, ry, rth = robot_pose
 
-        if action.scheme == "xy":
+        if self.action_scheme == "xy":
             dx, dy, th = action.motion
             rx += dx
             ry += dy
             rth = th
-        elif action.scheme == "vw":
+        elif self.action_scheme == "vw":
             # odometry motion model
             forward, angle = action.motion
             rth += angle  # angle (radian)

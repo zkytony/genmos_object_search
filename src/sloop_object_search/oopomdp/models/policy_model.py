@@ -16,7 +16,7 @@
 import math
 import random
 from pomdp_py import RolloutPolicy, ActionPrior
-from ..domain.action import Done
+from ..domain import action
 from ..utils.math import euclidean_dist
 
 class PolicyModel(RolloutPolicy):
@@ -29,7 +29,6 @@ class PolicyModel(RolloutPolicy):
         self.num_visits_init = num_visits_init
         self.val_init = val_init
         self._observation_model = None  # this can be helpful for the action prior
-
 
     @property
     def robot_id(self):
@@ -61,41 +60,34 @@ class PolicyModel(RolloutPolicy):
         self._observation_model = observation_model
 
 
-
-"""Policy model for 2D Multi-Object Search domain.
-It is optional for the agent to be equipped with an occupancy
-grid map of the environment.
-"""
-
-import pomdp_py
-import random
-import math
-from ..domain.action import *
-from ..domain.observation import *
-from .components.sensor import euclidean_dist
-
 class PolicyModelBasic2D(PolicyModel):
-    """Simple policy model. All actions are possible at any state."""
-
-    def __init__(self, robot_id, grid_map=None, no_look=False):
-        """FindAction can only be taken after LookAction"""
-        self.robot_id = robot_id
-        self._grid_map = grid_map
+    def __init__(self, robot_trans_model,
+                 action_scheme,
+                 observation_model,
+                 no_look=False,
+                 num_visits_init=10,
+                 val_init=100):
+        super().__init__(robot_trans_model, num_visits_init=10, val_init=100)
+        self.movements = PolicyModelBasic2D.all_movements(action_scheme)
         self._no_look = no_look
+        self._legal_moves = {}
+        self.observation_model = observation_model
+        if action_scheme == "vw":
+            self.action_prior = PolicyModelBasic2D.ActionPriorVW(
+                num_visits_init, val_init, self)
 
-    @property
-    def grid_map(self):
-        return self._grid_map
-
-    def sample(self, state, **kwargs):
-        return random.sample(self._get_all_actions(**kwargs), 1)[0]
-
-    def probability(self, action, state, **kwargs):
-        raise NotImplementedError
-
-    def argmax(self, state, **kwargs):
-        """Returns the most likely action"""
-        raise NotImplementedError
+    @staticmethod
+    def all_movements():
+        if self.action_scheme == "vw":
+            movements = {action.MoveForward,
+                         action.MoveLeft,  # rotate left
+                         action.MoveRight} # rotate right
+        elif self.action_scheme == "xy":
+            movements = {action.MoveNorth,
+                         action.MoveSouth,
+                         action.MoveEast,
+                         action.MoveWest}
+        return movements
 
     def get_all_actions(self, state=None, history=None):
         if self._no_look:
@@ -112,186 +104,134 @@ class PolicyModelBasic2D(PolicyModel):
             if isinstance(last_action, LookAction):
                 can_find = True
         find_action = set({Find}) if can_find else set({})
-        if state is None:
-            return ALL_MOTION_ACTIONS | {Look} | find_action
-        else:
-            if self._grid_map is not None:
-                valid_motions =\
-                    self._grid_map.valid_motions(self.robot_id,
-                                                 state.pose(self.robot_id),
-                                                 ALL_MOTION_ACTIONS)
-                return valid_motions | {Look} | find_action
-            else:
-                return ALL_MOTION_ACTIONS | {Look} | find_action
+        return self.valid_moves(state) | {Look} | find_action
 
     def get_all_actions_no_look(self, state=None, history=None):
         """note: find can only happen after look."""
-        find_action = set({Find})
-        if state is None:
-            return ALL_MOTION_ACTIONS | find_action
+        return self.valid_moves(state) | {Find}
+
+    def valid_moves(self, state):
+        srobot = state.s(self.robot_id)
+        if srobot in self._legal_moves:
+            return self._legal_moves[srobot]
         else:
-            if self._grid_map is not None:
-                valid_motions =\
-                    self._grid_map.valid_motions(self.robot_id,
-                                                 state.pose(self.robot_id),
-                                                 ALL_MOTION_ACTIONS)
-                return valid_motions | find_action
+            robot_pose = srobot["pose"]
+            valid_moves = set(a for a in self.movements
+                if self.robot_trans_model.sample(state, a)["pose"] != robot_pose)
+            self._legal_moves[srobot] = valid_moves
+            return valid_moves
+
+    ############# Action Prior VW ############
+    class ActionPriorVW(ActionPrior):
+        def __init__(self, num_visits_init, val_init, policy_model):
+            self.num_visits_init = num_visits_init
+            self.val_init = val_init
+            self.policy_model = policy_model
+
+        def get_preferred_actions(self, state, history):
+            # If you have taken done before, you are done. So keep the done.
+            last_action = history[-1][0] if len(history) > 0 else None
+            if isinstance(last_action, Done):
+                return {(Done(), 0, 0)}
+
+            preferences = set()
+
+            robot_id = self.policy_model.robot_id
+            target_id = self.policy_model.observation_model.target_id
+            srobot = state.s(robot_id)
+            starget = state.s(target_id)
+            if self.policy_model.reward_model.success(srobot, starget):
+                preferences.add((Done(), self.num_visits_init, self.val_init))
+
+            current_distance = euclidean_dist(srobot.loc, starget.loc)
+            desired_yaw = yaw_facing(srobot.loc, starget.loc)
+            current_yaw_diff = abs(desired_yaw - srobot.pose[2]) % 360
+
+            for move in self.policy_model.movements:
+                # A move is preferred if:
+                # (1) it moves the robot closer to the target
+                next_srobot = self.policy_model.robot_trans_model.sample(state, move)
+                next_distance = euclidean_dist(next_srobot.loc, starget.loc)
+                if next_distance < current_distance:
+                    preferences.add((move, self.num_visits_init, self.val_init))
+                    break
+
+                # (2) if the move rotates the robot to be more facing the target,
+                # unless the previous move was a rotation in an opposite direction;
+                next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
+                if next_yaw_diff < current_yaw_diff:
+                    if hasattr(last_action, "dyaw") and last_action.dyaw * move.dyaw >= 0:
+                        # last action and current are NOT rotations in different directions
+                        preferences.add((move, self.num_visits_init, self.val_init))
+                        break
+
+                # (3) it makes the robot observe any object;
+                next_state = cospomdp.CosState({target_id: state.s(target_id),
+                                                robot_id: next_srobot})
+                observation = self.policy_model.observation_model.sample(next_state, move)
+                for zi in observation:
+                    if zi.loc is not None:
+                        preferences.add((move, self.num_visits_init, self.val_init))
+                        break
+            return preferences
+
+    ############# Action Prior XY ############
+    class ActionPriorXY(pomdp_py.ActionPrior):
+        """greedy action prior for 'xy' motion scheme"""
+        def __init__(self, robot_id, grid_map, num_visits_init, val_init,
+                     no_look=False):
+            self.robot_id = robot_id
+            self.grid_map = grid_map
+            self.all_motion_actions = None
+            self.num_visits_init = num_visits_init
+            self.val_init = val_init
+            self.no_look = no_look
+
+        def set_motion_actions(self, motion_actions):
+            self.all_motion_actions = motion_actions
+
+        def get_preferred_actions(self, state, history):
+            """Get preferred actions. This can be used by a rollout policy as well."""
+            # Prefer actions that move the robot closer to any
+            # undetected target object in the state. If
+            # cannot move any closer, look. If the last
+            # observation contains an unobserved object, then Find.
+            #
+            # Also do not prefer actions that makes the robot rotate in place back
+            # and forth.
+            if self.all_motion_actions is None:
+                raise ValueError("Unable to get preferred actions because"\
+                                 "we don't know what motion actions there are.")
+            robot_state = state.object_states[self.robot_id]
+
+            last_action = None
+            if len(history) > 0:
+                last_action, last_observation = history[-1]
+                for objid in last_observation.objposes:
+                    if objid not in robot_state["objects_found"]\
+                       and last_observation.for_obj(objid).pose != ObjectObservation.NULL:
+                        # We last observed an object that was not found. Then Find.
+                        return set({(FindAction(), self.num_visits_init, self.val_init)})
+
+            if self.no_look:
+                # No Look action; It's embedded in Move.
+                preferences = set()
             else:
-                return ALL_MOTION_ACTIONS | find_action
-
-    def rollout(self, state, history=None):
-        return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
-
-
-
-# Preferred policy, action prior.
-class PreferredPolicyModel(PolicyModel):
-    """The same with PolicyModel except there is a preferred rollout policypomdp_py.RolloutPolicy"""
-    def __init__(self, action_prior):
-        self.action_prior = action_prior
-        super().__init__(self.action_prior.robot_id,
-                         self.action_prior.grid_map,
-                         no_look=self.action_prior.no_look)
-        self.action_prior.set_motion_actions(ALL_MOTION_ACTIONS)
-
-    def rollout(self, state, history):
-        # Obtain preference and returns the action in it.
-        preferences = self.action_prior.get_preferred_actions(state, history)
-        if len(preferences) > 0:
-            return random.sample(preferences, 1)[0][0]
-        else:
-            return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
-
-
-class GreedyActionPriorXY(pomdp_py.ActionPrior):
-    """greedy action prior for 'xy' motion scheme"""
-    def __init__(self, robot_id, grid_map, num_visits_init, val_init,
-                 no_look=False):
-        self.robot_id = robot_id
-        self.grid_map = grid_map
-        self.all_motion_actions = None
-        self.num_visits_init = num_visits_init
-        self.val_init = val_init
-        self.no_look = no_look
-
-    def set_motion_actions(self, motion_actions):
-        self.all_motion_actions = motion_actions
-
-    def get_preferred_actions(self, state, history):
-        """Get preferred actions. This can be used by a rollout policy as well."""
-        # Prefer actions that move the robot closer to any
-        # undetected target object in the state. If
-        # cannot move any closer, look. If the last
-        # observation contains an unobserved object, then Find.
-        #
-        # Also do not prefer actions that makes the robot rotate in place back
-        # and forth.
-        if self.all_motion_actions is None:
-            raise ValueError("Unable to get preferred actions because"\
-                             "we don't know what motion actions there are.")
-        robot_state = state.object_states[self.robot_id]
-
-        last_action = None
-        if len(history) > 0:
-            last_action, last_observation = history[-1]
-            for objid in last_observation.objposes:
-                if objid not in robot_state["objects_found"]\
-                   and last_observation.for_obj(objid).pose != ObjectObservation.NULL:
-                    # We last observed an object that was not found. Then Find.
-                    return set({(FindAction(), self.num_visits_init, self.val_init)})
-
-        if self.no_look:
-            # No Look action; It's embedded in Move.
-            preferences = set()
-        else:
-            # Always give preference to Look
-            preferences = set({(LookAction(), self.num_visits_init, self.val_init)})
-        for objid in state.object_states:
-            if objid != self.robot_id and objid not in robot_state.objects_found:
-                object_pose = state.pose(objid)
-                cur_dist = euclidean_dist(robot_state.pose, object_pose)
-                neighbors =\
-                    self.grid_map.get_neighbors(
-                        robot_state.pose,
-                        self.grid_map.valid_motions(self.robot_id,
-                                                    robot_state.pose,
-                                                    self.all_motion_actions))
-                for next_robot_pose in neighbors:
-                    if euclidean_dist(next_robot_pose, object_pose) < cur_dist:
-                        action = neighbors[next_robot_pose]
-                        preferences.add((action,
-                                         self.num_visits_init, self.val_init))
-        return preferences
-
-class GreedyActionPriorVW(pomdp_py.ActionPrior):
-    """greedy action prior for 'vw' motion scheme"""
-    def __init__(self, robot_id, grid_map, num_visits_init, val_init,
-                 no_look=False):
-        self.robot_id = robot_id
-        self.grid_map = grid_map
-        self.all_motion_actions = None
-        self.num_visits_init = num_visits_init
-        self.val_init = val_init
-        self.no_look = no_look
-
-    def set_motion_actions(self, motion_actions):
-        self.all_motion_actions = motion_actions
-
-    def get_preferred_actions(self, state, history):
-        """Get preferred actions. This can be used by a rollout policy as well."""
-        # Prefer actions that move the robot closer to any
-        # undetected target object in the state. If
-        # cannot move any closer, look. If the last
-        # observation contains an unobserved object, then Find.
-        #
-        # Also do not prefer actions that makes the robot rotate in place back
-        # and forth.
-        if self.all_motion_actions is None:
-            raise ValueError("Unable to get preferred actions because"\
-                             "we don't know what motion actions there are.")
-        robot_state = state.object_states[self.robot_id]
-
-        last_action = None
-        if len(history) > 0:
-            last_action, last_observation = history[-1]
-            for objid in last_observation.objposes:
-                if objid not in robot_state["objects_found"]\
-                   and last_observation.for_obj(objid).pose != ObjectObservation.NULL:
-                    # We last observed an object that was not found. Then Find.
-                    return set({(FindAction(), self.num_visits_init, self.val_init)})
-
-        if self.no_look:
-            # No Look action; It's embedded in Move.
-            preferences = set()
-        else:
-            # Always give preference to Look
-            preferences = set({(LookAction(), self.num_visits_init, self.val_init)})
-        for objid in state.object_states:
-            if objid != self.robot_id and objid not in robot_state.objects_found:
-                object_pose = state.pose(objid)
-                cur_dist = euclidean_dist(robot_state.pose, object_pose)
-                object_angle = (math.atan2(object_pose[1] - robot_state.pose[1],
-                                           object_pose[0] - robot_state.pose[0])) % (2*math.pi)
-                cur_angle_diff = abs(robot_state.pose[2] - object_angle)
-                valid_motions = self.grid_map.valid_motions(self.robot_id,
-                                                            robot_state.pose,
-                                                            self.all_motion_actions)
-                neighbors =\
-                    self.grid_map.get_neighbors(
-                        robot_state.pose,
-                        valid_motions,
-                        include_angle=True)
-                for next_robot_pose in neighbors:
-                    action = neighbors[next_robot_pose]
-                    if euclidean_dist(next_robot_pose, object_pose) <= cur_dist:
-                        # actually prefer forward as long as it doesn't move the robot away
-                        preferences.add((action,
-                                         self.num_visits_init, self.val_init))
-                    else:
-                        # also prefer rotation actions that brings the robot
-                        # to the direction facing the target.
-                        next_angle_diff = abs(next_robot_pose[2] - object_angle)
-                        if next_angle_diff < cur_angle_diff:
+                # Always give preference to Look
+                preferences = set({(LookAction(), self.num_visits_init, self.val_init)})
+            for objid in state.object_states:
+                if objid != self.robot_id and objid not in robot_state.objects_found:
+                    object_pose = state.pose(objid)
+                    cur_dist = euclidean_dist(robot_state.pose, object_pose)
+                    neighbors =\
+                        self.grid_map.get_neighbors(
+                            robot_state.pose,
+                            self.grid_map.valid_motions(self.robot_id,
+                                                        robot_state.pose,
+                                                        self.all_motion_actions))
+                    for next_robot_pose in neighbors:
+                        if euclidean_dist(next_robot_pose, object_pose) < cur_dist:
+                            action = neighbors[next_robot_pose]
                             preferences.add((action,
                                              self.num_visits_init, self.val_init))
-        return preferences
+            return preferences

@@ -46,26 +46,13 @@ class MotionAction2D(MotionAction):
     LEFT = LEFT_45
     RIGHT = RIGHT_45
 
-    def __init__(self, motion,
-                 scheme=MOTION_SCHEME, distance_cost=1,
+    def __init__(self, motion, distance_cost=1,
                  motion_name=None):
         """
         motion (tuple): a tuple of floats that describes the motion;
         scheme (str): description of the motion scheme; Either
                       "xy" or "vw"
         """
-        if scheme != "xy" and scheme != "vw":
-            raise ValueError("Invalid motion scheme %s" % scheme)
-
-        if scheme == "xy":
-            if motion not in {MotionAction2D.EAST, MotionAction2D.WEST,
-                              MotionAction2D.NORTH, MotionAction2D.SOUTH}:
-                raise ValueError("Invalid move motion %s" % motion)
-        else:
-            if motion not in {MotionAction2D.FORWARD, MotionAction2D.BACKWARD,
-                              MotionAction2D.LEFT, MotionAction2D.RIGHT}:
-                raise ValueError("Invalid move motion %s" % motion)
-
         self.motion = motion
         self.scheme = scheme
         self.distance_cost = distance_cost
