@@ -30,7 +30,7 @@ class MosRewardModel(pomdp_py.RewardModel):
         """Returns the most likely reward"""
         return self._reward_func(state, action, next_state, robot_id=robot_id)
 
-class GoalRewardModel(MosRewardModel):
+class GoalBasedRewardModel(MosRewardModel):
     """
     This is a reward where the agent gets reward only for detect-related actions.
     """
@@ -49,8 +49,6 @@ class GoalRewardModel(MosRewardModel):
 
         if isinstance(action, MotionAction):
             reward = reward - self.small - action.distance_cost
-            if next_state.object_states[robot_id]["collision"]:
-                reward -= self.big  # collision is very bad
         elif isinstance(action, LookAction):
             reward = reward - self.small
         elif isinstance(action, FindAction):

@@ -1,4 +1,68 @@
-"""Policy model for 2D Multi-Object Search domain. 
+
+# Copyright 2022 Kaiyu Zheng
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import math
+import random
+from pomdp_py import RolloutPolicy, ActionPrior
+from ..domain.action import Done
+from ..utils.math import euclidean_dist
+
+class PolicyModel(RolloutPolicy):
+    def __init__(self,
+                 robot_trans_model,
+                 num_visits_init=10,
+                 val_init=100):
+        self.robot_trans_model = robot_trans_model
+        self.action_prior = None
+        self.num_visits_init = num_visits_init
+        self.val_init = val_init
+        self._observation_model = None  # this can be helpful for the action prior
+
+
+    @property
+    def robot_id(self):
+        return self.robot_trans_model.robot_id
+
+    @property
+    def observation_model(self):
+        return self._observation_model
+
+    def sample(self, state):
+        return random.sample(self.get_all_actions(state=state), 1)[0]
+
+    def get_all_actions(self, state, history=None):
+        raise NotImplementedError
+
+    def rollout(self, state, history=None):
+        if self.action_prior is not None:
+            preferences = self.action_prior.get_preferred_actions(state, history)
+            if len(preferences) > 0:
+                return random.sample(preferences, 1)[0][0]
+            else:
+                return random.sample(self.get_all_actions(state=state), 1)[0]
+        else:
+            return random.sample(self.get_all_actions(state=state), 1)[0]
+
+    def set_observation_model(self, observation_model, use_heuristic=True):
+        # Classes that inherit this class can override this
+        # function to create action prior
+        self._observation_model = observation_model
+
+
+
+"""Policy model for 2D Multi-Object Search domain.
 It is optional for the agent to be equipped with an occupancy
 grid map of the environment.
 """
@@ -10,7 +74,7 @@ from ..domain.action import *
 from ..domain.observation import *
 from .components.sensor import euclidean_dist
 
-class PolicyModel(pomdp_py.RolloutPolicy):
+class PolicyModelBasic2D(PolicyModel):
     """Simple policy model. All actions are possible at any state."""
 
     def __init__(self, robot_id, grid_map=None, no_look=False):
@@ -25,7 +89,7 @@ class PolicyModel(pomdp_py.RolloutPolicy):
 
     def sample(self, state, **kwargs):
         return random.sample(self._get_all_actions(**kwargs), 1)[0]
-    
+
     def probability(self, action, state, **kwargs):
         raise NotImplementedError
 
@@ -73,14 +137,14 @@ class PolicyModel(pomdp_py.RolloutPolicy):
                                                  ALL_MOTION_ACTIONS)
                 return valid_motions | find_action
             else:
-                return ALL_MOTION_ACTIONS | find_action            
+                return ALL_MOTION_ACTIONS | find_action
 
     def rollout(self, state, history=None):
         return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
 
 
 
-# Preferred policy, action prior.    
+# Preferred policy, action prior.
 class PreferredPolicyModel(PolicyModel):
     """The same with PolicyModel except there is a preferred rollout policypomdp_py.RolloutPolicy"""
     def __init__(self, action_prior):
@@ -89,7 +153,7 @@ class PreferredPolicyModel(PolicyModel):
                          self.action_prior.grid_map,
                          no_look=self.action_prior.no_look)
         self.action_prior.set_motion_actions(ALL_MOTION_ACTIONS)
-        
+
     def rollout(self, state, history):
         # Obtain preference and returns the action in it.
         preferences = self.action_prior.get_preferred_actions(state, history)
@@ -98,7 +162,7 @@ class PreferredPolicyModel(PolicyModel):
         else:
             return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
 
-    
+
 class GreedyActionPriorXY(pomdp_py.ActionPrior):
     """greedy action prior for 'xy' motion scheme"""
     def __init__(self, robot_id, grid_map, num_visits_init, val_init,
@@ -112,7 +176,7 @@ class GreedyActionPriorXY(pomdp_py.ActionPrior):
 
     def set_motion_actions(self, motion_actions):
         self.all_motion_actions = motion_actions
-        
+
     def get_preferred_actions(self, state, history):
         """Get preferred actions. This can be used by a rollout policy as well."""
         # Prefer actions that move the robot closer to any
@@ -158,7 +222,7 @@ class GreedyActionPriorXY(pomdp_py.ActionPrior):
                         preferences.add((action,
                                          self.num_visits_init, self.val_init))
         return preferences
-    
+
 class GreedyActionPriorVW(pomdp_py.ActionPrior):
     """greedy action prior for 'vw' motion scheme"""
     def __init__(self, robot_id, grid_map, num_visits_init, val_init,
@@ -172,7 +236,7 @@ class GreedyActionPriorVW(pomdp_py.ActionPrior):
 
     def set_motion_actions(self, motion_actions):
         self.all_motion_actions = motion_actions
-        
+
     def get_preferred_actions(self, state, history):
         """Get preferred actions. This can be used by a rollout policy as well."""
         # Prefer actions that move the robot closer to any
@@ -231,6 +295,3 @@ class GreedyActionPriorVW(pomdp_py.ActionPrior):
                             preferences.add((action,
                                              self.num_visits_init, self.val_init))
         return preferences
-                
-    
-    

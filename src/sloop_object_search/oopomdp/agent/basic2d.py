@@ -1,5 +1,6 @@
 import pomdp_py
-from ..domain.transition_model import StaticObjectTransitionModel
+from ..domain.transition_model import (StaticObjectTransitionModel,
+                                       RobotTransBasic2D)
 
 class SloopMosBasic2DAgent(pomdp_py.Agent):
     """
@@ -51,7 +52,7 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
             observation_model=observation_model)
 
         # Reward Model
-        reward_model = MosRewardModel(...)
+        reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
         # Belief
         init_belief = self.initialize_belief(target_ids, grid_map, agent_config["belief"])
