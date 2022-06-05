@@ -16,6 +16,8 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
                 should have a name.
         """
         # Prep work
+        robot = agent_config["robot"]
+        objects = agent_config["objects"]
         action_scheme = agent_config.get("action_scheme", "vw")
         if action_scheme not in {"vw", "xy"}:
             raise ValueError(f"Action scheme {action_scheme} is invalid.")
@@ -27,13 +29,16 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
                 **detector_spec[objid]["params"]
             )
             detection_models[objid] = detection_model
+        search_region = grid_map.free_locations
+        init_robot_state = RobotState(robot["id"],
+                                      robot["init_pose"],
+                                      tuple(),
+                                      None)
 
         # Transition Model
         robot_trans_model = RobotTransBasic2D(
-            robot["id"], grid_map.free_locations,
+            robot["id"], search_region,
             detection_models, action_scheme)
-        robot = agent_config["robot"]
-        objects = agent_config["objects"]
         transition_models = {robot["id"]: robot_trans_model}
         for objid in objects:
             object_trans_model =\
@@ -59,11 +64,16 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
         # Belief
-        init_belief = self.initialize_belief(target_ids, grid_map, agent_config["belief"])
+        target_objects = {objid: objects[objid]
+                          for objid in target_ids}
+        init_belief = BasicBelief2D(init_robot_state,
+                                    target_objects,
+                                    search_region,
+                                    agent_config["belief"])
 
         super().__init__(self,
                          init_belief,
-                         policy_model
+                         policy_model,
                          transition_model,
                          observation_model,
                          reward_model)

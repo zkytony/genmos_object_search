@@ -6,22 +6,24 @@ test_config = {
         "action_scheme": "vw",
         "no_look": False,
         "belief": {
-            "representation": "histogram",
             "prior": "uniform"
         },
         "objects": {
             "targets": ["G"],
             "G": {
+                "class": "GreenCar",
                 "transition": {
                     "class": "StaticObjectTransitionModel"
                 },
             },
             "B": {
+                "class": "RedBike",
                 "transition": {
                     "class": "StaticObjectTransitionModel"
                 }
             },
             "R": {
+                "class": "RedCar",
                 "transition": {
                     "class": "StaticObjectTransitionModel"
                 },
