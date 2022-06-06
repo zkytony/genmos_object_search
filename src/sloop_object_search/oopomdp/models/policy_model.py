@@ -138,7 +138,7 @@ class PolicyModelBasic2D(PolicyModel):
             if len(history) > 0:
                 last_action, last_observation = history[-1]
                 for objid in last_observation:
-                    if objid not in srobot["objects_found"]\
+                    if objid != srobot["id"] and objid not in srobot["objects_found"]\
                        and last_observation.z(objid).pose != ObjectDetection.NULL:
                         # We last observed an object that was not found. Then Find.
                         return set({(action.FindAction(), self.num_visits_init, self.val_init)})

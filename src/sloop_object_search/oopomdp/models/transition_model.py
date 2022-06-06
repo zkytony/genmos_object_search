@@ -18,7 +18,7 @@ from ..domain.state import (ObjectState,
 
 from ..domain.observation import *
 from ..domain.action import *
-from sloop_object_search.utils.math import fround
+from sloop_object_search.utils.math import fround, to_rad
 
 class ObjectTransitionModel(pomdp_py.TransitionModel):
     def __init__(self, objid):
@@ -123,11 +123,10 @@ class RobotTransBasic2D(RobotTransitionModel):
         elif self.action_scheme == "vw":
             # odometry motion model
             forward, angle = action.motion
-            rth += angle  # angle (radian)
-            rx = rx + forward*math.cos(rth)
-            ry = ry + forward*math.sin(rth)
-            rth = rth % (2*math.pi)
-        rx, ry = fround(round_to, (rx, ry))
+            rth = (rth + angle) % 360
+            rx = rx + forward*math.cos(to_rad(rth))
+            ry = ry + forward*math.sin(to_rad(rth))
+        rx, ry, rth = fround(round_to, (rx, ry, rth))
         if (rx, ry) in self.reachable_positions:
             return (rx, ry, rth)
         else:

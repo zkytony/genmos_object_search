@@ -15,13 +15,15 @@ class BeliefBasic2D(pomdp_py.OOBelief):
         self.target_objects = target_objects
         robot_belief = pomdp_py.Histogram({robot_state:1.0})
         prior = belief_config.get("prior", {})
-        if prior == "uniform":
+        if type(prior) != dict:
             prior = {}
 
         object_beliefs = {robot_state["id"]: robot_belief}
         for objid in target_objects:
             belief_dist = {}
             object_prior_dist = prior.get(objid, {})
+            if type(object_prior_dist) != dict:
+                object_prior_dist = {}
             target = target_objects[objid]
             for loc in search_region:
                 state = ObjectState2D(objid, target["class"], loc)

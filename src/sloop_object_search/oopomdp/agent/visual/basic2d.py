@@ -2,6 +2,7 @@ import cv2
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.colors import inverse_color_rgb
 from sloop_object_search.utils.images import cv2shape
+from sloop_object_search.utils.math import to_deg
 
 
 class VizSloopMosBasic2D(GridMapVisualizer):

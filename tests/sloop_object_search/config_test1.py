@@ -6,7 +6,10 @@ ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 config = {
     "planner_config": {
         "planner": "pomdp_py.POUCT",
-        "planner_params": {}
+        "planner_params": {
+            "max_depth": 5,
+            "exploration_const": 1000
+        }
     },
 
     "task_config": {
@@ -19,7 +22,7 @@ config = {
         "action_scheme": "vw",
         "no_look": False,
         "belief": {
-            "prior": "uniform"
+            "prior": {"G": "groundtruth"}
         },
         "targets": ["G"],
         "objects": {
@@ -28,6 +31,7 @@ config = {
                 "transition": {
                     "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
                 },
+                "color": [40, 240, 20]
             },
         },
         "robot": {

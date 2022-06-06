@@ -37,11 +37,11 @@ class MotionAction2D(MotionAction):
     FORWARD = (STEP_SIZE, 0)
     BACKWARD = (-STEP_SIZE, 0)
 
-    LEFT_45 = (0, -math.pi/4)  # left 45 deg
-    RIGHT_45 = (0, math.pi/4)  # right 45 deg
+    LEFT_45 = (0, 45.0)  # left 45 deg
+    RIGHT_45 = (0, -45.0)  # right 45 deg
 
-    LEFT_90 = (0, -math.pi/2)  # left 90 deg
-    RIGHT_90 = (0, math.pi/2)  # right 90 deg
+    LEFT_90 = (0, 90.0)  # left 90 deg
+    RIGHT_90 = (0, -90.0)  # right 90 deg
 
     LEFT = LEFT_45
     RIGHT = RIGHT_45

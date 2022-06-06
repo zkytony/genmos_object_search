@@ -1,7 +1,7 @@
 import math
 import random
 from pomdp_py import Gaussian
-from sloop_object_search.utils.math import fround
+from sloop_object_search.utils.math import fround, euclidean_dist
 from ..domain.observation import ObjectDetection2D
 from .observation_model import ObjectDetectionModel
 from .sensors import FanSensor

@@ -59,7 +59,7 @@ class RobotState(pomdp_py.ObjectState):
                           "camera_direction": camera_direction})
 
     def __str__(self):
-        return "{}({}, {})".format(self.__class__, self.pose, self.status)
+        return "{}({}, {})".format(type(self).__name__, self.pose, self.objects_found)
 
     def __hash__(self):
         return hash(self.pose)
