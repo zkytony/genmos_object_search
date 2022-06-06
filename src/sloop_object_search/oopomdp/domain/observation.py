@@ -3,6 +3,7 @@ GMOS observation breaks down to:
 - object detection
 - robot observation about itself
 """
+import pomdp_py
 
 class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""

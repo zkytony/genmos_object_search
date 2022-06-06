@@ -4,7 +4,7 @@ action types, useful for multi-object search
 However, no specific implementation is provided, as that
 is the job of individual domains
 """
-
+import math
 import pomdp_py
 
 ##################### Generic definitions ###########################
@@ -54,21 +54,20 @@ class MotionAction2D(MotionAction):
                       "xy" or "vw"
         """
         self.motion = motion
-        self.scheme = scheme
         self.distance_cost = distance_cost
         if motion_name is None:
             motion_name = str(motion)
-        super().__init__("move-%s-%s" % (scheme, motion_name))
+        super().__init__("move-{}({})".format(motion_name, motion))
 
 # Define some constant actions
-MoveEast = MotionAction2D(MotionAction2D.EAST, scheme="xy", motion_name="East")
-MoveWest = MotionAction2D(MotionAction2D.WEST, scheme="xy", motion_name="West")
-MoveNorth = MotionAction2D(MotionAction2D.NORTH, scheme="xy", motion_name="North")
-MoveSouth = MotionAction2D(MotionAction2D.SOUTH, scheme="xy", motion_name="South")
-MoveForward = MotionAction2D(MotionAction2D.FORWARD, scheme="vw", motion_name="Forward")
-MoveBackward = MotionAction2D(MotionAction2D.BACKWARD, scheme="vw", motion_name="Backward")
-MoveLeft = MotionAction2D(MotionAction2D.LEFT, scheme="vw", motion_name="TurnLeft")
-MoveRight = MotionAction2D(MotionAction2D.RIGHT, scheme="vw", motion_name="TurnRight")
+MoveEast = MotionAction2D(MotionAction2D.EAST, motion_name="East")
+MoveWest = MotionAction2D(MotionAction2D.WEST, motion_name="West")
+MoveNorth = MotionAction2D(MotionAction2D.NORTH, motion_name="North")
+MoveSouth = MotionAction2D(MotionAction2D.SOUTH, motion_name="South")
+MoveForward = MotionAction2D(MotionAction2D.FORWARD, motion_name="Forward")
+MoveBackward = MotionAction2D(MotionAction2D.BACKWARD, motion_name="Backward")
+MoveLeft = MotionAction2D(MotionAction2D.LEFT, motion_name="TurnLeft")
+MoveRight = MotionAction2D(MotionAction2D.RIGHT, motion_name="TurnRight")
 
 Look = LookAction()
 Find = FindAction()

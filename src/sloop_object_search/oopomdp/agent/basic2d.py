@@ -1,9 +1,9 @@
 import torch
 import pomdp_py
-from .agent import SloopAgent
-from ..domain.transition_model import (StaticObjectTransitionModel,
-                                       RobotTransBasic2D)
+from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
+from ..models.transition_model import (StaticObjectTransitionModel,
+                                       RobotTransBasic2D)
 
 class SloopMosBasic2DAgent(SloopAgent):
     """

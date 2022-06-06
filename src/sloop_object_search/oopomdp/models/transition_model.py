@@ -16,6 +16,9 @@ from ..domain.observation import *
 from ..domain.action import *
 from sloop_object_search.utils.math import fround
 
+class ObjectTransitionModel(pomdp_py.TransitionModel):
+    def __init__(self, objid):
+        self.objid = objid
 
 class StaticObjectTransitionModel(ObjectTransitionModel):
     """ static objects"""
@@ -44,7 +47,7 @@ class StaticObjectTransitionModel(ObjectTransitionModel):
         return state.s(self.objid).copy()
 
 
-class RobotTransitionModel(RobotTransitionModel):
+class RobotTransitionModel(ObjectTransitionModel):
     def __init__(self, robot_id, reachable_positions, detection_models):
         super().__init__(robot_id)
         self.reachable_positions = reachable_positions

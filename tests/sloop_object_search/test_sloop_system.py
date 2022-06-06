@@ -1,14 +1,15 @@
 import random
 import pomdp_py
 import config_test1 as test_config
+from sloop.osm.datasets import MapInfoDataset
 from sloop_object_search.utils.misc import import_class
-from sloop_object_search.utils.osm import osm_grid_map
+from sloop_object_search.utils.osm import osm_map_to_grid_map
 from sloop_object_search.oopomdp.agent import SloopMosBasic2DAgent, VizSloopMosBasic2D
 
 
 def main(config):
     mapinfo = MapInfoDataset()
-    map_name = config.task_config["map_name"]
+    map_name = config['task_config']["map_name"]
     mapinfo.load_map(map_name)
     grid_map = osm_map_to_grid_map(map_info, map_name)
 
