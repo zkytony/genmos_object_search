@@ -88,3 +88,7 @@ class SloopMosBasic2DAgent(SloopAgent):
                 transition_model,
                 observation_model,
                 reward_model)
+
+
+    def sensor(self, objid):
+        return self.observation_model.detection_models[objid].sensor

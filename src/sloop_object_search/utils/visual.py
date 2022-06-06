@@ -75,6 +75,7 @@ class Visualizer2D:
             bgimg = self._bg_img
         elif self._bg_path is not None:
             bgimg = cv2.imread(self._bg_path, cv2.IMREAD_UNCHANGED)
+            bgimg = cv2.cvtColor(bgimg, cv2.COLOR_BGR2RGB)
         if bgimg is not None:
             bgimg = cv2.resize(bgimg, (w*r, l*r))
             img = overlay(img, bgimg, opacity=1.0)
@@ -201,7 +202,7 @@ class Visualizer2D:
                 stop = np.mean(np.array(color[:3]) / np.array([255, 255, 255])) < 0.999
 
             if not stop:
-                tx, ty = state['loc']
+                tx, ty = state.loc
                 if (tx,ty) not in circle_drawn:
                     circle_drawn[(tx,ty)] = 0
                 circle_drawn[(tx,ty)] += 1
@@ -254,13 +255,3 @@ class GridMapVisualizer(Visualizer2D):
 
     def render(self):
         return self._make_gridworld_image(self._res)
-
-    def highlight(self, img, locations, thor=False, **params):
-        if thor:
-            if len(locations[0]) == 2:
-                locations = [self._grid_map.to_grid_pos(thor_x, thor_z)
-                             for thor_x, thor_z in locations]
-            else:
-                locations = [self._grid_map.to_grid_pos(thor_x, thor_z)
-                             for thor_x, _, thor_z in locations]
-        return super().highlight(img, locations, **params)

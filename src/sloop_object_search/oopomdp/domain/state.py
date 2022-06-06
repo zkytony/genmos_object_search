@@ -87,9 +87,6 @@ class RobotState(pomdp_py.ObjectState):
         """
         raise NotImplementedError
 
-    def in_range(self, sensor, sobj, **kwargs):
-        return sensor.in_range(sobj.pose, self["pose"], **kwargs)
-
 
 class ObjectState2D(ObjectState):
     @property
@@ -112,3 +109,10 @@ class RobotState2D(RobotState):
                             zrobot.pose,
                             zrobot.objects_found,
                             zrobot.camera_direction)
+
+
+    def in_range(self, sensor, sobj, **kwargs):
+        return sensor.in_range(sobj.loc, self["pose"], **kwargs)
+
+    def loc_in_range(self, sensor, loc, **kwargs):
+        return sensor.in_range(loc, self["pose"], **kwargs)
