@@ -26,7 +26,10 @@ class SloopAgent(pomdp_py.Agent):
             self._init_splang_observation_model(
                 agent_config["foref_models_dir"],
                 device=agent_config.get("device", "cuda:0"))
-        self._init_oopomdp()
+
+        pomdp_components = self._init_oopomdp()
+        super().__init__(*pomdp_components)
+
 
     def _init_oopomdp(self):
         """Should call the super().__init__ method

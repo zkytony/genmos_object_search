@@ -1,3 +1,5 @@
+# Single object
+
 import os
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -19,42 +21,22 @@ config = {
         "belief": {
             "prior": "uniform"
         },
+        "targets": ["G"],
         "objects": {
-            "targets": ["G"],
             "G": {
                 "class": "GreenCar",
                 "transition": {
-                    "class": "StaticObjectTransitionModel"
+                    "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
                 },
             },
-            # "B": {
-            #     "class": "RedBike",
-            #     "transition": {
-            #         "class": "StaticObjectTransitionModel"
-            #     }
-            # },
-            # "R": {
-            #     "class": "RedCar",
-            #     "transition": {
-            #         "class": "StaticObjectTransitionModel"
-            #     },
-            # },
         },
         "robot": {
             "id": "robot0",
             "detectors": {
                 "G": {
-                    "class": "FanModelSimpleFP",
+                    "class": "sloop_object_search.oopomdp.FanModelSimpleFP",
                     "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1))
                 },
-                # "B": {
-                #     "class": "FanModelSimpleFP",
-                #     "params": (dict(fov=90, min_range=0, max_range=3), (0.8, 0.1))
-                # },
-                # "R": {
-                #     "class": "FanModelSimpleFP",
-                #     "params": (dict(fov=90, min_range=0, max_range=4), (0.9, 0.1))
-                # },
             }
         },
         "spacy_model": "en_core_web_lg",

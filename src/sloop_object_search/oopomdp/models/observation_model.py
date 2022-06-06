@@ -37,7 +37,7 @@ class ObjectDetectionModel:
     Models: Pr(zi | si', sr', a);
     Domain-specific.
     """
-    def __init__(self, objid):
+    def __init__(self, objid, *args):
         self.objid = objid
 
     def probability(self, zi, si, srobot):
@@ -101,7 +101,7 @@ class ObjectObservationModel(pomdp_py.ObservationModel):
     """
     def __init__(self, objid, detection_model, no_look=False):
         self.objid = objid
-        self.detection_models = detection_models
+        self.detection_model = detection_model
 
     def sample(self, snext, action):
         """
@@ -111,7 +111,7 @@ class ObjectObservationModel(pomdp_py.ObservationModel):
             return ObjectDetection(self.objid, ObjectDetection.NULL)
         srobot_next = snext.s(self.robot_id)
         sobj_next = snext.s(self.objid)
-        zobj = self.detection_models[j].sample(sobj_next, srobot_next)
+        zobj = self.detection_modelsample(sobj_next, srobot_next)
         return zobj
 
     def probability(self, zobj, snext, action):
@@ -130,8 +130,10 @@ class ObjectObservationModel(pomdp_py.ObservationModel):
         return self.detection_model.probability(zobj, sobj_next, srobot_next)
 
 
-class GMosObservationModel(pomdp_py.OOObservationModel):
+class GMOSObservationModel(pomdp_py.OOObservationModel):
     """
+    GMOS = generalized MOS
+
     The observation model for multi-object search
     (generalization of the original, as it allows
     other kinds of object detection models and also
@@ -156,6 +158,7 @@ class GMosObservationModel(pomdp_py.OOObservationModel):
         self.detection_models = detection_models
         self.correlation_model = correlation_model
         self._no_look = no_look
+        self.robot_observation_model = robot_observation_model
         if self.robot_observation_model is None:
             self.robot_observation_model = RobotObservationModel(robot_id)
 
@@ -163,7 +166,7 @@ class GMosObservationModel(pomdp_py.OOObservationModel):
                               **{j: ObjectObservationModel(
                                   j, self.detection_models[j], no_look=no_look)
                                  for j in self.detection_models}}
-        super().__init__(self, observation_models)
+        super().__init__(observation_models)
 
     def sample(self, snext, action):
         factored_observations = super().sample(snext, action)

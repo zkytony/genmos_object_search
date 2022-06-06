@@ -1,13 +1,15 @@
 from .observation_model import ObjectDetectionModel
+from .sensors import FanSensor
 
 class FanModel(ObjectDetectionModel):
     def __init__(self, objid, fan_params,
                  quality_params, round_to="int", **kwargs):
         self.fan_params = fan_params
         self.quality_params = quality_params
+        self._round_to = round_to
         self._kwargs = kwargs
         self.__dict__.update(kwargs)
-        super().__init__(objid, round_to)
+        super().__init__(objid)
 
     def copy(self):
         return self.__class__(self.objid,
@@ -101,7 +103,7 @@ class FanModelYoonseon(FanModel):
                                 [[sigma**2, 0],
                                  [0, sigma**2]])
             # Needs to discretize otherwise MCTS tree cannot handle this.
-            loc = fround(self._round_to, gaussian.random())
+            loc = fround("int", gaussian.random())
 
         elif event_occured == "B":
             # Sample from field of view

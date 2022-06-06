@@ -3,8 +3,14 @@ import pomdp_py
 from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
 from sloop_object_search.utils.osm import osm_map_to_grid_map
+from sloop_object_search.utils.misc import import_class
+from ..domain.state import RobotState
 from ..models.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
+from ..models.observation_model import GMOSObservationModel
+from ..models.policy_model import PolicyModelBasic2D
+from ..models.reward_model import GoalBasedRewardModel
+from ..models.belief import BeliefBasic2D
 
 class SloopMosBasic2DAgent(SloopAgent):
     """
@@ -26,8 +32,8 @@ class SloopMosBasic2DAgent(SloopAgent):
         detection_models = {}
         for objid in robot["detectors"]:
             detector_spec = robot["detectors"][objid]
-            detection_model = eval(detector_spec[objid]["class"])(
-                **detector_spec[objid]["params"]
+            detection_model = import_class(detector_spec["class"])(
+                objid, *detector_spec["params"]
             )
             detection_models[objid] = detection_model
         search_region = self.grid_map.free_locations
@@ -43,24 +49,22 @@ class SloopMosBasic2DAgent(SloopAgent):
         transition_models = {robot["id"]: robot_trans_model}
         for objid in objects:
             object_trans_model =\
-                eval(objects[objid]["transition"]["class"])(
-                    **objects[objid]["transition"].get("params", {})
+                import_class(objects[objid]["transition"]["class"])(
+                    objid, **objects[objid]["transition"].get("params", {})
                 )
             transition_models[objid] = object_trans_model
-        transition_model = pomdp_py.OOTransitionModel(
-            {objid: eval(objects[objid]["transition"]["class"])}
-        )
+        transition_model = pomdp_py.OOTransitionModel(transition_models)
 
         # Observation Model (Mos)
-        observation_model = GMosObservationModel(
+        observation_model = GMOSObservationModel(
             robot["id"], detection_models, no_look=no_look)
 
 
         # Policy Model
-        target_ids = objects["targets"]
+        target_ids = agent_config["targets"]
         policy_model = PolicyModelBasic2D(
-            robot["id"], target_ids, self.grid_map, action_scheme,
-            observation_model=observation_model)
+            robot_trans_model, action_scheme, observation_model,
+            no_look=no_look)
 
         # Reward Model
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
@@ -68,14 +72,13 @@ class SloopMosBasic2DAgent(SloopAgent):
         # Belief
         target_objects = {objid: objects[objid]
                           for objid in target_ids}
-        init_belief = BasicBelief2D(init_robot_state,
+        init_belief = BeliefBasic2D(init_robot_state,
                                     target_objects,
                                     search_region,
                                     agent_config["belief"])
 
-        super().__init__(self,
-                         init_belief,
-                         policy_model,
-                         transition_model,
-                         observation_model,
-                         reward_model)
+        return (init_belief,
+                policy_model,
+                transition_model,
+                observation_model,
+                reward_model)

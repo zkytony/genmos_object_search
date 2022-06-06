@@ -34,8 +34,15 @@ class BeliefBasic2D(pomdp_py.OOBelief):
             object_beliefs = {objid: pomdp_py.Histogram(belief_dist)}
         super().__init__(object_beliefs)
 
+
     def update_object_belief(self, objid, zobj, action, agent,
                              observation_model=None):
+        """
+        will update the belief with the given observation_model
+        (default its the agent's built-in; But it may be set to the
+        spatial language observation model, which is separate
+        from the agent's model for planning.
+        """
         belief_dist = {}
         for loc in self.search_region:
             objclass = self.target_objects[objid]["class"]

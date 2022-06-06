@@ -16,8 +16,8 @@
 import math
 import random
 from pomdp_py import RolloutPolicy, ActionPrior
+from sloop_object_search.utils.math import euclidean_dist
 from ..domain import action
-from ..utils.math import euclidean_dist
 
 class PolicyModel(RolloutPolicy):
     def __init__(self,
@@ -54,11 +54,6 @@ class PolicyModel(RolloutPolicy):
         else:
             return random.sample(self.get_all_actions(state=state), 1)[0]
 
-    def set_observation_model(self, observation_model, use_heuristic=True):
-        # Classes that inherit this class can override this
-        # function to create action prior
-        self._observation_model = observation_model
-
 
 class PolicyModelBasic2D(PolicyModel):
     def __init__(self, robot_trans_model,
@@ -71,22 +66,24 @@ class PolicyModelBasic2D(PolicyModel):
         self.movements = PolicyModelBasic2D.all_movements(action_scheme)
         self._no_look = no_look
         self._legal_moves = {}
-        self.observation_model = observation_model
+        self._observation_model = observation_model
         if action_scheme == "vw":
             self.action_prior = PolicyModelBasic2D.ActionPriorVW(
                 num_visits_init, val_init, self)
 
     @staticmethod
-    def all_movements():
-        if self.action_scheme == "vw":
+    def all_movements(action_scheme):
+        if action_scheme == "vw":
             movements = {action.MoveForward,
                          action.MoveLeft,  # rotate left
                          action.MoveRight} # rotate right
-        elif self.action_scheme == "xy":
+        elif action_scheme == "xy":
             movements = {action.MoveNorth,
                          action.MoveSouth,
                          action.MoveEast,
                          action.MoveWest}
+        else:
+            raise ValueError(f"Invalid action scheme {action_scheme}")
         return movements
 
     def get_all_actions(self, state=None, history=None):
@@ -176,7 +173,7 @@ class PolicyModelBasic2D(PolicyModel):
             return preferences
 
     ############# Action Prior XY ############
-    class ActionPriorXY(pomdp_py.ActionPrior):
+    class ActionPriorXY(ActionPrior):
         """greedy action prior for 'xy' motion scheme"""
         def __init__(self, robot_id, grid_map, num_visits_init, val_init,
                      no_look=False):

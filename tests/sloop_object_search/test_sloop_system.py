@@ -16,7 +16,7 @@ def main(_config):
     agent = eval(_config["agent_config"]["agent_class"])(
         _config["agent_config"], map_name)
 
-    init_robot_state = agent.belief.mpe().s(robot["id"])
+    init_robot_state = agent.belief.mpe().s(_robot["id"])
     _objects = _config["agent_config"]["objects"]
     object_states = {
         objid: ObjectState(objid, _objects[objid]["class"],
