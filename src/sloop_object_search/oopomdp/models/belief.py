@@ -2,6 +2,8 @@ import pomdp_py
 from .transition_model import StaticObjectTransitionModel
 from ..domain.state import ObjectState2D, RobotState2D
 from sloop_object_search.utils.math import normalize
+from sloop_object_search.oopomdp.domain.observation import GMOSObservation
+from sloop.observation import SpatialLanguageObservation
 
 
 class BeliefBasic2D(pomdp_py.OOBelief):
@@ -36,7 +38,7 @@ class BeliefBasic2D(pomdp_py.OOBelief):
         super().__init__(object_beliefs)
 
 
-    def update_object_belief(self, agent, objid, zobj,
+    def update_object_belief(self, agent, objid, observation,
                              next_robot_state, action,
                              observation_model=None):
         """
@@ -45,6 +47,13 @@ class BeliefBasic2D(pomdp_py.OOBelief):
         spatial language observation model, which is separate
         from the agent's model for planning.
         """
+        if isinstance(observation, GMOSObservation):
+            zobj = observation.z(objid)
+        elif isinstance(observation, SpatialLanguageObservation):
+            zobj = observation
+        else:
+            raise TypeError(f"observation type {observation.__class__.__name__} unexpected")
+
         assert isinstance(agent.transition_model.transition_models[objid],
                           StaticObjectTransitionModel)
         belief_dist = {}
@@ -57,7 +66,7 @@ class BeliefBasic2D(pomdp_py.OOBelief):
             })
             if observation_model is None:
                 observation_model = agent.observation_model[objid]
-            pr_z = agent.observation_model[objid].probability(zobj, snext, action)
+            pr_z = observation_model.probability(zobj, snext, action)
             belief_dist[object_state] = pr_z * self.b(objid)[object_state]
 
         belief_dist = pomdp_py.Histogram(normalize(belief_dist))
@@ -65,6 +74,10 @@ class BeliefBasic2D(pomdp_py.OOBelief):
 
     def update_robot_belief(self, observation, action):
         # Note: assumes robot state observable
+        if isinstance(observation, SpatialLanguageObservation):
+            # spatial language doesn't involve robot
+            return
+
         next_robot_state = RobotState2D.from_obz(observation.z(self.robot_id))
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))

@@ -7,7 +7,7 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
     to be sampled from; it is meant to output a probability
     for a spatial language given a state.
     """
-    def __init__(self):
+    def __init__(self, symbol_map=None):
         # Maps from spatial language observation to a tuple
         # where the first element is an "oo_belief" and the
         # second element is a dictionary of metadata generated
@@ -19,11 +19,12 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
         # a float between 0.0 and 1.0
         self._slu_cache = {}
         self._objid = None
+        self._symbol_map = symbol_map   # maps from object symbol to ID
 
     def set_object_id(self, objid):
         self._objid = objid
 
-    def probability(self, splang_observation, next_state):
+    def probability(self, splang_observation, next_state, action=None):
         """
         Args:
             splang_observation (SpatialLangObservation)
@@ -33,8 +34,16 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
                 related to the given object.
         """
         if splang_observation not in self._slu_cache:
-            result = self.interpret(splang_observations)
-            self._slu_cache[splang_observation] = result
+            print("Interpreting spatial language...", end='')
+            oo_belief_by_symbol, metadata  = self.interpret(splang_observation)
+            print("done")
+            if self._symbol_map is not None:
+                oo_belief = self._map_symbols_to_ids(oo_belief_by_symbol)
+            else:
+                print("WARNING: spatial language interpretation result indexed"
+                      "by object symbol instead of id")
+                oo_belief = oo_belief_by_symbol
+            self._slu_cache[splang_observation] = (oo_belief, metadata)
         oo_belief, _ = self._slu_cache[splang_observation]
         if self._objid is not None:
             # This is useful of the OOBelief is updated individually
@@ -53,6 +62,10 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
                 pr *= oo_belief[objid][loc]
             return pr
 
+    def _map_symbols_to_ids(self, oo_belief):
+        return {self._symbol_map[objsymbol]: oo_belief[objsymbol]
+                for objsymbol in oo_belief}
+
     def interpret(self, splang_observation):
         """Given a spatial language observation (splang_observation)
         return a matrix belief distribution of the objects
@@ -67,4 +80,5 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
             dict {loc -> prob} where 'loc' is a location on the map and 'prob'
             is a float between 0.0 and 1.0
         """
+
         raise NotImplementedError

@@ -23,7 +23,7 @@ class RuleBasedModel(SpatialLanguageObservationModel):
     from a language input based on manually coded rules;
     We follow the research by John O'Keefe on Place Fields."""
 
-    def __init__(self, rules, mapinfo, foref_models={}, foref_kwargs={}):
+    def __init__(self, rules, mapinfo, foref_models={}, foref_kwargs={}, **kwargs):
         """
         `rules` is a mapping from keyword to a Rule
         """
@@ -31,7 +31,7 @@ class RuleBasedModel(SpatialLanguageObservationModel):
         self._mapinfo = mapinfo
         self._foref_models = foref_models
         self._foref_kwargs = foref_kwargs
-        super().__init__()
+        super().__init__(**kwargs)
 
     def interpret(self, splang_observation):
         """Given a spatial language observation (splang_observation)
@@ -97,7 +97,7 @@ class MixtureSLUModel(SpatialLanguageObservationModel):
     We follow the research by John O'Keefe on Place Fields."""
 
     def __init__(self, rules, mapinfo, mixtures=[0,1,2,3], weights=[0.6, 0.25, 0.1, 0.05],
-                 foref_models={}, foref_kwargs={}):
+                 foref_models={}, foref_kwargs={}, **kwargs):
         """
         `rules` is a mapping from keyword to a Rule
         mixtures (str or list): String ('all') or a list of
@@ -115,7 +115,7 @@ class MixtureSLUModel(SpatialLanguageObservationModel):
         self.weights = weights
         self._foref_models = foref_models
         self._foref_kwargs = foref_kwargs
-        super().__init__()
+        super().__init__(**kwargs)
 
     def interpret(self, splang_observation):
         # The parse query here also matches keyword

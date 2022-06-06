@@ -76,6 +76,9 @@ class Visualizer2D:
         elif self._bg_path is not None:
             bgimg = cv2.imread(self._bg_path, cv2.IMREAD_UNCHANGED)
             bgimg = cv2.cvtColor(bgimg, cv2.COLOR_BGR2RGB)
+            bgimg = cv2.flip(bgimg, 1)  # flip horizontally
+            bgimg = cv2.rotate(bgimg, cv2.ROTATE_90_COUNTERCLOCKWISE)  # rotate 90deg clockwise
+
         if bgimg is not None:
             bgimg = cv2.resize(bgimg, (w*r, l*r))
             img = overlay(img, bgimg, opacity=1.0)
@@ -138,7 +141,6 @@ class Visualizer2D:
             self.on_init()
             self._initialized = True
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-        img = cv2.flip(img, 1)  # flip horizontally
         pygame.surfarray.blit_array(self._display_surf, img)
         pygame.display.flip()
         return img

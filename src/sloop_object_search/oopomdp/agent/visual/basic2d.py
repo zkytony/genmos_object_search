@@ -53,11 +53,12 @@ class VizSloopMosBasic2D(GridMapVisualizer):
             img = self.highlight(img,
                                  [objlocs[objid]],
                                  color=self.get_color(objid, colors, alpha=None))
-        for objid in objlocs:
-            color = self.get_color(objid, colors, alpha=None)
-            belief_obj = agent.belief.b(objid)
-            img = self.draw_object_belief(img, belief_obj,
-                                          list(color) + [250])
+        if draw_belief:
+            for objid in objlocs:
+                color = self.get_color(objid, colors, alpha=None)
+                belief_obj = agent.belief.b(objid)
+                img = self.draw_object_belief(img, belief_obj,
+                                              list(color) + [250])
         img = self.draw_robot(img, x, y, th, (255, 20, 20))
         if draw_fov is not None:
             for objid in sorted(draw_fov):

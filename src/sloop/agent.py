@@ -26,7 +26,8 @@ class SloopAgent(pomdp_py.Agent):
         self.splang_observation_model =\
             self._init_splang_observation_model(
                 agent_config["foref_models_dir"],
-                device=agent_config.get("device", "cuda:0"))
+                device=agent_config.get("device", "cuda:0"),
+                symbol_map=agent_config.get("object_symbol_map", None))
 
         pomdp_components = self._init_oopomdp()
         super().__init__(*pomdp_components)
@@ -39,7 +40,8 @@ class SloopAgent(pomdp_py.Agent):
 
     def _init_splang_observation_model(self,
                                        foref_models_dir,
-                                       device="cpu"):
+                                       device="cpu",
+                                       symbol_map=None):
         def _mp(predicate):
             """model path"""
             iteration = 2
@@ -59,7 +61,8 @@ class SloopAgent(pomdp_py.Agent):
         return MixtureSLUModel(BASIC_RULES,
                                self.mapinfo,
                                foref_models=foref_models,
-                               foref_kwargs={"device": device})
+                               foref_kwargs={"device": device},
+                               symbol_map=symbol_map)
 
     def update_belief(self, observation, action):
         self.belief.update_robot_belief(observation, action)
@@ -74,6 +77,6 @@ class SloopAgent(pomdp_py.Agent):
                     obseravtion_model = self.splang_observation_model
 
                 self.belief.update_object_belief(self,
-                    objid, observation.z(objid),
+                    objid, observation,
                     next_robot_state, action,
                     obseravtion_model)

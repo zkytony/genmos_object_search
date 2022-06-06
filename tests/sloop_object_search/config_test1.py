@@ -22,17 +22,22 @@ config = {
         "action_scheme": "vw",
         "no_look": True,
         "belief": {
-            "prior": {"G": "groundtruth"}
+            # could be "groundtruth", "uniform", or "splang" (interactive)
+            "prior": {"G": "splang"}
         },
         "targets": ["G"],
         "objects": {
             "G": {
-                "class": "GreenCar",
+                "class": "car",
                 "transition": {
                     "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
                 },
-                "color": [40, 240, 20]
+                "color": [100, 200, 80]
             },
+        },
+        "object_symbol_map": {
+            # Maps from object symbol to object id
+            "GreenToyota": "G"
         },
         "robot": {
             "id": "robot0",

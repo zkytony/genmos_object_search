@@ -64,7 +64,6 @@ class SloopMosBasic2DAgent(SloopAgent):
             robot_observation_model=robot_observation_model,
             no_look=no_look)
 
-
         # Policy Model
         target_ids = agent_config["targets"]
         policy_model = PolicyModelBasic2D(target_ids,
