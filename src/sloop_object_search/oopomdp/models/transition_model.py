@@ -52,10 +52,11 @@ class StaticObjectTransitionModel(ObjectTransitionModel):
 
 
 class RobotTransitionModel(ObjectTransitionModel):
-    def __init__(self, robot_id, reachable_positions, detection_models):
+    def __init__(self, robot_id, reachable_positions, detection_models, no_look=False):
         super().__init__(robot_id)
         self.reachable_positions = reachable_positions
         self.detection_models = detection_models
+        self._no_look = no_look
 
     @property
     def robot_id(self):
@@ -71,6 +72,8 @@ class RobotTransitionModel(ObjectTransitionModel):
         next_robot_pose = current_robot_pose
         next_objects_found = srobot.objects_found
         next_camera_direction = srobot.camera_direction
+        if self._no_look:
+            next_camera_direction = action.name
 
         if isinstance(action, MotionAction):
             next_robot_pose = self.motion_transition(srobot, action)
@@ -108,8 +111,9 @@ class RobotTransitionModel(ObjectTransitionModel):
 
 class RobotTransBasic2D(RobotTransitionModel):
     """robot movements over 2D grid"""
-    def __init__(self, robot_id, reachable_positions, detection_models, action_scheme):
-        super().__init__(robot_id, reachable_positions, detection_models)
+    def __init__(self, robot_id, reachable_positions,
+                 detection_models, action_scheme, **kwargs):
+        super().__init__(robot_id, reachable_positions, detection_models, **kwargs)
         self.action_scheme = action_scheme
 
     def motion_transition(self, srobot, action, round_to="int"):

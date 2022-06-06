@@ -46,7 +46,8 @@ class SloopMosBasic2DAgent(SloopAgent):
         # Transition Model
         robot_trans_model = RobotTransBasic2D(
             robot["id"], search_region,
-            detection_models, action_scheme)
+            detection_models, action_scheme,
+            no_look=no_look)
         transition_models = {robot["id"]: robot_trans_model}
         for objid in objects:
             object_trans_model =\

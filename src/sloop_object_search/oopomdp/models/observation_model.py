@@ -99,7 +99,7 @@ def receiving_observation(action, no_look=False):
     if not no_look:
         return isinstance(action, LookAction)
     else:
-        return isinstance(action, MotionAction)
+        return True
 
 
 class ObjectObservationModel(pomdp_py.ObservationModel):
