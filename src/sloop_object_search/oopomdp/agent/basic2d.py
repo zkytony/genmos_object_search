@@ -4,10 +4,11 @@ from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
 from sloop_object_search.utils.osm import osm_map_to_grid_map
 from sloop_object_search.utils.misc import import_class
-from ..domain.state import RobotState
+from ..domain.state import RobotState2D
 from ..models.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
-from ..models.observation_model import GMOSObservationModel
+from ..models.observation_model import (GMOSObservationModel,
+                                        RobotObservationModel2D)
 from ..models.policy_model import PolicyModelBasic2D
 from ..models.reward_model import GoalBasedRewardModel
 from ..models.belief import BeliefBasic2D
@@ -37,10 +38,10 @@ class SloopMosBasic2DAgent(SloopAgent):
             )
             detection_models[objid] = detection_model
         search_region = self.grid_map.free_locations
-        init_robot_state = RobotState(robot["id"],
-                                      robot["init_pose"],
-                                      robot.get("found_objects", tuple()),
-                                      robot.get("camera_direction", None))
+        init_robot_state = RobotState2D(robot["id"],
+                                        robot["init_pose"],
+                                        robot.get("found_objects", tuple()),
+                                        robot.get("camera_direction", None))
 
         # Transition Model
         robot_trans_model = RobotTransBasic2D(
@@ -56,15 +57,20 @@ class SloopMosBasic2DAgent(SloopAgent):
         transition_model = pomdp_py.OOTransitionModel(transition_models)
 
         # Observation Model (Mos)
+        robot_observation_model = RobotObservationModel2D(robot['id'])
         observation_model = GMOSObservationModel(
-            robot["id"], detection_models, no_look=no_look)
+            robot["id"], detection_models,
+            robot_observation_model=robot_observation_model,
+            no_look=no_look)
 
 
         # Policy Model
         target_ids = agent_config["targets"]
-        policy_model = PolicyModelBasic2D(
-            robot_trans_model, action_scheme, observation_model,
-            no_look=no_look)
+        policy_model = PolicyModelBasic2D(target_ids,
+                                          robot_trans_model,
+                                          action_scheme,
+                                          observation_model,
+                                          no_look=no_look)
 
         # Reward Model
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])

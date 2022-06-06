@@ -16,8 +16,10 @@
 import math
 import random
 from pomdp_py import RolloutPolicy, ActionPrior
-from sloop_object_search.utils.math import euclidean_dist
+from sloop_object_search.utils.math import (euclidean_dist)
+from .sensors import yaw_facing
 from ..domain import action
+from ..domain.observation import ObjectDetection
 
 class PolicyModel(RolloutPolicy):
     def __init__(self,
@@ -56,7 +58,8 @@ class PolicyModel(RolloutPolicy):
 
 
 class PolicyModelBasic2D(PolicyModel):
-    def __init__(self, robot_trans_model,
+    def __init__(self, target_ids,
+                 robot_trans_model,
                  action_scheme,
                  observation_model,
                  no_look=False,
@@ -64,7 +67,8 @@ class PolicyModelBasic2D(PolicyModel):
                  val_init=100):
         super().__init__(robot_trans_model, num_visits_init=10, val_init=100)
         self.movements = PolicyModelBasic2D.all_movements(action_scheme)
-        self._no_look = no_look
+        self.target_ids = target_ids
+        self.no_look = no_look
         self._legal_moves = {}
         self._observation_model = observation_model
         if action_scheme == "vw":
@@ -87,7 +91,7 @@ class PolicyModelBasic2D(PolicyModel):
         return movements
 
     def get_all_actions(self, state=None, history=None):
-        if self._no_look:
+        if self.no_look:
             return self.get_all_actions_no_look(state=state, history=history)
         else:
             return self.get_all_actions_with_look(state=state, history=history)
@@ -98,14 +102,14 @@ class PolicyModelBasic2D(PolicyModel):
         if history is not None and len(history) > 1:
             # last action
             last_action = history[-1][0]
-            if isinstance(last_action, LookAction):
+            if isinstance(last_action, action.LookAction):
                 can_find = True
-        find_action = set({Find}) if can_find else set({})
-        return self.valid_moves(state) | {Look} | find_action
+        find_action = set({action.Find}) if can_find else set({})
+        return self.valid_moves(state) | {action.Look} | find_action
 
     def get_all_actions_no_look(self, state=None, history=None):
         """note: find can only happen after look."""
-        return self.valid_moves(state) | {Find}
+        return self.valid_moves(state) | {action.Find}
 
     def valid_moves(self, state):
         srobot = state.s(self.robot_id)
@@ -128,107 +132,51 @@ class PolicyModelBasic2D(PolicyModel):
         def get_preferred_actions(self, state, history):
             # If you have taken done before, you are done. So keep the done.
             last_action = history[-1][0] if len(history) > 0 else None
-            if isinstance(last_action, Done):
-                return {(Done(), 0, 0)}
-
-            preferences = set()
 
             robot_id = self.policy_model.robot_id
-            target_id = self.policy_model.observation_model.target_id
             srobot = state.s(robot_id)
-            starget = state.s(target_id)
-            if self.policy_model.reward_model.success(srobot, starget):
-                preferences.add((Done(), self.num_visits_init, self.val_init))
+            if len(history) > 0:
+                last_action, last_observation = history[-1]
+                for objid in last_observation:
+                    if objid not in srobot["objects_found"]\
+                       and last_observation.z(objid).pose != ObjectDetection.NULL:
+                        # We last observed an object that was not found. Then Find.
+                        return set({(action.FindAction(), self.num_visits_init, self.val_init)})
 
-            current_distance = euclidean_dist(srobot.loc, starget.loc)
-            desired_yaw = yaw_facing(srobot.loc, starget.loc)
-            current_yaw_diff = abs(desired_yaw - srobot.pose[2]) % 360
+            if self.policy_model.no_look:
+                preferences = set()
+            else:
+                preferences = set({(action.LookAction(), self.num_visits_init, self.val_init)})
 
             for move in self.policy_model.movements:
-                # A move is preferred if:
-                # (1) it moves the robot closer to the target
-                next_srobot = self.policy_model.robot_trans_model.sample(state, move)
-                next_distance = euclidean_dist(next_srobot.loc, starget.loc)
-                if next_distance < current_distance:
-                    preferences.add((move, self.num_visits_init, self.val_init))
-                    break
+                for target_id in self.policy_model.target_ids:
+                    if target_id in srobot.objects_found:
+                        continue
 
-                # (2) if the move rotates the robot to be more facing the target,
-                # unless the previous move was a rotation in an opposite direction;
-                next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
-                if next_yaw_diff < current_yaw_diff:
-                    if hasattr(last_action, "dyaw") and last_action.dyaw * move.dyaw >= 0:
-                        # last action and current are NOT rotations in different directions
+                    starget = state.s(target_id)
+                    current_distance = euclidean_dist(srobot.pose[:2], starget.pose)
+                    desired_yaw = yaw_facing(srobot.pose[:2], starget.pose)
+                    current_yaw_diff = abs(desired_yaw - srobot.pose[2]) % 360
+
+                    # A move is preferred if:
+                    # (1) it moves the robot closer to the target
+                    next_srobot = self.policy_model.robot_trans_model.sample(state, move)
+                    next_distance = euclidean_dist(next_srobot.pose[:2], starget.pose)
+                    if next_distance < current_distance:
                         preferences.add((move, self.num_visits_init, self.val_init))
                         break
 
-                # (3) it makes the robot observe any object;
-                next_state = cospomdp.CosState({target_id: state.s(target_id),
-                                                robot_id: next_srobot})
-                observation = self.policy_model.observation_model.sample(next_state, move)
-                for zi in observation:
-                    if zi.loc is not None:
-                        preferences.add((move, self.num_visits_init, self.val_init))
-                        break
+                    # (2) if the move rotates the robot to be more facing the target,
+                    # unless the previous move was a rotation in an opposite direction;
+                    next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
+                    if next_yaw_diff < current_yaw_diff:
+                        if hasattr(last_action, "dyaw") and last_action.dyaw * move.dyaw >= 0:
+                            # last action and current are NOT rotations in different directions
+                            preferences.add((move, self.num_visits_init, self.val_init))
+                            break
             return preferences
 
     ############# Action Prior XY ############
     class ActionPriorXY(ActionPrior):
-        """greedy action prior for 'xy' motion scheme"""
-        def __init__(self, robot_id, grid_map, num_visits_init, val_init,
-                     no_look=False):
-            self.robot_id = robot_id
-            self.grid_map = grid_map
-            self.all_motion_actions = None
-            self.num_visits_init = num_visits_init
-            self.val_init = val_init
-            self.no_look = no_look
-
-        def set_motion_actions(self, motion_actions):
-            self.all_motion_actions = motion_actions
-
-        def get_preferred_actions(self, state, history):
-            """Get preferred actions. This can be used by a rollout policy as well."""
-            # Prefer actions that move the robot closer to any
-            # undetected target object in the state. If
-            # cannot move any closer, look. If the last
-            # observation contains an unobserved object, then Find.
-            #
-            # Also do not prefer actions that makes the robot rotate in place back
-            # and forth.
-            if self.all_motion_actions is None:
-                raise ValueError("Unable to get preferred actions because"\
-                                 "we don't know what motion actions there are.")
-            robot_state = state.object_states[self.robot_id]
-
-            last_action = None
-            if len(history) > 0:
-                last_action, last_observation = history[-1]
-                for objid in last_observation.objposes:
-                    if objid not in robot_state["objects_found"]\
-                       and last_observation.for_obj(objid).pose != ObjectObservation.NULL:
-                        # We last observed an object that was not found. Then Find.
-                        return set({(FindAction(), self.num_visits_init, self.val_init)})
-
-            if self.no_look:
-                # No Look action; It's embedded in Move.
-                preferences = set()
-            else:
-                # Always give preference to Look
-                preferences = set({(LookAction(), self.num_visits_init, self.val_init)})
-            for objid in state.object_states:
-                if objid != self.robot_id and objid not in robot_state.objects_found:
-                    object_pose = state.pose(objid)
-                    cur_dist = euclidean_dist(robot_state.pose, object_pose)
-                    neighbors =\
-                        self.grid_map.get_neighbors(
-                            robot_state.pose,
-                            self.grid_map.valid_motions(self.robot_id,
-                                                        robot_state.pose,
-                                                        self.all_motion_actions))
-                    for next_robot_pose in neighbors:
-                        if euclidean_dist(next_robot_pose, object_pose) < cur_dist:
-                            action = neighbors[next_robot_pose]
-                            preferences.add((action,
-                                             self.num_visits_init, self.val_init))
-            return preferences
+        # TODO, if needed.
+        pass

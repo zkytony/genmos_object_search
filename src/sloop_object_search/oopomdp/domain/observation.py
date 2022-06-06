@@ -9,18 +9,36 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
     NULL = None  # empty
     def __init__(self, objid, pose):
-        super().__init__(objid, pose)
+        super().__init__((objid, pose))
 
     @property
     def pose(self):
-        return self.data
+        return self.data[1]
 
     def __str__(self):
         return f"{self.objid}({self.objid}, {self.pose})"
 
     @property
     def id(self):
-        return self.objid
+        return self.data[0]
+
+    @property
+    def objid(self):
+        return self.data[0]
+
+    @staticmethod
+    def null_observation(objid):
+        return ObjectDetection(objid, ObjectDetection.NULL)
+
+
+class ObjectDetection2D(ObjectDetection):
+    @property
+    def loc(self):
+        return self.pose
+
+    @staticmethod
+    def null_observation(objid):
+        return ObjectDetection2D(objid, ObjectDetection.NULL)
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
@@ -34,6 +52,18 @@ class RobotObservation(pomdp_py.SimpleObservation):
     def __str__(self):
         return f"{self.robot_id}({self.pose, self.camera_direction, self.objects_found})"
 
+
+class RobotObservation2D(RobotObservation):
+    @property
+    def loc(self):
+        return self.pose[:2]
+
+    @staticmethod
+    def from_state(srobot):
+        return RobotObservation2D(srobot['id'],
+                                  srobot['pose'],
+                                  srobot['objects_found'],
+                                  srobot['camera_direction'])
 
 class GMOSObservation(pomdp_py.Observation):
     """Joint observation of objects for GMOS"""
@@ -58,6 +88,7 @@ class GMOSObservation(pomdp_py.Observation):
                 objzstr += str(self._objobzs[objid])
         return "{}({})".format(self.__class__.__name__, objzstr)
 
+
     def __repr__(self):
         return str(self)
 
@@ -66,8 +97,7 @@ class GMOSObservation(pomdp_py.Observation):
         return len(self._objobzs)
 
     def __iter__(self):
-        # Only care about object observations here
-        return iter(self._objobzs.values())
+        return iter(self._objobzs)
 
     def __getitem__(self, objid):
         # objid can be either object id or robot id.

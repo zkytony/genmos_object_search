@@ -5,6 +5,7 @@ import spacy
 from .osm.models.heuristics.rules import BASIC_RULES
 from .osm.models.heuristics.model import MixtureSLUModel
 from .osm.datasets import MapInfoDataset
+from .observation import SpatialLanguageObservation
 
 class SloopAgent(pomdp_py.Agent):
     def __init__(self,
@@ -60,21 +61,19 @@ class SloopAgent(pomdp_py.Agent):
                                foref_models=foref_models,
                                foref_kwargs={"device": device})
 
-    def update(self, observation, action):
-        next_robot_state = robot_state_from_obz(observation.z(self.robot_id))
-        new_object_beliefs = {}
-        for objid in self.object_beliefs:
+    def update_belief(self, observation, action):
+        self.belief.update_robot_belief(observation, action)
+        next_robot_state = self.belief.mpe().s(self.robot_id)
+        for objid in self.belief.object_beliefs:
             if objid == self.robot_id:
-                self.belief.set_object_belief(
-                    objid, pomdp_py.Histogram({next_robot_state: 1.0}))
+                continue
             else:
-                assert isinstance(agent.transition_model.transition_models[objid],
-                                  StaticObjectTransitionModel)
-
-                obseravtion_model = agent.observation_model
+                obseravtion_model = self.observation_model
                 if isinstance(observation, SpatialLanguageObservation):
                     self.splang_observation_model.set_object_id(objid)
                     obseravtion_model = self.splang_observation_model
 
-                self.belief.update_object_belief(
-                    objid, observation.z(objid), action, agent, obseravtion_model)
+                self.belief.update_object_belief(self,
+                    objid, observation.z(objid),
+                    next_robot_state, action,
+                    obseravtion_model)

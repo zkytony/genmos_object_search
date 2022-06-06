@@ -27,7 +27,9 @@ from ..domain.action import (MotionAction,
                              LookAction,
                              FindAction)
 from ..domain.observation import (ObjectDetection,
+                                  ObjectDetection2D,
                                   RobotObservation,
+                                  RobotObservation2D,
                                   GMOSObservation)
 
 
@@ -61,27 +63,35 @@ class ObjectDetectionModel:
         """
         raise NotImplementedError
 
-def robot_state_from_obz(zrobot):
-    return RobotState(zrobot.robot_id,
-                      zrobot.pose,
-                      zrobot.objects_found,
-                      zrobot.camera_direction)
+    @property
+    def observation_class(self):
+        raise NotImplementedError
 
-class RobotObservationModel:
+
+class RobotObservationModel(pomdp_py.ObservationModel):
     """Pr(zrobot | srobot); default is identity"""
     def __init__(self, robot_id):
         self.robot_id = robot_id
 
-    def sample(self, srobot_next, action):
-        robotobz = RobotObservation(self.robot_id,
-                                    srobot_next['pose'],
-                                    srobot_next['objects_found'],
-                                    srobot_next['camera_direction'])
+    @property
+    def observation_class(self):
+        return RobotObservation
+
+    def sample(self, snext, action):
+        srobot_next = snext.s(self.robot_id)
+        robotobz = self.observation_class.from_state(srobot_next)
         return robotobz
 
-    def probability(self, zrobot, srobot_next, action):
-        srobot_from_z = robot_state_from_obz(zrobot)
+    def probability(self, zrobot, snext, action):
+        srobot_next = snext.s(self.robot_id)
+        srobot_from_z = srobot_next.__class__.from_obz(zrobot)
         return identity(srobot_from_z, srobot)
+
+
+class RobotObservationModel2D(RobotObservationModel):
+    @property
+    def observation_class(self):
+        return RobotObservation2D
 
 
 def receiving_observation(action, no_look=False):
@@ -99,19 +109,21 @@ class ObjectObservationModel(pomdp_py.ObservationModel):
     Note that correlation is not considered here; you
     may do that during belief update.
     """
-    def __init__(self, objid, detection_model, no_look=False):
+    def __init__(self, objid, robot_id, detection_model, no_look=False):
         self.objid = objid
+        self.robot_id = robot_id
         self.detection_model = detection_model
+        self._no_look = no_look
 
     def sample(self, snext, action):
         """
         Just sample observation for THIS object
         """
         if not receiving_observation(action, no_look=self._no_look):
-            return ObjectDetection(self.objid, ObjectDetection.NULL)
+            return self.detection_model.observation_class.null_observation(self.objid)
         srobot_next = snext.s(self.robot_id)
         sobj_next = snext.s(self.objid)
-        zobj = self.detection_modelsample(sobj_next, srobot_next)
+        zobj = self.detection_model.sample(sobj_next, srobot_next)
         return zobj
 
     def probability(self, zobj, snext, action):
@@ -120,7 +132,7 @@ class ObjectObservationModel(pomdp_py.ObservationModel):
         """
         if not receiving_observation(action, no_look=self._no_look):
             # No observation should be received
-            if zobj.pose == ObjectObservation.NULL:
+            if zobj.pose == self.detection_model.observation_class.NULL:
                 return 1.0
             else:
                 return 0.0
@@ -164,10 +176,10 @@ class GMOSObservationModel(pomdp_py.OOObservationModel):
 
         observation_models = {**{robot_id: self.robot_observation_model},
                               **{j: ObjectObservationModel(
-                                  j, self.detection_models[j], no_look=no_look)
+                                  j, self.robot_id, self.detection_models[j], no_look=no_look)
                                  for j in self.detection_models}}
         super().__init__(observation_models)
 
     def sample(self, snext, action):
         factored_observations = super().sample(snext, action)
-        return GMOSObservationGMosOOObservation(factored_observations)
+        return GMOSObservation(factored_observations)

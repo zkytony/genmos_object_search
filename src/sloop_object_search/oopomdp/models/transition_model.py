@@ -11,7 +11,11 @@ Transition: deterministic
 import pomdp_py
 from pomdp_py.framework.basics import State
 import copy
-from ..domain.state import *
+from ..domain.state import (ObjectState,
+                            ObjectState2D,
+                            RobotState,
+                            RobotState2D)
+
 from ..domain.observation import *
 from ..domain.action import *
 from sloop_object_search.utils.math import fround
@@ -53,6 +57,10 @@ class RobotTransitionModel(ObjectTransitionModel):
         self.reachable_positions = reachable_positions
         self.detection_models = detection_models
 
+    @property
+    def robot_id(self):
+        return self.objid
+
     def sample(self, state, action):
         """Returns next_robot_state"""
         return self.argmax(state, action)
@@ -61,7 +69,7 @@ class RobotTransitionModel(ObjectTransitionModel):
         srobot = state.s(self.robot_id)
         current_robot_pose = srobot["pose"]
         next_robot_pose = current_robot_pose
-        next_found_objects = srobot.found_objects
+        next_objects_found = srobot.objects_found
         next_camera_direction = srobot.camera_direction
 
         if isinstance(action, MotionAction):
@@ -73,22 +81,28 @@ class RobotTransitionModel(ObjectTransitionModel):
         elif isinstance(action, FindAction):
             next_objects_found = tuple(
                 set(next_objects_found)
-                | set(objects_in_range(current_robot_pose, state)))
+                | set(self.objects_in_range(current_robot_pose, state)))
 
         return RobotState(self.robot_id,
                           next_robot_pose,
                           next_objects_found,
-                          camera_direction)
+                          next_camera_direction)
 
     def objects_in_range(self, robot_pose, state):
         objects_in_range = []
         for objid in state.object_states:
+            if objid == self.robot_id:
+                continue
             object_pose = state.s(objid)['pose']
             if self.detection_models[objid].sensor.in_range_facing(object_pose, robot_pose):
                 objects_in_range.append(objid)
         return objects_in_range
 
-    def motion_transition(self, srobot, action):
+    def motion_transition(self, srobot, action, round_to="int"):
+        """
+        round_to (str): specifies rounding method of the location
+            of transitioned pose. See utils.math.fround for definition.
+        """
         raise NotImplementedError
 
 
@@ -98,8 +112,8 @@ class RobotTransBasic2D(RobotTransitionModel):
         super().__init__(robot_id, reachable_positions, detection_models)
         self.action_scheme = action_scheme
 
-    def motion_transition(self, srobot, action):
-        rx, ry, rth = robot_pose
+    def motion_transition(self, srobot, action, round_to="int"):
+        rx, ry, rth = srobot.pose
 
         if self.action_scheme == "xy":
             dx, dy, th = action.motion
@@ -110,11 +124,18 @@ class RobotTransBasic2D(RobotTransitionModel):
             # odometry motion model
             forward, angle = action.motion
             rth += angle  # angle (radian)
-            rx = rx + forward*math.cos(nth)
-            ry = ry + forward*math.sin(nth)
+            rx = rx + forward*math.cos(rth)
+            ry = ry + forward*math.sin(rth)
             rth = rth % (2*math.pi)
-        rx, ry = fround("int", rx, ry)
-        if (rx, ry) in self.grid_map.free_locations:
+        rx, ry = fround(round_to, (rx, ry))
+        if (rx, ry) in self.reachable_positions:
             return (rx, ry, rth)
         else:
             return srobot['pose']
+
+    def argmax(self, state, action):
+        srobot_next = super().argmax(state, action)
+        return RobotState2D(srobot_next['id'],
+                            srobot_next['pose'],
+                            srobot_next['objects_found'],
+                            srobot_next['camera_direction'])

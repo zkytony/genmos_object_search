@@ -73,16 +73,12 @@ class RobotState(pomdp_py.ObjectState):
         return self.attributes['objects_found']
 
     @property
-    def id(self):
-        return self.attributes['id']
+    def camera_direction(self):
+        return self.attributes['camera_direction']
 
     @property
-    def loc(self):
-        """the location of the robot, regardless of orientation"""
-        raise NotImplementedError
-
-    def in_range(self, sensor, loc):
-        raise NotImplementedError
+    def id(self):
+        return self.attributes['id']
 
     @staticmethod
     def from_obz(robot_obz):
@@ -90,3 +86,29 @@ class RobotState(pomdp_py.ObjectState):
         robot_obz (RobotObservation)
         """
         raise NotImplementedError
+
+    def in_range(self, sensor, sobj, **kwargs):
+        return sensor.in_range(sobj.pose, self["pose"], **kwargs)
+
+
+class ObjectState2D(ObjectState):
+    @property
+    def loc(self):
+        return self.pose
+
+    def copy(self):
+        return ObjectState2D(self.id,
+                             self.objclass,
+                             self.pose)
+
+class RobotState2D(RobotState):
+    @property
+    def loc(self):
+        return self.pose[:2]
+
+    @staticmethod
+    def from_obz(zrobot):
+        return RobotState2D(zrobot.robot_id,
+                            zrobot.pose,
+                            zrobot.objects_found,
+                            zrobot.camera_direction)
