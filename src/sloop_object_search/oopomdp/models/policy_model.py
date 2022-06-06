@@ -164,16 +164,15 @@ class PolicyModelBasic2D(PolicyModel):
                     next_distance = euclidean_dist(next_srobot.pose[:2], starget.pose)
                     if next_distance < current_distance:
                         preferences.add((move, self.num_visits_init, self.val_init))
-                        break
 
-                    # (2) if the move rotates the robot to be more facing the target,
-                    # unless the previous move was a rotation in an opposite direction;
-                    next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
-                    if next_yaw_diff < current_yaw_diff:
-                        if hasattr(last_action, "dyaw") and last_action.dyaw * move.dyaw >= 0:
-                            # last action and current are NOT rotations in different directions
-                            preferences.add((move, self.num_visits_init, self.val_init))
-                            break
+                        # # (2) ALSO, if the move rotates the robot to be more facing the target,
+                        # # unless the previous move was a rotation in an opposite direction;
+                        # next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
+                        # if next_yaw_diff < current_yaw_diff:
+                        #     if hasattr(last_action, "dyaw") and last_action.dyaw * move.dyaw >= 0:
+                        #         # last action and current are NOT rotations in different directions
+                        #         preferences.add((move, self.num_visits_init, self.val_init))
+                        #         break
             return preferences
 
     ############# Action Prior XY ############

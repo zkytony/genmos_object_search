@@ -2,7 +2,7 @@ import os
 import torch
 import pomdp_py
 import spacy
-from .osm.models.heuristics.rules import BASIC_RULES
+from .osm.models.heuristics.rules import BASIC_RULES, ForefRule
 from .osm.models.heuristics.model import MixtureSLUModel
 from .osm.datasets import MapInfoDataset
 from .observation import SpatialLanguageObservation
@@ -53,12 +53,20 @@ class SloopAgent(pomdp_py.Agent):
 
         device = torch.device(device if torch.cuda.is_available() else "cpu")
         foref_models = {
-            "front": torch.load(_mp("front"), map_location=device),
-            "behind": torch.load(_mp("front"), map_location=device),
-            "left": torch.load(_mp("left"), map_location=device),
-            "right": torch.load(_mp("left"), map_location=device),
+            "front": torch.load(_mp("front"), map_location=device).predict_foref,
+            "behind": torch.load(_mp("front"), map_location=device).predict_foref,
+            "left": torch.load(_mp("left"), map_location=device).predict_foref,
+            "right": torch.load(_mp("left"), map_location=device).predict_foref,
         }
-        return MixtureSLUModel(BASIC_RULES,
+        relative_rules = {
+            "front": ForefRule("front"),
+            "behind": ForefRule("behind"),
+            "left": ForefRule("left"),
+            "right": ForefRule("right"),
+        }
+        rules = {**BASIC_RULES,
+                  **relative_rules}
+        return MixtureSLUModel(rules,
                                self.mapinfo,
                                foref_models=foref_models,
                                foref_kwargs={"device": device},
@@ -71,12 +79,12 @@ class SloopAgent(pomdp_py.Agent):
             if objid == self.robot_id:
                 continue
             else:
-                obseravtion_model = self.observation_model
+                observation_model = None
                 if isinstance(observation, SpatialLanguageObservation):
                     self.splang_observation_model.set_object_id(objid)
-                    obseravtion_model = self.splang_observation_model
+                    observation_model = self.splang_observation_model
 
-                self.belief.update_object_belief(self,
-                    objid, observation,
+                self.belief.update_object_belief(
+                    self, objid, observation,
                     next_robot_state, action,
-                    obseravtion_model)
+                    observation_model=observation_model)

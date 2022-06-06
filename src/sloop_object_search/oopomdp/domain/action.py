@@ -59,6 +59,10 @@ class MotionAction2D(MotionAction):
             motion_name = str(motion)
         super().__init__("move-{}({})".format(motion_name, motion))
 
+    @property
+    def dyaw(self):
+        return self.motion[1]
+
 # Define some constant actions
 MoveEast = MotionAction2D(MotionAction2D.EAST, motion_name="East")
 MoveWest = MotionAction2D(MotionAction2D.WEST, motion_name="West")

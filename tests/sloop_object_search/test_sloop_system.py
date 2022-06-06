@@ -95,7 +95,7 @@ def main(_config):
     for i in range(max_steps):
         action = planner.plan(agent)
         _dd = pomdp_py.utils.TreeDebugger(agent.tree)
-        _dd.p(1)
+        _dd.mbp
 
         reward = task_env.state_transition(action, execute=True)
         observation = task_env.provide_observation(agent.observation_model, action)

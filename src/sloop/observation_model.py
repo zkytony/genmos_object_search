@@ -46,12 +46,15 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
             self._slu_cache[splang_observation] = (oo_belief, metadata)
         oo_belief, _ = self._slu_cache[splang_observation]
         if self._objid is not None:
-            # This is useful of the OOBelief is updated individually
-            # by objects.
-            if self._objid not in next_state.object_states:
-                raise ValueError(f"objid {objid} is not a valid object")
-            loc = next_state.s(self._objid).loc
-            return oo_belief[self._objid][loc]
+            if self._objid in oo_belief:
+                # This is useful of the OOBelief is updated individually
+                # by objects.
+                if self._objid not in next_state.object_states:
+                    raise ValueError(f"objid {objid} is not a valid object")
+                loc = next_state.s(self._objid).loc
+                return oo_belief[self._objid][loc]
+            else:
+                return 1.0
         else:
             pr = 1.0
             for objid in oo_belief:
