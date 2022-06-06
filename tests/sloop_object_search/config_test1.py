@@ -1,6 +1,7 @@
+import os
+ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
 config = {
-
     "planner_config": {
         "planner": "pomdp_py.POUCT",
         "planner_params": {}
@@ -56,6 +57,7 @@ config = {
                 # },
             }
         },
-        "spacy_model": "en_web_core_lg",
+        "spacy_model": "en_core_web_lg",
+        "foref_models_dir": os.path.join(ABS_PATH, "../../models")
     },
 }

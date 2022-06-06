@@ -1,6 +1,7 @@
 import os
 import torch
 import pomdp_py
+import spacy
 from .osm.models.heuristics.rules import BASIC_RULES
 from .osm.models.heuristics.model import MixtureSLUModel
 from .osm.datasets import MapInfoDataset
@@ -9,10 +10,15 @@ class SloopAgent(pomdp_py.Agent):
     def __init__(self,
                  agent_config,
                  map_name):
+        """
+        agent_config (dict): specifies various configurations.
+            See example in tests/src/sloop_object_search/test_sloop_system.py
+        """
+        self.agent_config = agent_config
         self.robot_id = agent_config["robot"]["id"]
         self.map_name = map_name
         self.mapinfo = MapInfoDataset()
-        self.map_info.load_by_name(self.map_name)
+        self.mapinfo.load_by_name(self.map_name)
         # Spatial Language Observation Model
         self.spacy_model = spacy.load(agent_config.get(
             "spacy_model", "en_core_web_lg"))
@@ -32,6 +38,7 @@ class SloopAgent(pomdp_py.Agent):
                                        device="cpu"):
         def _mp(predicate):
             """model path"""
+            iteration = 2
             return os.path.join(foref_models_dir,
                                 "iter%s_%s:%s:%s"
                                 % (iteration, "ego-ctx-foref-angle",
@@ -43,7 +50,7 @@ class SloopAgent(pomdp_py.Agent):
             "front": torch.load(_mp("front"), map_location=device),
             "behind": torch.load(_mp("front"), map_location=device),
             "left": torch.load(_mp("left"), map_location=device),
-            "right": torch.load(_mp("right"), map_location=device),
+            "right": torch.load(_mp("left"), map_location=device),
         }
         return MixtureSLUModel(BASIC_RULES,
                                self.mapinfo,

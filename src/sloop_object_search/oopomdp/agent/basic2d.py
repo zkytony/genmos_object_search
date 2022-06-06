@@ -2,6 +2,7 @@ import torch
 import pomdp_py
 from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
+from sloop_object_search.utils.osm import osm_map_to_grid_map
 from ..models.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
 
@@ -9,22 +10,11 @@ class SloopMosBasic2DAgent(SloopAgent):
     """
     basic --> operates at the fine-grained action level.
     """
-    def __init__(self,
-                 agent_config,
-                 grid_map):
-        """
-        Args:
-            agent_config (dict): various configurations
-            grid_map (GridMap): The map to search over. The map
-                should have a name.
-        """
-        self.agent_config = agent_config
-        self.grid_map = grid_map
-        super().__init__(agent_config, grid_map.map_name)
-
     def _init_oopomdp(self):
         agent_config = self.agent_config
-        grid_map = self.grid_map
+
+        self.grid_map = osm_map_to_grid_map(
+            self.mapinfo, self.map_name)
 
         # Prep work
         robot = agent_config["robot"]
@@ -40,7 +30,7 @@ class SloopMosBasic2DAgent(SloopAgent):
                 **detector_spec[objid]["params"]
             )
             detection_models[objid] = detection_model
-        search_region = grid_map.free_locations
+        search_region = self.grid_map.free_locations
         init_robot_state = RobotState(robot["id"],
                                       robot["init_pose"],
                                       robot.get("found_objects", tuple()),
@@ -69,7 +59,7 @@ class SloopMosBasic2DAgent(SloopAgent):
         # Policy Model
         target_ids = objects["targets"]
         policy_model = PolicyModelBasic2D(
-            robot["id"], target_ids, grid_map, action_scheme,
+            robot["id"], target_ids, self.grid_map, action_scheme,
             observation_model=observation_model)
 
         # Reward Model
