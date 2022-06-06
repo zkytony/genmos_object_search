@@ -1,8 +1,11 @@
+import torch
 import pomdp_py
+from .agent import SloopAgent
 from ..domain.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
+from sloop.observation import SpatialLanguageObservation
 
-class SloopMosBasic2DAgent(pomdp_py.Agent):
+class SloopMosBasic2DAgent(SloopAgent):
     """
     basic --> operates at the fine-grained action level.
     """
@@ -15,6 +18,14 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
             grid_map (GridMap): The map to search over. The map
                 should have a name.
         """
+        self.agent_config = agent_config
+        self.grid_map = grid_map
+        super().__init__(agent_config, grid_map.map_name)
+
+    def _init_oopomdp(self):
+        agent_config = self.agent_config
+        grid_map = self.grid_map
+
         # Prep work
         robot = agent_config["robot"]
         objects = agent_config["objects"]
@@ -50,9 +61,10 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
             {objid: eval(objects[objid]["transition"]["class"])}
         )
 
-        # Observation Model
+        # Observation Model (Mos)
         observation_model = GMosObservationModel(
             robot["id"], detection_models, no_look=no_look)
+
 
         # Policy Model
         target_ids = objects["targets"]
@@ -78,5 +90,16 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
                          observation_model,
                          reward_model)
 
+
     def update_belief(self, observation, action):
+        if isinstance(observation, SpatialLanguageObservation):
+            for objid in self.belief.object_beliefs:
+                if objid == self.robot_id:
+                    new_belief_obj = self.belief.b(self.robot_id)
+                else:
+                    for
+
+
+                    self.splang_observation_model.interpret(observation)
+        if isinstance()
         self.belief.update(observation, action, self)

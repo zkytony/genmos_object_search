@@ -18,8 +18,12 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
         # where 'loc' is a location on the map and 'prob' is
         # a float between 0.0 and 1.0
         self._slu_cache = {}
+        self._objid = None
 
-    def probability(self, splang_observation, next_state, objid=None):
+    def set_object_id(self, objid):
+        self._objid = objid
+
+    def probability(self, splang_observation, next_state):
         """
         Args:
             splang_observation (SpatialLangObservation)
@@ -32,13 +36,13 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
             result = self.interpret(splang_observations)
             self._slu_cache[splang_observation] = result
         oo_belief, _ = self._slu_cache[splang_observation]
-        if objid is not None:
+        if self._objid is not None:
             # This is useful of the OOBelief is updated individually
             # by objects.
-            if objid not in next_state.object_states:
+            if self._objid not in next_state.object_states:
                 raise ValueError(f"objid {objid} is not a valid object")
-            loc = next_state.s(objid).loc
-            return oo_belief[objid][loc]
+            loc = next_state.s(self._objid).loc
+            return oo_belief[self._objid][loc]
         else:
             pr = 1.0
             for objid in oo_belief:
