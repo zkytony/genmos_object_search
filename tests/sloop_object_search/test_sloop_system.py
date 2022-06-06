@@ -1,85 +1,47 @@
-test_config = {
-    "map_name": "austin",
+import random
+import pomdp_py
+import config_test1 as test_config
+from sloop_object_search.utils.misc import import_class
+from sloop_object_search.utils.osm import osm_grid_map
+from sloop_object_search.oopomdp.agent import SloopMosBasic2DAgent, VizSloopMosBasic2D
 
-    "agent_config": {
-        "agent_class": "SloopMosBasic2DAgent",  # This agent works in 2D grids
-        "action_scheme": "vw",
-        "no_look": False,
-        "belief": {
-            "prior": "uniform"
-        },
-        "objects": {
-            "targets": ["G"],
-            "G": {
-                "class": "GreenCar",
-                "transition": {
-                    "class": "StaticObjectTransitionModel"
-                },
-            },
-            "B": {
-                "class": "RedBike",
-                "transition": {
-                    "class": "StaticObjectTransitionModel"
-                }
-            },
-            "R": {
-                "class": "RedCar",
-                "transition": {
-                    "class": "StaticObjectTransitionModel"
-                },
-            },
-        },
-        "robot": {
-            "id": "robot0",
-            "detectors": {
-                "G": {
-                    "class": "FanModelSimpleFP",
-                    "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1))
-                },
-                "B": {
-                    "class": "FanModelSimpleFP",
-                    "params": (dict(fov=90, min_range=0, max_range=3), (0.8, 0.1))
-                },
-                "R": {
-                    "class": "FanModelSimpleFP",
-                    "params": (dict(fov=90, min_range=0, max_range=4), (0.9, 0.1))
-                },
-            }
-        },
-        "spacy_model": "en_web_core_lg",
-    },
-
-    "planner_config": {
-        "planner": "pomdp_py.POUCT",
-        "planner_params": {}
-    },
-
-    "task_config": {
-        "max_steps": 100
-    }
-}
 
 def main(config):
     mapinfo = MapInfoDataset()
-    mapinfo.load_map(config["map_name"])
-    grid_map = mapinfo.grid_map_of(config["map_name"])
-    agent = eval(config["agent_class"])(config["agnet_config"])
+    map_name = config.task_config["map_name"]
+    mapinfo.load_map(map_name)
+    grid_map = osm_map_to_grid_map(map_info, map_name)
 
-    init_state = ...
+    init_robot_pose = (*random.sample(grid_map.free_locations, 1)[0], 0.0)
+    config["agent_config"]["robot"]["init_pose"] = init_robot_pose
+    init_robot_state = RobotState(robot["id"], robot["init_pose"], tuple(), None)
+    objects = config["agent_config"]["objects"]
+    object_states = {
+        objid: ObjectState(objid, objects[objid]["class"],
+                           random.sample(grid_map.free_locations - {init_robot_pose[:2]}, 1))
+        for objid in objects["targets"]
+    }
+
+    init_state = pomdp_py.OOState({**{robot["id"]: init_robot_state},
+                                   **object_states})
+    agent = eval(config["agent_config"]["agent_class"])(config["agent_config"])
     task_env = pomdp_py.Environment(init_state,
                                     agent.transition_model,
                                     agent.reward_model)
-    planner = eval(config["planner_config"])(**config["planner_params"],
-                                             rollout_policy=agent.policy_model)
-
+    planner = import_class(config["planner_config"])(**config["planner_params"],
+                                                     rollout_policy=agent.policy_model)
     max_steps = config["task_config"]["max_steps"]
-    visualizer = ...
+    visualizer = VizSloopMosBasic2D(grid_map)
+    img = visualizer.render()
+    visualizer.show_img(img)
+
     for i in range(max_steps):
         action = planner.plan(agent)
         reward = task_env.state_transition(action, execute=True)
         observation = task_env.provide_observation(agent.observation_model)
         agent.update_belief(observation, action)
-        visualizer...
+        img = visualizer.render()
+        visualizer.show_img(img)
 
 if __name__ == "__main__":
     main(test_config)

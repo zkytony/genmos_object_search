@@ -32,8 +32,8 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
         search_region = grid_map.free_locations
         init_robot_state = RobotState(robot["id"],
                                       robot["init_pose"],
-                                      tuple(),
-                                      None)
+                                      robot.get("found_objects", tuple()),
+                                      robot.get("camera_direction", None))
 
         # Transition Model
         robot_trans_model = RobotTransBasic2D(
@@ -77,3 +77,6 @@ class SloopMosBasic2DAgent(pomdp_py.Agent):
                          transition_model,
                          observation_model,
                          reward_model)
+
+    def update_belief(self, observation, action):
+        self.belief.update(observation, action, self)

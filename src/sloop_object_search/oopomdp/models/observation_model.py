@@ -61,6 +61,11 @@ class ObjectDetectionModel:
         """
         raise NotImplementedError
 
+def robot_state_from_obz(zrobot):
+    return RobotState(zrobot.robot_id,
+                      zrobot.pose,
+                      zrobot.objects_found,
+                      zrobot.camera_direction)
 
 class RobotObservationModel:
     """Pr(zrobot | srobot); default is identity"""
@@ -75,11 +80,6 @@ class RobotObservationModel:
         return robotobz
 
     def probability(self, zrobot, srobot_next, action):
-        def robot_state_from_obz(zrobot):
-            return RobotState(zrobot.robot_id,
-                              zrobot.pose,
-                              zrobot.objects_found,
-                              zrobot.camera_direction)
         srobot_from_z = robot_state_from_obz(zrobot)
         return identity(srobot_from_z, srobot)
 

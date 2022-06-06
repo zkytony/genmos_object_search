@@ -1,4 +1,9 @@
 import pomdp_py
+from .transition_model import StaticObjectTransitionModel
+from .observation_model import robot_state_from_obz
+from ..domain.state import ObjectState
+from sloop_object_search.utils.math import normalize
+
 
 class BeliefBasic2D(pomdp_py.OOBelief):
     def __init__(self,
@@ -6,6 +11,9 @@ class BeliefBasic2D(pomdp_py.OOBelief):
                  target_objects,
                  search_region,
                  belief_config):
+        self.robot_id = robot_state["id"]
+        self.search_region = search_region
+        self.target_objects = target_objects
         robot_belief = pomdp_py.Histogram({robot_state:1.0})
         prior = belief_config.get("prior", {})
         if prior == "uniform":
@@ -25,3 +33,25 @@ class BeliefBasic2D(pomdp_py.OOBelief):
                     belief_dist[state] = 1.0 / len(search_region)
             object_beliefs = {objid: pomdp_py.Histogram(belief_dist)}
         super().__init__(object_beliefs)
+
+    def update(self, observation, action, agent):
+        next_robot_state = robot_state_from_obz(observation.z(self.robot_id))
+        for objid in self.object_beliefs:
+            if objid == self.robot_id:
+                belief_dist = pomdp_py.Histogram({next_robot_state: 1.0})
+            else:
+                assert isinstance(agent.transition_model.transition_models[objid],
+                                  StaticObjectTransitionModel)
+                belief_dist = {}
+                for loc in self.search_region:
+                    objclass = self.target_objects[objid]["class"]
+                    object_state = ObjectState(objid, objclass, loc)
+                    zobj = observation.z(objid)
+                    snext = pomdp_py.OOState({
+                        objid: object_state,
+                        self.robot_id: next_robot_state
+                    })
+                    pr_z = agent.observation_model[objid].probability(zobj, snext, action)
+                    belief_dist[object_state] = pr_z * self.b(objid)[object_state]
+                belief_dist = normalize(belief_dist)
+            self.set_object_belief(objid, belief_dist)

@@ -1,82 +1,82 @@
 """
-Defines the Observation for the 2D Multi-Object Search domain;
-
-Origin: Multi-Object Search using Object-Oriented POMDPs (ICRA 2019)
-(extensions: action space changes, different sensor model, gridworld instead of topological graph)
-
-Observation:
-
-    :code:`{objid : pose(x,y) or NULL}`.
-    The sensor model could vary;
-    it could be a fan-shaped model as the original paper, or
-    it could be something else. But the resulting observation
-    should be a map from object id to observed pose or NULL (not observed).
+GMOS observation breaks down to:
+- object detection
+- robot observation about itself
 """
-import pomdp_py
 
-###### Observation ######
-class ObjectObservation(pomdp_py.Observation):
-    """The xy pose of the object is observed; or NULL if not observed"""
-    NULL = None
+class ObjectDetection(pomdp_py.SimpleObservation):
+    """Observation of a target object's location"""
+    NULL = None  # empty
     def __init__(self, objid, pose):
-        self.objid = objid
-        if type(pose) == tuple and len(pose) == 2\
-           or pose == ObjectObservation.NULL:
-            self.pose = pose
-        else:
-            raise ValueError("Invalid observation %s for object"
-                             % (str(pose), objid))
-    def __hash__(self):
-        return hash((self.objid, self.pose))
-    def __eq__(self, other):
-        if not isinstance(other, ObjectObservation):
-            return False
-        else:
-            return self.objid == other.objid\
-                and self.pose == other.pose
+        super().__init__(objid, pose)
 
-class MosOOObservation(pomdp_py.OOObservation):
-    """Observation for Mos that can be factored by objects;
-    thus this is an OOObservation."""
-    def __init__(self, objposes):
-        """
-        objposes (dict): map from objid to 2d pose or NULL (not ObjectObservation!).
-        """
-        self._hashcode = hash(frozenset(objposes.items()))
-        self.objposes = objposes
-
-    def for_obj(self, objid):
-        if objid in self.objposes:
-            return ObjectObservation(objid, self.objposes[objid])
-        else:
-            return ObjectObservation(objid, ObjectObservation.NULL)
-        
-    def __hash__(self):
-        return self._hashcode
-    
-    def __eq__(self, other):
-        if not isinstance(other, MosOOObservation):
-            return False
-        else:
-            return self.objposes == other.objposes
+    @property
+    def pose(self):
+        return self.data
 
     def __str__(self):
-        return "MosOOObservation(%s)" % str(self.objposes)
+        return f"{self.objid}({self.objid}, {self.pose})"
+
+    @property
+    def id(self):
+        return self.objid
+
+
+class RobotObservation(pomdp_py.SimpleObservation):
+    def __init__(self, robot_id, robot_pose, objects_found, camera_direction):
+        self.robot_id = robot_id
+        self.pose = robot_pose
+        self.objects_found = objects_found
+        self.camera_direction = camera_direction
+        super().__init__((self.robot_id, self.pose, self.objects_found, self.camera_direction))
+
+    def __str__(self):
+        return f"{self.robot_id}({self.pose, self.camera_direction, self.objects_found})"
+
+
+class GMOSObservation(pomdp_py.Observation):
+    """Joint observation of objects for GMOS"""
+    def __init__(self, objobzs):
+        """
+        objobzs (dict): Maps from object id to Observation.
+            (can include robot observation)
+        """
+        self._hashcode = hash(frozenset(objobzs.items()))
+        self._objobzs = objobzs
+
+    def __hash__(self):
+        return self._hashcode
+
+    def __eq__(self, other):
+        return self._objobzs == other._objobzs
+
+    def __str__(self):
+        objzstr = ""
+        for objid in self._objobzs:
+            if self._objobzs[objid].loc is not None:
+                objzstr += str(self._objobzs[objid])
+        return "{}({})".format(self.__class__.__name__, objzstr)
 
     def __repr__(self):
         return str(self)
 
-    def factor(self, next_state, *params, **kwargs):
-        """Factor this OO-observation by objects"""
-        return {objid: ObjectObservation(objid, self.objposes[objid])
-                for objid in next_state.object_states
-                if objid != next_state.robot_id}
-    
-    @classmethod
-    def merge(cls, object_observations, next_state, *params, **kwargs):
-        """Merge `object_observations` into a single OOObservation object;
-        
-        object_observation (dict): Maps from objid to ObjectObservation"""
-        return MosOOObservation({objid: object_observations[objid].pose
-                                 for objid in object_observations
-                                 if objid != next_state.object_states[objid].objclass != "robot"})
+    def __len__(self):
+        # Only care about object observations here
+        return len(self._objobzs)
+
+    def __iter__(self):
+        # Only care about object observations here
+        return iter(self._objobzs.values())
+
+    def __getitem__(self, objid):
+        # objid can be either object id or robot id.
+        return self.z(objid)
+
+    def z(self, objid):
+        if objid in self._objobzs:
+            return self._objobzs[objid]
+        else:
+            raise ValueError("Object ID {} not in observation".format(objid))
+
+    def __contains__(self, objid):
+        return objid in self._objobzs
