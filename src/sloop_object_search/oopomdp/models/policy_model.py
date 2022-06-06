@@ -130,55 +130,8 @@ class PolicyModelBasic2D(PolicyModel):
             self.policy_model = policy_model
 
         def get_preferred_actions(self, state, history):
-            # If you have taken done before, you are done. So keep the done.
-            last_action = history[-1][0] if len(history) > 0 else None
-
-            robot_id = self.policy_model.robot_id
-            srobot = state.s(robot_id)
-
-            preferences = set()
-            if len(history) > 0:
-                last_action, last_observation = history[-1]
-                for objid in last_observation:
-                    if objid != srobot["id"] and objid not in srobot["objects_found"]\
-                       and last_observation.z(objid).pose != ObjectDetection.NULL:
-                        # We last observed an object that was not found. Then Find.
-                        preferences.add((action.FindAction(), self.num_visits_init, self.val_init))
-
-
-            if not self.policy_model.no_look:
-                preferences.add((action.LookAction(), self.num_visits_init, self.val_init))
-
-            for move in self.policy_model.movements:
-                for target_id in self.policy_model.target_ids:
-                    if target_id in srobot.objects_found:
-                        continue
-
-                    starget = state.s(target_id)
-                    current_distance = euclidean_dist(srobot.pose[:2], starget.pose)
-                    desired_yaw = yaw_facing(srobot.pose[:2], starget.pose)
-                    current_yaw_diff = abs(desired_yaw - srobot.pose[2]) % 360
-
-                    # A move is preferred if:
-                    # (1) it moves the robot closer to the target
-                    next_srobot = self.policy_model.robot_trans_model.sample(state, move)
-                    next_distance = euclidean_dist(next_srobot.pose[:2], starget.pose)
-                    if next_distance < current_distance:
-                        preferences.add((move, self.num_visits_init, self.val_init))
-                        break
-
-                    # (2) ALSO, if the move rotates the robot to be more facing the target,
-                    # unless the previous move was a rotation in an opposite direction;
-                    next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
-                    if next_yaw_diff < current_yaw_diff:
-                        if hasattr(last_action, "dyaw"):
-                            if last_action.dyaw * move.dyaw >= 0:
-                                # last action and current are NOT rotations in different directions
-                                preferences.add((move, self.num_visits_init, self.val_init))
-                        else:
-                            preferences.add((move, self.num_visits_init, self.val_init))
-
-            return preferences
+            # TODO: FILL
+            return set()
 
     ############# Action Prior XY ############
     class ActionPriorXY(ActionPrior):
