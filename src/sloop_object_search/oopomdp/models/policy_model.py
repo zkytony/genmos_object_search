@@ -135,18 +135,19 @@ class PolicyModelBasic2D(PolicyModel):
 
             robot_id = self.policy_model.robot_id
             srobot = state.s(robot_id)
+
+            preferences = set()
             if len(history) > 0:
                 last_action, last_observation = history[-1]
                 for objid in last_observation:
                     if objid != srobot["id"] and objid not in srobot["objects_found"]\
                        and last_observation.z(objid).pose != ObjectDetection.NULL:
                         # We last observed an object that was not found. Then Find.
-                        return set({(action.FindAction(), self.num_visits_init, self.val_init)})
+                        preferences.add((action.FindAction(), self.num_visits_init, self.val_init))
 
-            if self.policy_model.no_look:
-                preferences = set()
-            else:
-                preferences = set({(action.LookAction(), self.num_visits_init, self.val_init)})
+
+            if not self.policy_model.no_look:
+                preferences.add((action.LookAction(), self.num_visits_init, self.val_init))
 
             for move in self.policy_model.movements:
                 for target_id in self.policy_model.target_ids:
@@ -170,10 +171,13 @@ class PolicyModelBasic2D(PolicyModel):
                     # unless the previous move was a rotation in an opposite direction;
                     next_yaw_diff = abs(desired_yaw - next_srobot.pose[2]) % 360
                     if next_yaw_diff < current_yaw_diff:
-                        if hasattr(last_action, "dyaw") and last_action.dyaw * move.dyaw >= 0:
-                            # last action and current are NOT rotations in different directions
+                        if hasattr(last_action, "dyaw"):
+                            if last_action.dyaw * move.dyaw >= 0:
+                                # last action and current are NOT rotations in different directions
+                                preferences.add((move, self.num_visits_init, self.val_init))
+                        else:
                             preferences.add((move, self.num_visits_init, self.val_init))
-                            break
+
             return preferences
 
     ############# Action Prior XY ############
