@@ -5,8 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   genmsg
-  actionlib_msgs
-  pomdp_ros)
+  actionlib_msgs)
 
 catkin_python_setup()
 
