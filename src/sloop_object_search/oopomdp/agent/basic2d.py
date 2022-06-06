@@ -89,17 +89,3 @@ class SloopMosBasic2DAgent(SloopAgent):
                          transition_model,
                          observation_model,
                          reward_model)
-
-
-    def update_belief(self, observation, action):
-        if isinstance(observation, SpatialLanguageObservation):
-            for objid in self.belief.object_beliefs:
-                if objid == self.robot_id:
-                    new_belief_obj = self.belief.b(self.robot_id)
-                else:
-                    for
-
-
-                    self.splang_observation_model.interpret(observation)
-        if isinstance()
-        self.belief.update(observation, action, self)

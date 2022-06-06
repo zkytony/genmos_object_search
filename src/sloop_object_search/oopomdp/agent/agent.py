@@ -23,6 +23,8 @@ class SloopAgent(pomdp_py.Agent):
         self._init_oopomdp()
 
     def _init_oopomdp(self):
+        """Should call the super().__init__ method
+        to actually create the pomdp_py.Agent"""
         raise NotImplementedError
 
     def _init_splang_observation_model(self,
