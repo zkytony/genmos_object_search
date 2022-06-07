@@ -30,6 +30,7 @@ from ..domain.observation import (ObjectDetection,
                                   ObjectDetection2D,
                                   RobotObservation,
                                   RobotObservation2D,
+                                  RobotObservationTopo,
                                   GMOSObservation)
 
 
@@ -92,6 +93,11 @@ class RobotObservationModel2D(RobotObservationModel):
     @property
     def observation_class(self):
         return RobotObservation2D
+
+class RobotObservationModelTopo(RobotObservationModel):
+    @property
+    def observation_class(self):
+        return RobotObservationTopo
 
 
 def receiving_observation(action, no_look=False):

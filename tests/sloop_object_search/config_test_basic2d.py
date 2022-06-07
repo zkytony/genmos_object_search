@@ -24,7 +24,11 @@ config = {
 
     "agent_config": {
         "agent_class": "SloopMosBasic2DAgent",  # This agent works in 2D grids
-        "action_scheme": "vw",
+        "action": {
+            "action_scheme": "vw",
+            "step_size": 3,
+            "h_rotation": 45.0
+        },
         "no_look": True,
         "belief": {
             # could be "groundtruth", "uniform", or "splang" (interactive)

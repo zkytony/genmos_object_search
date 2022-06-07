@@ -46,7 +46,8 @@ class RobotState(pomdp_py.ObjectState):
                  robot_id,
                  pose,
                  objects_found,
-                 camera_direction):
+                 camera_direction,
+                 **kwargs):
         """
         Note: camera_direction is assumed to be None unless the robot is
         looking at a direction, in which case camera_direction is the string
@@ -56,7 +57,8 @@ class RobotState(pomdp_py.ObjectState):
                          {"id": robot_id,
                           "pose": pose,
                           "objects_found": objects_found,
-                          "camera_direction": camera_direction})
+                          "camera_direction": camera_direction,
+                          **kwargs})
 
     def __str__(self):
         return "{}({}, {})".format(type(self).__name__, self.pose, self.objects_found)
@@ -116,3 +118,34 @@ class RobotState2D(RobotState):
 
     def loc_in_range(self, sensor, loc, **kwargs):
         return sensor.in_range(loc, self["pose"], **kwargs)
+
+
+class RobotStateTopo(RobotState):
+    def __init__(self,
+                 robot_id,
+                 pose,
+                 objects_found,
+                 camera_direction,
+                 topo_nid):
+        super().__init__(robot_id,
+                         pose,
+                         objects_found,
+                         camera_direction,
+                         topo_nid=topo_nid)
+
+    @staticmethod
+    def from_obz(zrobot):
+        pose, topo_nid = zrobot.pose[:-1]
+        return RobotStateTopo(zrobot.robot_id,
+                              pose,
+                              zrobot.objects_found,
+                              zrobot.camera_direction,
+                              topo_nid)
+
+    @property
+    def nid(self):
+        return self['topo_nid']
+
+    @property
+    def topo_nid(self):
+        return self['topo_nid']

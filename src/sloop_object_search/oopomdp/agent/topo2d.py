@@ -11,6 +11,8 @@ from ..models.belief import Belief2D, BeliefTopo2D
 from .basic2d import (init_detection_models,
                       init_object_transition_models)
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
+from ..models.transition_model import RobotTransTopo
+from ..domain.state import RobotStateTopo
 
 
 class SloopMosTopo2DAgent(SloopAgent):
@@ -32,6 +34,10 @@ class SloopMosTopo2DAgent(SloopAgent):
         target_objects = {objid: objects[objid]
                           for objid in target_ids}
         search_region = self.grid_map.filter_by_label("search_region")
+        action_config = agent_config["action"]
+        action_config["h_rotation"] = action_config.get("h_rotation", 45.0)
+        h_angles = [i*action_config["h_rotation"]
+                    for i in range(int(360/action_config["h_rotation"]))]
 
         # initial object beliefs and combine them together
         init_object_beliefs = {}
@@ -62,8 +68,10 @@ class SloopMosTopo2DAgent(SloopAgent):
                                           init_topo_nid)
         # transition models and observation models
         detection_models = init_detection_models(agent_config)
-        robot_trans_model = RobotTransTopo(robot["id"], self.topo_map, detection_models)
-        transition_models = {**{robot["id"]: robot_trans_model},
+        robot_trans_model = RobotTransTopo(robot["id"], target_ids,
+                                           self.topo_map, detection_models, h_angles,
+                                           no_look=no_look)
+        transition_models = {robot["id"]: robot_trans_model,
                              **init_object_transition_models(agent_config)}
 
         robot_observation_model = RobotObservationModelTopo(robot['id'])

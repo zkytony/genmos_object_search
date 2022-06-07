@@ -65,6 +65,15 @@ class RobotObservation2D(RobotObservation):
                                   srobot['objects_found'],
                                   srobot['camera_direction'])
 
+class RobotObservationTopo(RobotObservation):
+    @staticmethod
+    def from_state(srobot):
+        return RobotObservationTopo(srobot['id'],
+                                    (srobot['pose'], srobot['topo_nid']),
+                                    srobot['objects_found'],
+                                    srobot['camera_direction'])
+
+
 class GMOSObservation(pomdp_py.Observation):
     """Joint observation of objects for GMOS"""
     def __init__(self, objobzs):

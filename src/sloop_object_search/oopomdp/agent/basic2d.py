@@ -14,6 +14,7 @@ from ..models.belief import BeliefBasic2D
 
 
 def init_detection_models(agent_config):
+    robot = agent_config["robot"]
     detection_models = {}
     for objid in robot["detectors"]:
         detector_spec = robot["detectors"][objid]
@@ -48,7 +49,8 @@ class SloopMosBasic2DAgent(SloopAgent):
         # Prep work
         robot = agent_config["robot"]
         objects = agent_config["objects"]
-        action_scheme = agent_config.get("action_scheme", "vw")
+        action_config = agent_config["action"]
+        action_scheme = action_config.get("action_scheme", "vw")
         if action_scheme not in {"vw", "xy"}:
             raise ValueError(f"Action scheme {action_scheme} is invalid.")
         no_look = agent_config.get("no_look", True)
@@ -65,7 +67,7 @@ class SloopMosBasic2DAgent(SloopAgent):
             robot["id"], reachable_positions,
             detection_models, action_scheme,
             no_look=no_look)
-        transition_models = {**{robot["id"]: robot_trans_model},
+        transition_models = {robot["id"]: robot_trans_model,
                              **init_object_transition_models(agent_config)}
         transition_model = pomdp_py.OOTransitionModel(transition_models)
 
@@ -80,9 +82,9 @@ class SloopMosBasic2DAgent(SloopAgent):
         target_ids = agent_config["targets"]
         policy_model = PolicyModelBasic2D(target_ids,
                                           robot_trans_model,
-                                          action_scheme,
                                           observation_model,
-                                          no_look=no_look)
+                                          no_look=no_look,
+                                          **action_config)
 
         # Reward Model
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])

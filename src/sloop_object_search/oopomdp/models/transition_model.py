@@ -18,6 +18,7 @@ from ..domain.state import (ObjectState,
 
 from ..domain.observation import *
 from ..domain.action import *
+from .sensors import yaw_facing
 from sloop_object_search.utils.math import fround, to_rad
 
 class ObjectTransitionModel(pomdp_py.TransitionModel):
@@ -52,9 +53,8 @@ class StaticObjectTransitionModel(ObjectTransitionModel):
 
 
 class RobotTransitionModel(ObjectTransitionModel):
-    def __init__(self, robot_id, reachable_positions, detection_models, no_look=False):
+    def __init__(self, robot_id, detection_models, no_look=False):
         super().__init__(robot_id)
-        self.reachable_positions = reachable_positions
         self.detection_models = detection_models
         self._no_look = no_look
 
@@ -76,7 +76,7 @@ class RobotTransitionModel(ObjectTransitionModel):
             next_camera_direction = action.name
 
         if isinstance(action, MotionAction):
-            next_robot_pose = self.motion_transition(srobot, action)
+            next_robot_pose = self.sample_motion(state, action)
 
         elif isinstance(action, LookAction):
             next_camera_direction = action.name
@@ -101,7 +101,7 @@ class RobotTransitionModel(ObjectTransitionModel):
                 objects_in_range.append(objid)
         return objects_in_range
 
-    def motion_transition(self, srobot, action, round_to="int"):
+    def sample_motion(self, state, action, round_to="int"):
         """
         round_to (str): specifies rounding method of the location
             of transitioned pose. See utils.math.fround for definition.
@@ -113,10 +113,12 @@ class RobotTransBasic2D(RobotTransitionModel):
     """robot movements over 2D grid"""
     def __init__(self, robot_id, reachable_positions,
                  detection_models, action_scheme, **kwargs):
-        super().__init__(robot_id, reachable_positions, detection_models, **kwargs)
+        super().__init__(robot_id, detection_models, **kwargs)
+        self.reachable_positions = reachable_positions
         self.action_scheme = action_scheme
 
-    def motion_transition(self, srobot, action, round_to="int"):
+    def sample_motion(self, state, action, round_to="int"):
+        srobot = state.s(self.robot_id)
         rx, ry, rth = srobot.pose
 
         if self.action_scheme == "xy":
@@ -142,3 +144,41 @@ class RobotTransBasic2D(RobotTransitionModel):
                             srobot_next['pose'],
                             srobot_next['objects_found'],
                             srobot_next['camera_direction'])
+
+
+class RobotTransTopo(RobotTransitionModel):
+    def __init__(self, robot_id, target_ids, topo_map,
+                 detection_models, h_angles, **kwargs):
+        """
+        h_angles (list): List of horizontal rotation (i.e. yaw)
+            angles considered for planning
+        """
+        super().__init__(robot_id, detection_models, **kwargs)
+        self._target_ids = target_ids
+        self._topo_map = topo_map
+        self._h_angles = h_angles
+
+    def sample_motion(self, state, action, round_to="int"):
+        srobot = state.s(self.robot_id)
+        if srobot.nid == action.src_nid:
+            next_robot_pos = self._topo_map.nodes[action.dst_nid].pos
+            for target_id in self._target_ids:
+                if target_id not in srobot.objects_found:
+                    starget = state.s(target_id)
+                    # will sample a yaw facing the target object
+                    yaw = yaw_facing(next_robot_pos, starget.loc, self._h_angles)
+                    next_robot_pose = (*next_robot_pos, yaw)
+                    next_topo_nid = action.dst_nid
+                    return (next_robot_pose, next_topo_nid)
+        else:
+            print(":::::WARNING::::: Unexpected action {} for robot state {}. Ignoring action".format(action, srobot))
+            return srobot['pose'], srobot['topo_nid']
+
+    def argmax(self, state, action):
+        srobot_next = super().argmax(state, action)
+        pose, topo_nid = srobot_next['pose']
+        return RobotStateTopo(srobot_next['id'],
+                              pose,
+                              srobot_next['objects_found'],
+                              srobot_next['camera_direction'],
+                              topo_nid)
