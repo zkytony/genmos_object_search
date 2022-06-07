@@ -1,4 +1,3 @@
-import torch
 import pomdp_py
 from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
@@ -12,6 +11,29 @@ from ..models.observation_model import (GMOSObservationModel,
 from ..models.policy_model import PolicyModelBasic2D
 from ..models.reward_model import GoalBasedRewardModel
 from ..models.belief import BeliefBasic2D
+
+
+def init_detection_models(agent_config):
+    detection_models = {}
+    for objid in robot["detectors"]:
+        detector_spec = robot["detectors"][objid]
+        detection_model = import_class(detector_spec["class"])(
+            objid, *detector_spec["params"]
+        )
+        detection_models[objid] = detection_model
+    return detection_models
+
+def init_object_transition_models(agent_config):
+    objects = agent_config["objects"]
+    transition_models = {}
+    for objid in objects:
+        object_trans_model =\
+            import_class(objects[objid]["transition"]["class"])(
+                objid, **objects[objid]["transition"].get("params", {})
+            )
+        transition_models[objid] = object_trans_model
+    return transition_models
+
 
 class SloopMosBasic2DAgent(SloopAgent):
     """
@@ -30,31 +52,21 @@ class SloopMosBasic2DAgent(SloopAgent):
         if action_scheme not in {"vw", "xy"}:
             raise ValueError(f"Action scheme {action_scheme} is invalid.")
         no_look = agent_config.get("no_look", True)
-        detection_models = {}
-        for objid in robot["detectors"]:
-            detector_spec = robot["detectors"][objid]
-            detection_model = import_class(detector_spec["class"])(
-                objid, *detector_spec["params"]
-            )
-            detection_models[objid] = detection_model
-        search_region = self.grid_map.free_locations
+        detection_models = init_detection_models(agent_config)
+        search_region = self.grid_map.filter_by_label("search_region")
         init_robot_state = RobotState2D(robot["id"],
                                         robot["init_pose"],
                                         robot.get("found_objects", tuple()),
                                         robot.get("camera_direction", None))
 
         # Transition Model
+        reachable_positions = self.grid_map.filter_by_label("reachable")
         robot_trans_model = RobotTransBasic2D(
-            robot["id"], search_region,
+            robot["id"], reachable_positions,
             detection_models, action_scheme,
             no_look=no_look)
-        transition_models = {robot["id"]: robot_trans_model}
-        for objid in objects:
-            object_trans_model =\
-                import_class(objects[objid]["transition"]["class"])(
-                    objid, **objects[objid]["transition"].get("params", {})
-                )
-            transition_models[objid] = object_trans_model
+        transition_models = {**{robot["id"]: robot_trans_model},
+                             **init_object_transition_models(agent_config)}
         transition_model = pomdp_py.OOTransitionModel(transition_models)
 
         # Observation Model (Mos)

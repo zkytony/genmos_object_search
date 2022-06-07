@@ -1,17 +1,39 @@
 import pomdp_py
 from .transition_model import StaticObjectTransitionModel
-from ..domain.state import ObjectState2D, RobotState2D
+from ..domain.state import (ObjectState2D,
+                            RobotState2D)x
 from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.domain.observation import GMOSObservation
 from sloop.observation import SpatialLanguageObservation
 
 
-class BeliefBasic2D(pomdp_py.OOBelief):
+class Belief2D(pomdp_py.OOBelief):
+
+    @staticmethod
+    def init_object_belief(objid, search_region, prior=None):
+        if prior is None:
+            prior = {}
+        belief_dist = {}
+        object_prior_dist = prior.get(objid, {})
+        if type(object_prior_dist) != dict:
+            object_prior_dist = {}
+        target = target_objects[objid]
+        for loc in search_region:
+            state = ObjectState2D(objid, target["class"], loc)
+            if loc in object_prior_dist:
+                belief_dist[state] = object_prior_dist[loc]
+            else:
+                # uniform
+                belief_dist[state] = 1.0 / len(search_region)
+        return pomdp_py.Histogram(belief_dist)
+
     def __init__(self,
                  robot_state,
                  target_objects,
                  search_region,
-                 belief_config):
+                 belief_config,
+                 object_beliefs=None):
+        """Note that object_beliefs don't include robot belief"""
         self.robot_id = robot_state["id"]
         self.search_region = search_region
         self.target_objects = target_objects
@@ -20,21 +42,13 @@ class BeliefBasic2D(pomdp_py.OOBelief):
         if type(prior) != dict:
             prior = {}
 
-        object_beliefs = {robot_state["id"]: robot_belief}
-        for objid in target_objects:
-            belief_dist = {}
-            object_prior_dist = prior.get(objid, {})
-            if type(object_prior_dist) != dict:
-                object_prior_dist = {}
-            target = target_objects[objid]
-            for loc in search_region:
-                state = ObjectState2D(objid, target["class"], loc)
-                if loc in object_prior_dist:
-                    belief_dist[state] = object_prior_dist[loc]
-                else:
-                    # uniform
-                    belief_dist[state] = 1.0 / len(search_region)
-            object_beliefs[objid] = pomdp_py.Histogram(belief_dist)
+        if object_beliefs is not None:
+            object_beliefs[robot_state["id"] = robot_belief
+        else:
+            object_beliefs = {robot_state["id"]: robot_belief}
+            for objid in target_objects:
+                object_beliefs[objid] = Belief2D.init_object_belief(
+                    objid, search_region, prior=prior)
         super().__init__(object_beliefs)
 
 
@@ -72,6 +86,8 @@ class BeliefBasic2D(pomdp_py.OOBelief):
         belief_dist = pomdp_py.Histogram(normalize(belief_dist))
         self.set_object_belief(objid, belief_dist)
 
+
+class BeliefBasic2D(Belief2D):
     def update_robot_belief(self, observation, action):
         # Note: assumes robot state observable
         if isinstance(observation, SpatialLanguageObservation):
@@ -81,3 +97,28 @@ class BeliefBasic2D(pomdp_py.OOBelief):
         next_robot_state = RobotState2D.from_obz(observation.z(self.robot_id))
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
+
+
+class BeliefTopo2D(Belief2D):
+
+    @staticmethod
+    def combine_object_beliefs(search_region,
+                               object_beliefs):
+        """
+        Given object_beliefs (dict, mapping from objid to belief histogram),
+        returns a mapping from location to probability where the probability
+        is the result of adding up probabilities from different objects at
+        the same location.
+
+        Args:
+            search_region (set): set of locations
+            object_beliefs (dict): mapping from objid to belief histogram
+        """
+        dist = {}
+        for loc in search_region:
+            dist[loc] = 1e-9
+            for objid in object_beliefs:
+                random_sobj = objec_beliefs[objid].random()
+                sobj = ObjectState2D(objid, random_sobj.objclass, loc)
+                dist[loc] += object_beliefs[sobj]
+        return dist

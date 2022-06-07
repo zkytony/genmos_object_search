@@ -60,7 +60,8 @@ class GridMap:
         for loc in locs:
             self.label(*loc, label)
 
-    def cells_with_label(self, label):
+    def filter_by_label(self, label):
+        """Returns a set of locations in the grid map with label"""
         return {loc for loc in self.free_locations
                 if label in self._labels.get(loc, set())}\
                 | {loc for loc in self.obstacles

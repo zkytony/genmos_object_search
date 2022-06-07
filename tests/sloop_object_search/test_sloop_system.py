@@ -2,7 +2,7 @@ import copy
 import random
 import pomdp_py
 from pomdp_py.utils import typ
-import config_test1 as test_config
+import config_test_basic2d as test_config
 import sloop.observation
 from sloop.osm.datasets import MapInfoDataset, FILEPATHS
 from sloop_object_search.utils.misc import import_class
@@ -63,9 +63,10 @@ def main(_config):
                                     agent.reward_model)
 
     # Show visualization
-    viz = VizSloopMosBasic2D(agent.grid_map,
-                             res=20,
-                             bg_path=FILEPATHS[map_name]["map_png"])
+    _task_config = _config["task_config"]
+    viz = import_class(_task_config["visualizer"])(agent.grid_map,
+                                                   bg_path=FILEPATHS[map_name]["map_png"],
+                                                   **_task_config["viz_params"])
     visualize_step(viz, agent, task_env, None, _config, draw_belief=False)
 
     # Belief prior
@@ -95,7 +96,7 @@ def main(_config):
     for i in range(max_steps):
         action = planner.plan(agent)
         _dd = pomdp_py.utils.TreeDebugger(agent.tree)
-        _dd.mbp
+        _dd.p(1)
 
         reward = task_env.state_transition(action, execute=True)
         observation = task_env.provide_observation(agent.observation_model, action)

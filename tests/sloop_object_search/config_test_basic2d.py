@@ -8,13 +8,18 @@ config = {
         "planner": "pomdp_py.POUCT",
         "planner_params": {
             "max_depth": 20,
-            "exploration_const": 1000
+            "exploration_const": 1000,
+            "planning_time": 0.25
         }
     },
 
     "task_config": {
         "max_steps": 100,
-        "map_name": "austin"
+        "map_name": "austin",
+        "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosBasic2D",
+        "viz_params": {
+            "res": 20
+        }
     },
 
     "agent_config": {
@@ -49,6 +54,6 @@ config = {
             }
         },
         "spacy_model": "en_core_web_lg",
-        "foref_models_dir": os.path.join(ABS_PATH, "../../models")
+        "foref_models_dir": os.path.join(ABS_PATH, "../../models"),
     },
 }
