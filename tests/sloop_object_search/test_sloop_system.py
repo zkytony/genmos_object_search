@@ -2,7 +2,6 @@ import copy
 import random
 import pomdp_py
 from pomdp_py.utils import typ
-import config_test_basic2d as test_config
 import sloop.observation
 from sloop.osm.datasets import MapInfoDataset, FILEPATHS
 from sloop_object_search.utils.misc import import_class
@@ -113,4 +112,11 @@ def main(_config):
             break
 
 if __name__ == "__main__":
-    main(test_config.config)
+    import sys
+    import importlib
+    if len(sys.argv) >= 1:
+        config_module = importlib.import_module(sys.argv[0].split(".py")[0])
+    else:
+        import config_test_basic2d
+        config_module = config_test_basic2d
+    main(config_module.config)
