@@ -71,41 +71,23 @@ class PolicyModelBasic2D(PolicyModel):
         self.no_look = no_look
         self._legal_moves = {}
         self._observation_model = observation_model
-        if action_args.get("action_scheme") == "vw":
-            self.action_prior = PolicyModelBasic2D.ActionPriorVW(
-                num_visits_init, val_init, self)
+        self.action_prior = PolicyModelBasic2D.ActionPriorVW(
+            num_visits_init, val_init, self)
 
     @staticmethod
-    def all_movements(action_scheme="vw", step_size=3, h_rotation=45.0):
-        if action_scheme == "vw":
-            # scheme vw: (vt, vw) translational, rotational velocities.
-            FORWARD = (step_size, 0)
-            BACKWARD = (-step_size, 0)
-            LEFT = (0, -h_rotation)  # left 45 deg
-            RIGHT = (0, h_rotation)  # right 45 deg
-            MoveForward = action.MotionAction2D(FORWARD, motion_name="Forward")
-            MoveBackward = action.MotionAction2D(BACKWARD, motion_name="Backward")
-            MoveLeft = action.MotionAction2D(LEFT, motion_name="TurnLeft")
-            MoveRight = action.MotionAction2D(RIGHT, motion_name="TurnRight")
-            movements = {MoveForward,
-                         MoveLeft,  # rotate left
-                         MoveRight} # rotate right
-        elif action_scheme == "xy":
-            # scheme xy: (vx,vy,th)
-            EAST = (step_size, 0, 0)  # x is horizontal; x+ is right. y is vertical; y+ is down.
-            WEST = (-step_size, 0, 180.0)
-            NORTH = (0, -step_size, 270.0)
-            SOUTH = (0, step_size, 90.0)
-            MoveEast = action.MotionAction2D(EAST, motion_name="East")
-            MoveWest = action.MotionAction2D(WEST, motion_name="West")
-            MoveNorth = action.MotionAction2D(NORTH, motion_name="North")
-            MoveSouth = action.MotionAction2D(SOUTH, motion_name="South")
-            movements = {MoveNorth,
-                         MoveSouth,
-                         MoveEast,
-                         MoveWest}
-        else:
-            raise ValueError(f"Invalid action scheme {action_scheme}")
+    def all_movements(step_size=3, h_rotation=45.0):
+        # scheme vw: (vt, vw) translational, rotational velocities.
+        FORWARD = (step_size, 0)
+        BACKWARD = (-step_size, 0)
+        LEFT = (0, -h_rotation)  # left 45 deg
+        RIGHT = (0, h_rotation)  # right 45 deg
+        MoveForward = action.MotionAction2D(FORWARD, motion_name="Forward")
+        MoveBackward = action.MotionAction2D(BACKWARD, motion_name="Backward")
+        MoveLeft = action.MotionAction2D(LEFT, motion_name="TurnLeft")
+        MoveRight = action.MotionAction2D(RIGHT, motion_name="TurnRight")
+        movements = {MoveForward,
+                     MoveLeft,  # rotate left
+                     MoveRight} # rotate right
         return movements
 
     def get_all_actions(self, state=None, history=None):
@@ -150,11 +132,6 @@ class PolicyModelBasic2D(PolicyModel):
         def get_preferred_actions(self, state, history):
             # TODO: FILL
             return set()
-
-    ############# Action Prior XY ############
-    class ActionPriorXY(ActionPrior):
-        # TODO, if needed.
-        pass
 
 
 class PolicyModelTopo(PolicyModel):

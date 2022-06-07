@@ -84,7 +84,6 @@ class SloopMosTopo2DAgent(SloopAgent):
         target_ids = agent_config["targets"]
         policy_model = PolicyModelTopo(target_ids,
                                        robot_trans_model,
-                                       action_scheme,
                                        observation_model,
                                        no_look=no_look)
 

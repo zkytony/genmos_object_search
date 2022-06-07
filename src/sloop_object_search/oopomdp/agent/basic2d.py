@@ -50,9 +50,6 @@ class SloopMosBasic2DAgent(SloopAgent):
         robot = agent_config["robot"]
         objects = agent_config["objects"]
         action_config = agent_config["action"]
-        action_scheme = action_config.get("action_scheme", "vw")
-        if action_scheme not in {"vw", "xy"}:
-            raise ValueError(f"Action scheme {action_scheme} is invalid.")
         no_look = agent_config.get("no_look", True)
         detection_models = init_detection_models(agent_config)
         search_region = self.grid_map.filter_by_label("search_region")
@@ -65,7 +62,7 @@ class SloopMosBasic2DAgent(SloopAgent):
         reachable_positions = self.grid_map.filter_by_label("reachable")
         robot_trans_model = RobotTransBasic2D(
             robot["id"], reachable_positions,
-            detection_models, action_scheme,
+            detection_models,
             no_look=no_look)
         transition_models = {robot["id"]: robot_trans_model,
                              **init_object_transition_models(agent_config)}

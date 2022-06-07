@@ -112,26 +112,18 @@ class RobotTransitionModel(ObjectTransitionModel):
 class RobotTransBasic2D(RobotTransitionModel):
     """robot movements over 2D grid"""
     def __init__(self, robot_id, reachable_positions,
-                 detection_models, action_scheme, **kwargs):
+                 detection_models, **kwargs):
         super().__init__(robot_id, detection_models, **kwargs)
         self.reachable_positions = reachable_positions
-        self.action_scheme = action_scheme
 
     def sample_motion(self, state, action, round_to="int"):
         srobot = state.s(self.robot_id)
         rx, ry, rth = srobot.pose
-
-        if self.action_scheme == "xy":
-            dx, dy, th = action.motion
-            rx += dx
-            ry += dy
-            rth = th
-        elif self.action_scheme == "vw":
-            # odometry motion model
-            forward, angle = action.motion
-            rth = (rth + angle) % 360
-            rx = rx + forward*math.cos(to_rad(rth))
-            ry = ry + forward*math.sin(to_rad(rth))
+        # odometry motion model
+        forward, angle = action.motion
+        rth = (rth + angle) % 360
+        rx = rx + forward*math.cos(to_rad(rth))
+        ry = ry + forward*math.sin(to_rad(rth))
         rx, ry, rth = fround(round_to, (rx, ry, rth))
         if (rx, ry) in self.reachable_positions:
             return (rx, ry, rth)
