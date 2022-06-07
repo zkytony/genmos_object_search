@@ -41,6 +41,33 @@ class GridMap:
         self._geodesic_dist_cache = {}
         self._blocked_cache = {}
 
+        # Labels on grid cells
+        self._labels = {}  # maps from position (x,y) to a set of labels
+
+    def __contains__(self, loc):
+        return loc in self.free_locations\
+            or loc in self.obstacles\
+            or loc in self.unknown
+
+    def label(self, x, y, label):
+        if (x,y) not in self:
+            raise ValueError(f"Cell ({x}, {y}) not on grid map")
+        if (x,y) not in self._labels:
+            self._labels[(x,y)] = set()
+        self._labels[(x,y)].add(label)
+
+    def label_all(self, locs, label):
+        for loc in locs:
+            self.label(*loc, label)
+
+    def cells_with_label(self, label):
+        return {loc for loc in self.free_locations
+                if label in self._labels.get(loc, set())}\
+                | {loc for loc in self.obstacles
+                   if label in self._labels.get(loc, set())}\
+                | {loc for loc in self.unknown
+                   if label in self._labels.get(loc, set())}
+
     def update(self, obstacles, unknown=None):
         all_positions = {(x,y) for x in range(self.width)
                          for y in range(self.length)}
