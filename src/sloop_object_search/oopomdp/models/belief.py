@@ -1,7 +1,7 @@
 import pomdp_py
 from .transition_model import StaticObjectTransitionModel
 from ..domain.state import (ObjectState2D,
-                            RobotState2D)x
+                            RobotState2D)
 from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.domain.observation import GMOSObservation
 from sloop.observation import SpatialLanguageObservation
@@ -10,16 +10,15 @@ from sloop.observation import SpatialLanguageObservation
 class Belief2D(pomdp_py.OOBelief):
 
     @staticmethod
-    def init_object_belief(objid, search_region, prior=None):
+    def init_object_belief(objid, objclass, search_region, prior=None):
         if prior is None:
             prior = {}
         belief_dist = {}
         object_prior_dist = prior.get(objid, {})
         if type(object_prior_dist) != dict:
             object_prior_dist = {}
-        target = target_objects[objid]
         for loc in search_region:
-            state = ObjectState2D(objid, target["class"], loc)
+            state = ObjectState2D(objid, objclass, loc)
             if loc in object_prior_dist:
                 belief_dist[state] = object_prior_dist[loc]
             else:
@@ -43,12 +42,13 @@ class Belief2D(pomdp_py.OOBelief):
             prior = {}
 
         if object_beliefs is not None:
-            object_beliefs[robot_state["id"] = robot_belief
+            object_beliefs[robot_state["id"]] = robot_belief
         else:
             object_beliefs = {robot_state["id"]: robot_belief}
             for objid in target_objects:
+                target = target_objects[objid]
                 object_beliefs[objid] = Belief2D.init_object_belief(
-                    objid, search_region, prior=prior)
+                    objid, target['class'], search_region, prior=prior)
         super().__init__(object_beliefs)
 
 
@@ -118,7 +118,7 @@ class BeliefTopo2D(Belief2D):
         for loc in search_region:
             dist[loc] = 1e-9
             for objid in object_beliefs:
-                random_sobj = objec_beliefs[objid].random()
+                random_sobj = object_beliefs[objid].random()
                 sobj = ObjectState2D(objid, random_sobj.objclass, loc)
-                dist[loc] += object_beliefs[sobj]
+                dist[loc] += object_beliefs[objid][sobj]
         return dist

@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import copy
 from collections import deque
-import networkx as nx
 
 ########################################
 #  Node
@@ -605,6 +604,7 @@ class Graph(EdgeNodeSet):
 
     #--- Conversion ---#
     def to_nx_graph(self):
+        import networkx as nx
         if self._directed:
             G = nx.MultiDiGraph()
         else:
@@ -1175,7 +1175,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.lines as lines
 import matplotlib.patheffects as path_effects
-import sklearn.metrics
 
 
 def transform_coordinates(gx, gy, map_spec, img):
@@ -1251,6 +1250,7 @@ def plot_to_file(*args, labels=[], path="plot.png", xlabel=None, ylabel=None):
 
 def plot_roc(roc_data, savepath='roc.png', names=[]):
     """roc_data is list of tuples (fpr, tpr)"""
+    import sklearn.metrics
     from pylab import rcParams
     rcParams['figure.figsize'] = 4, 4
     for i, item in enumerate(roc_data):

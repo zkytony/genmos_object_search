@@ -1,12 +1,17 @@
 """
 Agent that works over a topological graph
 """
+import random
+from collections import deque
 import pomdp_py
 from sloop.agent import SloopAgent
 from sloop_object_search.utils.osm import osm_map_to_grid_map
+from sloop_object_search.utils.math import euclidean_dist, normalize
 from ..models.belief import Belief2D, BeliefTopo2D
 from .basic2d import (init_detection_models,
                       init_object_transition_models)
+from ..models.topo_map import TopoNode, TopoMap, TopoEdge
+
 
 class SloopMosTopo2DAgent(SloopAgent):
     """
@@ -31,22 +36,24 @@ class SloopMosTopo2DAgent(SloopAgent):
         # initial object beliefs and combine them together
         init_object_beliefs = {}
         for objid in target_ids:
+            target = target_objects[objid]
             init_object_beliefs[objid] =\
-                Belief2D.init_object_belief(objid, search_region,
+                Belief2D.init_object_belief(objid, target['class'], search_region,
                                             agent_config["belief"].get("prior", {}))
         combined_dist = BeliefTopo2D.combine_object_beliefs(search_region,
                                                             init_object_beliefs)
         reachable_positions = self.grid_map.filter_by_label("reachable")
-        _topo_map_args = agent_config["topo_map_args"]
+        topo_map_args = agent_config["topo_map_args"]
+        print("Sampling topological graph...")
         self.topo_map = _sample_topo_map(combined_dist,
                                          reachable_positions,
-                                         _topo_map_args.get("num_place_samples", 10),
-                                         degree=_topo_map_args.get("degree", (3,5)),
-                                         sep=_topo_map_args.get("sep", 4.0),
-                                         rnd=random.Random(_topo_map_args.get("seed", 1001))
+                                         topo_map_args.get("num_place_samples", 10),
+                                         degree=topo_map_args.get("degree", (3,5)),
+                                         sep=topo_map_args.get("sep", 4.0),
+                                         rnd=random.Random(topo_map_args.get("seed", 1001))
         )
 
-
+        robot = agent_config["robot"]
         init_topo_nid = self.topo_map.closest_node(*robot["init_pose"][:2])
         init_robot_state = RobotStateTopo(robot["id"],
                                           robot["init_pose"],

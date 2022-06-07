@@ -6,7 +6,9 @@ import sloop.observation
 from sloop.osm.datasets import MapInfoDataset, FILEPATHS
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import normalize
-from sloop_object_search.oopomdp.agent import SloopMosBasic2DAgent, VizSloopMosBasic2D
+from sloop_object_search.oopomdp.agent import (SloopMosBasic2DAgent,
+                                               VizSloopMosBasic2D,
+                                               SloopMosTopo2DAgent)
 from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
 from sloop_object_search.oopomdp.domain.action import LookAction
 
@@ -114,8 +116,8 @@ def main(_config):
 if __name__ == "__main__":
     import sys
     import importlib
-    if len(sys.argv) >= 1:
-        config_module = importlib.import_module(sys.argv[0].split(".py")[0])
+    if len(sys.argv) >= 2:
+        config_module = importlib.import_module(sys.argv[1].split(".py")[0])
     else:
         import config_test_basic2d
         config_module = config_test_basic2d

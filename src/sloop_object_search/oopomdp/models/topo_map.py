@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
 from collections import deque
-import networkx as nx
-from sloop_object_search.utils.color import lighter
+from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils.math import euclidean_dist
 from sloop_object_search.utils.graph import Node, Graph, Edge
 
