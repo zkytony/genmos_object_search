@@ -46,10 +46,8 @@ class MotionAction2D(MotionAction):
         return self.motion[1]
 
 # Define some constant actions
-
 Look = LookAction()
 Find = FindAction()
-
 
 class MotionActionTopo(MotionAction):
     def __init__(self, src_nid, dst_nid, gdist=None,

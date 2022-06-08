@@ -42,12 +42,13 @@ class ObjectDetection2D(ObjectDetection):
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
-    def __init__(self, robot_id, robot_pose, objects_found, camera_direction):
+    def __init__(self, robot_id, robot_pose, objects_found, camera_direction, *args):
         self.robot_id = robot_id
         self.pose = robot_pose
         self.objects_found = objects_found
         self.camera_direction = camera_direction
-        super().__init__((self.robot_id, self.pose, self.objects_found, self.camera_direction))
+        data = (self.robot_id, self.pose, self.objects_found, self.camera_direction, *args)
+        super().__init__(data)
 
     def __str__(self):
         return f"{self.robot_id}({self.pose, self.camera_direction, self.objects_found})"
@@ -65,13 +66,25 @@ class RobotObservation2D(RobotObservation):
                                   srobot['objects_found'],
                                   srobot['camera_direction'])
 
-class RobotObservationTopo(RobotObservation):
+class RobotObservationTopo(RobotObservation2D):
+    def __init__(self, robot_id, robot_pose, objects_found, camera_direction, topo_nid):
+        super().__init__(robot_id,
+                         robot_pose,
+                         objects_found,
+                         camera_direction,
+                         topo_nid)
+
+    @property
+    def topo_nid(self):
+        return self.data[-1]
+
     @staticmethod
     def from_state(srobot):
         return RobotObservationTopo(srobot['id'],
-                                    (srobot['pose'], srobot['topo_nid']),
+                                    srobot['pose'],
                                     srobot['objects_found'],
-                                    srobot['camera_direction'])
+                                    srobot['camera_direction'],
+                                    srobot['topo_nid'])
 
 
 class GMOSObservation(pomdp_py.Observation):

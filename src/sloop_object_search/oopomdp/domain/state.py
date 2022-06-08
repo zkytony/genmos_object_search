@@ -112,7 +112,6 @@ class RobotState2D(RobotState):
                             zrobot.objects_found,
                             zrobot.camera_direction)
 
-
     def in_range(self, sensor, sobj, **kwargs):
         return sensor.in_range(sobj.loc, self["pose"], **kwargs)
 
@@ -120,7 +119,7 @@ class RobotState2D(RobotState):
         return sensor.in_range(loc, self["pose"], **kwargs)
 
 
-class RobotStateTopo(RobotState):
+class RobotStateTopo(RobotState2D):
     def __init__(self,
                  robot_id,
                  pose,
@@ -135,12 +134,11 @@ class RobotStateTopo(RobotState):
 
     @staticmethod
     def from_obz(zrobot):
-        pose, topo_nid = zrobot.pose[:-1]
         return RobotStateTopo(zrobot.robot_id,
-                              pose,
+                              zrobot.pose,
                               zrobot.objects_found,
                               zrobot.camera_direction,
-                              topo_nid)
+                              zrobot.topo_nid)
 
     @property
     def nid(self):

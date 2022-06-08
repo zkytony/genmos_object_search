@@ -10,8 +10,12 @@ from sloop_object_search.utils.math import euclidean_dist, normalize
 from ..models.belief import Belief2D, BeliefTopo2D
 from .basic2d import (init_detection_models,
                       init_object_transition_models)
+from ..models.observation_model import (GMOSObservationModel,
+                                        RobotObservationModelTopo)
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from ..models.transition_model import RobotTransTopo
+from ..models.policy_model import PolicyModelTopo
+from ..models.reward_model import GoalBasedRewardModel
 from ..domain.state import RobotStateTopo
 
 
@@ -38,6 +42,7 @@ class SloopMosTopo2DAgent(SloopAgent):
         action_config["h_rotation"] = action_config.get("h_rotation", 45.0)
         h_angles = [i*action_config["h_rotation"]
                     for i in range(int(360/action_config["h_rotation"]))]
+        no_look = agent_config.get("no_look", True)
 
         # initial object beliefs and combine them together
         init_object_beliefs = {}
@@ -73,6 +78,7 @@ class SloopMosTopo2DAgent(SloopAgent):
                                            no_look=no_look)
         transition_models = {robot["id"]: robot_trans_model,
                              **init_object_transition_models(agent_config)}
+        transition_model = pomdp_py.OOTransitionModel(transition_models)
 
         robot_observation_model = RobotObservationModelTopo(robot['id'])
         observation_model = GMOSObservationModel(
@@ -84,7 +90,6 @@ class SloopMosTopo2DAgent(SloopAgent):
         target_ids = agent_config["targets"]
         policy_model = PolicyModelTopo(target_ids,
                                        robot_trans_model,
-                                       observation_model,
                                        no_look=no_look)
 
         # Reward Model
@@ -101,8 +106,6 @@ class SloopMosTopo2DAgent(SloopAgent):
                 transition_model,
                 observation_model,
                 reward_model)
-
-
 
 
 def _shortest_path(reachable_positions, gloc1, gloc2):

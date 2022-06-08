@@ -14,7 +14,8 @@ import copy
 from ..domain.state import (ObjectState,
                             ObjectState2D,
                             RobotState,
-                            RobotState2D)
+                            RobotState2D,
+                            RobotStateTopo)
 
 from ..domain.observation import *
 from ..domain.action import *
@@ -116,9 +117,16 @@ class RobotTransBasic2D(RobotTransitionModel):
         super().__init__(robot_id, detection_models, **kwargs)
         self.reachable_positions = reachable_positions
 
-    def sample_motion(self, state, action, round_to="int"):
-        srobot = state.s(self.robot_id)
-        rx, ry, rth = srobot.pose
+    def sample_motion(self, state_or_pose, action, round_to="int"):
+        if type(state_or_pose) != tuple:
+            state = state_or_pose
+            if isinstance(state, RobotState):
+                srobot = state
+            elif isinstance(state, OOState):
+                srobot = state.s(self.robot_id)
+            rx, ry, rth = srobot.pose
+        else:
+            rx, ry, rth = state_or_pose
         # odometry motion model
         forward, angle = action.motion
         rth = (rth + angle) % 360
@@ -146,14 +154,14 @@ class RobotTransTopo(RobotTransitionModel):
             angles considered for planning
         """
         super().__init__(robot_id, detection_models, **kwargs)
+        self.topo_map = topo_map
         self._target_ids = target_ids
-        self._topo_map = topo_map
         self._h_angles = h_angles
 
     def sample_motion(self, state, action, round_to="int"):
         srobot = state.s(self.robot_id)
         if srobot.nid == action.src_nid:
-            next_robot_pos = self._topo_map.nodes[action.dst_nid].pos
+            next_robot_pos = self.topo_map.nodes[action.dst_nid].pos
             for target_id in self._target_ids:
                 if target_id not in srobot.objects_found:
                     starget = state.s(target_id)
@@ -162,15 +170,41 @@ class RobotTransTopo(RobotTransitionModel):
                     next_robot_pose = (*next_robot_pos, yaw)
                     next_topo_nid = action.dst_nid
                     return (next_robot_pose, next_topo_nid)
+
+            # If no more target to find, then just keep the current yaw
+            next_robot_pose = (*next_robot_pos, srobot['pose'][2])
+            return (next_robot_pose, next_topo_nid)
         else:
             print(":::::WARNING::::: Unexpected action {} for robot state {}. Ignoring action".format(action, srobot))
             return srobot['pose'], srobot['topo_nid']
 
     def argmax(self, state, action):
-        srobot_next = super().argmax(state, action)
-        pose, topo_nid = srobot_next['pose']
-        return RobotStateTopo(srobot_next['id'],
-                              pose,
-                              srobot_next['objects_found'],
-                              srobot_next['camera_direction'],
-                              topo_nid)
+        srobot = state.s(self.robot_id)
+        current_robot_pose = srobot["pose"]
+        next_robot_pose = current_robot_pose
+        next_objects_found = srobot.objects_found
+        next_camera_direction = srobot.camera_direction
+        next_topo_nid = srobot.topo_nid
+        if self._no_look:
+            next_camera_direction = action.name
+
+        if isinstance(action, MotionAction):
+            next_robot_pose, next_topo_nid = self.sample_motion(state, action)
+
+        elif isinstance(action, LookAction):
+            next_camera_direction = action.name
+
+        elif isinstance(action, FindAction):
+            next_objects_found = tuple(
+                set(next_objects_found)
+                | set(self.objects_in_range(current_robot_pose, state)))
+
+        return RobotStateTopo(self.robot_id,
+                              next_robot_pose,
+                              next_objects_found,
+                              next_camera_direction,
+                              next_topo_nid)
+
+
+    def update(self, topo_map):
+        self.topo_map = topo_map

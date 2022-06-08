@@ -36,7 +36,7 @@ config = {
         "no_look": True,
         "belief": {
             # could be "groundtruth", "uniform", or "splang" (interactive)
-            "prior": {"G": "splang"}
+            "prior": {"G": "groundtruth"}
         },
         "targets": ["G"],
         "objects": {

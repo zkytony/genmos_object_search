@@ -1,7 +1,8 @@
 import pomdp_py
 from .transition_model import StaticObjectTransitionModel
 from ..domain.state import (ObjectState2D,
-                            RobotState2D)
+                            RobotState2D,
+                            RobotStateTopo)
 from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.domain.observation import GMOSObservation
 from sloop.observation import SpatialLanguageObservation
@@ -100,6 +101,17 @@ class BeliefBasic2D(Belief2D):
 
 
 class BeliefTopo2D(Belief2D):
+
+    def update_robot_belief(self, observation, action):
+        # Note: assumes robot state observable
+        if isinstance(observation, SpatialLanguageObservation):
+            # spatial language doesn't involve robot
+            return
+
+        next_robot_state = RobotStateTopo.from_obz(observation.z(self.robot_id))
+        self.set_object_belief(
+            self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
+
 
     @staticmethod
     def combine_object_beliefs(search_region,
