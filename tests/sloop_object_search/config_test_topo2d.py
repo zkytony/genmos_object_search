@@ -16,7 +16,7 @@ config = {
     "task_config": {
         "max_steps": 100,
         "map_name": "austin",
-        "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosTopo2D",
+        "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosTopo",
         "viz_params": {
             "res": 20
         }

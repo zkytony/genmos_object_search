@@ -80,7 +80,6 @@ class SloopMosBasic2DAgent(SloopAgent):
         policy_model = PolicyModelBasic2D(target_ids,
                                           robot_trans_model,
                                           observation_model,
-                                          no_look=no_look,
                                           **action_config)
 
         # Reward Model

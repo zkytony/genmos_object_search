@@ -98,6 +98,7 @@ class PolicyModelBasic2D(PolicyModel):
 
     @staticmethod
     def all_movements(step_size=3, h_rotation=45.0):
+        """returns mapping from action name to Action"""
         # scheme vw: (vt, vw) translational, rotational velocities.
         FORWARD = (step_size, 0)
         BACKWARD = (-step_size, 0)
@@ -119,7 +120,7 @@ class PolicyModelBasic2D(PolicyModel):
         else:
             robot_pose = srobot["pose"]
             valid_moves = set(self.movements[a] for a in self.movements
-                if self.robot_trans_model.sample(state, a)["pose"] != robot_pose)
+                if self.robot_trans_model.sample(state, self.movements[a])["pose"] != robot_pose)
             self._legal_moves[srobot] = valid_moves
             return valid_moves
 
@@ -149,7 +150,7 @@ class PolicyModelBasic2D(PolicyModel):
                 preferences = set({(action.LookAction(), self.num_visits_init, self.val_init)})
 
             srobot = state.s(self.policy_model.robot_id)
-            for move in self.valid_moves(state):
+            for move in self.policy_model.valid_moves(state):
                 srobot_next = self.policy_model.robot_trans_model.sample(state, move)
                 for target_id in self.policy_model.target_ids:
                     starget = state.s(target_id)

@@ -122,11 +122,18 @@ class RobotTransBasic2D(RobotTransitionModel):
             state = state_or_pose
             if isinstance(state, RobotState):
                 srobot = state
-            elif isinstance(state, OOState):
+            elif isinstance(state, pomdp_py.OOState):
                 srobot = state.s(self.robot_id)
-            rx, ry, rth = srobot.pose
+            else:
+                raise ValueError(f"Invalid state type {type(state)}")
+            return self.sample_by_pose(srobot.pose, action)
         else:
-            rx, ry, rth = state_or_pose
+            pose = state_or_pose
+            return self.sample_by_pose(pose, action)
+
+    def sample_by_pose(self, pose, action, round_to="int"):
+        original_pose = pose
+        rx, ry, rth = pose
         # odometry motion model
         forward, angle = action.motion
         rth = (rth + angle) % 360
@@ -136,7 +143,7 @@ class RobotTransBasic2D(RobotTransitionModel):
         if (rx, ry) in self.reachable_positions:
             return (rx, ry, rth)
         else:
-            return srobot['pose']
+            return original_pose
 
     def argmax(self, state, action):
         srobot_next = super().argmax(state, action)

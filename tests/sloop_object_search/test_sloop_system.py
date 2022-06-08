@@ -63,12 +63,12 @@ def main(_config):
                                     agent.transition_model,
                                     agent.reward_model)
 
-    # # Show visualization
-    # _task_config = _config["task_config"]
-    # viz = import_class(_task_config["visualizer"])(agent.grid_map,
-    #                                                bg_path=FILEPATHS[map_name]["map_png"],
-    #                                                **_task_config["viz_params"])
-    # visualize_step(viz, agent, task_env, None, _config, draw_belief=False)
+    # Show visualization
+    _task_config = _config["task_config"]
+    viz = import_class(_task_config["visualizer"])(agent.grid_map,
+                                                   bg_path=FILEPATHS[map_name]["map_png"],
+                                                   **_task_config["viz_params"])
+    visualize_step(viz, agent, task_env, None, _config, draw_belief=False)
 
     # Belief prior
     _prior = _config["agent_config"]["belief"]["prior"]
@@ -106,7 +106,7 @@ def main(_config):
 
         agent.update_belief(observation, action)
         planner.update(agent, action, observation)
-        # visualize_step(viz, agent, task_env, action, _config)
+        visualize_step(viz, agent, task_env, action, _config)
 
         if set(task_env.state.s(agent.robot_id).objects_found)\
            == set(_config["agent_config"]["targets"]):
