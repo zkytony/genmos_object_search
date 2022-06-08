@@ -19,7 +19,7 @@ config = {
         "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosBasic2D",
         "viz_params": {
             "res": 20
-        }
+        },
     },
 
     "agent_config": {

@@ -68,7 +68,7 @@ def main(_config):
     viz = import_class(_task_config["visualizer"])(agent.grid_map,
                                                    bg_path=FILEPATHS[map_name]["map_png"],
                                                    **_task_config["viz_params"])
-    visualize_step(viz, agent, task_env, None, _config, draw_belief=False, draw_topo=False)
+    visualize_step(viz, agent, task_env, None, _config, draw_belief=False)
 
     # Belief prior
     _prior = _config["agent_config"]["belief"]["prior"]

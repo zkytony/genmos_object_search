@@ -33,7 +33,7 @@ class VizSloopMosBasic2D(GridMapVisualizer):
 
 
     def render(self, agent, objlocs, colors={}, robot_state=None, draw_fov=None,
-               draw_belief=True, img=None):
+               draw_belief=True, img=None, **kwargs):
         """
         Args:
             agent (CosAgent)
