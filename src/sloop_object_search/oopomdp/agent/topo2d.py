@@ -61,14 +61,13 @@ class SloopMosTopo2DAgent(SloopAgent):
                                          topo_map_args.get("num_place_samples", 10),
                                          degree=topo_map_args.get("degree", (3,5)),
                                          sep=topo_map_args.get("sep", 4.0),
-                                         rnd=random.Random(topo_map_args.get("seed", 1001))
-        )
+                                         rnd=random.Random(topo_map_args.get("seed", 1001)))
 
         robot = agent_config["robot"]
         init_topo_nid = self.topo_map.closest_node(*robot["init_pose"][:2])
         init_robot_state = RobotStateTopo(robot["id"],
                                           robot["init_pose"],
-                                          robot.get("found_objects", tuple()),
+                                          robot.get("objects_found", tuple()),
                                           robot.get("camera_direction", None),
                                           init_topo_nid)
         # transition models and observation models
@@ -106,6 +105,46 @@ class SloopMosTopo2DAgent(SloopAgent):
                 transition_model,
                 observation_model,
                 reward_model)
+
+
+    def sensor(self, objid):
+        return self.observation_model.detection_models[objid].sensor
+
+    def update_belief(self, observation, action):
+        super().update_belief(observation, action)
+        # sample new topological graph based on updated belief
+        object_beliefs = {objid: self.belief.b(objid)
+                          for objid in self.belief.object_beliefs
+                          if objid != self.robot_id}
+        search_region = self.grid_map.filter_by_label("search_region")
+        combined_dist = BeliefTopo2D.combine_object_beliefs(
+            search_region, object_beliefs)
+        reachable_positions = self.grid_map.filter_by_label("reachable")
+        topo_map_args = self.agent_config["topo_map_args"]
+        print("Sampling topological graph...")
+        self.topo_map = _sample_topo_map(combined_dist,
+                                         reachable_positions,
+                                         topo_map_args.get("num_place_samples", 10),
+                                         degree=topo_map_args.get("degree", (3,5)),
+                                         sep=topo_map_args.get("sep", 4.0),
+                                         rnd=random.Random(topo_map_args.get("seed", 1001)))
+        self.policy_model.update(self.topo_map)
+
+        srobot = self.belief.b(self.robot_id).mpe()
+        topo_nid = self.topo_map.closest_node(*srobot.loc)
+        robot_state = RobotStateTopo(srobot["id"],
+                                     srobot["pose"],
+                                     srobot.objects_found,
+                                     srobot.camera_direction,
+                                     topo_nid)
+        self.belief.set_object_belief(self.robot_id, pomdp_py.Histogram({robot_state: 1.0}))
+
+        # This is necessary because the action space changes due to new
+        # topo graph; this shouldn't hurt, theoretically; It is necessary in order
+        # to prevent replanning goals from the same, out-dated tree while
+        # a goal is in execution.
+        if hasattr(self, "tree"):
+            del self.tree # remove the search tree after planning
 
 
 def _shortest_path(reachable_positions, gloc1, gloc2):

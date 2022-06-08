@@ -169,13 +169,14 @@ class RobotTransTopo(RobotTransitionModel):
         srobot = state.s(self.robot_id)
         if srobot.nid == action.src_nid:
             next_robot_pos = self.topo_map.nodes[action.dst_nid].pos
+            next_topo_nid = action.dst_nid
             for target_id in self._target_ids:
                 if target_id not in srobot.objects_found:
                     starget = state.s(target_id)
                     # will sample a yaw facing the target object
                     yaw = yaw_facing(next_robot_pos, starget.loc, self._h_angles)
                     next_robot_pose = (*next_robot_pos, yaw)
-                    next_topo_nid = action.dst_nid
+
                     return (next_robot_pose, next_topo_nid)
 
             # If no more target to find, then just keep the current yaw

@@ -147,3 +147,6 @@ class RobotStateTopo(RobotState2D):
     @property
     def topo_nid(self):
         return self['topo_nid']
+
+    def __str__(self):
+        return "{}({}, {}, nid={})".format(type(self).__name__, self.pose, self.objects_found, self.topo_nid)

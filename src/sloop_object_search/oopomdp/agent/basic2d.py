@@ -55,7 +55,7 @@ class SloopMosBasic2DAgent(SloopAgent):
         search_region = self.grid_map.filter_by_label("search_region")
         init_robot_state = RobotState2D(robot["id"],
                                         robot["init_pose"],
-                                        robot.get("found_objects", tuple()),
+                                        robot.get("objects_found", tuple()),
                                         robot.get("camera_direction", None))
 
         # Transition Model

@@ -68,7 +68,7 @@ def main(_config):
     viz = import_class(_task_config["visualizer"])(agent.grid_map,
                                                    bg_path=FILEPATHS[map_name]["map_png"],
                                                    **_task_config["viz_params"])
-    visualize_step(viz, agent, task_env, None, _config, draw_belief=False)
+    visualize_step(viz, agent, task_env, None, _config, draw_belief=False, draw_topo=False)
 
     # Belief prior
     _prior = _config["agent_config"]["belief"]["prior"]
@@ -104,8 +104,8 @@ def main(_config):
         print("Step {}:  Action: {}   Observation: {}  Reward: {}    Robot State: {}"\
               .format(i, action, observation, reward, task_env.state.s(agent.robot_id)))
 
-        agent.update_belief(observation, action)
         planner.update(agent, action, observation)
+        agent.update_belief(observation, action)
         visualize_step(viz, agent, task_env, action, _config)
 
         if set(task_env.state.s(agent.robot_id).objects_found)\
