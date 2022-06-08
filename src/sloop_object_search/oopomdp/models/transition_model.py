@@ -183,6 +183,9 @@ class RobotTransTopo(RobotTransitionModel):
             next_robot_pose = (*next_robot_pos, srobot['pose'][2])
             return (next_robot_pose, next_topo_nid)
         else:
+            import traceback
+            for line in traceback.format_stack():
+                print(line.strip())
             print(":::::WARNING::::: Unexpected action {} for robot state {}. Ignoring action".format(action, srobot))
             return srobot['pose'], srobot['topo_nid']
 

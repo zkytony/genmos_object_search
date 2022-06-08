@@ -106,6 +106,8 @@ def main(_config):
 
         planner.update(agent, action, observation)
         agent.update_belief(observation, action)
+        if isinstance(agent, SloopMosTopo2DAgent):
+            task_env.state.set_object_state(agent.robot_id, agent.belief.mpe().s(agent.robot_id))
         visualize_step(viz, agent, task_env, action, _config)
 
         if set(task_env.state.s(agent.robot_id).objects_found)\
