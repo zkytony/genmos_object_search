@@ -34,10 +34,10 @@ class SloopMosTopo2DAgent(SloopAgent):
             self.mapinfo, self.map_name)
 
         # Prep work
+        robot = agent_config["robot"]
         objects = agent_config["objects"]
         target_ids = agent_config["targets"]
-        target_objects = {objid: objects[objid]
-                          for objid in target_ids}
+        self.target_objects = {objid: objects[objid] for objid in target_ids}
         search_region = self.grid_map.filter_by_label("search_region")
         action_config = agent_config["action"]
         action_config["h_rotation"] = action_config.get("h_rotation", 45.0)
@@ -75,7 +75,7 @@ class SloopMosTopo2DAgent(SloopAgent):
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
         init_belief = BeliefTopo2D(init_robot_state,
-                                   target_objects,
+                                   self.target_objects,
                                    search_region,
                                    agent_config["belief"],
                                    object_beliefs=init_object_beliefs)
@@ -86,23 +86,22 @@ class SloopMosTopo2DAgent(SloopAgent):
                 observation_model,
                 reward_model)
 
-
     def sensor(self, objid):
         return self.observation_model.detection_models[objid].sensor
 
     def _compute_object_beliefs_and_combine(self, init=False):
-        target_ids = self.agent_config["targets"]
         if init:
             # need to consider prior
             object_beliefs = {}
-            for objid in target_ids:
-                target = target_objects[objid]
+            search_region = self.grid_map.filter_by_label("search_region")
+            for objid in self.target_objects:
+                target = self.target_objects[objid]
                 object_beliefs[objid] =\
                     Belief2D.init_object_belief(objid, target['class'], search_region,
-                                                agent_config["belief"].get("prior", {}))
+                                                self.agent_config["belief"].get("prior", {}))
         else:
             # object beliefs just come from current belief
-            object_beliefs = {objid: self.belief.b(objid) for objid in target_ids}
+            object_beliefs = {objid: self.belief.b(objid) for objid in self.target_objects}
 
         search_region = self.grid_map.filter_by_label("search_region")
         combined_dist = BeliefTopo2D.combine_object_beliefs(
@@ -118,9 +117,13 @@ class SloopMosTopo2DAgent(SloopAgent):
         if init:
             robot = self.agent_config["robot"]
             robot_pose = robot["init_pose"]
+            objects_found = tuple()
+            camera_direction = None
         else:
             srobot_old = self.belief.b(self.robot_id).mpe()
             robot_pose = srobot_old.pose
+            objects_found = srobot_old.objects_found
+            camera_direction = srobot_old.camera_direction
 
         topo_map = _sample_topo_map(combined_dist,
                                     reachable_positions,
@@ -130,12 +133,13 @@ class SloopMosTopo2DAgent(SloopAgent):
                                     rnd=random.Random(topo_map_args.get("seed", 1001)),
                                     robot_pos=robot_pose[:2])
         self.topo_map = topo_map
-        self.policy_model.update(topo_map)
+        if not init:
+            self.policy_model.update(topo_map)
         topo_nid = topo_map.closest_node(*robot_pose[:2])
         robot_state = RobotStateTopo(self.robot_id,
                                      robot_pose,
-                                     srobot.objects_found,
-                                     srobot.camera_direction,
+                                     objects_found,
+                                     camera_direction,
                                      topo_nid)
 
         if init:
@@ -167,12 +171,12 @@ class SloopMosTopo2DAgent(SloopAgent):
         topo_node_prob = {}  # nid to prob
         for loc in search_region:
             # find closest node
-            closest_node = min(
-                topo_nodes, key=lambda node: euclidean_dist(node.pos, loc))
+            closest_nid = min(
+                topo_nodes, key=lambda nid: euclidean_dist(self.topo_map.nodes[nid].pos, loc))
             # If the distance is not too far away
-            if euclidean_dist(closest_node.pos, loc) < node_coverage_radius:
-                topo_node_prob[closest_node.id]\
-                    += topo_node_prob.get(closest_node.id, 0.0) + combined_dist[loc]
+            if euclidean_dist(self.topo_map.nodes[closest_nid].pos, loc) < node_coverage_radius:
+                topo_node_prob[closest_nid]\
+                    = topo_node_prob.get(closest_nid, 0.0) + combined_dist[loc]
 
         # combine the topo node probs --> the probability "covered" by the nodes.
         total_prob = sum(topo_node_prob[n] for n in topo_node_prob)
