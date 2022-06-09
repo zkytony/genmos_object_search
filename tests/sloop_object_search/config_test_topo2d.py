@@ -33,7 +33,7 @@ config = {
             "sep": 4.0,   # separation between places
             "seed": 1120,
             "node_coverage_radius": 3.0,
-            "resample_prob_thres": 0.1
+            "resample_prob_thres": 0.2
         },
         "no_look": True,
         "belief": {
@@ -59,7 +59,7 @@ config = {
             "detectors": {
                 "G": {
                     "class": "sloop_object_search.oopomdp.FanModelSimpleFP",
-                    "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1, 0.25))
+                    "params": (dict(fov=90, min_range=0, max_range=10), (0.9, 0.1, 0.25))
                 },
             }
         },
