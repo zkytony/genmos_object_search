@@ -7,7 +7,7 @@ from sloop_object_search.utils.graph import Node, Graph, Edge
 class TopoNode(Node):
     """TopoNode is a node on the grid map."""
 
-    def __init__(self, node_id, grid_pos, search_region_locs):
+    def __init__(self, node_id, grid_pos):
         """
         grid_pos (x,y): The grid position this node is located
         search_region_locs (list or set): locations where the
@@ -15,15 +15,10 @@ class TopoNode(Node):
         """
         super().__init__(node_id, grid_pos)
         self._coords = grid_pos
-        self.search_region_locs = search_region_locs
 
     @property
     def pos(self):
         return self.data
-
-    def prob(self, target_hist):
-        return sum(target_hist[loc]
-                   for loc in self.search_region_locs)
 
     def __str__(self):
         return "n{}@{}".format(self.id, self.pos)
@@ -106,7 +101,3 @@ class TopoMap(Graph):
             path = super().shortest_path(src, dst, lambda e: e.grid_dist)
             self._cache_shortest_path[(src, dst)] = path
             return path
-
-    def total_prob(self, target_hist):
-        return sum(self.nodes[nid].prob(target_hist)
-                   for nid in self.nodes)

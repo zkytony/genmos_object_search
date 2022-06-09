@@ -63,15 +63,20 @@ def main(_config):
                                     agent.transition_model,
                                     agent.reward_model)
 
+    _prior = _config["agent_config"]["belief"]["prior"]
+
     # Show visualization
     _task_config = _config["task_config"]
     viz = import_class(_task_config["visualizer"])(agent.grid_map,
                                                    bg_path=FILEPATHS[map_name]["map_png"],
                                                    **_task_config["viz_params"])
-    visualize_step(viz, agent, task_env, None, _config, draw_belief=False)
+    if _prior == "splang":
+        draw_belief = False  # don't hide the map when typing language
+    else:
+        draw_belief = True
+    visualize_step(viz, agent, task_env, None, _config, draw_belief=draw_belief)
 
     # Belief prior
-    _prior = _config["agent_config"]["belief"]["prior"]
     _objects = _config["agent_config"]["objects"]
     if _prior == "splang":
         splang_observation = ask_for_splang(agent)

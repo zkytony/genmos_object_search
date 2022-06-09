@@ -4,6 +4,7 @@ Agent that works over a topological graph
 import random
 from collections import deque
 import pomdp_py
+from tqdm import tqdm
 from sloop.agent import SloopAgent
 from sloop_object_search.utils.osm import osm_map_to_grid_map
 from sloop_object_search.utils.math import euclidean_dist, normalize
@@ -44,32 +45,11 @@ class SloopMosTopo2DAgent(SloopAgent):
                     for i in range(int(360/action_config["h_rotation"]))]
         no_look = agent_config.get("no_look", True)
 
-        # initial object beliefs and combine them together
-        init_object_beliefs = {}
-        for objid in target_ids:
-            target = target_objects[objid]
-            init_object_beliefs[objid] =\
-                Belief2D.init_object_belief(objid, target['class'], search_region,
-                                            agent_config["belief"].get("prior", {}))
-        combined_dist = BeliefTopo2D.combine_object_beliefs(search_region,
-                                                            init_object_beliefs)
-        reachable_positions = self.grid_map.filter_by_label("reachable")
-        topo_map_args = agent_config["topo_map_args"]
-        print("Sampling topological graph...")
-        self.topo_map = _sample_topo_map(combined_dist,
-                                         reachable_positions,
-                                         topo_map_args.get("num_place_samples", 10),
-                                         degree=topo_map_args.get("degree", (3,5)),
-                                         sep=topo_map_args.get("sep", 4.0),
-                                         rnd=random.Random(topo_map_args.get("seed", 1001)))
+        # generate topo map (and initialize robot state)
+        combined_dist, init_object_beliefs =\
+            self._compute_object_beliefs_and_combine(init=True)
+        init_robot_state = self._update_topo_map(combined_dist, init=True)
 
-        robot = agent_config["robot"]
-        init_topo_nid = self.topo_map.closest_node(*robot["init_pose"][:2])
-        init_robot_state = RobotStateTopo(robot["id"],
-                                          robot["init_pose"],
-                                          robot.get("objects_found", tuple()),
-                                          robot.get("camera_direction", None),
-                                          init_topo_nid)
         # transition models and observation models
         detection_models = init_detection_models(agent_config)
         robot_trans_model = RobotTransTopo(robot["id"], target_ids,
@@ -110,41 +90,93 @@ class SloopMosTopo2DAgent(SloopAgent):
     def sensor(self, objid):
         return self.observation_model.detection_models[objid].sensor
 
-    def update_belief(self, observation, action):
-        super().update_belief(observation, action)
-        # sample new topological graph based on updated belief
-        object_beliefs = {objid: self.belief.b(objid)
-                          for objid in self.belief.object_beliefs
-                          if objid != self.robot_id}
+    def _compute_object_beliefs_and_combine(self, init=False):
+        target_ids = self.agent_config["targets"]
+        if init:
+            # need to consider prior
+            object_beliefs = {}
+            for objid in target_ids:
+                target = target_objects[objid]
+                object_beliefs[objid] =\
+                    Belief2D.init_object_belief(objid, target['class'], search_region,
+                                                agent_config["belief"].get("prior", {}))
+        else:
+            # object beliefs just come from current belief
+            object_beliefs = {objid: self.belief.b(objid) for objid in target_ids}
+
         search_region = self.grid_map.filter_by_label("search_region")
         combined_dist = BeliefTopo2D.combine_object_beliefs(
             search_region, object_beliefs)
+        return combined_dist, object_beliefs
+
+
+    def _update_topo_map(self, combined_dist, init=False):
+        """combined_dist (dict): mapping from location to probability"""
         reachable_positions = self.grid_map.filter_by_label("reachable")
         topo_map_args = self.agent_config["topo_map_args"]
         print("Sampling topological graph...")
-        self.topo_map = _sample_topo_map(combined_dist,
-                                         reachable_positions,
-                                         topo_map_args.get("num_place_samples", 10),
-                                         degree=topo_map_args.get("degree", (3,5)),
-                                         sep=topo_map_args.get("sep", 4.0),
-                                         rnd=random.Random(topo_map_args.get("seed", 1001)))
-        self.policy_model.update(self.topo_map)
+        if init:
+            robot = self.agent_config["robot"]
+            robot_pose = robot["init_pose"]
+        else:
+            srobot_old = self.belief.b(self.robot_id).mpe()
+            robot_pose = srobot_old.pose
 
-        srobot = self.belief.b(self.robot_id).mpe()
-        topo_nid = self.topo_map.closest_node(*srobot.loc)
-        robot_state = RobotStateTopo(srobot["id"],
-                                     srobot["pose"],
+        topo_map = _sample_topo_map(combined_dist,
+                                    reachable_positions,
+                                    topo_map_args.get("num_place_samples", 10),
+                                    degree=topo_map_args.get("degree", (3,5)),
+                                    sep=topo_map_args.get("sep", 4.0),
+                                    rnd=random.Random(topo_map_args.get("seed", 1001)),
+                                    robot_pos=robot_pose[:2])
+        self.topo_map = topo_map
+        self.policy_model.update(topo_map)
+        topo_nid = topo_map.closest_node(*robot_pose[:2])
+        robot_state = RobotStateTopo(self.robot_id,
+                                     robot_pose,
                                      srobot.objects_found,
                                      srobot.camera_direction,
                                      topo_nid)
-        self.belief.set_object_belief(self.robot_id, pomdp_py.Histogram({robot_state: 1.0}))
 
-        # This is necessary because the action space changes due to new
-        # topo graph; this shouldn't hurt, theoretically; It is necessary in order
-        # to prevent replanning goals from the same, out-dated tree while
-        # a goal is in execution.
-        if hasattr(self, "tree"):
-            del self.tree # remove the search tree after planning
+        if init:
+            return robot_state
+        else:
+            self.belief.set_object_belief(self.robot_id, pomdp_py.Histogram({robot_state: 1.0}))
+
+    def update_belief(self, observation, action):
+        super().update_belief(observation, action)
+        # sample new topological graph based on updated belief
+        combined_dist, object_beliefs =\
+            self._compute_object_beliefs_and_combine()
+        if self._should_resample_topo_map(combined_dist):
+            self._update_topo_map(combined_dist)
+
+            # This is necessary because the action space changes due to new
+            # topo graph; this shouldn't hurt, theoretically; It is necessary in order
+            # to prevent replanning goals from the same, out-dated tree while
+            # a goal is in execution.
+            if hasattr(self, "tree"):
+                del self.tree # remove the search tree after planning
+
+    def _should_resample_topo_map(self, combined_dist):
+        # We will compute coverage of the probabilities
+        search_region = self.grid_map.filter_by_label("search_region")
+        topo_map_args = self.agent_config["topo_map_args"]
+        node_coverage_radius = topo_map_args.get("node_coverage_radius", 3.0)
+        topo_nodes = list(self.topo_map.nodes.keys())
+        topo_node_prob = {}  # nid to prob
+        for loc in search_region:
+            # find closest node
+            closest_node = min(
+                topo_nodes, key=lambda node: euclidean_dist(node.pos, loc))
+            # If the distance is not too far away
+            if euclidean_dist(closest_node.pos, loc) < node_coverage_radius:
+                topo_node_prob[closest_node.id]\
+                    += topo_node_prob.get(closest_node.id, 0.0) + combined_dist[loc]
+
+        # combine the topo node probs --> the probability "covered" by the nodes.
+        total_prob = sum(topo_node_prob[n] for n in topo_node_prob)
+        return total_prob < topo_map_args.get("resample_prob_thres", 0.4)
 
 
 def _shortest_path(reachable_positions, gloc1, gloc2):
@@ -192,27 +224,15 @@ def _sample_topo_map(target_hist,
                      sep=4.0,
                      rnd=random,
                      robot_pos=None):
-    """Note: originally from COSPOMDP codebase
-
-    Given a search region, a distribution over target locations in the
-    search region, return a TopoMap with nodes within
-    reachable_positions.
-
-    The algorithm works by first converting the target_hist,
-    which is a distribution over the search region, to a distribution
-    over the robot's reachable positions.
-
-    This is done by, for each location in the search region, find
-    a closest reachable position; Then the probability at a reachable
-    position is the sum of those search region locations mapped to it.
-
-    Then, simply sample reachable positions based on this distribution.
-
-    The purpose of this topo map is for navigation action abstraction
-    and robot state abstraction.
+    """Note: originally from COSPOMDP codebase; But
+    modified - instead of creating a mapping from reachable position
+    to a set of closest search region locations, simply sample from
+    the distribution based on the search region locations, and then
+    add a closest reachable position as a node. The separation and
+    degree requirements still apply.
 
     Args:
-        target_hist (dict): maps from location to probability
+        target_hist (dict): maps from search region location location to probability
         reachable_positions (list of tuples)
         num_places (int): number of places to sample
         degree (int or tuple): Controls the minimum and maximum degree
@@ -226,7 +246,6 @@ def _sample_topo_map(target_hist,
 
     Returns:
         TopologicalMap.
-
     """
     if type(degree) == int:
         degree_range = (degree, degree)
@@ -236,27 +255,17 @@ def _sample_topo_map(target_hist,
             raise ValueError("Invalid argument for degree {}."
                              "Accepts int or (int, int)".format(degree))
 
-    mapping = {}  # maps from reachable pos to a list of search region locs
-    for loc in target_hist:
-        closest_reachable_pos = min(reachable_positions,
-                                    key=lambda robot_pos: euclidean_dist(loc, robot_pos))
-        if closest_reachable_pos not in mapping:
-            mapping[closest_reachable_pos] = []
-        mapping[closest_reachable_pos].append(loc)
-
-    # distribution over reachable positions
-    reachable_pos_dist = {}
-    for pos in mapping:
-        reachable_pos_dist[pos] = 0.0
-        for search_region_loc in mapping[pos]:
-            reachable_pos_dist[pos] += target_hist[search_region_loc]
-    hist = pomdp_py.Histogram(normalize(reachable_pos_dist))
+    hist = pomdp_py.Histogram(normalize(target_hist))
 
     places = set()
     if robot_pos is not None:
         places.add(robot_pos)
-    for i in range(num_samples):
-        pos = hist.random(rnd=rnd)
+    for i in tqdm(range(num_samples)):
+        search_region_loc = hist.random(rnd=rnd)
+        closest_reachable_pos = min(reachable_positions,
+                                    key=lambda robot_pos: euclidean_dist(
+                                        search_region_loc, robot_pos))
+        pos = closest_reachable_pos
         if len(places) > 0:
             closest_pos = min(places,
                               key=lambda c: euclidean_dist(pos, c))
@@ -269,7 +278,7 @@ def _sample_topo_map(target_hist,
     pos_to_nid = {}
     nodes = {}
     for i, pos in enumerate(places):
-        topo_node = TopoNode(i, pos, mapping.get(pos, set()))
+        topo_node = TopoNode(i, pos)
         nodes[i] = topo_node
         pos_to_nid[pos] = i
 

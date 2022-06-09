@@ -1,4 +1,5 @@
 import pomdp_py
+from tqdm import tqdm
 from .transition_model import StaticObjectTransitionModel
 from ..domain.state import (ObjectState2D,
                             RobotState2D,
@@ -125,9 +126,11 @@ class BeliefTopo2D(Belief2D):
         Args:
             search_region (set): set of locations
             object_beliefs (dict): mapping from objid to belief histogram
+        Returns:
+            dict
         """
         dist = {}
-        for loc in search_region:
+        for loc in tqdm(search_region):
             dist[loc] = 1e-9
             for objid in object_beliefs:
                 random_sobj = object_beliefs[objid].random()
