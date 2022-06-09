@@ -70,7 +70,7 @@ def main(_config):
     viz = import_class(_task_config["visualizer"])(agent.grid_map,
                                                    bg_path=FILEPATHS[map_name]["map_png"],
                                                    **_task_config["viz_params"])
-    if _prior == "splang":
+    if _prior == "splang" or any(_prior[objid] == "splang" for objid in _prior):
         draw_belief = False  # don't hide the map when typing language
     else:
         draw_belief = True
