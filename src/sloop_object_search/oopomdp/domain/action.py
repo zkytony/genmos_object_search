@@ -28,7 +28,7 @@ class LookAction(pomdp_py.SimpleAction):
 MOTION_SCHEME="vw"  # can be either xy or vw
 STEP_SIZE=3
 class MotionAction2D(MotionAction):
-    def __init__(self, motion, step_cost=1,
+    def __init__(self, motion, step_cost=-1,
                  motion_name=None):
         """
         motion (tuple): a tuple of floats that describes the motion;

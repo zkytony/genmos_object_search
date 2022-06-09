@@ -48,9 +48,9 @@ class GoalBasedRewardModel(MosRewardModel):
             return 0  # no reward or penalty; the task is finished.
 
         if isinstance(action, MotionAction):
-            reward = reward - self.small - action.step_cost
+            reward = reward + (-self.small) + action.step_cost
         elif isinstance(action, LookAction):
-            reward = reward - self.small
+            reward = reward + (-self.small)
         elif isinstance(action, FindAction):
             if state.object_states[robot_id]['camera_direction'] is None:
                 # The robot didn't look before detect. So nothing is in the field of view.

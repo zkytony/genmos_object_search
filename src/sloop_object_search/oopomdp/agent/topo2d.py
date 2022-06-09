@@ -180,6 +180,7 @@ class SloopMosTopo2DAgent(SloopAgent):
 
         # combine the topo node probs --> the probability "covered" by the nodes.
         total_prob = sum(topo_node_prob[n] for n in topo_node_prob)
+        print("total_prob covered by topo map:", total_prob)
         return total_prob < topo_map_args.get("resample_prob_thres", 0.4)
 
 
