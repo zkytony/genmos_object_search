@@ -109,8 +109,8 @@ def main(_config):
         print("Step {}:  Action: {}   Observation: {}  Reward: {}    Robot State: {}"\
               .format(i, action, observation, reward, task_env.state.s(agent.robot_id)))
 
-        planner.update(agent, action, observation)
         agent.update_belief(observation, action)
+        planner.update(agent, action, observation)
         if isinstance(agent, SloopMosTopo2DAgent):
             task_env.state.set_object_state(agent.robot_id, agent.belief.mpe().s(agent.robot_id))
         visualize_step(viz, agent, task_env, action, _config)

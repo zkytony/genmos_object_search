@@ -1,6 +1,7 @@
 import pomdp_py
 from .basic2d import MosBasic2DAgent
 from ..domain.state import RobotState2D
+from ..domain.action import FindAction
 from ..models.belief import BeliefBasic2D
 
 class SubgoalHandler:
@@ -50,9 +51,19 @@ class LocalSearchHandler(SubgoalHandler):
         self.agent.belief.set_object_belief(self.agent.robot_id,
                                             pomdp_py.Histogram({srobot: 1.0}))
 
+class FindHandler(SubgoalHandler):
+    def __init__(self, subgoal):
+        pass
+
+    def step(self):
+        return FindAction()
+
+    def update(self):
+        pass
+
 
 class NavTopoHandler(SubgoalHandler):
-    def __init__(self, subgoal, topo_agent, movements):
+    def __init__(self, subgoal, topo_agent):
         self._topo_agent = topo_agent
         self._agent = self._create_mos2d_agent()
         srobot_topo = topo_agent.belief.mpe().s(topo_agent.robot_id)
@@ -69,10 +80,19 @@ class NavTopoHandler(SubgoalHandler):
     def update(self):
         self._index += 1
 
-    def _compute_nav_plan(src_loc, dst_loc, mos2dagent):
-        pass
+    def _compute_nav_plan(src_pose, dst_pose, mos2dagent):
+        movements_dict = mos2dagent.policy_model.movements
+        navigation_actions = {(action_name, movements_dict[action_name].motion)
+                              for action_name in movements_dict}
+        robot_trans_model = mos2dagent.transition_model[mos2dagent.robot_id]
+        return find_navigation_plan(src_pose, dst_pose,
+                                    navigation_actions,
+                                    robot_trans_model.reachable_positions,
+                                    diagonal_ok=True,
+                                    return_pose=True)
 
 
+##### Auxiliary functions for navigation handler ###############
 def find_navigation_plan(start, goal, navigation_actions,
                          reachable_positions,
                          goal_distance=0.0,

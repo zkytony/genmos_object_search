@@ -35,7 +35,14 @@ class HierarchicalPlanner(pomdp_py.Planner):
             return LocalSearchHandler(subgoal, self._topo_agent,
                                       self.planner_config['local_search'])
         elif isinstance(subgoal, MotionActionTopo):
-            return NavTopoHandler(subgoal)
+            rnd_state = self._topo_agent.belief.random()
+            subgoal.pose = self._topo_agent.transition_model.sample(rnd_state, subgoal).pose
+            return NavTopoHandler(subgoal, self._topo_agent)
 
         elif isinstance(subgoal, FindAction):
-            return FindHandler.create(goal, self)
+            return FindHandler(subgoal)
+
+    def update(self, agent, action, observation):
+        if self._subgoal_handler is not None:
+            self._subgoal_handler.update(action, observation)
+            self._subgoal_planner.update(agent, action, observation)
