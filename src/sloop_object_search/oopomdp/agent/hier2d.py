@@ -1,6 +1,9 @@
 # Hierarchical agent, with a hierarchical planner
 from sloop.agent import SloopAgent
 from .topo2d import SloopMosTopo2DAgent
+from .basic2d import MosBasic2DAgent
+from ..models.belief import BeliefBasic2D
+from ..domain.state import RobotState2D
 from sloop_object_search.oopomdp.action import MotionActionTopo, StayAction
 
 import pomdp_py
@@ -32,6 +35,10 @@ class HierarchicalPlanner(pomdp_py.Planner):
 
 
     def plan(self, agent):
+        """
+        Args:
+            agent: a topo2d agent.
+        """
         if self._topo_agent is None:
             # First time plan
             assert isinstance(agent, SloopMosTopo2DAgent)
