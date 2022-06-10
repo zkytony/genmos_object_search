@@ -76,9 +76,9 @@ class SloopMosTopo2DAgent(SloopAgent):
 
         init_belief = BeliefTopo2D(init_robot_state,
                                    self.target_objects,
-                                   search_region,
                                    agent_config["belief"],
-                                   object_beliefs=init_object_beliefs)
+                                   object_beliefs=init_object_beliefs,
+                                   search_region=search_region)
 
         return (init_belief,
                 policy_model,

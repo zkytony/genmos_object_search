@@ -36,15 +36,9 @@ def init_object_transition_models(agent_config):
     return transition_models
 
 
-class SloopMosBasic2DAgent(SloopAgent):
-    """
-    basic --> operates at the fine-grained action level.
-    """
-    def _init_oopomdp(self):
-        agent_config = self.agent_config
-
-        self.grid_map = osm_map_to_grid_map(
-            self.mapinfo, self.map_name)
+class MosBasic2DAgent(pomdp_py.Agent):
+    def __init__(self, agent_config, grid_map, init_belief=None):
+        self.agent_config = agent_config
 
         # Prep work
         robot = agent_config["robot"]
@@ -52,14 +46,10 @@ class SloopMosBasic2DAgent(SloopAgent):
         action_config = agent_config["action"]
         no_look = agent_config.get("no_look", True)
         detection_models = init_detection_models(agent_config)
-        search_region = self.grid_map.filter_by_label("search_region")
-        init_robot_state = RobotState2D(robot["id"],
-                                        robot["init_pose"],
-                                        robot.get("objects_found", tuple()),
-                                        robot.get("camera_direction", None))
+        search_region = grid_map.filter_by_label("search_region")
 
         # Transition Model
-        reachable_positions = self.grid_map.filter_by_label("reachable")
+        reachable_positions = grid_map.filter_by_label("reachable")
         robot_trans_model = RobotTransBasic2D(
             robot["id"], reachable_positions,
             detection_models,
@@ -86,18 +76,51 @@ class SloopMosBasic2DAgent(SloopAgent):
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
         # Belief
-        target_objects = {objid: objects[objid]
-                          for objid in target_ids}
-        init_belief = BeliefBasic2D(init_robot_state,
-                                    target_objects,
-                                    search_region,
-                                    agent_config["belief"])
+        if init_belief is None:
+            init_robot_state = RobotState2D(robot["id"],
+                                            robot["init_pose"],
+                                            robot.get("objects_found", tuple()),
+                                            robot.get("camera_direction", None))
 
-        return (init_belief,
-                policy_model,
-                transition_model,
-                observation_model,
-                reward_model)
+            target_objects = {objid: objects[objid]
+                              for objid in target_ids}
+            init_belief = BeliefBasic2D(init_robot_state,
+                                        target_objects,
+                                        agent_config["belief"],
+                                        search_region=search_region,
+                                        object_beliefs=agent_config.get("object_beliefs", None))
+        super().__init__(init_belief,
+                         policy_model,
+                         transition_model,
+                         observation_model,
+                         reward_model)
+
+    def update_belief(self, observation, action):
+        self.belief.update_robot_belief(observation, action)
+        next_robot_state = self.belief.mpe().s(self.robot_id)
+        for objid in self.belief.object_beliefs:
+            if objid == self.robot_id:
+                continue
+            else:
+                self.belief.update_object_belief(
+                    self, objid, observation,
+                    next_robot_state, action)
+
+
+
+class SloopMosBasic2DAgent(SloopAgent):
+    """
+    basic --> operates at the fine-grained action level.
+    """
+    def _init_oopomdp(self):
+        self.grid_map = osm_map_to_grid_map(
+            self.mapinfo, self.map_name)
+        mos_agent = MosBasic2DAgent(self.agent_config, self.grid_map)
+        return (mos_agent.belief,
+                mos_agent.policy_model,
+                mos_agent.transition_model,
+                mos_agent.observation_model,
+                mos_agent.reward_model)
 
 
     def sensor(self, objid):
