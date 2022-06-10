@@ -9,29 +9,27 @@ class SubgoalHandler:
     def create(cls, *args, **kwargs):
         raise NotImplementedError
 
-    def _create_mos2d_agent(self):
-        agent_config = self._topo_agent.agent_config.copy()
-        srobot_topo = self._topo_agent.belief.mpe().s(self._topo_agent.robot_id)
-        init_robot_state = RobotState2D(self._topo_agent.robot_id,
-                                        srobot_topo.pose,
-                                        srobot_topo.objects_found,
-                                        srobot_topo.camera_direction)
-        init_belief = BeliefBasic2D(init_robot_state,
-                                    self._topo_agent.target_objects,
-                                    object_beliefs=self._topo_agent.belief.object_beliefs)
-        agent = MosBasic2DAgent(agent_config,
-                                self._topo_agent.grid_map,
-                                init_belief=init_belief)
-        return agent
+    def _copy_topo_agent_belief(self):
+        self._mos2d_agent.set_belief(self._topo_agent.belief)
+        srobot_topo = self._topo_agent.belief.mpe().s(topo_agent.robot_id)
+        srobot = RobotState2D(topo_agent.robot_id,
+                              srobot_topo.pose,
+                              srobot_topo.objects_found,
+                              srobot_topo.camera_direction)
+        self._mos2d_agent.belief.set_object_belief(self._mos2d.agent.robot_id,
+                                            pomdp_py.Histogram({srobot: 1.0}))
 
 
 class LocalSearchHandler(SubgoalHandler):
     def __init__(self,
                  subgoal,
                  topo_agent,
+                 mos2d_agent,
                  local_search_planner_args):
         self._topo_agent = topo_agent  # parent
-        self._agent = self._create_mos2d_agent()
+        self._mos2d_agent = mos2d_agent
+        self._copy_topo_agent_belief()
+
         self.planner = local_search_planner_args["planner"](
             **local_search_planner_args.get("planner_args", {}),
             rollout_policy=self.agent.policy_model
@@ -51,6 +49,7 @@ class LocalSearchHandler(SubgoalHandler):
         self.agent.belief.set_object_belief(self.agent.robot_id,
                                             pomdp_py.Histogram({srobot: 1.0}))
 
+
 class FindHandler(SubgoalHandler):
     def __init__(self, subgoal):
         pass
@@ -63,9 +62,11 @@ class FindHandler(SubgoalHandler):
 
 
 class NavTopoHandler(SubgoalHandler):
-    def __init__(self, subgoal, topo_agent):
+    def __init__(self, subgoal, topo_agent, mos2d_agent):
         self._topo_agent = topo_agent
-        self._agent = self._create_mos2d_agent()
+        self._mos2d_agent = mos2d_agent
+        self._copy_topo_agent_belief()
+
         srobot_topo = topo_agent.belief.mpe().s(topo_agent.robot_id)
 
         assert subgoal.src_nid == srobot_topo.topo_nid
