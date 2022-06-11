@@ -11,6 +11,7 @@ from sloop_object_search.oopomdp.agent import (SloopMosBasic2DAgent,
                                                SloopMosTopo2DAgent)
 from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
 from sloop_object_search.oopomdp.domain.action import LookAction
+from sloop_object_search.oopomdp.planner import make_planner
 
 
 def ask_for_splang(sloop_agent, objspec=None):
@@ -95,8 +96,7 @@ def main(_config):
             agent.update_belief(splang_observation, None)
 
     _planner_config = _config["planner_config"]
-    planner = import_class(_planner_config["planner"])(**_planner_config["planner_params"],
-                             rollout_policy=agent.policy_model)
+    planner = make_planner(_planner_config, agent)
     max_steps = _config["task_config"]["max_steps"]
 
     for i in range(max_steps):

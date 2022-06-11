@@ -4,7 +4,8 @@ from .topo2d import SloopMosTopo2DAgent
 from .basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
 from ..domain.state import RobotState2D
-from sloop_object_search.oopomdp.action import MotionActionTopo, StayAction
+from sloop_object_search.oopomdp.domain.action\
+    import MotionActionTopo, StayAction
 
 import pomdp_py
 
@@ -44,7 +45,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
             assert isinstance(agent, SloopMosTopo2DAgent)
             self._topo_agent = agent
             self._mos2d_agent = self._create_mos2d_agent()
-            self._subgoal_planner = pomdp_py.POUCT(**planner_config['subgoal_level'],
+            self._subgoal_planner = pomdp_py.POUCT(**self.planner_config['subgoal_level'],
                                                    rollout_policy=agent.policy_model)
 
         if self._subgoal_handler is None:
