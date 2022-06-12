@@ -50,7 +50,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
             agent: a topo2d agent.
         """
         subgoal = self._subgoal_planner.plan(self._topo_agent)
-        print(typ.green(f"Subgoal planned: {subgoal})"))
+        print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
         if self._current_subgoal is None:
             self._current_subgoal = subgoal
