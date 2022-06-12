@@ -64,7 +64,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
         elif isinstance(subgoal, MotionActionTopo):
             rnd_state = self._topo_agent.belief.random()
             robot_trans_model = self._topo_agent.transition_model[self._topo_agent.robot_id]
-            subgoal.pose = robot_trans_model.sample(rnd_state, subgoal).pose
+            subgoal.dst_pose = robot_trans_model.sample(rnd_state, subgoal).pose
             return NavTopoHandler(subgoal, self._topo_agent, self._mos2d_agent)
 
         elif isinstance(subgoal, FindAction):

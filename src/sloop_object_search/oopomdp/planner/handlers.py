@@ -3,6 +3,8 @@ from ..domain.action import FindAction
 from ..domain.state import RobotState2D
 from ..models.belief import BeliefBasic2D
 from sloop_object_search.utils.misc import import_class
+from sloop_object_search.utils.math import normalize_angles, euclidean_dist
+from sloop_object_search.utils.algo import PriorityQueue
 
 class SubgoalHandler:
     @classmethod
@@ -39,7 +41,8 @@ class LocalSearchHandler(SubgoalHandler):
         )
 
     def step(self):
-        return self.planner.plan(self.agent)
+        import pdb; pdb.set_trace()
+        return self.planner.plan(self._mos2d_agent)
 
     def update(self, action, observation):
         self.planner.update(self.agent, action, observation)
@@ -77,7 +80,9 @@ class NavTopoHandler(SubgoalHandler):
         navigation_actions = {(action_name, movements_dict[action_name].motion)
                               for action_name in movements_dict}
         robot_trans_model = self._mos2d_agent.transition_model[self._mos2d_agent.robot_id]
-        self._nav_plan = find_navigation_plan(src_pose, dst_pose,
+        start = (srobot_topo.pose[:1], (srobot_topo.pose[2],))
+        goal = (subgoal.dst_pose[:1], (subgoal.dst_pose[2],))
+        self._nav_plan = find_navigation_plan(start, goal,
                                               navigation_actions,
                                               robot_trans_model.reachable_positions,
                                               diagonal_ok=True,
@@ -92,6 +97,45 @@ class NavTopoHandler(SubgoalHandler):
 
 
 ##### Auxiliary functions for navigation handler ###############
+def _nav_heuristic(pose, goal):
+    """Returns underestimate of the cost from pose to goal
+    pose tuple(position, rotation); goal tuple(position, rotation)"""
+    return euclidean_dist(pose[0], goal[0])
+
+def _reconstruct_plan(comefrom, end_node, return_pose=False):
+    """Returns the plan from start to end_node; The dictionary `comefrom` maps from node
+    to parent node and the edge (i.e. action)."""
+    plan = deque([])
+    node = end_node
+    while node in comefrom:
+        parent_node, action = comefrom[node]
+        if return_pose:
+            plan.appendleft({"action": action, "next_pose": _simplify_pose(node)})
+        else:
+            plan.appendleft(action)
+        node = parent_node
+    return list(plan)
+
+def _cost(action):
+    """
+    action is (movement_str, (forward, h_angle, v_angle))
+    """
+    forward, h_angle, v_angle = action[1]
+    cost = 0
+    if forward != 0:
+        cost += 1
+    if h_angle != 0:
+        cost += 1
+    if v_angle != 0:
+        cost += 1
+    return cost
+
+def _round_pose(full_pose):
+    x, y, z = full_pose[0]
+    pitch, yaw, roll = full_pose[1]
+    return ((round(x, 4), round(y, 4), round(z, 4)),\
+            (round(pitch, 4), round(yaw, 4), round(roll, 4)))
+
 def find_navigation_plan(start, goal, navigation_actions,
                          reachable_positions,
                          goal_distance=0.0,
