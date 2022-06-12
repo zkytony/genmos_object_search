@@ -47,6 +47,7 @@ class MosBasic2DAgent(pomdp_py.Agent):
         no_look = agent_config.get("no_look", True)
         detection_models = init_detection_models(agent_config)
         search_region = grid_map.filter_by_label("search_region")
+        self.robot_id = robot['id']
 
         # Transition Model
         reachable_positions = grid_map.filter_by_label("reachable")

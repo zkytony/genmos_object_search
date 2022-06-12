@@ -1,6 +1,8 @@
 import pomdp_py
 from ..domain.action import FindAction
-
+from ..domain.state import RobotState2D
+from ..models.belief import BeliefBasic2D
+from sloop_object_search.utils.misc import import_class
 
 class SubgoalHandler:
     @classmethod
@@ -8,14 +10,16 @@ class SubgoalHandler:
         raise NotImplementedError
 
     def _copy_topo_agent_belief(self):
-        self._mos2d_agent.set_belief(self._topo_agent.belief)
-        srobot_topo = self._topo_agent.belief.mpe().s(topo_agent.robot_id)
-        srobot = RobotState2D(topo_agent.robot_id,
+        robot_id = self._topo_agent.robot_id
+        srobot_topo = self._topo_agent.belief.mpe().s(robot_id)
+        srobot = RobotState2D(robot_id,
                               srobot_topo.pose,
                               srobot_topo.objects_found,
                               srobot_topo.camera_direction)
-        self._mos2d_agent.belief.set_object_belief(self._mos2d.agent.robot_id,
-                                            pomdp_py.Histogram({srobot: 1.0}))
+        belief = BeliefBasic2D(srobot,
+                               self._topo_agent.target_objects,
+                               object_beliefs=dict(self._topo_agent.belief.object_beliefs))
+        self._mos2d_agent.set_belief(belief)
 
 
 class LocalSearchHandler(SubgoalHandler):
@@ -28,9 +32,10 @@ class LocalSearchHandler(SubgoalHandler):
         self._mos2d_agent = mos2d_agent
         self._copy_topo_agent_belief()
 
-        self.planner = local_search_planner_args["planner"](
+        planner_class = local_search_planner_args["planner"]
+        self.planner = import_class(planner_class)(
             **local_search_planner_args.get("planner_args", {}),
-            rollout_policy=self.agent.policy_model
+            rollout_policy=self._mos2d_agent.policy_model
         )
 
     def step(self):
@@ -64,13 +69,19 @@ class NavTopoHandler(SubgoalHandler):
         self._topo_agent = topo_agent
         self._mos2d_agent = mos2d_agent
         self._copy_topo_agent_belief()
-
         srobot_topo = topo_agent.belief.mpe().s(topo_agent.robot_id)
-
         assert subgoal.src_nid == srobot_topo.topo_nid
-        self._nav_plan = self._compute_nav_plan(srobot_topo.pose,
-                                                subgoal.pose,
-                                                self._agent)
+
+        # Compute navigation plan
+        movements_dict = self._mos2d_agent.policy_model.movements
+        navigation_actions = {(action_name, movements_dict[action_name].motion)
+                              for action_name in movements_dict}
+        robot_trans_model = self._mos2d_agent.transition_model[self._mos2d_agent.robot_id]
+        self._nav_plan = find_navigation_plan(src_pose, dst_pose,
+                                              navigation_actions,
+                                              robot_trans_model.reachable_positions,
+                                              diagonal_ok=True,
+                                              return_pose=True)
         self._index = 0
 
     def step(self):
@@ -78,17 +89,6 @@ class NavTopoHandler(SubgoalHandler):
 
     def update(self):
         self._index += 1
-
-    def _compute_nav_plan(src_pose, dst_pose, mos2dagent):
-        movements_dict = mos2dagent.policy_model.movements
-        navigation_actions = {(action_name, movements_dict[action_name].motion)
-                              for action_name in movements_dict}
-        robot_trans_model = mos2dagent.transition_model[mos2dagent.robot_id]
-        return find_navigation_plan(src_pose, dst_pose,
-                                    navigation_actions,
-                                    robot_trans_model.reachable_positions,
-                                    diagonal_ok=True,
-                                    return_pose=True)
 
 
 ##### Auxiliary functions for navigation handler ###############

@@ -5,16 +5,19 @@ ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
 config = {
     "planner_config": {
-        "planner": "sloop_object_search.oopomdp.agent.hier2d.HierarchicalPlanner",
+        "planner": "sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner",
         "subgoal_level": {
             "max_depth": 20,
             "exploration_const": 1000,
             "planning_time": 0.25
         },
         "local_search": {
-            "max_depth": 10,
-            "exploration_const": 1000,
-            "planning_time": 0.25
+            "planner": "pomdp_py.POUCT",
+            "planner_args": {
+                "max_depth": 10,
+                "exploration_const": 1000,
+                "planning_time": 0.25
+            }
         }
     },
 

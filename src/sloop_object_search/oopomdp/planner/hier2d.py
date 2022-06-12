@@ -1,11 +1,11 @@
 # Hierarchical agent, with a hierarchical planner
 from sloop.agent import SloopAgent
-from .topo2d import SloopMosTopo2DAgent
-from .basic2d import MosBasic2DAgent
+from ..agent.topo2d import SloopMosTopo2DAgent
+from ..agent.basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
 from ..domain.state import RobotState2D
-from sloop_object_search.oopomdp.domain.action\
-    import MotionActionTopo, StayAction
+from ..domain.action import MotionActionTopo, StayAction, FindAction
+from .handlers import LocalSearchHandler, NavTopoHandler
 
 import pomdp_py
 
@@ -20,6 +20,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
 
     def _create_mos2d_agent(self):
         agent_config = self._topo_agent.agent_config.copy()
+
         srobot_topo = self._topo_agent.belief.mpe().s(self._topo_agent.robot_id)
         init_robot_state = RobotState2D(self._topo_agent.robot_id,
                                         srobot_topo.pose,
@@ -27,7 +28,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
                                         srobot_topo.camera_direction)
         init_belief = BeliefBasic2D(init_robot_state,
                                     self._topo_agent.target_objects,
-                                    object_beliefs=self._topo_agent.belief.object_beliefs)
+                                    object_beliefs=dict(self._topo_agent.belief.object_beliefs))
         agent = MosBasic2DAgent(agent_config,
                                 self._topo_agent.grid_map,
                                 init_belief=init_belief)
@@ -62,7 +63,8 @@ class HierarchicalPlanner(pomdp_py.Planner):
                                       self.planner_config['local_search'])
         elif isinstance(subgoal, MotionActionTopo):
             rnd_state = self._topo_agent.belief.random()
-            subgoal.pose = self._topo_agent.transition_model.sample(rnd_state, subgoal).pose
+            robot_trans_model = self._topo_agent.transition_model[self._topo_agent.robot_id]
+            subgoal.pose = robot_trans_model.sample(rnd_state, subgoal).pose
             return NavTopoHandler(subgoal, self._topo_agent, self._mos2d_agent)
 
         elif isinstance(subgoal, FindAction):
