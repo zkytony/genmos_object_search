@@ -1,4 +1,5 @@
 # Hierarchical agent, with a hierarchical planner
+from pomdp_py.utils import typ
 from sloop.agent import SloopAgent
 from ..agent.topo2d import SloopMosTopo2DAgent
 from ..agent.basic2d import MosBasic2DAgent
@@ -19,6 +20,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
         self._subgoal_planner = pomdp_py.POUCT(**self.planner_config['subgoal_level'],
                                                rollout_policy=self._topo_agent.policy_model)
         self._subgoal_handler = None
+        self._current_subgoal = None
 
     @property
     def mos2d_agent(self):
@@ -47,9 +49,17 @@ class HierarchicalPlanner(pomdp_py.Planner):
         Args:
             agent: a topo2d agent.
         """
+        subgoal = self._subgoal_planner.plan(self._topo_agent)
+        print(typ.green(f"Subgoal planned: {subgoal})"))
+
+        if self._current_subgoal is None:
+            self._current_subgoal = subgoal
+
         if self._subgoal_handler is None:
-            subgoal = self._subgoal_planner.plan(self._topo_agent)
             self._subgoal_handler = self.handle(subgoal)
+        else:
+            if subgoal != self._subgoal_handler.subgoal:
+                self._subgoal_handler = self.handle(subgoal)
 
         action = self._subgoal_handler.step()
         return action
@@ -72,3 +82,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
         if self._subgoal_handler is not None:
             self._subgoal_handler.update(action, observation)
             self._subgoal_planner.update(agent, action, observation)
+
+            if self._subgoal_handler.done:
+                self._subgoal_handler = None
+                self._current_subgoal = None

@@ -1,7 +1,7 @@
 from collections import deque
 import pomdp_py
 from ..domain.action import FindAction
-from ..domain.state import RobotState2D
+from ..domain.state import RobotState2D, RobotStateTopo
 from ..models.belief import BeliefBasic2D
 from ..models.transition_model import RobotTransBasic2D
 from sloop_object_search.utils.misc import import_class
@@ -11,6 +11,10 @@ from sloop_object_search.utils.algo import PriorityQueue
 class SubgoalHandler:
     @classmethod
     def create(cls, *args, **kwargs):
+        raise NotImplementedError
+
+    @property
+    def done(self):
         raise NotImplementedError
 
     def _copy_topo_agent_belief(self):
@@ -32,6 +36,7 @@ class LocalSearchHandler(SubgoalHandler):
                  topo_agent,
                  mos2d_agent,
                  local_search_planner_args):
+        self.subgoal = subgoal
         self._topo_agent = topo_agent  # parent
         self._mos2d_agent = mos2d_agent
         self._copy_topo_agent_belief()
@@ -49,20 +54,29 @@ class LocalSearchHandler(SubgoalHandler):
         self.planner.update(self._mos2d_agent, action, observation)
         self._copy_topo_agent_belief()
 
+    @property
+    def done(self):
+        return False
+
 
 class FindHandler(SubgoalHandler):
     def __init__(self, subgoal):
-        pass
+        self.subgoal = subgoal
 
     def step(self):
         return FindAction()
 
-    def update(self):
+    def update(self, *args):
         pass
+
+    @property
+    def done(self):
+        return True
 
 
 class NavTopoHandler(SubgoalHandler):
     def __init__(self, subgoal, topo_agent, mos2d_agent):
+        self.subgoal = subgoal
         self._topo_agent = topo_agent
         self._mos2d_agent = mos2d_agent
         self._copy_topo_agent_belief()
@@ -76,18 +90,36 @@ class NavTopoHandler(SubgoalHandler):
         robot_trans_model = self._mos2d_agent.transition_model[self._mos2d_agent.robot_id]
         start = (srobot_topo.pose[:2], (srobot_topo.pose[2],))
         goal = (subgoal.dst_pose[:2], (subgoal.dst_pose[2],))
-        import pdb; pdb.set_trace()
         self._nav_plan = find_navigation_plan(start, goal,
                                               navigation_actions,
                                               robot_trans_model.reachable_positions,
                                               return_pose=True)
         self._index = 0
+        self._done = False
+
+    @property
+    def done(self):
+        return self._done
 
     def step(self):
-        return self._nav_plan[self._index]
+        if not self._done:
+            action_name = self._nav_plan[self._index]['action'][0]
+            return self._mos2d_agent.policy_model.movements[action_name]
 
-    def update(self):
-        self._index += 1
+    def update(self, action, observation):
+        if self._index < len(self._nav_plan) - 1:
+            self._index += 1
+        else:
+            self._done = True
+            zrobot = observation.z(self._topo_agent.robot_id)
+            topo_nid = self._topo_agent.topo_map.closest_node(*zrobot.pose[:2])
+            srobot_topo = RobotStateTopo(zrobot.robot_id,
+                                         zrobot.pose,
+                                         zrobot.objects_found,
+                                         zrobot.camera_direction,
+                                         topo_nid)
+            self._topo_agent.set_object_belief(self._topo_agent.robot_id,
+                                               pomdp_py.Histogram({srobot_topo: 1.0}))
 
 
 ##### Auxiliary functions for navigation handler ###############
