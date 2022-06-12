@@ -9,7 +9,7 @@ from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.agent import (SloopMosBasic2DAgent,
                                                VizSloopMosBasic2D,
                                                SloopMosTopo2DAgent)
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
+from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState, RobotStateTopo
 from sloop_object_search.oopomdp.domain.action import LookAction
 from sloop_object_search.oopomdp.planner import make_planner
 from sloop_object_search.oopomdp.planner.hier2d import HierarchicalPlanner
@@ -65,15 +65,9 @@ def main(_config):
     # Just grab a random state as initial state
     random.seed(100)
     init_state = agent.belief.random()
-    if isinstance(planner, HierarchicalPlanner):
-        # note: planner-specific (but ok since this is just a test!)
-        task_env = pomdp_py.Environment(init_state,
-                                        planner.mos2d_agent.transition_model,
-                                        planner.mos2d_agent.reward_model)
-    else:
-        task_env = pomdp_py.Environment(init_state,
-                                        agent.transition_model,
-                                        agent.reward_model)
+    task_env = pomdp_py.Environment(init_state,
+                                    agent.transition_model,
+                                    agent.reward_model)
 
     _prior = _config["agent_config"]["belief"]["prior"]
 
@@ -112,7 +106,21 @@ def main(_config):
         _dd = pomdp_py.utils.TreeDebugger(agent.tree)
         _dd.p(1)
 
-        reward = task_env.state_transition(action, execute=True)
+        if isinstance(planner, HierarchicalPlanner):
+            # note: planner-specific (but ok since this is just a test!)
+            old_state = copy.deepcopy(task_env.state)
+            snext = planner.mos2d_agent.transition_model.sample(task_env.state, action)
+            srobot_next = snext.s(agent.robot_id)
+            srobot_topo_next = RobotStateTopo(agent.robot_id,
+                                              srobot_next['pose'],
+                                              srobot_next['objects_found'],
+                                              srobot_next['camera_direction'],
+                                              task_env.state.s(srobot_next['id']).topo_nid)
+            snext.set_object_state(agent.robot_id, srobot_topo_next)
+            task_env.apply_transition(snext)
+            reward = agent.reward_model.sample(old_state, action, snext)
+        else:
+            reward = task_env.state_transition(action, execute=True)
         observation = task_env.provide_observation(agent.observation_model, action)
         print("Step {}:  Action: {}   Observation: {}  Reward: {}    Robot State: {}"\
               .format(i, action, observation, reward, task_env.state.s(agent.robot_id)))

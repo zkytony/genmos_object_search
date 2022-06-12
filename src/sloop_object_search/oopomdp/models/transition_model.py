@@ -132,18 +132,29 @@ class RobotTransBasic2D(RobotTransitionModel):
             return self.sample_by_pose(pose, action)
 
     def sample_by_pose(self, pose, action, round_to="int"):
+        return RobotTransBasic2D.transform_pose(pose, action, self.reachable_positions, round_to=round_to)
+
+    @classmethod
+    def transform_pose(cls, pose, action,
+                       reachable_positions=None, round_to="int"):
         original_pose = pose
         rx, ry, rth = pose
         # odometry motion model
-        forward, angle = action.motion
+        if type(action) == tuple:
+            forward, angle = action
+        else:
+            forward, angle = action.motion
         rth = (rth + angle) % 360
         rx = rx + forward*math.cos(to_rad(rth))
         ry = ry + forward*math.sin(to_rad(rth))
         rx, ry, rth = fround(round_to, (rx, ry, rth))
-        if (rx, ry) in self.reachable_positions:
-            return (rx, ry, rth)
+        if reachable_positions is not None:
+            if (rx, ry) in reachable_positions:
+                return (rx, ry, rth)
+            else:
+                return original_pose
         else:
-            return original_pose
+            return (rx, ry, rth)
 
     def argmax(self, state, action):
         srobot_next = super().argmax(state, action)

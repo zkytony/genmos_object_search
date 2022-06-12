@@ -5,7 +5,7 @@ from ..agent.basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
 from ..domain.state import RobotState2D
 from ..domain.action import MotionActionTopo, StayAction, FindAction
-from .handlers import LocalSearchHandler, NavTopoHandler
+from .handlers import LocalSearchHandler, NavTopoHandler, FindHandler
 
 import pomdp_py
 

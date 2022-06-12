@@ -1,9 +1,11 @@
+from collections import deque
 import pomdp_py
 from ..domain.action import FindAction
 from ..domain.state import RobotState2D
 from ..models.belief import BeliefBasic2D
+from ..models.transition_model import RobotTransBasic2D
 from sloop_object_search.utils.misc import import_class
-from sloop_object_search.utils.math import normalize_angles, euclidean_dist
+from sloop_object_search.utils.math import normalize_angles, euclidean_dist, fround
 from sloop_object_search.utils.algo import PriorityQueue
 
 class SubgoalHandler:
@@ -41,19 +43,11 @@ class LocalSearchHandler(SubgoalHandler):
         )
 
     def step(self):
-        import pdb; pdb.set_trace()
         return self.planner.plan(self._mos2d_agent)
 
     def update(self, action, observation):
-        self.planner.update(self.agent, action, observation)
-        self.agent.set_belief(self._topo_agent.belief)
-        srobot_topo = self._topo_agent.belief.mpe().s(topo_agent.robot_id)
-        srobot = RobotState2D(topo_agent.robot_id,
-                              srobot_topo.pose,
-                              srobot_topo.objects_found,
-                              srobot_topo.camera_direction)
-        self.agent.belief.set_object_belief(self.agent.robot_id,
-                                            pomdp_py.Histogram({srobot: 1.0}))
+        self.planner.update(self._mos2d_agent, action, observation)
+        self._copy_topo_agent_belief()
 
 
 class FindHandler(SubgoalHandler):
@@ -80,12 +74,12 @@ class NavTopoHandler(SubgoalHandler):
         navigation_actions = {(action_name, movements_dict[action_name].motion)
                               for action_name in movements_dict}
         robot_trans_model = self._mos2d_agent.transition_model[self._mos2d_agent.robot_id]
-        start = (srobot_topo.pose[:1], (srobot_topo.pose[2],))
-        goal = (subgoal.dst_pose[:1], (subgoal.dst_pose[2],))
+        start = (srobot_topo.pose[:2], (srobot_topo.pose[2],))
+        goal = (subgoal.dst_pose[:2], (subgoal.dst_pose[2],))
+        import pdb; pdb.set_trace()
         self._nav_plan = find_navigation_plan(start, goal,
                                               navigation_actions,
                                               robot_trans_model.reachable_positions,
-                                              diagonal_ok=True,
                                               return_pose=True)
         self._index = 0
 
@@ -110,7 +104,7 @@ def _reconstruct_plan(comefrom, end_node, return_pose=False):
     while node in comefrom:
         parent_node, action = comefrom[node]
         if return_pose:
-            plan.appendleft({"action": action, "next_pose": _simplify_pose(node)})
+            plan.appendleft({"action": action, "next_pose": node})
         else:
             plan.appendleft(action)
         node = parent_node
@@ -120,28 +114,44 @@ def _cost(action):
     """
     action is (movement_str, (forward, h_angle, v_angle))
     """
-    forward, h_angle, v_angle = action[1]
+    forward, h_angle = action[1]
     cost = 0
     if forward != 0:
         cost += 1
     if h_angle != 0:
         cost += 1
-    if v_angle != 0:
-        cost += 1
     return cost
 
 def _round_pose(full_pose):
-    x, y, z = full_pose[0]
-    pitch, yaw, roll = full_pose[1]
-    return ((round(x, 4), round(y, 4), round(z, 4)),\
-            (round(pitch, 4), round(yaw, 4), round(roll, 4)))
+    return (fround('int', full_pose[0]),
+            fround('int', full_pose[1]))
+
+def _same_pose(pose1, pose2, tolerance=1e-4, angle_tolerance=5):
+    """
+    Returns true if pose1 and pose2 are of the same pose;
+
+    Args:
+       tolerance (float): Euclidean distance tolerance
+       angle_tolerance (float): Angular tolerance;
+          Instead of relying on this tolerance, you
+          should make sure the goal pose's rotation
+          can be achieved exactly by taking the
+          rotation actions.
+    """
+    x1, y1 = pose1[0]
+    th1 = pose1[1][0]
+
+    x2, y2 = pose2[0]
+    th2 = pose2[1][0]
+
+    return euclidean_dist((x1, y1), (x2, y2)) <= tolerance\
+        and abs(th1 - th2) <= angle_tolerance
+
 
 def find_navigation_plan(start, goal, navigation_actions,
                          reachable_positions,
                          goal_distance=0.0,
-                         grid_size=None,
                          angle_tolerance=5,
-                         diagonal_ok=False,
                          return_pose=False,
                          debug=False):
     """
@@ -165,10 +175,6 @@ def find_navigation_plan(start, goal, navigation_actions,
         navigation_actions (list): list of navigation actions,
             represented as ("ActionName", (forward, h_angles, v_angles)),
         goal_distance (bool): acceptable minimum euclidean distance to the goal
-        grid_size (float): size of the grid, typically 0.25. Only
-            necessary if `diagonal_ok` is True
-        diagonal_ok (bool): True if 'MoveAhead' can move
-            the robot diagonally.
         return_pose (bool): True if return a list of {"action": <action>, "next_pose": <pose>} dicts
         debug (bool): If true, returns the expanded poses
     Returns:
@@ -219,10 +225,8 @@ def find_navigation_plan(start, goal, navigation_actions,
                                          return_pose=return_pose)
 
         for action in navigation_actions:
-            next_pose = transform_pose(current_pose, action,
-                                       grid_size=grid_size,
-                                       diagonal_ok=diagonal_ok)
-            if not _valid_pose(_round_pose(next_pose), reachable_positions):
+            next_pose = transform_pose(current_pose, action)
+            if not _round_pose(next_pose)[0] in reachable_positions:
                 continue
 
             new_cost = cost[current_pose] + _cost(action)
@@ -240,8 +244,7 @@ def find_navigation_plan(start, goal, navigation_actions,
         return None
 
 
-def transform_pose(robot_pose, action, schema="vw",
-                   diagonal_ok=False, grid_size=None):
+def transform_pose(robot_pose, action):
     """Transform pose of robot in 2D;
     This is a generic function, not specific to Thor.
 
@@ -253,29 +256,11 @@ def transform_pose(robot_pose, action, schema="vw",
        action:
               ("ActionName", delta), where delta is the change, format dependent on schema
 
-       grid_size (float or None): If None, then will not
-           snap the transformed x,y to grid.
-
-       diagonal_ok (bool): True if it is ok to go diagonally,
-           even though the traversed distance is longer than grid_size.
-
     Returns the transformed pose in the same form as input
     """
     action_name, delta = action
-    if schema == "vw":
-        x, z, pitch, yaw = _simplify_pose(robot_pose)
-        new_pose = _move_by_vw((x, z, pitch, yaw), delta,
-                               grid_size=grid_size, diagonal_ok=diagonal_ok)
-    elif schema == "vw2d":
-        x, z, yaw = robot_pose
-        new_pose = _move_by_vw2d((x, z, yaw), delta,
-                                 grid_size=grid_size, diagonal_ok=diagonal_ok)
-    else:
-        raise ValueError("Unknown schema")
-
-    if _is_full_pose(robot_pose):
-        new_rx, new_rz, new_yaw, new_pitch = new_pose
-        return (new_rx, robot_pose[0][1], new_rz),\
-            (new_pitch, new_yaw, robot_pose[1][2])
-    else:
-        return new_pose
+    x, y = robot_pose[0]
+    yaw = robot_pose[1][0]
+    nx, ny, nyaw = RobotTransBasic2D.transform_pose((x, y, yaw), delta,
+                                                    round_to='int')
+    return ((nx, ny), (nyaw,))
