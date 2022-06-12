@@ -11,12 +11,18 @@ import pomdp_py
 
 class HierarchicalPlanner(pomdp_py.Planner):
 
-    def __init__(self, planner_config):
-        self._topo_agent = None
-        self._mos2d_agent = None
-        self._subgoal_planner = None
-        self._subgoal_handler = None
+    def __init__(self, planner_config, topo_agent):
+        assert isinstance(topo_agent, SloopMosTopo2DAgent)
         self.planner_config = planner_config
+        self._topo_agent = topo_agent
+        self._mos2d_agent = self._create_mos2d_agent()
+        self._subgoal_planner = pomdp_py.POUCT(**self.planner_config['subgoal_level'],
+                                               rollout_policy=self._topo_agent.policy_model)
+        self._subgoal_handler = None
+
+    @property
+    def mos2d_agent(self):
+        return self._mos2d_agent
 
     def _create_mos2d_agent(self):
         agent_config = self._topo_agent.agent_config.copy()
@@ -41,14 +47,6 @@ class HierarchicalPlanner(pomdp_py.Planner):
         Args:
             agent: a topo2d agent.
         """
-        if self._topo_agent is None:
-            # First time plan
-            assert isinstance(agent, SloopMosTopo2DAgent)
-            self._topo_agent = agent
-            self._mos2d_agent = self._create_mos2d_agent()
-            self._subgoal_planner = pomdp_py.POUCT(**self.planner_config['subgoal_level'],
-                                                   rollout_policy=agent.policy_model)
-
         if self._subgoal_handler is None:
             subgoal = self._subgoal_planner.plan(self._topo_agent)
             self._subgoal_handler = self.handle(subgoal)

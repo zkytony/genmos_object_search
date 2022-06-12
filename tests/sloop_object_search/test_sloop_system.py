@@ -12,6 +12,7 @@ from sloop_object_search.oopomdp.agent import (SloopMosBasic2DAgent,
 from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
 from sloop_object_search.oopomdp.domain.action import LookAction
 from sloop_object_search.oopomdp.planner import make_planner
+from sloop_object_search.oopomdp.planner.hier2d import HierarchicalPlanner
 
 
 def ask_for_splang(sloop_agent, objspec=None):
@@ -57,25 +58,24 @@ def main(_config):
     agent = eval(_config["agent_config"]["agent_class"])(
         _config["agent_config"], map_name)
 
+    _planner_config = _config["planner_config"]
+    planner = make_planner(_planner_config, agent)
+    max_steps = _config["task_config"]["max_steps"]
+
     # Just grab a random state as initial state
     random.seed(100)
     init_state = agent.belief.random()
-    task_env = pomdp_py.Environment(init_state,
-                                    agent.transition_model,
-                                    agent.reward_model)
+    if isinstance(planner, HierarchicalPlanner):
+        # note: planner-specific (but ok since this is just a test!)
+        task_env = pomdp_py.Environment(init_state,
+                                        planner.mos2d_agent.transition_model,
+                                        planner.mos2d_agent.reward_model)
+    else:
+        task_env = pomdp_py.Environment(init_state,
+                                        agent.transition_model,
+                                        agent.reward_model)
 
     _prior = _config["agent_config"]["belief"]["prior"]
-
-    # Show visualization
-    _task_config = _config["task_config"]
-    viz = import_class(_task_config["visualizer"])(agent.grid_map,
-                                                   bg_path=FILEPATHS[map_name]["map_png"],
-                                                   **_task_config["viz_params"])
-    if _prior == "splang":
-        draw_belief = False  # don't hide the map when typing language
-    else:
-        draw_belief = True
-    visualize_step(viz, agent, task_env, None, _config, draw_belief=draw_belief)
 
     # Belief prior
     _objects = _config["agent_config"]["objects"]
@@ -95,9 +95,17 @@ def main(_config):
             splang_observation = ask_for_splang(agent, _objects[objid])
             agent.update_belief(splang_observation, None)
 
-    _planner_config = _config["planner_config"]
-    planner = make_planner(_planner_config, agent)
-    max_steps = _config["task_config"]["max_steps"]
+    # Show visualization
+    _task_config = _config["task_config"]
+    viz = import_class(_task_config["visualizer"])(agent.grid_map,
+                                                   bg_path=FILEPATHS[map_name]["map_png"],
+                                                   **_task_config["viz_params"])
+    if _prior == "splang":
+        draw_belief = False  # don't hide the map when typing language
+    else:
+        draw_belief = True
+    visualize_step(viz, agent, task_env, None, _config, draw_belief=draw_belief)
+
 
     for i in range(max_steps):
         action = planner.plan(agent)

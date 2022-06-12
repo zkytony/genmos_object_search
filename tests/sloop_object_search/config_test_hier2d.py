@@ -27,7 +27,8 @@ config = {
         "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosTopo",
         "viz_params": {
             "res": 20
-        }
+        },
+
     },
 
     "agent_config": {

@@ -6,6 +6,6 @@ def make_planner(planner_config, agent):
         return import_class(planner_class)(**planner_config["planner_params"],
                                            rollout_policy=agent.policy_model)
     elif planner_class.endswith("HierarchicalPlanner"):
-        return import_class(planner_class)(planner_config)
+        return import_class(planner_class)(planner_config, agent)
     else:
         raise ValueError(f"Cannot make planner {planner_class} (unrecognized).")
