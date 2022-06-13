@@ -1,0 +1,11 @@
+<launch>
+
+  <node name="run_mos_agent_osm"
+        pkg="sloop_ros" type="run_agent" output="screen">
+    <param name="~pomdp_name" value="sloop_mos_osm"/>
+    <!-- So strange. bug you can't do ~config -->
+    <rosparam param="config" command="load"
+              file="$(find sloop_ros)/config/sloop_mos_osm.yaml"/>
+  </node>
+
+</launch>

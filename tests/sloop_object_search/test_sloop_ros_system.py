@@ -36,6 +36,13 @@ test_config = {
 }
 
 def main(config):
+
+
+
+    agent = ros_wrapped_agent(config)
+    agent.run()
+
+
     mapinfo = MapInfoDataset()
     mapinfo.load_map(config["map_name"])
     grid_map = mapinfo.grid_map_of(config["map_name"])

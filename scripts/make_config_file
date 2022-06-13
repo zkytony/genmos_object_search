@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+import os
+import argparse
+import yaml
+import sys
+import importlib
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="convert python dict config to yaml file.")
+    parser.add_argument("config_file", type=str, help="the .py file that contains the config dict")
+    parser.add_argument("output_file", type=str, help="the .yaml file that will be the output")
+    args = parser.parse_args()
+
+    sys.path.insert(0, os.path.dirname(args.config_file))
+    config_module = importlib.import_module(os.path.basename(args.config_file.split(".py")[0]))
+
+    with open(args.output_file, "w") as f:
+        yaml.dump(config_module.config, f)

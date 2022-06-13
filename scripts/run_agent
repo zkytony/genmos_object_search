@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import rospy
+from sloop_object_search.ros import make_ros_agent
+
+def main():
+    rospy.init_node("run_agent")
+    config = rospy.get_param("~config")  # access parameters together as a dictionary
+    agent = make_ros_agent(config)
+    agent.setup()
+    agent.run()
+
+if __name__ == "__main__":
+    main()

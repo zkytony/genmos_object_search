@@ -7,7 +7,7 @@ from pomdp_ros.msg import (PlanNextStepAction,
 from .utils import tobeoverriden
 
 
-class BaseAgent(pomdp_py.Agent):
+class BaseAgentWrapper:
     """
     A base agent serves:
     - ~plan
@@ -21,13 +21,9 @@ class BaseAgent(pomdp_py.Agent):
 
     See scripts/run_pomdp_agent for how this is used.
     """
-    def __init__(self, belief, models, config):
-        super().__init__(belief,
-                         models.policy_model,
-                         transition_model=models.transition_model,
-                         observation_model=models.observation_model,
-                         reward_model=models.reward_model)
-        self._planner = None
+    def __init__(self, pomdp_agent, config={}, planner=None):
+        self.agent = pomdp_agent
+        self._planner = planner
 
         # Note that the following objects are created when 'setup' is called.
         # If you would like the agent
@@ -45,7 +41,7 @@ class BaseAgent(pomdp_py.Agent):
 
         # This will always be equal to the last planned action
         self._last_action = None
-        self._debug_planner = config.get("debug_planning", True)
+
 
     def setup(self):
         """Override this function to create make your agent
@@ -63,7 +59,7 @@ class BaseAgent(pomdp_py.Agent):
         # Publishes current belief
         self._belief_publisher = rospy.Publisher(
             self._belief_topic,
-            self.belief.ros_belief_msg_type,
+            self.agent.belief.ros_belief_msg_type,
             queue_size=10, latch=True)
 
         # Subscribes to observation
@@ -77,7 +73,7 @@ class BaseAgent(pomdp_py.Agent):
         """Override this function to handle different observation types"""
         rospy.loginfo(f"Observation received: {observation_msg}")
         observation = self.observation_model.interpret_observation_msg(observation_msg)
-        self.belief.update(self, observation, self._last_action)
+        self.agent.belief.update(self, observation, self._last_action)
 
     def run(self):
         """Blocking call"""
@@ -105,8 +101,6 @@ class BaseAgent(pomdp_py.Agent):
             self._last_action = None
         else:
             action = self._planner.plan(self)
-            if self._debug_planning:
-                self._debug_planning()
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
             action_msg = action.to_ros_msg(goal.goal_id)
@@ -129,14 +123,3 @@ class BaseAgent(pomdp_py.Agent):
         if self._observation_subscriber is None:
             message += "- self._observation_subscriber\n"
         return message
-
-    def _debug_planning(self):
-        """
-        Function called when planner successfully returns
-        an action. Override this function if you would like
-        different behavior after plan success.
-        """
-        if isinstance(self._planner, pomdp_py.POUCT)\
-           or isinstance(self._planner, pomdp_py.POMCP):
-            dd = pomdp_py.utils.TreeDebugger(self.tree)
-            dd.p(1)
