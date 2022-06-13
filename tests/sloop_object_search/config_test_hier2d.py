@@ -5,11 +5,19 @@ ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
 config = {
     "planner_config": {
-        "planner": "pomdp_py.POUCT",
-        "planner_params": {
+        "planner": "sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner",
+        "subgoal_level": {
             "max_depth": 20,
             "exploration_const": 1000,
             "planning_time": 0.25
+        },
+        "local_search": {
+            "planner": "pomdp_py.POUCT",
+            "planner_args": {
+                "max_depth": 10,
+                "exploration_const": 1000,
+                "planning_time": 0.15
+            }
         }
     },
 
@@ -19,7 +27,8 @@ config = {
         "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosTopo",
         "viz_params": {
             "res": 20
-        }
+        },
+
     },
 
     "agent_config": {
@@ -33,7 +42,7 @@ config = {
             "sep": 4.0,   # separation between places
             "seed": 1120,
             "node_coverage_radius": 3.0,
-            "resample_prob_thres": 0.1
+            "resample_prob_thres": 0.25
         },
         "no_look": True,
         "belief": {
@@ -59,7 +68,7 @@ config = {
             "detectors": {
                 "G": {
                     "class": "sloop_object_search.oopomdp.FanModelSimpleFP",
-                    "params": (dict(fov=90, min_range=0, max_range=10), (0.9, 0.1, 0.25))
+                    "params": (dict(fov=90, min_range=0, max_range=15), (0.9, 0.1, 0.25))
                 },
             }
         },

@@ -76,9 +76,9 @@ class SloopMosTopo2DAgent(SloopAgent):
 
         init_belief = BeliefTopo2D(init_robot_state,
                                    self.target_objects,
-                                   search_region,
                                    agent_config["belief"],
-                                   object_beliefs=init_object_beliefs)
+                                   object_beliefs=init_object_beliefs,
+                                   search_region=search_region)
 
         return (init_belief,
                 policy_model,
@@ -180,7 +180,7 @@ class SloopMosTopo2DAgent(SloopAgent):
 
         # combine the topo node probs --> the probability "covered" by the nodes.
         total_prob = sum(topo_node_prob[n] for n in topo_node_prob)
-        print("total_prob covered by topo map:", total_prob)
+        print(f"Topo map coverage total prob: {total_prob}")
         return total_prob < topo_map_args.get("resample_prob_thres", 0.4)
 
 

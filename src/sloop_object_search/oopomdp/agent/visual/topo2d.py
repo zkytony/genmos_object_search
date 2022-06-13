@@ -14,13 +14,14 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
         if img is None:
             img = self._make_gridworld_image(self._res)
 
+        img = super().render(agent, objlocs, colors=colors,
+                              robot_state=robot_state, draw_fov=draw_fov,
+                              draw_belief=draw_belief, img=img)
         # Draw topo map
         if draw_topo:
             img = draw_topo_func(img, agent.topo_map, self._res,
                                  draw_grid_path=self._draw_topo_grid_path)
-        return super().render(agent, objlocs, colors=colors,
-                              robot_state=robot_state, draw_fov=draw_fov,
-                              draw_belief=draw_belief, img=img)
+        return img
 
 
 #------ Visualization -----#
@@ -86,6 +87,6 @@ def mark_cell(img, pos, nid, r, linewidth=1, unmark=False):
         text_loc = (int(round(r/4)), int(round(r/1.5)))
         cv2.putText(imgtxt, str(nid), text_loc, #(y*r+r//4, x*r+r//2),
                     font, fontScale, fontColor, lineType)
-        imgtxt = cv2.rotate(imgtxt, cv2.ROTATE_90_CLOCKWISE)
+        imgtxt = cv2.rotate(imgtxt, cv2.ROTATE_90_COUNTERCLOCKWISE)
         img[x*r:x*r+r, y*r:y*r+r] = imgtxt
     return img

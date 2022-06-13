@@ -31,21 +31,21 @@ class Belief2D(pomdp_py.OOBelief):
     def __init__(self,
                  robot_state,
                  target_objects,
-                 search_region,
-                 belief_config,
+                 belief_config=None,
+                 search_region=None,
                  object_beliefs=None):
         """Note that object_beliefs don't include robot belief"""
         self.robot_id = robot_state["id"]
         self.search_region = search_region
         self.target_objects = target_objects
         robot_belief = pomdp_py.Histogram({robot_state:1.0})
-        prior = belief_config.get("prior", {})
-        if type(prior) != dict:
-            prior = {}
-
         if object_beliefs is not None:
             object_beliefs[robot_state["id"]] = robot_belief
         else:
+            prior = belief_config.get("prior", {})
+            if type(prior) != dict:
+                prior = {}
+
             object_beliefs = {robot_state["id"]: robot_belief}
             for objid in target_objects:
                 target = target_objects[objid]
