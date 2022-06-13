@@ -1,23 +1,20 @@
+import rospy
 from .framework.base_agent_wrapper import BaseAgentWrapper
-from sloop_object_search.oopomdp.agent import make_planner
+import sloop_ros.msg as sloop_ros
+from sloop_object_search.oopomdp.agent import make_agent
 from sloop_object_search.oopomdp.planner import make_planner
 
-def make_ros_agent(config):
+def make_ros_agent(_config):
     """
     Args:
         config (dict): the configuration dictionary; refer to examples
             under sloop_ros/tests
     """
-    map_name = _config['task_config']["map_name"]
-
-    init_robot_pose = (5, 10, 0.0)
-    _robot = _config["agent_config"]["robot"]
-    _robot["init_pose"] = init_robot_pose
-    agent = eval(_config["agent_config"]["agent_class"])(
-        _config["agent_config"], map_name)
-
-    _planner_config = _config["planner_config"]
-    planner = make_planner(_planner_config, agent)
+    _ros_config = _config.get("ros_config", {})
+    init_pose_msg = rospy.wait_for_message(_ros_config.get("init_pose_topic", "~init_pose"),
+                                       sloop_ros.GridMapPose2d)
+    agent = make_agent(config, init_pose=(init_pose_msg.x, init_pose_msg.y, init_pose_msg.yaw))
+    planner = make_planner(_config["planner_config"], agent)
     return SloopMosROSAgentWrapper(agent, planner,
                                    config=config.get("ros_config", {}))
 

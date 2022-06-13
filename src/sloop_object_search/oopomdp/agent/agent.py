@@ -1,4 +1,4 @@
-def make_agent(config, init_pose=None):
+def make_agent(_config, init_pose=None):
     map_name = _config['task_config']["map_name"]
 
     if init_pose is None:

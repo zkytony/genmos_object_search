@@ -1,3 +1,7 @@
+ros_config:
+  init_pose_topic: ~init_pose
+
+
 agent_config:
   action:
     h_rotation: 45.0
@@ -22,12 +26,11 @@ agent_config:
     detectors:
       G:
         class: sloop_object_search.oopomdp.FanModelSimpleFP
-        params: !!python/tuple
+        params:
         - fov: 90
           max_range: 15
           min_range: 0
-        - !!python/tuple
-          - 0.9
+        - - 0.9
           - 0.1
           - 0.25
     id: robot0
