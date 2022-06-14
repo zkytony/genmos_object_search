@@ -115,7 +115,7 @@ class BaseAgentWrapper:
             action = self._planner.plan(self)
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
-            action_msg = action.to_ros_msg(goal.goal_id)
+            action_msg = self.action_to_ros_msg(action, goal.goal_id)
             self._action_publisher.publish(action_msg)
             self._last_action = action
             result.status = GoalStatus.SUCCEEDED
@@ -139,12 +139,12 @@ class BaseAgentWrapper:
     def belief_to_ros_msg(self, belief, stamp=None):
         """To Be Overriden"""
         belief_msg = DefaultBelief()
-        if stamp is None:
-            stamp = rospy.Time.now()
-        belief_msg.stamp = stamp
-        belief_msg.states = [state for state in belief]
-        belief_msg.probs = [belief[state]
-                            for state in belief_msg.states]
+        # if stamp is None:
+        #     stamp = rospy.Time.now()
+        # belief_msg.stamp = stamp
+        # belief_msg.states = [state for state in belief]
+        # belief_msg.probs = [belief[state]
+        #                     for state in belief_msg.states]
         return belief_msg
 
     def action_to_ros_msg(self, action, goal_id):
@@ -152,9 +152,9 @@ class BaseAgentWrapper:
         # All Action message types are assumed to have a goal_id
         # (actionlib goal)
         action_msg = DefaultAction()
-        action_msg.goal_id = goal_id
-        action_msg.name = action.name
-        action_msg.data = str(action.data)
+        # action_msg.goal_id = goal_id
+        # action_msg.name = action.name
+        # action_msg.data = str(action.data)
         return action_msg
 
     def interpret_observation_msg(self, observation, goal_id):
