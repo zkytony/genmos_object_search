@@ -97,7 +97,7 @@ class PolicyModelBasic2D(PolicyModel):
             num_visits_init, val_init, self)
 
     @staticmethod
-    def all_movements(step_size=3, h_rotation=45.0):
+    def all_movements(step_size=1, h_rotation=45.0):
         """returns mapping from action name to Action"""
         # scheme vw: (vt, vw) translational, rotational velocities.
         FORWARD = (step_size, 0)

@@ -118,8 +118,8 @@ class NavTopoHandler(SubgoalHandler):
                                          zrobot.objects_found,
                                          zrobot.camera_direction,
                                          topo_nid)
-            self._topo_agent.set_object_belief(self._topo_agent.robot_id,
-                                               pomdp_py.Histogram({srobot_topo: 1.0}))
+            self._topo_agent.belief.set_object_belief(self._topo_agent.robot_id,
+                                                      pomdp_py.Histogram({srobot_topo: 1.0}))
 
 
 ##### Auxiliary functions for navigation handler ###############

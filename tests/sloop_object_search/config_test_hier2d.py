@@ -42,7 +42,7 @@ config = {
             "sep": 4.0,   # separation between places
             "seed": 1120,
             "node_coverage_radius": 3.0,
-            "resample_prob_thres": 0.25
+            "resample_prob_thres": 0.15
         },
         "no_look": True,
         "belief": {
