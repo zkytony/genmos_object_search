@@ -1,4 +1,4 @@
 # Grid map
-std_msgs/Header header
+time stamp
 # all locations, including free or not
 sloop_ros/GridMapLoc[] locations

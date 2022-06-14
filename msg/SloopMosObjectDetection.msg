@@ -1,4 +1,4 @@
 # single object detection
-std_msgs/Header header
-std_msgs/String objid
+time stamp
+string objid
 Loc loc

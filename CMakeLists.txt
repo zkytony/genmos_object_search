@@ -29,7 +29,8 @@ add_message_files(
   SloopMosJointObjectDetections.msg
   SloopMosObjectBelief.msg
   SloopMosObjectDetection.msg
-  SloopMosSpatialLanguage.msg)
+  SloopMosSpatialLanguage.msg
+  SloopMosRobotState.msg)
 
 # Adding the action file for PlanAction
 add_action_files(

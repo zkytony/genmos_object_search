@@ -1,5 +1,6 @@
 # belief about one object's location
-std_msgs/Header header
+time stamp
 string objid
+string objclass
 sloop_ros/Loc[] locations
 float32[] probs

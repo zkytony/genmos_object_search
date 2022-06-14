@@ -30,7 +30,6 @@ def ask_for_splang(sloop_agent, objspec=None):
                                          verbose_level=1)
     return splang_obz
 
-
 def visualize_step(viz, agent, env, action, _config, **kwargs):
     objlocs = {j: env.state.s(j).loc
                for j in env.state.object_states
@@ -47,7 +46,6 @@ def visualize_step(viz, agent, env, action, _config, **kwargs):
     if action is None:
         draw_fov = None
     viz.visualize(agent, objlocs, colors=colors, draw_fov=draw_fov, **kwargs)
-
 
 def main(_config):
     map_name = _config['task_config']["map_name"]

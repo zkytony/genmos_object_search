@@ -1,0 +1,2 @@
+time stamp
+sloop_ros/GridMapPose2d pose

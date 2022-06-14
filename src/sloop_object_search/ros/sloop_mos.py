@@ -1,8 +1,13 @@
 import rospy
-from .framework import BaseAgentWrapper
 import sloop_ros.msg as sloop_ros
+import std_msgs.msg as std_msgs
 from sloop_object_search.oopomdp.agent import make_agent
 from sloop_object_search.oopomdp.planner import make_planner
+from sloop_object_search.utils.misc import import_class
+from sloop_object_search.oopomdp.agent.visual import visualize_step
+from sloop.osm.datasets import FILEPATHS
+from .framework import BaseAgentWrapper
+from .action_mos import action_to_ros_msg
 
 def make_ros_agent(_config):
     """
@@ -21,22 +26,68 @@ def make_ros_agent(_config):
     return SloopMosROSAgentWrapper(agent, planner,
                                    ros_config=_config.get("ros_config", {}))
 
-
 class SloopMosROSAgentWrapper(BaseAgentWrapper):
     def __init__(self, oopomdp_agent, planner, ros_config={}):
         self.planner = planner
+        self.viz = None
         super().__init__(oopomdp_agent,
                          ros_config=ros_config,
                          planner=planner)
 
     def belief_to_ros_msg(self, belief, stamp=None):
-        pass
+        if stamp is None:
+            stamp = rospy.Time.now()
 
-    def action_to_ros_msg(self, belief, stamp=None):
-        pass
+        bobj_msgs = []
+        for objid in belief.object_beliefs:
+            bobj = belief.object_beliefs[objid]
+            locations = []
+            probs = []
+            objclass = None
+            for sobj in bobj:
+                locations.append(sloop_ros.Loc(x=sobj.loc[0], y=sobj.loc[1]))
+                probs.append(bobj[sobj])
+                if objclass is None:
+                    objclass = sobj.objclass
+            bobj_msg = sloop_ros.SloopMosObjectBelief(stamp=stamp, objid=objid, objclass=objclass)
+            bobj_msgs.append(bobj_msg)
+        belief_msg = sloop_ros.SloopMosBelief(stamp=stamp, object_beliefs=bobj_msgs)
+        return belief_msg
+
+    def action_to_ros_msg(self, action, stamp=None):
+        return action_to_ros_msg(action, stamp=stamp)
+
+    def _observation_cb(self, observation_msg):
+        """
+        we can deal with three types of observations:
+        - robot state
+        - object detection
+        - grid map
+        - spatial language
+        """
+        raise NotImplementedError
 
     def interpret_observation_msg(self, belief, stamp=None):
         pass
 
-    def _observation_cb(self, observation_msg):
-        pass
+    def run(self):
+        # start visualization
+        _config = self.agent.agent_config
+        self.viz = import_class(_config["visualizer"])(self.agent.grid_map,
+                                                       bg_path=FILEPATHS[self.agent.map_name]["map_png"],
+                                                       **_config["viz_params"])
+        self._visualize_step()
+        super().run()
+
+    def _visualize_step(self, action=None, **kwargs):
+        colors = {j: self.agent.agent_config["objects"][j].get("color", [128, 128, 128])
+                  for j in self.agent.belief.object_beliefs
+                  if j != self.agent.robot_id}
+        no_look = self.agent.agent_config["no_look"]
+        draw_fov = list(self.agent.belief.object_beliefs.keys())
+        if not no_look:
+            if not isinstance(action, LookAction):
+                draw_fov = None
+        if action is None:
+            draw_fov = None
+        self.viz.visualize(self.agent, {}, colors=colors, draw_fov=draw_fov, **kwargs)

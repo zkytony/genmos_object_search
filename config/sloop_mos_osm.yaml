@@ -1,3 +1,6 @@
+task_config:
+  map_name: austin
+  max_steps: 100
 ros_config:
   init_pose_topic: ~init_pose
   belief_msg_type: sloop_ros.msg.SloopMosBelief
@@ -54,6 +57,11 @@ agent_config:
     resample_prob_thres: 0.25
     seed: 1120
     sep: 4.0
+  # visualization
+  visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo
+  viz_params:
+    res: 20
+
 planner_config:
   local_search:
     planner: pomdp_py.POUCT
@@ -66,9 +74,3 @@ planner_config:
     exploration_const: 1000
     max_depth: 20
     planning_time: 0.25
-task_config:
-  map_name: austin
-  max_steps: 100
-  visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo
-  viz_params:
-    res: 20

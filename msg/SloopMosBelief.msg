@@ -1,3 +1,3 @@
 # joint belief
-std_msgs/Header header
+time stamp
 sloop_ros/SloopMosObjectBelief[] object_beliefs

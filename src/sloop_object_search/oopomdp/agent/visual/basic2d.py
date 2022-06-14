@@ -54,7 +54,7 @@ class VizSloopMosBasic2D(GridMapVisualizer):
                                  [objlocs[objid]],
                                  color=self.get_color(objid, colors, alpha=None))
         if draw_belief:
-            for objid in objlocs:
+            for objid in agent.belief.object_beliefs:
                 color = self.get_color(objid, colors, alpha=None)
                 belief_obj = agent.belief.b(objid)
                 img = self.draw_object_belief(img, belief_obj,
