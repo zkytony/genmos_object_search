@@ -1,6 +1,14 @@
 ros_config:
   init_pose_topic: ~init_pose
-
+  belief_msg_type: sloop_ros.msg.SloopMosBelief
+  action_msg_type: sloop_ros.msg.SloopMosAction
+  observation:
+    detection:
+      msg_type: sloop_ros.msg.SloopMosJointObjectDetections
+    grid_map:
+      msg_type: sloop_ros.msg.GridMap2d
+    spatial_lang:
+      msg_type: sloop_ros.msg.SloopMosSpatialLanguage
 
 agent_config:
   action:

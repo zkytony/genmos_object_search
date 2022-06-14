@@ -28,3 +28,15 @@ class SloopMosROSAgentWrapper(BaseAgentWrapper):
         super().__init__(oopomdp_agent,
                          ros_config=ros_config,
                          planner=planner)
+
+    def belief_to_ros_msg(self, belief, stamp=None):
+        pass
+
+    def action_to_ros_msg(self, belief, stamp=None):
+        pass
+
+    def interpret_observation_msg(self, belief, stamp=None):
+        pass
+
+    def _observation_cb(self, observation_msg):
+        pass

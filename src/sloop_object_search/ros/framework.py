@@ -39,7 +39,11 @@ class BaseAgentWrapper:
         self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
-        self._observation_topic = self._ros_config.get("observation_topic", "~observation")
+
+        self._observation_topics = {}
+        for z_type in ros_config.get("observation", []):
+            z_topic = ros_config["observation"][z_type].get("topic", z_type)
+            self._observation_topics[z_type] = f"~observation/{z_type}"
 
         self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
 
@@ -66,20 +70,21 @@ class BaseAgentWrapper:
         # Publishes current belief
         belief_msg_type = DefaultBelief
         if "belief_msg_type" in self._ros_config:
-            belief_msg_type = self._ros_config["belief_msg_type"]
+            belief_msg_type = import_class(self._ros_config["belief_msg_type"])
         self._belief_publisher = rospy.Publisher(
             self._belief_topic,
             belief_msg_type,
             queue_size=10, latch=True)
 
-        # Subscribes to observation
-        observation_msg_type = DefaultObservation
-        if "observation_msg_type" in self._ros_config:
-            observation_msg_type = self._ros_config["observation_msg_type"]
-        self._observation_subscriber = rospy.Subscriber(
-            self._observation_topic,
-            observation_msg_type,
-            self._observation_cb)
+        # Subscribes to observation types
+        for z_type in self._observation_topics:
+            z_msg_type = DefaultObservation
+            if "msg_type" in self._ros_config['observation'][z_type]:
+                z_msg_type = import_class(self._ros_config['observation'][z_type]["msg_type"])
+            self._observation_subscriber = rospy.Subscriber(
+                self._observation_topics[z_type],
+                z_msg_type,
+                self._observation_cb)
 
     def _observation_cb(self, observation_msg):
         """Override this function to handle different observation types"""
