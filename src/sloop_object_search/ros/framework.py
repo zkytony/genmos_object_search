@@ -139,12 +139,7 @@ class BaseAgentWrapper:
     def belief_to_ros_msg(self, belief, stamp=None):
         """To Be Overriden"""
         belief_msg = DefaultBelief()
-        # if stamp is None:
-        #     stamp = rospy.Time.now()
-        # belief_msg.stamp = stamp
-        # belief_msg.states = [state for state in belief]
-        # belief_msg.probs = [belief[state]
-        #                     for state in belief_msg.states]
+        rospy.logwarn("Dummy belief message created. You should override belief_to_ros_msg")
         return belief_msg
 
     def action_to_ros_msg(self, action, goal_id):
@@ -152,13 +147,9 @@ class BaseAgentWrapper:
         # All Action message types are assumed to have a goal_id
         # (actionlib goal)
         action_msg = DefaultAction()
-        # action_msg.goal_id = goal_id
-        # action_msg.name = action.name
-        # action_msg.data = str(action.data)
+        rospy.logwarn("Dummy action message created. You should override action_to_ros_msg")
         return action_msg
 
-    def interpret_observation_msg(self, observation, goal_id):
+    def interpret_observation_msg(self, observation_msg):
         """To Be Overriden"""
-        # All Action message types are assumed to have a goal_id
-        # (actionlib goal)
-        return pomdp_py.SimpleObservation(observation_msg.data)
+        raise NotImplementedError
