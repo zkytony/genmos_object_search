@@ -49,29 +49,29 @@ class HierarchicalPlanner(pomdp_py.Planner):
         Args:
             agent: a topo2d agent.
         """
-        ########## Only plans subgoal when previous one done ########
-        if isinstance(self._current_subgoal, StayAction):
-            self._current_subgoal = None  # replan if stay
-
-        if self._current_subgoal is None:
-            subgoal = self._subgoal_planner.plan(self._topo_agent)
-            self._current_subgoal = subgoal
-            print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
-
-            self._subgoal_handler = self.handle(self._current_subgoal)
-
-        # ########## Always replan subgaol ########
-        # subgoal = self._subgoal_planner.plan(self._topo_agent)
-        # print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
+        # ########## Only plans subgoal when previous one done ########
+        # if isinstance(self._current_subgoal, StayAction):
+        #     self._current_subgoal = None  # replan if stay
 
         # if self._current_subgoal is None:
+        #     subgoal = self._subgoal_planner.plan(self._topo_agent)
         #     self._current_subgoal = subgoal
+        #     print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
-        # if self._subgoal_handler is None:
-        #     self._subgoal_handler = self.handle(subgoal)
-        # else:
-        #     if subgoal != self._subgoal_handler.subgoal:
-        #         self._subgoal_handler = self.handle(subgoal)
+        #     self._subgoal_handler = self.handle(self._current_subgoal)
+
+        ########## Always replan subgaol ########
+        subgoal = self._subgoal_planner.plan(self._topo_agent)
+        print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
+
+        if self._current_subgoal is None:
+            self._current_subgoal = subgoal
+
+        if self._subgoal_handler is None:
+            self._subgoal_handler = self.handle(subgoal)
+        else:
+            if subgoal != self._subgoal_handler.subgoal:
+                self._subgoal_handler = self.handle(subgoal)
 
         action = self._subgoal_handler.step()
         return action

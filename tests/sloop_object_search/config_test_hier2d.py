@@ -47,7 +47,7 @@ config = {
         "no_look": True,
         "belief": {
             # could be "groundtruth", "uniform", or "splang" (interactive)
-            "prior": {"G": "uniform"}
+            "prior": {"G": "splang"}
         },
         "targets": ["G"],
         "objects": {
@@ -68,7 +68,7 @@ config = {
             "detectors": {
                 "G": {
                     "class": "sloop_object_search.oopomdp.FanModelSimpleFP",
-                    "params": (dict(fov=90, min_range=0, max_range=15), (0.9, 0.1, 0.25))
+                    "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1, 0.25))
                 },
             }
         },

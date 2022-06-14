@@ -21,6 +21,12 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
         if draw_topo:
             img = draw_topo_func(img, agent.topo_map, self._res,
                                  draw_grid_path=self._draw_topo_grid_path)
+
+        # redraw robot on top of topo map
+        if robot_state is None:
+            robot_state = agent.belief.mpe().s(agent.robot_id)
+        x, y, th = robot_state["pose"]
+        img = self.draw_robot(img, x, y, th, (255, 20, 20))
         return img
 
 
@@ -88,5 +94,6 @@ def mark_cell(img, pos, nid, r, linewidth=1, unmark=False):
         cv2.putText(imgtxt, str(nid), text_loc, #(y*r+r//4, x*r+r//2),
                     font, fontScale, fontColor, lineType)
         imgtxt = cv2.rotate(imgtxt, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        imgtxt = cv2.flip(imgtxt, 1) # flip horizontally
         img[x*r:x*r+r, y*r:y*r+r] = imgtxt
     return img
