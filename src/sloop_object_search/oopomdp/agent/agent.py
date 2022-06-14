@@ -1,3 +1,6 @@
+from .basic2d import SloopMosBasic2DAgent
+from .topo2d import SloopMosTopo2DAgent
+
 def make_agent(_config, init_pose=None):
     map_name = _config['task_config']["map_name"]
 

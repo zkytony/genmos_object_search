@@ -2,9 +2,12 @@ import rospy
 import actionlib
 import pomdp_py
 from actionlib_msgs.msg import GoalStatus
-from pomdp_ros.msg import (PlanNextStepAction,
-                           PlanNextStepResult)
-from .utils import tobeoverriden
+from sloop_ros.msg import (PlanNextStepAction,
+                           PlanNextStepResult,
+                           DefaultAction,
+                           DefaultBelief,
+                           DefaultObservation)
+from sloop_object_search.utils.misc import import_class
 
 
 class BaseAgentWrapper:
@@ -21,9 +24,10 @@ class BaseAgentWrapper:
 
     See scripts/run_pomdp_agent for how this is used.
     """
-    def __init__(self, pomdp_agent, config={}, planner=None):
+    def __init__(self, pomdp_agent, ros_config={}, planner=None):
         self.agent = pomdp_agent
         self._planner = planner
+        self._ros_config = ros_config
 
         # Note that the following objects are created when 'setup' is called.
         # If you would like the agent
@@ -32,12 +36,12 @@ class BaseAgentWrapper:
         self._belief_publisher = None
         self._observation_subscriber = None
 
-        self._plan_service = config.get("plan_service", "~plan")  # would become <node_name>/plan
-        self._action_topic = config.get("action_topic", "~action")
-        self._belief_topic = config.get("belief_topic", "~belief")
-        self._observation_topic = config.get("observation_topic", "~observation")
+        self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
+        self._action_topic = self._ros_config.get("action_topic", "~action")
+        self._belief_topic = self._ros_config.get("belief_topic", "~belief")
+        self._observation_topic = self._ros_config.get("observation_topic", "~observation")
 
-        self._belief_rate = config.get("belief_publish_rate", 5)  # Hz
+        self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
 
         # This will always be equal to the last planned action
         self._last_action = None
@@ -51,24 +55,32 @@ class BaseAgentWrapper:
             self._plan_service, PlanNextStepAction, self.plan, auto_start=False)
 
         # Publishes most recent action
+        action_msg_type = DefaultAction
+        if "action_msg_type" in self._ros_config:
+            action_msg_type = import_class(self._ros_config["action_msg_type"])
         self._action_publisher = rospy.Publisher(
             self._action_topic,
-            self.policy_model.ros_action_msg_type,
+            action_msg_type,
             queue_size=10, latch=True)
 
         # Publishes current belief
+        belief_msg_type = DefaultBelief
+        if "belief_msg_type" in self._ros_config:
+            belief_msg_type = self._ros_config["belief_msg_type"]
         self._belief_publisher = rospy.Publisher(
             self._belief_topic,
-            self.agent.belief.ros_belief_msg_type,
+            belief_msg_type,
             queue_size=10, latch=True)
 
         # Subscribes to observation
+        observation_msg_type = DefaultObservation
+        if "observation_msg_type" in self._ros_config:
+            observation_msg_type = self._ros_config["observation_msg_type"]
         self._observation_subscriber = rospy.Subscriber(
             self._observation_topic,
-            self.observation_model.ros_observation_msg_type,
+            observation_msg_type,
             self._observation_cb)
 
-    @tobeoverriden
     def _observation_cb(self, observation_msg):
         """Override this function to handle different observation types"""
         rospy.loginfo(f"Observation received: {observation_msg}")
@@ -86,7 +98,7 @@ class BaseAgentWrapper:
             return
 
         self._plan_server.start()
-        belief_msg = self.belief.to_ros_msg()
+        belief_msg = self.belief_to_ros_msg(self.agent.belief)
         rospy.Timer(rospy.Duration(1./self._belief_rate),
                     lambda event: self._belief_publisher.publish(belief_msg))
         rospy.loginfo("Running agent {}".format(self.__class__.__name__))
@@ -123,3 +135,30 @@ class BaseAgentWrapper:
         if self._observation_subscriber is None:
             message += "- self._observation_subscriber\n"
         return message
+
+    def belief_to_ros_msg(self, belief, stamp=None):
+        """To Be Overriden"""
+        belief_msg = DefaultBelief()
+        if stamp is None:
+            stamp = rospy.Time.now()
+        belief_msg.stamp = stamp
+        belief_msg.states = [state for state in belief]
+        belief_msg.probs = [belief[state]
+                            for state in belief_msg.states]
+        return belief_msg
+
+    def action_to_ros_msg(self, action, goal_id):
+        """To Be Overriden"""
+        # All Action message types are assumed to have a goal_id
+        # (actionlib goal)
+        action_msg = DefaultAction()
+        action_msg.goal_id = goal_id
+        action_msg.name = action.name
+        action_msg.data = str(action.data)
+        return action_msg
+
+    def interpret_observation_msg(self, observation, goal_id):
+        """To Be Overriden"""
+        # All Action message types are assumed to have a goal_id
+        # (actionlib goal)
+        return pomdp_py.SimpleObservation(observation_msg.data)
