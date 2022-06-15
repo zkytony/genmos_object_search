@@ -42,7 +42,8 @@ config = {
             "sep": 4.0,   # separation between places
             "seed": 1120,
             "node_coverage_radius": 3.0,
-            "resample_prob_thres": 0.15
+            # if the topo graph covers less than this amount of prob, resample
+            "resample_prob_thres": 0.4
         },
         "no_look": True,
         "belief": {
