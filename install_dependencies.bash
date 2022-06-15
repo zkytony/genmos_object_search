@@ -8,6 +8,8 @@ pip install 'pygame>=1.9.6'
 pip install 'scipy>=1.3.3'
 pip install 'seaborn>=0.11.0'
 # Note that we are trying out versions of the following packages
+pip install pygame
+pip install gdown
 pip install pomdp-py
 pip install spacy  # tested 3.3.0
 pip install nltk   # tested 3.7
