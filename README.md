@@ -146,7 +146,9 @@ under [src/sloop_object_search/ros/sloop_mos.py](./src/sloop_object_search/ros/s
 It extends [BaseAgentWrapper](./src/sloop_object_search/ros/framework.py).
 
 The wrapper will keep in itself a SLOOP agent object. The wrapper acts as a ROS
-node.  It publishes:
+node.
+
+It publishes:
 
  - actions (to `~action` by default)
  - its current belief (to `~belief`).
@@ -167,7 +169,7 @@ It provides:
 You can configure the message types of the action, belief, and observations in
 the configuration dictionary; This time, because the configuration dictionary
 is loaded by roslaunch, it is in the YAML format. For example:
-```
+```yaml
 ros_config:
   init_pose_topic: ~init_pose
   belief_msg_type: sloop_ros.msg.SloopMosBelief
