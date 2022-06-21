@@ -19,13 +19,15 @@ class GridMap:
     Horizontal axis is x, vertical axis is y.
 
     Note that the coordinates in grid map starts from (0,0) to (width-1,length-1).
+
+    The grid map can correspond its coordinates to metric-space coordinates if parameters
+    'grid_size' and 'ranges-in_metric' are provided; Adapted from thortils.GridMap.
     """
 
     def __init__(self, width, length, obstacles,
-                 unknown=None, name="grid_map"):
+                 unknown=None, name="grid_map",
+                 ranges_in_metric=None, grid_size=None):
         """
-        xpos (list): list of x coordinates for free cells
-        ypos (list): list of y coordinates for free cells
         obstacles (set): a set of locations for the obstacles
         unknown (set): locations that have unknown properties.
             If None, then this set will be empty; The free locations
@@ -35,6 +37,8 @@ class GridMap:
         self.width = width
         self.length = length
         self.name = name
+        self.ranges_in_metric = ranges_in_metric
+        self.grid_size = grid_size
         self.update(obstacles, unknown=unknown)
 
         # Caches the computations
@@ -48,6 +52,57 @@ class GridMap:
         return loc in self.free_locations\
             or loc in self.obstacles\
             or loc in self.unknown
+
+    def to_metric_pose(self, x, y, th):
+        """Given a point (x, y) in the grid map and th (degrees),
+        convert it to a tuple (metric_x, metric_y, degrees_th)"""
+        return (*self.to_metric_pos(x, y), self.to_metric_yaw(th))
+
+    def to_metric_pos(self, x, y):
+        """
+        Given a point (x,y) in the grid map, convert it to (x,z) in
+        the THOR coordinte system (grid size is accounted for).
+        If grid_size is None, will return the integers
+        for the corresponding coordinate.
+        """
+        # Note that y is z in Unity
+        metric_gx_min, metric_gx_max = self.ranges_in_metric[0]
+        metric_gy_min, metric_gy_max = self.ranges_in_metric[1]
+        metric_gx = remap(x, 0, self.width, metric_gx_min, metric_gx_max)
+        metric_gy = remap(y, 0, self.length, metric_gy_min, metric_gy_max)
+        if self.grid_size is not None:
+            # Snap to grid
+            return (self.grid_size * round((metric_gx * self.grid_size) / self.grid_size),
+                    self.grid_size * round((metric_gy * self.grid_size) / self.grid_size))
+        else:
+            return (metric_gx, metric_gy)
+
+    def to_grid_pose(self, metric_x, metric_y, metric_th, avoid_obstacle=False):
+        return (*self.to_grid_pos(metric_x, metric_y, avoid_obstacle=avoid_obstacle),
+                self.to_grid_yaw(metric_th))
+
+    def to_grid_pos(self, metric_x, metric_y, avoid_obstacle=False):
+        """
+        Convert thor location to grid map location. If grid_size is specified,
+        then will regard metric_x, metric_y as the original Unity coordinates.
+        If not, then will regard them as grid indices but with origin not at (0,0).
+        """
+        if self.grid_size is not None:
+            metric_gx = int(round(metric_x / self.grid_size))
+            metric_gy = int(round(metric_y / self.grid_size))
+        else:
+            metric_gx = metric_x
+            metric_gy = metric_y
+
+        # remap coordinates to be nonnegative (origin AT (0,0))
+        metric_gx_min, metric_gx_max = self.ranges_in_metric[0]
+        metric_gy_min, metric_gy_max = self.ranges_in_metric[1]
+        gx = int(remap(metric_gx, metric_gx_min, metric_gx_max, 0, self.width, enforce=True))
+        gy = int(remap(metric_gy, metric_gy_min, metric_gy_max, 0, self.length, enforce=True))
+        if avoid_obstacle and (gx, gy) not in self.free_locations:
+            return self.closest_free_cell((gx, gy))
+        else:
+            return gx, gy
 
     def label(self, x, y, label):
         if (x,y) not in self:
@@ -245,13 +300,13 @@ class GridMap:
             'name': self.name
         }
 
-        if self.ranges_in_thor is not None:
-            thor_gx_min, thor_gx_max = self.ranges_in_thor[0]
-            thor_gy_min, thor_gy_max = self.ranges_in_thor[1]
-            output['ranges_in_thor'] = [[int(thor_gx_min), int(thor_gx_max)],
-                                        [int(thor_gy_min), int(thor_gy_max)]]
+        if self.ranges_in_metric is not None:
+            metric_gx_min, metric_gx_max = self.ranges_in_metric[0]
+            metric_gy_min, metric_gy_max = self.ranges_in_metric[1]
+            output['ranges_in_metric'] = [[int(metric_gx_min), int(metric_gx_max)],
+                                        [int(metric_gy_min), int(metric_gy_max)]]
         else:
-            output['ranges_in_thor'] = 'null'
+            output['ranges_in_metric'] = 'null'
 
         output['grid_size'] = self.grid_size\
             if self.grid_size is not None else "null"
@@ -271,5 +326,5 @@ class GridMap:
                        obstacles,
                        unknown=unknown,
                        name=data["name"],
-                       ranges_in_thor=data["ranges_in_thor"],
+                       ranges_in_metric=data["ranges_in_metric"],
                        grid_size=data["grid_size"])
