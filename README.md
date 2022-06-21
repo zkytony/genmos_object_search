@@ -81,3 +81,58 @@ There are currently two specific implementations of the SLOOP agent:
   Here, "Topo2D" means the action space of the agent is "topological": it
   consists of navigations between topological graph nodes.
   (see [PolicyModelTopo](./src/sloop_object_search/oopomdp/models/policy_model.py)).
+
+A SLOOP agent can be most conveniently created based on a configuration dictionary.
+See [tests/sloop_object_search/config_test_topo2d.py](./tests/sloop_object_search/config_test_topo2d.py)
+as an example configuration dictionary. See [tests/sloop_object_search/test_sloop_system.py](./tests/sloop_object_search/test_sloop_system.py)
+for how to actually create the agent. It boils down to:
+```python
+map_name = _config['task_config']["map_name"]
+agent = eval(_config["agent_config"]["agent_class"])(
+    _config["agent_config"], map_name)
+```
+Note that `_config` is the configuration dictionary.
+
+Now, after creating the SLOOP agent, you'd like it to _act_. To do so, you need to
+specify the configuration of a planner in the configuration dictionary. For example,
+if you'd like to plan directly over the primitive actions (of the SloopMosBasic2DAgent),
+the planner configuration could be:
+```python
+config = {
+    "planner_config": {
+        "planner": "pomdp_py.POUCT",
+        "planner_params": {
+            "max_depth": 20,
+            "exploration_const": 1000,
+            "planning_time": 0.25
+        }
+    }, ...
+```
+In fact, you can use the same planner configuration to plan for SloopMosTopo2DAgent;
+This will produce navigation actions to topological nodes - the agent jumps around
+in the visualization (test this out by running the test
+`python test_sloop_system.py config_test_topo2d.py`)
+
+There is a more sophisticated hierarchical planner you can specify. This planner
+is meant for continuously running the SLOOP system, by carrying out each individual
+primitive action to fulfill a navigation subgoal, or a stay subgoal in the action
+space of a SloopMosTopo2DAgent. To use this planner:
+```python
+config = {
+    "planner_config": {
+        "planner": "sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner",
+        "subgoal_level": {
+            "max_depth": 20,
+            "exploration_const": 1000,
+            "planning_time": 0.25
+        },
+        "local_search": {
+            "planner": "pomdp_py.POUCT",
+            "planner_args": {
+                "max_depth": 10,
+                "exploration_const": 1000,
+                "planning_time": 0.15
+            }
+        }
+    }, ...
+```
