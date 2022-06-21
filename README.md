@@ -69,6 +69,8 @@ A SLOOP agent is a pomdp_py.Agent that represents the SLOOP POMDP. It refers
 to a _class of POMDPs_ that have a spatial language observation model and
 that factors state and observation spaces by objects.
 
+## SLOOP Agent
+
 There are currently two specific implementations of the SLOOP agent:
 - **SloopMosBasic2DAgent** (at [basic2d.py](./src/sloop_object_search/oopomdp/agent/basic2d.py))
 
@@ -136,6 +138,8 @@ config = {
         }
     }, ...
 ```
+
+## ROS Wrapper for SLOOP Agent
 
 In terms of the ROS interface, we defined a SloopMosROSAgentWrapper
 under [src/sloop_object_search/ros/sloop_mos.py](./src/sloop_object_search/ros/sloop_mos.py).
