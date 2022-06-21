@@ -2,6 +2,7 @@
 #
 # Subscribes to a PointCloud2 topic and converts it to
 # sloop_ros/GridMap2d, and publishes it.
+import time
 import argparse
 import rospy
 import ros_numpy
@@ -12,12 +13,14 @@ import sensor_msgs.point_cloud2 as pc2
 import sloop_ros.msg
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.utils.math import remap
+from sloop_object_search.utils.visual import GridMapVisualizer
 
 
 def pcd_to_grid_map(pcd,
                     ceiling_cut=1.0,
-                    floor_cut=0.1,
-                    grid_size=0.25):
+                    floor_cut=0.5,
+                    grid_size=0.25,
+                    debug=True):
     """
     Args:
         pcd (Open3D PointCloud)
@@ -31,9 +34,11 @@ def pcd_to_grid_map(pcd,
     Note:
         this code is based on thortils.map3d
     """
-    debug = True
-    downpcd = pcd.voxel_down_sample(voxel_size=0.05)
+    downpcd = pcd.voxel_down_sample(voxel_size=0.25)
     points = np.asarray(downpcd.points)
+
+    bad_points_filter = np.less(points[:, 2], 0.0)
+    points = points[np.logical_not(bad_points_filter)]
 
     xmax, ymax, zmax = np.max(points, axis=0)
     xmin, ymin, zmin = np.min(points, axis=0)
@@ -44,18 +49,18 @@ def pcd_to_grid_map(pcd,
     # points corresponding to the lights (this might be achievable
     # by a combination of semantic segmantation and projection;
     # left as a todo).
-    floor_points_filter = np.isclose(points[:,1], ymin, atol=floor_cut)
-    ceiling_points_filter = np.isclose(points[:,1], ymax, atol=ceiling_cut)
+    floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
+    ceiling_points_filter = np.isclose(points[:,2], zmax, atol=ceiling_cut)
     xwalls_min_filter = np.isclose(points[:,0], xmin, atol=0.05)
     xwalls_max_filter = np.isclose(points[:,0], xmax, atol=0.05)
-    zwalls_min_filter = np.isclose(points[:,2], zmin, atol=0.05)
-    zwalls_max_filter = np.isclose(points[:,2], zmax, atol=0.05)
+    ywalls_min_filter = np.isclose(points[:,1], ymin, atol=0.05)
+    ywalls_max_filter = np.isclose(points[:,1], ymax, atol=0.05)
     boundary_filter = np.any([floor_points_filter,
                               ceiling_points_filter,
                               xwalls_min_filter,
                               xwalls_max_filter,
-                              zwalls_min_filter,
-                              zwalls_max_filter], axis=0)
+                              ywalls_min_filter,
+                              ywalls_max_filter], axis=0)
     not_boundary_filter = np.logical_not(boundary_filter)
 
     # The simplest 2D grid map is Floor + Non-boundary points in 2D
@@ -67,9 +72,10 @@ def pcd_to_grid_map(pcd,
     # The coordinates in points may be negative;
     metric_grid_points = (points[map_points_filter] / grid_size).astype(int)
     metric_gx = metric_grid_points[:,0]
-    metric_gy = metric_grid_points[:,2]
+    metric_gy = metric_grid_points[:,1]
     width = max(metric_gx) - min(metric_gx) + 1
     length = max(metric_gy) - min(metric_gy) + 1
+    metric_gy = -metric_gy
     metric_gx_range = (min(metric_gx), max(metric_gx) + 1)
     metric_gy_range = (min(metric_gy), max(metric_gy) + 1)
     # remap coordinates to be nonnegative (origin AT (0,0))
@@ -88,22 +94,22 @@ def pcd_to_grid_map(pcd,
         raise ex
 
     metric_reachable_points = points[floor_points_filter]
-    metric_reachable_points[:,1] = 0
+    metric_reachable_points[:,2] = 0
     metric_reachable_grid_points = (metric_reachable_points / grid_size).astype(int)
     metric_reachable_gx = metric_reachable_grid_points[:,0]
-    metric_reachable_gy = metric_reachable_grid_points[:,2]
+    metric_reachable_gy = metric_reachable_grid_points[:,1]
     metric_reachable_gy = -metric_reachable_gy  # see [**] #length
 
     metric_obstacle_points = points[not_boundary_filter]
-    metric_obstacle_points[:,1] = 0
+    metric_obstacle_points[:,2] = 0
     metric_obstacle_grid_points = (metric_obstacle_points / grid_size).astype(int)
     metric_obstacle_gx = metric_obstacle_grid_points[:,0]
-    metric_obstacle_gy = metric_obstacle_grid_points[:,2]
+    metric_obstacle_gy = metric_obstacle_grid_points[:,1]
     metric_obstacle_gy = -metric_obstacle_gy  # see [**] length
 
     # For Debugging
     if debug:
-        reachable_colors = np.full((metric_reachable_points.shape[0], 3), (0.7, 0.7, 0.7))
+        reachable_colors = np.full((metric_reachable_points.shape[0], 3), (0.6, 0.6, 0.6))
         obstacle_colors = np.full((metric_obstacle_points.shape[0], 3), (0.2, 0.2, 0.2))
 
         # We now grab points
@@ -131,28 +137,26 @@ def pcd_to_grid_map(pcd,
                        unknown=(all_positions\
                                 - grid_map_obstacle_positions\
                                 - grid_map_reachable_positions),
-                       name=scene,
-                       ranges_in_thor=(metric_gx_range, metric_gy_range),
+                       ranges_in_metric=(metric_gx_range, metric_gy_range),
                        grid_size=grid_size)
     return grid_map
 
-
-
-
 def _point_cloud_callback(msg, args):
     # Convert PointCloud2 message to Open3D point cloud
-    import pdb; pdb.set_trace()
     points_array = ros_numpy.point_cloud2.pointcloud2_to_array(msg)
     points = ros_numpy.point_cloud2.get_xyz_points(points_array)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
+
     # convert pcd to grid map
-
     grid_map = pcd_to_grid_map(pcd)
-
-    print("HELLO!")
+    print("Grid Map created!")
     grid_map_pub = args[0]
 
+    viz = GridMapVisualizer(grid_map=grid_map,
+                            res=5)
+    viz.show_img(viz.render())
+    time.sleep(5)
 
 
 def main():
