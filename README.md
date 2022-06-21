@@ -57,3 +57,27 @@ python test_sloop_system.py config_test_basic2d.py
 python test_sloop_system.py config_test_topo2d.py
 python test_sloop_system.py config_test_hier2d.py
 ```
+
+
+# Documentation
+
+The sloop_ros package can be thought of as wrapping a ROS interface around
+a SLOOP agent, which allows the SLOOP agent to interact with real robot sensor
+inputs and execute actions in the real world.
+
+A SLOOP agent is a pomdp_py.Agent that represents the SLOOP POMDP. It refers
+to a _class of POMDPs_ that have a spatial language observation model and
+that factors state and observation spaces by objects.
+
+There are currently two specific implementations of the SLOOP agent:
+- **SloopMosBasic2DAgent** (at [basic2d.py](./src/sloop_object_search/oopomdp/agent/basic2d.py))
+
+  Here, "Basic2D" means the action space of the agent is "basic": it consists
+  of primitive motions such as moving forward, turning left and turning right
+  (see [PolicyModelBasic2D](./src/sloop_object_search/oopomdp/models/policy_model.py)).
+
+- **SloopMosTopo2DAgent** (at [topo2d.py](./src/sloop_object_search/oopomdp/agent/topo2d.py))
+
+  Here, "Topo2D" means the action space of the agent is "topological": it
+  consists of navigations between topological graph nodes.
+  (see [PolicyModelTopo](./src/sloop_object_search/oopomdp/models/policy_model.py)).
