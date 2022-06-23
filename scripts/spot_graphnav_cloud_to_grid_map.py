@@ -102,6 +102,9 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     # percentage of waypoints to be sampled and used as seeds for flooding
     pct_waypoint_seeds = kwargs.get("pct_waypoint_seeds", 0.25)
 
+    # grid map name
+    name = kwargs.get("name", "grid_map")
+
     points = np.asarray(pcd.points)
     bad_points_filter = np.less(points[:, 2], layout_cut)
     points = points[np.logical_not(bad_points_filter)]
@@ -123,141 +126,65 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     for wp in tqdm(selected_waypoints):
         floor_grid_coords = flood_fill(floor_grid_coords, wp)
 
+    # The floor points will be reachable points
+    metric_reachable_grid_points = floor_grid_coords
+    metric_reachable_gx = metric_reachable_grid_points[:,0]
+    metric_reachable_gy = metric_reachable_grid_points[:,1]
+    metric_reachable_gy = -metric_reachable_gy  # see [**] #length
+
+    # For the obstacles, we get points above the floor - we already have them in points
+    metric_obstacle_points = points
+    metric_obstacle_points[:,2] = 0
+    metric_obstacle_grid_points = (metric_obstacle_points / grid_size).astype(int)
+    metric_obstacle_gx = metric_obstacle_grid_points[:,0]
+    metric_obstacle_gy = metric_obstacle_grid_points[:,1]
+    metric_obstacle_gy = -metric_obstacle_gy  # see [**] length
+
+    # obtain ranges
+    metric_gx = metric_obstacle_grid_points[:,0]
+    metric_gy = metric_obstacle_grid_points[:,2]
+    width = max(metric_gx) - min(metric_gx) + 1
+    length = max(metric_gy) - min(metric_gy) + 1
+    # Because of the axis-flip coordinate issue [**]
+    metric_gy = -metric_gy
+    metric_gx_range = (min(metric_gx), max(metric_gx) + 1)
+    metric_gy_range = (min(metric_gy), max(metric_gy) + 1)
+
+    # Now, we get points with 0-based coordinates, which are actual grid map points
+    gx_reachable = remap(metric_reachable_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+    gy_reachable = remap(metric_reachable_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+    gx_obstacles = remap(metric_obstacle_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+    gy_obstacles = remap(metric_obstacle_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+
+    all_positions = set((x,y) for x in range(width) for y in range(length))
+    grid_map_reachable_positions = set(zip(gx_reachable, gy_reachable))
+    grid_map_obstacle_positions = set(zip(gx_obstacles, gy_obstacles))
+
     ## Debugging
     pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(np.asarray(floor_grid_coords))
+    pcd.points = o3d.utility.Vector3dVector(np.asarray(metric_reachable_grid_points))
+    pcd.colors = o3d.utility.Vector3dVector(np.full((len(metric_reachable_grid_points), 3), (0.8, 0.8, 0.8)))
 
     pcd2 = o3d.geometry.PointCloud()
-    pcd2.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
+    pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_grid_points))
+    pcd2.colors = o3d.utility.Vector3dVector(np.full((len(metric_obstacle_grid_points), 3), (0.2, 0.2, 0.2)))
+
+    pcd3 = o3d.geometry.PointCloud()
+    pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
     waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
     waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
-    pcd2.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
-    o3d.visualization.draw_geometries([pcd, pcd2])
-    exit()
+    pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
+    o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
 
-
-# def _make_grid_map(pcd, ceiling_cut=1.0,
-#                     floor_cut=0.1,
-#                     grid_size=0.25,
-#                     debug=True):
-#     """
-#     Args:
-#         pcd (Open3D PointCloud)
-#         ceiling_cut (float): The points within `ceiling_cut` range (in meters) from the ymax
-#             will be regarded as "ceiling"; You may want to set this number so
-#             that the hanging lights are excluded.
-#         floor_cut: same as ceiling_cut, but for floors. Set this to 0.4 for FloorPlan201
-#     Returns:
-#         GridMap
-
-#     Note:
-#         this code is based on thortils.map3d
-#     """
-#     downpcd = pcd.voxel_down_sample(voxel_size=0.25)
-#     points = np.asarray(downpcd.points)
-
-
-
-#     xmax, ymax, zmax = np.max(points, axis=0)
-#     xmin, ymin, zmin = np.min(points, axis=0)
-
-#     # Boundary points;
-#     # Note: aggressively cutting ceiling and floor points;
-#     # This may not be desirable if you only want to exclude
-#     # points corresponding to the lights (this might be achievable
-#     # by a combination of semantic segmantation and projection;
-#     # left as a todo).
-#     floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
-#     ceiling_points_filter = np.isclose(points[:,2], zmax, atol=ceiling_cut)
-#     xwalls_min_filter = np.isclose(points[:,0], xmin, atol=0.05)
-#     xwalls_max_filter = np.isclose(points[:,0], xmax, atol=0.05)
-#     ywalls_min_filter = np.isclose(points[:,1], ymin, atol=0.05)
-#     ywalls_max_filter = np.isclose(points[:,1], ymax, atol=0.05)
-#     boundary_filter = np.any([floor_points_filter,
-#                               ceiling_points_filter,
-#                               xwalls_min_filter,
-#                               xwalls_max_filter,
-#                               ywalls_min_filter,
-#                               ywalls_max_filter], axis=0)
-#     not_boundary_filter = np.logical_not(boundary_filter)
-
-#     # The simplest 2D grid map is Floor + Non-boundary points in 2D
-#     # The floor points will be reachable, and the other ones are not.
-#     # Points that will map to grid locations, but origin is NOT at (0,0);
-#     # A lot of this code is borrowed from thortils.scene.convert_scene_to_grid_map.
-#     map_points_filter = np.any([floor_points_filter,
-#                                 not_boundary_filter], axis=0)
-#     # The coordinates in points may be negative;
-#     metric_grid_points = (points[map_points_filter] / grid_size).astype(int)
-#     metric_gx = metric_grid_points[:,0]
-#     metric_gy = metric_grid_points[:,1]
-#     width = max(metric_gx) - min(metric_gx) + 1
-#     length = max(metric_gy) - min(metric_gy) + 1
-#     metric_gy = -metric_gy
-#     metric_gx_range = (min(metric_gx), max(metric_gx) + 1)
-#     metric_gy_range = (min(metric_gy), max(metric_gy) + 1)
-#     # remap coordinates to be nonnegative (origin AT (0,0))
-#     gx = remap(metric_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-#     gy = remap(metric_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-
-#     gx_range = (min(gx), max(gx)+1)
-#     gy_range = (min(gy), max(gy)+1)
-
-#     # Little test: can convert back
-#     try:
-#         assert all(remap(gx, gx_range[0], gx_range[1], metric_gx_range[0], metric_gx_range[1]).astype(int) == metric_gx)
-#         assert all(remap(gy, gy_range[0], gy_range[1], metric_gy_range[0], metric_gy_range[1]).astype(int) == metric_gy)
-#     except AssertionError as ex:
-#         print("Unable to remap coordinates")
-#         raise ex
-
-#     metric_reachable_points = points[floor_points_filter]
-#     metric_reachable_points[:,2] = 0
-#     metric_reachable_grid_points = (metric_reachable_points / grid_size).astype(int)
-#     metric_reachable_gx = metric_reachable_grid_points[:,0]
-#     metric_reachable_gy = metric_reachable_grid_points[:,1]
-#     metric_reachable_gy = -metric_reachable_gy  # see [**] #length
-
-#     metric_obstacle_points = points[not_boundary_filter]
-#     metric_obstacle_points[:,2] = 0
-#     metric_obstacle_grid_points = (metric_obstacle_points / grid_size).astype(int)
-#     metric_obstacle_gx = metric_obstacle_grid_points[:,0]
-#     metric_obstacle_gy = metric_obstacle_grid_points[:,1]
-#     metric_obstacle_gy = -metric_obstacle_gy  # see [**] length
-
-#     # For Debugging
-#     if debug:
-#         reachable_colors = np.full((metric_reachable_points.shape[0], 3), (0.6, 0.6, 0.6))
-#         obstacle_colors = np.full((metric_obstacle_points.shape[0], 3), (0.2, 0.2, 0.2))
-
-#         # We now grab points
-#         pcd = o3d.geometry.PointCloud()
-#         pcd.points = o3d.utility.Vector3dVector(np.asarray(metric_reachable_points))
-#         pcd.colors = o3d.utility.Vector3dVector(np.asarray(reachable_colors))
-
-#         # We now grab points
-#         pcd2 = o3d.geometry.PointCloud()
-#         pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_points))
-#         pcd2.colors = o3d.utility.Vector3dVector(np.asarray(obstacle_colors))
-#         o3d.visualization.draw_geometries([pcd, pcd2])
-
-#     gx_reachable = remap(metric_reachable_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-#     gy_reachable = remap(metric_reachable_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-#     gx_obstacles = remap(metric_obstacle_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-#     gy_obstacles = remap(metric_obstacle_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-
-#     all_positions = set((x,y) for x in range(width) for y in range(length))
-#     grid_map_reachable_positions = set(zip(gx_reachable, gy_reachable))
-#     grid_map_obstacle_positions = set(zip(gx_obstacles, gy_obstacles))
-
-#     grid_map = GridMap(width, length,
-#                        grid_map_obstacle_positions,
-#                        unknown=(all_positions\
-#                                 - grid_map_obstacle_positions\
-#                                 - grid_map_reachable_positions),
-#                        ranges_in_metric=(metric_gx_range, metric_gy_range),
-#                        grid_size=grid_size)
-#     return grid_map
+    grid_map = GridMap(width, length,
+                       grid_map_obstacle_positions,
+                       unknown=(all_positions\
+                                - grid_map_obstacle_positions\
+                                - grid_map_reachable_positions),
+                       name=name,
+                       ranges_in_thor=(thor_gx_range, thor_gy_range),
+                       grid_size=grid_size)
+    return grid_map
 
 def waypoints_msg_to_arr(waypoints_msg):
     arr = np.array([[wp_msg.pose_sf.position.x,
