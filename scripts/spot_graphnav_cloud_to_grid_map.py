@@ -36,14 +36,14 @@ def proj_to_grid_coords(points, grid_size=0.25):
     metric_grid_points[:,2] = 0
     return metric_grid_points
 
-def flood_fill(grid_points, seed_point, brush_size=1):
+def flood_fill(grid_points, seed_point, brush_size=2):
     """
     Given a numpy array of points that are supposed to be on a grid map,
     and a "seed point", flood fill by adding more grid points that are
     in empty locations to the set of grid points, starting from the seed
     point. Will not modify 'grid_points' but returns a new array.
 
-    brush_size (int): The half of the length of a square brush which will
+    brush_size (int): The length of a square brush which will
         be used to fill out the empty spaces.
     """
     def _neighbors(p, d=1):
@@ -66,7 +66,7 @@ def flood_fill(grid_points, seed_point, brush_size=1):
         point = worklist.popleft()
         # Imagine placing a square brush centered at the point.
         # We assume that the point always represents a valid free cell
-        brush_points = _neighbors(point, d=brush_size)
+        brush_points = _neighbors(point, d=max(1, brush_size//2))
         new_points.update(brush_points)
         if not any(bp in grid_points_set for bp in brush_points):
             # This brush stroke fits; we will consider all brush points
@@ -76,7 +76,7 @@ def flood_fill(grid_points, seed_point, brush_size=1):
                     if in_region(neighbor_point, _ranges):
                         worklist.append(neighbor_point)
                         visited.add(neighbor_point)
-    return np.array(list(map(np.array, new_points)))
+    return np.array(list(map(np.array, grid_points_set | new_points)))
 
 
 def pcd_to_grid_map(pcd, waypoints, **kwargs):
@@ -99,8 +99,8 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     # length (in meters) of a grid in the grid map.
     grid_size = kwargs.get("grid_size", 0.25)
 
-    # # number of waypoint samples as seeds for flooding
-    num_waypoint_seeds = kwargs.get("num_waypoint_seeds", 1)
+    # percentage of waypoints to be sampled and used as seeds for flooding
+    pct_waypoint_seeds = kwargs.get("pct_waypoint_seeds", 0.25)
 
     points = np.asarray(pcd.points)
     bad_points_filter = np.less(points[:, 2], layout_cut)
@@ -117,9 +117,10 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
 
     # Now, flood fill the floor_grid_coords with waypoints; we will select
     # way points that are of some distance away from each other.
-    selected_waypoints_indices = [15]#np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
-    selected_waypoints = waypoints_grid_coords[15].reshape(1, -1)#[selected_waypoints_indices]
-    for wp in tqdm(selected_waypoints): #selected_waypoints:
+    num_waypoint_seeds = int(len(waypoints_grid_coords) * pct_waypoint_seeds)
+    selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
+    selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
+    for wp in tqdm(selected_waypoints):
         floor_grid_coords = flood_fill(floor_grid_coords, wp)
 
     ## Debugging
