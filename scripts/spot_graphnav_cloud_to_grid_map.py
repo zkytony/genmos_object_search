@@ -10,6 +10,8 @@ import rospy
 import ros_numpy
 import numpy as np
 import open3d as o3d
+from tqdm import tqdm
+from collections import deque
 
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
@@ -18,7 +20,7 @@ import message_filters
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_object_search.oopomdp.models.grid_map import GridMap
-from sloop_object_search.utils.math import remap
+from sloop_object_search.utils.math import remap, in_region
 from sloop_object_search.utils.visual import GridMapVisualizer
 
 
@@ -34,15 +36,52 @@ def proj_to_grid_coords(points, grid_size=0.25):
     metric_grid_points[:,2] = 0
     return metric_grid_points
 
+def flood_fill(grid_points, seed_point, brush_size=1):
+    """
+    Given a numpy array of points that are supposed to be on a grid map,
+    and a "seed point", flood fill by adding more grid points that are
+    in empty locations to the set of grid points, starting from the seed
+    point. Will not modify 'grid_points' but returns a new array.
+
+    brush_size (int): The half of the length of a square brush which will
+        be used to fill out the empty spaces.
+    """
+    def _neighbors(p, d=1):
+        # note that p is 3D, but we only care about x and y
+        nbs = []
+        for dx in range(-d, d+1):
+            for dy in range(-d, d+1):
+                if not (dx == 0 and dy == 0):
+                    nbs.append((p[0] + dx, p[1] + dy, p[2]))
+        return nbs
+
+    seed_point = tuple(seed_point)
+    xmax, ymax, zmax = np.max(grid_points, axis=0)
+    xmin, ymin, zmin = np.min(grid_points, axis=0)
+    _ranges = ([xmin, xmax], [ymin, ymax], [zmin, zmax+1])
+    grid_points_set = set(map(tuple, grid_points))
+    # BFS
+    worklist = deque([seed_point])
+    visited = set()
+    while len(worklist) > 0:
+        point = worklist.popleft()
+        visited.add(point)
+        for neighbor_point in _neighbors(point):
+            if in_region(neighbor_point, _ranges):
+                if neighbor_point not in grid_points_set:
+                    worklist.append(neighbor_point)
+                    grid_points_set.add(neighbor_point)
+    return np.array(list(map(np.array, grid_points_set)))
 
 
-
-def pcd_to_grid_map(pcd, **kwargs):
+def pcd_to_grid_map(pcd, waypoints, **kwargs):
     """
     Given an Open3D point cloud object, output a GridMap object
     as the 2D projection of the point cloud.
 
     pcd (Open3D point cloud object)
+    waypoints (numpy.array): L x 3 array where L is the number of waypoints;
+        each row is a waypoint's position.
     """
     # We will regard points with z within layout_cut +/- floor_cut
     # to be the points that represent the floor.
@@ -55,6 +94,9 @@ def pcd_to_grid_map(pcd, **kwargs):
     # length (in meters) of a grid in the grid map.
     grid_size = kwargs.get("grid_size", 0.25)
 
+    # # number of waypoint samples as seeds for flooding
+    num_waypoint_seeds = kwargs.get("num_waypoint_seeds", 10)
+
     points = np.asarray(pcd.points)
     bad_points_filter = np.less(points[:, 2], layout_cut)
     points = points[np.logical_not(bad_points_filter)]
@@ -65,11 +107,27 @@ def pcd_to_grid_map(pcd, **kwargs):
     # We will first convert floor_points into an integer-coordinated grid map.
     floor_grid_coords = proj_to_grid_coords(floor_points, grid_size=grid_size)
 
-    # floor_points[:,2] = 0
+    # also, convert waypoints into an integer-coordinated grid map
+    waypoints_grid_coords = proj_to_grid_coords(waypoints, grid_size=grid_size)
+
+    # Now, flood fill the floor_grid_coords with waypoints; we will select
+    # way points that are of some distance away from each other.
+    selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
+    selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
+    for wp in tqdm(selected_waypoints): #selected_waypoints:
+        floor_grid_coords = flood_fill(floor_grid_coords, wp)
+
+    ## Debugging
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(np.asarray(floor_grid_coords))
-    o3d.visualization.draw_geometries([pcd])
 
+    pcd2 = o3d.geometry.PointCloud()
+    pcd2.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
+    waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
+    waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
+    pcd2.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
+    o3d.visualization.draw_geometries([pcd, pcd2])
+    exit()
 
 
 # def _make_grid_map(pcd, ceiling_cut=1.0,
@@ -195,16 +253,25 @@ def pcd_to_grid_map(pcd, **kwargs):
 #                        grid_size=grid_size)
 #     return grid_map
 
+def waypoints_msg_to_arr(waypoints_msg):
+    arr = np.array([[wp_msg.pose_sf.position.x,
+                     wp_msg.pose_sf.position.y,
+                     wp_msg.pose_sf.position.z]
+                    for wp_msg in waypoints_msg.waypoints])
+    return arr
+
 def _cloud_waypoints_callback(cloud_msg, waypoints_msg, args):
     # Convert PointCloud2 message to Open3D point cloud
-    print(waypoints_msg)
-    points_array = ros_numpy.point_cloud2.pointcloud2_to_array(msg)
-    points = ros_numpy.point_cloud2.get_xyz_points(points_array)
+    # we will obtain a numpy array with each row being a waypoint's position
+    print("Received point cloud and waypoints messages")
+    waypoints_array = waypoints_msg_to_arr(waypoints_msg)
+    points_raw_array = ros_numpy.point_cloud2.pointcloud2_to_array(cloud_msg)
+    points_array = ros_numpy.point_cloud2.get_xyz_points(points_raw_array)
     pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
+    pcd.points = o3d.utility.Vector3dVector(points_array)
 
     # convert pcd to grid map
-    grid_map = pcd_to_grid_map(pcd)
+    grid_map = pcd_to_grid_map(pcd, waypoints_array)
     print("Grid Map created!")
     grid_map_pub = args[0]
 
