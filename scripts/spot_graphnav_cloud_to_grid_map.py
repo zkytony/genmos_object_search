@@ -105,6 +105,10 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     # grid map name
     name = kwargs.get("name", "grid_map")
 
+    # whether to debug (show a visualiation)
+    debug = kwargs.get("debug", False)
+
+    # First, filter points by cutting those points below the layout.
     points = np.asarray(pcd.points)
     bad_points_filter = np.less(points[:, 2], layout_cut)
     points = points[np.logical_not(bad_points_filter)]
@@ -142,7 +146,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
 
     # obtain ranges
     metric_gx = metric_obstacle_grid_points[:,0]
-    metric_gy = metric_obstacle_grid_points[:,2]
+    metric_gy = metric_obstacle_grid_points[:,1]
     width = max(metric_gx) - min(metric_gx) + 1
     length = max(metric_gy) - min(metric_gy) + 1
     # Because of the axis-flip coordinate issue [**]
@@ -161,20 +165,21 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     grid_map_obstacle_positions = set(zip(gx_obstacles, gy_obstacles))
 
     ## Debugging
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(np.asarray(metric_reachable_grid_points))
-    pcd.colors = o3d.utility.Vector3dVector(np.full((len(metric_reachable_grid_points), 3), (0.8, 0.8, 0.8)))
+    if debug:
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(np.asarray(metric_reachable_grid_points))
+        pcd.colors = o3d.utility.Vector3dVector(np.full((len(metric_reachable_grid_points), 3), (0.8, 0.8, 0.8)))
 
-    pcd2 = o3d.geometry.PointCloud()
-    pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_grid_points))
-    pcd2.colors = o3d.utility.Vector3dVector(np.full((len(metric_obstacle_grid_points), 3), (0.2, 0.2, 0.2)))
+        pcd2 = o3d.geometry.PointCloud()
+        pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_grid_points))
+        pcd2.colors = o3d.utility.Vector3dVector(np.full((len(metric_obstacle_grid_points), 3), (0.2, 0.2, 0.2)))
 
-    pcd3 = o3d.geometry.PointCloud()
-    pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
-    waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
-    waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
-    pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
-    o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
+        pcd3 = o3d.geometry.PointCloud()
+        pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
+        waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
+        waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
+        pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
+        o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
 
     grid_map = GridMap(width, length,
                        grid_map_obstacle_positions,
@@ -182,7 +187,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
                                 - grid_map_obstacle_positions\
                                 - grid_map_reachable_positions),
                        name=name,
-                       ranges_in_thor=(thor_gx_range, thor_gy_range),
+                       ranges_in_metric=(metric_gx_range, metric_gy_range),
                        grid_size=grid_size)
     return grid_map
 
@@ -206,12 +211,16 @@ def _cloud_waypoints_callback(cloud_msg, waypoints_msg, args):
     # convert pcd to grid map
     grid_map = pcd_to_grid_map(pcd, waypoints_array)
     print("Grid Map created!")
-    grid_map_pub = args[0]
 
-    viz = GridMapVisualizer(grid_map=grid_map,
-                            res=5)
-    viz.show_img(viz.render())
-    time.sleep(5)
+    # Publish grid map as message
+    grid_map_pub = args[0]
+    grid_map_msg = sloop_ros.msg.GridMap2d()
+
+    ## Debugging
+    # viz = GridMapVisualizer(grid_map=grid_map,
+    #                         res=5)
+    # viz.show_img(viz.render())
+    # time.sleep(5)
 
 
 def main():
