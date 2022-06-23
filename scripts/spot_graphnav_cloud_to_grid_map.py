@@ -1,16 +1,22 @@
 #!/usr/bin/env python
 #
-# Subscribes to a PointCloud2 topic and converts it to
-# sloop_ros/GridMap2d, and publishes it.
+# Subscribes to a PointCloud2 topic and a GraphNavWayPointArray topic
+# and converts it to sloop_ros/GridMap2d, and publishes it.
+#
+# Note that this is script specific for Spot.
 import time
 import argparse
 import rospy
 import ros_numpy
 import numpy as np
 import open3d as o3d
+
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 import sloop_ros.msg
+import message_filters
+from rbd_spot_perception.msg import GraphNavWaypointArray
+
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.utils.math import remap
 from sloop_object_search.utils.visual import GridMapVisualizer
@@ -189,8 +195,9 @@ def pcd_to_grid_map(pcd, **kwargs):
 #                        grid_size=grid_size)
 #     return grid_map
 
-def _point_cloud_callback(msg, args):
+def _cloud_waypoints_callback(cloud_msg, waypoints_msg, args):
     # Convert PointCloud2 message to Open3D point cloud
+    print(waypoints_msg)
     points_array = ros_numpy.point_cloud2.pointcloud2_to_array(msg)
     points = ros_numpy.point_cloud2.get_xyz_points(points_array)
     pcd = o3d.geometry.PointCloud()
@@ -209,13 +216,23 @@ def _point_cloud_callback(msg, args):
 
 def main():
     parser = argparse.ArgumentParser("PointCloud2 to GridMap2d")
-    parser.add_argument("point_cloud_topic", type=str, help="name of point cloud topic to subscribe to")
-    parser.add_argument("grid_map_topic", type=str, help="name of grid map topic to publish at")
+    parser.add_argument("--point-cloud-topic", type=str, help="name of point cloud topic to subscribe to",
+                        default="/graphnav_map_publisher/graphnav_points")
+    parser.add_argument("--waypoint-topic", type=str, help="name of the topic for GraphNav waypoints",
+                        default="/graphnav_waypoints")
+    parser.add_argument("--grid-map-topic", type=str, help="name of grid map topic to publish at",
+                        default="/graphnav_gridmap")
     args = parser.parse_args()
 
-    rospy.init_node("point_cloud_to_grid_map")
+    rospy.init_node("graphnav_cloud_to_grid_map")
     grid_map_pub = rospy.Publisher(args.grid_map_topic, sloop_ros.msg.GridMap2d, queue_size=10)
-    rospy.Subscriber(args.point_cloud_topic, PointCloud2, _point_cloud_callback, (grid_map_pub,))
+
+    pcl_sub = message_filters.Subscriber(args.point_cloud_topic, PointCloud2)
+    wyp_sub = message_filters.Subscriber(args.waypoint_topic, GraphNavWaypointArray)
+    ts = message_filters.ApproximateTimeSynchronizer([pcl_sub, wyp_sub], 10, 0.2)  # allow 0.2s difference
+    ts.registerCallback(_cloud_waypoints_callback, (grid_map_pub,))
+
+
     rospy.spin()
 
 if __name__ == "__main__":
