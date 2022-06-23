@@ -48,12 +48,10 @@ def flood_fill(grid_points, seed_point, brush_size=1):
     """
     def _neighbors(p, d=1):
         # note that p is 3D, but we only care about x and y
-        nbs = []
-        for dx in range(-d, d+1):
-            for dy in range(-d, d+1):
-                if not (dx == 0 and dy == 0):
-                    nbs.append((p[0] + dx, p[1] + dy, p[2]))
-        return nbs
+        return set((p[0] + dx, p[1] + dy, p[2])
+                   for dx in range(-d, d+1)
+                   for dy in range(-d, d+1)
+                   if not (dx == 0 and dy == 0))
 
     seed_point = tuple(seed_point)
     xmax, ymax, zmax = np.max(grid_points, axis=0)
@@ -63,15 +61,22 @@ def flood_fill(grid_points, seed_point, brush_size=1):
     # BFS
     worklist = deque([seed_point])
     visited = set()
+    new_points = set()
     while len(worklist) > 0:
         point = worklist.popleft()
-        visited.add(point)
-        for neighbor_point in _neighbors(point):
-            if in_region(neighbor_point, _ranges):
-                if neighbor_point not in grid_points_set:
-                    worklist.append(neighbor_point)
-                    grid_points_set.add(neighbor_point)
-    return np.array(list(map(np.array, grid_points_set)))
+        # Imagine placing a square brush centered at the point.
+        # We assume that the point always represents a valid free cell
+        brush_points = _neighbors(point, d=brush_size)
+        new_points.update(brush_points)
+        if not any(bp in grid_points_set for bp in brush_points):
+            # This brush stroke fits; we will consider all brush points
+            # as potential free cells - i.e. neighbors
+            for neighbor_point in brush_points:
+                if neighbor_point not in visited:
+                    if in_region(neighbor_point, _ranges):
+                        worklist.append(neighbor_point)
+                        visited.add(neighbor_point)
+    return np.array(list(map(np.array, new_points)))
 
 
 def pcd_to_grid_map(pcd, waypoints, **kwargs):
@@ -95,7 +100,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     grid_size = kwargs.get("grid_size", 0.25)
 
     # # number of waypoint samples as seeds for flooding
-    num_waypoint_seeds = kwargs.get("num_waypoint_seeds", 10)
+    num_waypoint_seeds = kwargs.get("num_waypoint_seeds", 1)
 
     points = np.asarray(pcd.points)
     bad_points_filter = np.less(points[:, 2], layout_cut)
@@ -112,8 +117,8 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
 
     # Now, flood fill the floor_grid_coords with waypoints; we will select
     # way points that are of some distance away from each other.
-    selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
-    selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
+    selected_waypoints_indices = [15]#np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
+    selected_waypoints = waypoints_grid_coords[15].reshape(1, -1)#[selected_waypoints_indices]
     for wp in tqdm(selected_waypoints): #selected_waypoints:
         floor_grid_coords = flood_fill(floor_grid_coords, wp)
 
