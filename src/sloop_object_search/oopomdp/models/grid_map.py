@@ -26,7 +26,7 @@ class GridMap:
 
     def __init__(self, width, length, obstacles,
                  free_locations=None, unknown=None, name="grid_map",
-                 ranges_in_metric=None, grid_size=None):
+                 ranges_in_metric=None, grid_size=None, labels=None):
         """
         obstacles (set): a set of locations for the obstacles
         unknown (set): locations that have unknown properties.
@@ -38,6 +38,7 @@ class GridMap:
             The unknown locations of a grid map is
                 ALL_CELLS(width, length) - obstacles - unknown
             this has higher priority than unknown.
+        labels (dict): maps from location to a string label
         """
         self.width = width
         self.length = length
@@ -51,7 +52,9 @@ class GridMap:
         self._blocked_cache = {}
 
         # Labels on grid cells
-        self._labels = {}  # maps from position (x,y) to a set of labels
+        self.labels = labels
+        if labels is None:
+            self.labels = {}  # maps from position (x,y) to a set of labels
 
     def update(self, obstacles, unknown=None, free_locations=None):
         all_positions = {(x,y) for x in range(self.width)
@@ -131,9 +134,9 @@ class GridMap:
     def label(self, x, y, label):
         if (x,y) not in self:
             raise ValueError(f"Cell ({x}, {y}) not on grid map")
-        if (x,y) not in self._labels:
-            self._labels[(x,y)] = set()
-        self._labels[(x,y)].add(label)
+        if (x,y) not in self.labels:
+            self.labels[(x,y)] = set()
+        self.labels[(x,y)].add(label)
 
     def label_all(self, locs, label):
         for loc in locs:
@@ -142,11 +145,11 @@ class GridMap:
     def filter_by_label(self, label):
         """Returns a set of locations in the grid map with label"""
         return {loc for loc in self.free_locations
-                if label in self._labels.get(loc, set())}\
+                if label in self.labels.get(loc, set())}\
                 | {loc for loc in self.obstacles
-                   if label in self._labels.get(loc, set())}\
+                   if label in self.labels.get(loc, set())}\
                 | {loc for loc in self.unknown
-                   if label in self._labels.get(loc, set())}
+                   if label in self.labels.get(loc, set())}
 
     def free_region(self, x, y):
         """Given (x,y) location, return a set of locations
