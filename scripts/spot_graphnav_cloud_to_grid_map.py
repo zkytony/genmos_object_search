@@ -90,13 +90,13 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     waypoints (numpy.array): L x 3 array where L is the number of waypoints;
         each row is a waypoint's position.
     """
+    # The height above which the points indicate nicely the layout of the room
+    # while preserving big obstacles like tables.
+    layout_cut = kwargs.get("layout_cut", 0.65)
+
     # We will regard points with z within layout_cut +/- floor_cut
     # to be the points that represent the floor.
     floor_cut = kwargs.get("floor_cut", 0.15)
-
-    # The height above which the points indicate nicely the layout of the room
-    # while preserving big obstacles like tables.
-    layout_cut = kwargs.get("layout_cut", 0.5)
 
     # length (in meters) of a grid in the grid map.
     grid_size = kwargs.get("grid_size", 0.25)
@@ -108,7 +108,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     name = kwargs.get("name", "grid_map")
 
     # whether to debug (show a visualiation)
-    debug = kwargs.get("debug", False)
+    debug = True #kwargs.get("debug", False)
 
     # First, filter points by cutting those points below the layout.
     points = np.asarray(pcd.points)
@@ -127,6 +127,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     # Now, flood fill the floor_grid_coords with waypoints; we will select
     # way points that are of some distance away from each other.
     num_waypoint_seeds = int(len(waypoints_grid_coords) * pct_waypoint_seeds)
+    np.random.seed(1010)
     selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
     selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
     for wp in tqdm(selected_waypoints):
@@ -189,9 +190,15 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
                        name=name,
                        ranges_in_metric=(metric_gx_range, metric_gy_range),
                        grid_size=grid_size)
+
+    if debug:
+        viz = GridMapVisualizer(grid_map=grid_map, res=5)
+        viz.show_img(viz.render())
+
     return grid_map
 
 def waypoints_msg_to_arr(waypoints_msg):
+    """converts a GraphNavWaypointArray message into a numpy array"""
     arr = np.array([[wp_msg.pose_sf.position.x,
                      wp_msg.pose_sf.position.y,
                      wp_msg.pose_sf.position.z]
@@ -202,6 +209,7 @@ class GraphNavPointCloudToGridMapPublisher:
     def __init__(self, args):
         rospy.init_node("graphnav_cloud_to_grid_map")
         self.latch = not args.updating
+        self.map_name = args.name
         self.grid_map_pub = rospy.Publisher(args.grid_map_topic, sloop_ros.msg.GridMap2d,
                                             queue_size=10, latch=self.latch)
 
@@ -221,7 +229,7 @@ class GraphNavPointCloudToGridMapPublisher:
         pcd.points = o3d.utility.Vector3dVector(points_array)
 
         # convert pcd to grid map
-        grid_map = pcd_to_grid_map(pcd, waypoints_array)
+        grid_map = pcd_to_grid_map(pcd, waypoints_array, name=self.map_name)
         print("Grid Map created!")
 
         # Publish grid map as message
@@ -245,6 +253,8 @@ def main():
                         default="/graphnav_gridmap")
     parser.add_argument("--updating", action="store_true",
                         help="Keeps subscribing to point cloud and update the grid map; Otherwise, publishes once and latches.")
+    parser.add_argument("--name", type=str, help="name of the grid map",
+                        required=True)
     args = parser.parse_args()
     gmpub = GraphNavPointCloudToGridMapPublisher(args)
     rospy.spin()
