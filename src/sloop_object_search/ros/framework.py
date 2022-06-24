@@ -10,8 +10,10 @@ from sloop_ros.msg import (PlanNextStepAction,
 from sloop_object_search.utils.misc import import_class
 
 
-class BaseAgentWrapper:
+class BaseAgentROSInterface:
     """
+    Builds a bridge between POMDP agent and ROS.
+
     A base agent serves:
     - ~plan
 
@@ -24,8 +26,8 @@ class BaseAgentWrapper:
 
     See scripts/run_pomdp_agent for how this is used.
     """
-    def __init__(self, pomdp_agent, ros_config={}, planner=None):
-        self.agent = pomdp_agent
+    def __init__(self, ros_config={}, planner=None):
+        self.agent = None
         self._planner = planner
         self._ros_config = ros_config
 
@@ -50,6 +52,8 @@ class BaseAgentWrapper:
         # This will always be equal to the last planned action
         self._last_action = None
 
+    def set_agent(self, agent):
+        self.agent = agent
 
     def setup(self):
         """Override this function to create make your agent
@@ -94,6 +98,9 @@ class BaseAgentWrapper:
 
     def run(self):
         """Blocking call"""
+        if self.agent is None:
+            raise ValueError("agent not yet created")
+
         if self._plan_server is None\
            or self._action_publisher is None\
            or self._belief_publisher is None\

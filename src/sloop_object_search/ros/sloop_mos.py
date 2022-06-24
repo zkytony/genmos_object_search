@@ -5,33 +5,17 @@ from sloop_object_search.oopomdp.agent import make_agent
 from sloop_object_search.oopomdp.planner import make_planner
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.oopomdp.agent.visual import visualize_step
+from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
+from sloop_ros.msg import GridMap2d
 from sloop.osm.datasets import FILEPATHS
-from .framework import BaseAgentWrapper
+from .framework import BaseAgentROSInterface
 from .action_mos import action_to_ros_msg
 
-def make_ros_agent(_config):
-    """
-    Args:
-        config (dict): the configuration dictionary; refer to examples
-            under sloop_ros/tests
-    """
-    _ros_config = _config.get("ros_config", {})
-    init_pose_topic = _ros_config.get("init_pose_topic", "~init_pose")
-    rospy.loginfo(f"Waiting for initial pose at topic: {init_pose_topic}")
-    init_pose_msg = sloop_ros.GridMapPose2d(x=5,y=5,yaw=0.0)
-    # rospy.wait_for_message(init_pose_topic,
-    #                                        sloop_ros.GridMapPose2d)
-    agent = make_agent(_config, init_pose=(init_pose_msg.x, init_pose_msg.y, init_pose_msg.yaw))
-    planner = make_planner(_config["planner_config"], agent)
-    return SloopMosROSAgentWrapper(agent, planner,
-                                   ros_config=_config.get("ros_config", {}))
-
-class SloopMosROSAgentWrapper(BaseAgentWrapper):
-    def __init__(self, oopomdp_agent, planner, ros_config={}):
+class SloopMosAgentROSInterface(BaseAgentROSInterface):
+    def __init__(self, planner, ros_config={}):
         self.planner = planner
         self.viz = None
-        super().__init__(oopomdp_agent,
-                         ros_config=ros_config,
+        super().__init__(ros_config=ros_config,
                          planner=planner)
 
     def belief_to_ros_msg(self, belief, stamp=None):
@@ -65,7 +49,13 @@ class SloopMosROSAgentWrapper(BaseAgentWrapper):
         - grid map
         - spatial language
         """
+        if isinstance(observation_msg, GridMap2d):
+            self._interpret_grid_map_msg(observation_msg):
         raise NotImplementedError
+
+    def _interpret_grid_map_msg(self, grid_map_msg):
+        grid_map = ros_msg_to_grid_map(grid_map_msg)
+        pass
 
     def interpret_observation_msg(self, belief, stamp=None):
         pass
@@ -91,3 +81,20 @@ class SloopMosROSAgentWrapper(BaseAgentWrapper):
         if action is None:
             draw_fov = None
         self.viz.visualize(self.agent, {}, colors=colors, draw_fov=draw_fov, **kwargs)
+
+def make_ros_agent(_config):
+    """
+    Args:
+        config (dict): the configuration dictionary; refer to examples
+            under sloop_ros/tests
+    """
+    _ros_config = _config.get("ros_config", {})
+    init_pose_topic = _ros_config.get("init_pose_topic", "~init_pose")
+    rospy.loginfo(f"Waiting for initial pose at topic: {init_pose_topic}")
+    init_pose_msg = sloop_ros.GridMapPose2d(x=5,y=5,yaw=0.0)
+    # rospy.wait_for_message(init_pose_topic,
+    #                                        sloop_ros.GridMapPose2d)
+    agent = make_agent(_config, init_pose=(init_pose_msg.x, init_pose_msg.y, init_pose_msg.yaw))
+    planner = make_planner(_config["planner_config"], agent)
+    return SloopMosROSAgentWrapper(agent, planner,
+                                   ros_config=_config.get("ros_config", {}))
