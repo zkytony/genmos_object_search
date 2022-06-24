@@ -25,7 +25,7 @@ class GridMap:
     """
 
     def __init__(self, width, length, obstacles,
-                 unknown=None, name="grid_map",
+                 free_locations=None, unknown=None, name="grid_map",
                  ranges_in_metric=None, grid_size=None):
         """
         obstacles (set): a set of locations for the obstacles
@@ -33,13 +33,18 @@ class GridMap:
             If None, then this set will be empty; The free locations
             of a grid map is
                 ALL_CELLS(width, length) - obstacles - unknown
+            Ignored if free_locations is not None.
+        free_locations (set): locations that are free.
+            The unknown locations of a grid map is
+                ALL_CELLS(width, length) - obstacles - unknown
+            this has higher priority than unknown.
         """
         self.width = width
         self.length = length
         self.name = name
         self.ranges_in_metric = ranges_in_metric
         self.grid_size = grid_size
-        self.update(obstacles, unknown=unknown)
+        self.update(obstacles, unknown=unknown, free_locations=free_locations)
 
         # Caches the computations
         self._geodesic_dist_cache = {}
@@ -47,6 +52,25 @@ class GridMap:
 
         # Labels on grid cells
         self._labels = {}  # maps from position (x,y) to a set of labels
+
+    def update(self, obstacles, unknown=None, free_locations=None):
+        all_positions = {(x,y) for x in range(self.width)
+                         for y in range(self.length)}
+
+        self.obstacles = obstacles
+        if free_locations is not None:
+            # check that obstacles and free_locations are disjoint sets
+            assert self.obstacles.isdisjoint(free_locations)
+            self.free_locations = free_locations
+            self.unknown = all_positions - self.obstacles - self.free_locations
+        else:
+            if unknown is None:
+                unknown = set()
+            else:
+                # check that obstacles and unknown locations are disjoint sets
+                assert self.obstacles.isdisjoint(unknown)
+            self.unknown = unknown
+            self.free_locations = all_positions - self.obstacles - self.unknown
 
     def __contains__(self, loc):
         return loc in self.free_locations\
@@ -123,16 +147,6 @@ class GridMap:
                    if label in self._labels.get(loc, set())}\
                 | {loc for loc in self.unknown
                    if label in self._labels.get(loc, set())}
-
-    def update(self, obstacles, unknown=None):
-        all_positions = {(x,y) for x in range(self.width)
-                         for y in range(self.length)}
-
-        self.obstacles = obstacles
-        if unknown is None:
-            unknown = set()
-        self.unknown = unknown
-        self.free_locations = all_positions - self.obstacles - self.unknown
 
     def free_region(self, x, y):
         """Given (x,y) location, return a set of locations
