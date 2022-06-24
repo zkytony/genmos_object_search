@@ -62,15 +62,22 @@ class GridMap:
 
         self.obstacles = obstacles
         if free_locations is not None:
-            # check that obstacles and free_locations are disjoint sets
+            # We need to make free_locations and obstacles disjoint sets; Overlaps
+            # are considered obstacles
+            overlap = self.obstacles.intersection(free_locations)
+            free_locations -= overlap
             assert self.obstacles.isdisjoint(free_locations)
             self.free_locations = free_locations
             self.unknown = all_positions - self.obstacles - self.free_locations
         else:
+            # We need to make unknown and obstacles disjoint sets; Overlaps
+            # are considered obstacles
             if unknown is None:
                 unknown = set()
             else:
                 # check that obstacles and unknown locations are disjoint sets
+                overlap = self.obstacles.intersection(unknown)
+                unknown -= overlap
                 assert self.obstacles.isdisjoint(unknown)
             self.unknown = unknown
             self.free_locations = all_positions - self.obstacles - self.unknown

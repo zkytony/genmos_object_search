@@ -22,15 +22,15 @@ def grid_map_to_ros_msg(grid_map, stamp=None):
     locations = []
     for pos in grid_map.obstacles:
         locmsg = GridMapLoc()
-        locmsg.x = pos[0]
-        locmsg.y = pos[1]
+        locmsg.loc.x = pos[0]
+        locmsg.loc.y = pos[1]
         locmsg.type = "obstacle"
         locmsg.label = grid_map.labels.get(pos, "")
         locations.append(locmsg)
     for pos in grid_map.free_locations:
         locmsg = GridMapLoc()
-        locmsg.x = pos[0]
-        locmsg.y = pos[1]
+        locmsg.loc.x = pos[0]
+        locmsg.loc.y = pos[1]
         locmsg.type = "free"
         locmsg.label = grid_map.labels.get(pos, "")
         locations.append(locmsg)
