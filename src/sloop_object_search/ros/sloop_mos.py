@@ -72,6 +72,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         - grid map
         - spatial language
         """
+        print("HE!!!!!!!!!!!!!!!")
         if isinstance(observation_msg, GridMap2d):
             self._interpret_grid_map_msg(observation_msg)
         elif isinstance(observation_msg, geometry_msgs.PoseStamped):

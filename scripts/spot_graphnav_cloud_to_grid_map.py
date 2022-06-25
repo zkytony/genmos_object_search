@@ -255,7 +255,7 @@ def main():
                         help="Keeps subscribing to point cloud and update the grid map; Otherwise, publishes once and latches.")
     parser.add_argument("--name", type=str, help="name of the grid map",
                         required=True)
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     gmpub = GraphNavPointCloudToGridMapPublisher(args)
     rospy.spin()
 

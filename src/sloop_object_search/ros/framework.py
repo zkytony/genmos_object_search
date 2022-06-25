@@ -36,7 +36,7 @@ class BaseAgentROSRunner:
         self._plan_server = None   # calls the service to plan the next step
         self._action_publisher = None
         self._belief_publisher = None
-        self._observation_subscriber = None
+        self._observation_subscribers = {}
 
         self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
         self._action_topic = self._ros_config.get("action_topic", "~action")
@@ -85,13 +85,16 @@ class BaseAgentROSRunner:
             z_msg_type = DefaultObservation
             if "msg_type" in self._ros_config['observation'][z_type]:
                 z_msg_type = import_class(self._ros_config['observation'][z_type]["msg_type"])
-            self._observation_subscriber = rospy.Subscriber(
+            print(z_msg_type)
+            print(self._observation_topics[z_type])
+            self._observation_subscribers[z_type] = rospy.Subscriber(
                 self._observation_topics[z_type],
                 z_msg_type,
                 self._observation_cb)
 
     def _observation_cb(self, observation_msg):
         """Override this function to handle different observation types"""
+        print("HE!!!!!!!!!!!!!!!")
         rospy.loginfo(f"Observation received: {observation_msg}")
         observation = self.observation_model.interpret_observation_msg(observation_msg)
         self.agent.belief.update(self, observation, self._last_action)
