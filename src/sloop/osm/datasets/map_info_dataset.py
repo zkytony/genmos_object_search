@@ -10,10 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
-if __name__ == '__main__':
-    from constants import FILEPATHS
-else:
-    from .constants import FILEPATHS
+from .SL_OSM_Dataset.mapinfo.constants import FILEPATHS
 
 class MapInfoDataset:
 
