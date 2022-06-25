@@ -108,7 +108,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     name = kwargs.get("name", "grid_map")
 
     # whether to debug (show a visualiation)
-    debug = True #kwargs.get("debug", False)
+    debug = kwargs.get("debug", False)
 
     # First, filter points by cutting those points below the layout.
     points = np.asarray(pcd.points)
