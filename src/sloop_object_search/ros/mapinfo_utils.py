@@ -8,7 +8,7 @@ from sloop.osm.datasets import FILEPATHS, MapInfoDataset
 
 # Path to the 'for_robots' folder that contains maps for robot tests.
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         "../../../data/for_robot")
+                         "../../../data/robot_tests")
 
 def _create_fp_dict_new(map_names):
     """WARNING: for NEW FORMAT (not original OSM)"""
@@ -57,4 +57,5 @@ def register_map(grid_map):
         f.write("[]")
     with open(os.path.join(mapdir, "map_dims.json")) as f:
         f.write(f"[{grid_map.width}, {grid_map.length}]")
-    FILEPATHS.update(_create_fp_dict_new([map_name])
+    print(f"Map {grid_map.name} registered")
+    FILEPATHS.update(_create_fp_dict_new([map_name]))

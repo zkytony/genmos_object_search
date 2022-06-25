@@ -113,9 +113,14 @@ class SloopMosBasic2DAgent(SloopAgent):
     """
     basic --> operates at the fine-grained action level.
     """
-    def _init_oopomdp(self):
-        self.grid_map = osm_map_to_grid_map(
-            self.mapinfo, self.map_name)
+    def _init_oopomdp(self, grid_map=None):
+        if grid_map is None:
+            # No grid map is provided. For now, we assume self.map_name is an OSM map
+            self.grid_map = osm_map_to_grid_map(
+                self.mapinfo, self.map_name)
+        else:
+            grid_map = grid_map
+
         mos_agent = MosBasic2DAgent(self.agent_config, self.grid_map)
         return (mos_agent.belief,
                 mos_agent.policy_model,

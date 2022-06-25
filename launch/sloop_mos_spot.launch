@@ -10,7 +10,7 @@
   <!-- Stream the robot's GraphNav pose as tf transforms and messages -->
   <node pkg="rbd_spot_perception" type="stream_graphnav_pose.py"
         name="stream_graphnav_pose"
-        args="--pub-tf --pub-pose" output="log"/>
+        args="--pub-tf --pub-pose" output="screen"/>
 
   <!-- run the POMDP ROS interface for SLOOP MOS -->
   <node name="run_sloop_mos_spot"

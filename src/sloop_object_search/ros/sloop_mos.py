@@ -30,7 +30,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
 
     def check_if_ready(self):
         # Check if I have grid map and I have the robot pose
-        return self._grid_map is not None and self._init_robot_pose is not None:
+        return self._grid_map is not None and self._init_robot_pose is not None
 
     def _interpret_grid_map_msg(self, grid_map_msg):
         if self._grid_map is not None:
@@ -58,7 +58,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         # first, obtain the position in grid map coords
         metric_position = robot_pose_msg.pose.position
         quat = robot_pose_msg.pose.rotation
-        rx, ry = grid_map.to_grid_pose(metric_position.x, metric_position.y)
+        rx, ry = self._grid_map.to_grid_pose(metric_position.x, metric_position.y)
         _, _, yaw = euler_from_quaternion((quat.x, quat.y, quat.z, quat.w))
         yaw = to_degrees(yaw)
         self._init_robot_pose = (rx, ry, yaw)
@@ -88,7 +88,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         super().run()
 
     def make_agent(self, config):
-        return make_sloop_mos_agent(_config, init_pose=self._init_robot_pose)
+        return make_sloop_mos_agent(config, init_pose=self._init_robot_pose)
 
     def make_planner(self, config, agent):
         return make_sloop_mos_planner(config["planner_config"], agent)

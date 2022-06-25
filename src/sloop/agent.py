@@ -10,7 +10,8 @@ from .observation import SpatialLanguageObservation
 class SloopAgent(pomdp_py.Agent):
     def __init__(self,
                  agent_config,
-                 map_name):
+                 map_name,
+                 **pomdp_kwargs):
         """
         agent_config (dict): specifies various configurations.
             See example in tests/src/sloop_object_search/test_sloop_system.py
@@ -29,7 +30,7 @@ class SloopAgent(pomdp_py.Agent):
                 device=agent_config.get("device", "cuda:0"),
                 symbol_map=agent_config.get("object_symbol_map", None))
 
-        pomdp_components = self._init_oopomdp()
+        pomdp_components = self._init_oopomdp(**pomdp_kwargs)
         super().__init__(*pomdp_components)
 
 
