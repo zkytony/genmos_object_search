@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from ..base_model import BaseModel
 from sloop.osm.datasets.dataloader import *
-from sloop.osm.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
 from sloop.osm.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
 
 # ROUND 1 PARAMS: does not generalize well

@@ -7,7 +7,6 @@ from pprint import pprint
 
 from sloop.observation_model import SpatialLanguageObservationModel
 
-from sloop.osm.datasets.SL_OSM_Dataset.mapinfo.constants import FILEPATHS
 from sloop.osm.datasets.SL_OSM_Dataset.mapinfo.map_info_dataset import MapInfoDataset
 from sloop.osm.datasets.utils import make_context_img
 from sloop.osm.datasets.dataloader import *
