@@ -8,6 +8,7 @@ def main():
 
     ros_config = config.get("ros_config", {})
     runner = SloopMosAgentROSRunner(ros_config=ros_config)
+    rospy.loginfo("setting up SloopMosAgentROSRunner")
     runner.setup()
     rate = rospy.Rate(5)
     ready = False
@@ -15,11 +16,14 @@ def main():
         if runner.check_if_ready():
             ready = True
             break
+        rospy.logwarn("runner not ready")
         rate.sleep()
+    rospy.loginfo("runner ready!")
     if ready:
         agent = runner.make_agent(config)
         planner = runner.make_planner(config, agent)
         runner.set_planner(planner)
+        rospy.loginfo("sloop agent created. Start running")
         runner.run()
 
 

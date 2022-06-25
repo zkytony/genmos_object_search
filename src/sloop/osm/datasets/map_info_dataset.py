@@ -23,6 +23,7 @@ class MapInfoDataset:
         self._pomdp_to_idx = {}
         self._idx_to_pomdp = {}
         self._symbol_to_maps = {} # {symbol -> [map_name]}
+        self._symbol_to_synonyms = {}  # {map_name -> {symbol -> {name1, name2, ...}}}
         self._cardinal_to_limit = {} # {map_name -> {"N": (0.02200,0.400) ...}}
         # NOTE: cell here DOES NOT MEAN grid cell in cartesian coordinates.
         #       IT IS A LAT/LON CELL.
@@ -155,29 +156,101 @@ class MapInfoDataset:
         return list(set(self.landmarks[map_name].keys()) - self._excluded_symbols[map_name])
 
     def load_by_name(self, map_name):
-        return self.load(map_name,
-                         FILEPATHS[map_name]["name_to_idx"],
-                         FILEPATHS[map_name]["pomdp_to_idx"],
-                         FILEPATHS[map_name]["name_to_symbol"],
-                         FILEPATHS[map_name]["cardinal_to_limit"],
-                         FILEPATHS[map_name]["idx_to_cell"],
-                         FILEPATHS[map_name]["name_to_feats"],
-                         FILEPATHS[map_name]["excluded_symbols"],
-                         FILEPATHS[map_name]["streets"],
-                         FILEPATHS[map_name]["map_dims"])
+        """load a map from filepaths specified in FILEPATHS"""
+        if map_name in FILEPATHS:
+            if "idx_to_cell" in FILEPATHS[map_name]:
+                return self.load_by_name_original_osm(map_name)
+            else:
+                # This will assume the map_name is registered with new organization;
+                # The difference is:
+                # - there is no *_idx_* files
+                # - landmark is specified by grid coordinates directly
+                return self.load_by_name_new(map_name)
+        else:
+            raise ValueError(f"map {map_name} not found")
 
-    def load(self,
-             map_name,
-             name_to_idx_fp,
-             pomdp_to_idx_fp,
-             name_to_symbol_fp,
-             limit_fp,
-             idx_to_cell_fp,
-             name_to_feats_fp,
-             excluded_symbols_fp,
-             streets_fp,
-             map_dims):
-        """
+    ############################ new format loading ##################################
+    def load_by_name_new(self, map_name):
+        return self.load_new(map_name,
+                             FILEPATHS[map_name]["name_to_symbols"],
+                             FILEPATHS[map_name]["symbol_to_grids"],
+                             FILEPATHS[map_name]["symbol_to_synonyms"],
+                             FILEPATHS[map_name]["streets"],
+                             FILEPATHS[map_name]["map_dims"],
+                             FILEPATHS[map_name]["excluded_symbols"])
+
+    def load_new(self, map_name,
+                 name_to_symbols_fp,
+                 symbol_to_grids_fp,
+                 symbol_to_synonyms_fp,
+                 streets_fp,
+                 map_dims_fp,
+                 excluded_symbols_fp):
+        with open(map_dims_fp) as f:
+            self._map_dims[map_name] = tuple(json.load(f))
+        with open(name_to_symbols_fp) as f:
+            name_to_symbols = json.load(f)
+        with open(symbol_to_grids_fp) as f:
+            symbol_to_grids = json.load(f)
+        with open(symbol_to_synonyms_fp) as f:
+            symbol_to_synonyms = json.load(f)
+        with open(excluded_symbols_fp) as f:
+            excluded_symbols = json.load(f)
+        with open(streets_fp) as f:
+            streets = json.load(f)
+
+        self._idx_to_cell[map_name] = None
+        self._cardinal_to_limit[map_name] = None
+        self._pomdp_to_idx[map_name] = None
+        self._idx_to_pomdp[map_name] = None
+        self._symbol_to_feats[map_name] = {}
+        self._symbol_to_name[map_name] = {}
+        self._symbol_to_synonyms[map_name] = symbol_to_synonyms
+        self._excluded_symbols[map_name] = set(excluded_symbols)
+        self._streets[map_name] = set(streets)
+
+        if map_name not in self.landmarks:
+            self.landmarks[map_name] = {}
+            self._cell_to_symbol[map_name] = {}
+
+        for landmark_name in name_to_symbols:
+            symbol = name_to_symbols[landmark_name]
+            self._name_to_symbols[landmark_name] = symbol
+
+        for symbol in symbol_to_grids:
+            self.landmarks[map_name][symbol] = symbol_to_grids[symbol]
+            self._symbol_to_name[map_name][symbol] = landmark_name
+            if symbol not in self._symbol_to_maps:
+                self._symbol_to_maps[symbol] = set()
+            self._symbol_to_maps[symbol].add(map_name)
+
+
+    ############################ original osm loading ##################################
+    def load_by_name_original_osm(self, map_name):
+        """This is used by original OSM maps"""
+        return self.load_original_osm(map_name,
+                                      FILEPATHS[map_name]["name_to_idx"],
+                                      FILEPATHS[map_name]["pomdp_to_idx"],
+                                      FILEPATHS[map_name]["name_to_symbol"],
+                                      FILEPATHS[map_name]["cardinal_to_limit"],
+                                      FILEPATHS[map_name]["idx_to_cell"],
+                                      FILEPATHS[map_name]["name_to_feats"],
+                                      FILEPATHS[map_name]["excluded_symbols"],
+                                      FILEPATHS[map_name]["streets"],
+                                      FILEPATHS[map_name]["map_dims"])
+
+    def load_original_osm(self,
+                          map_name,
+                          name_to_idx_fp,
+                          pomdp_to_idx_fp,
+                          name_to_symbol_fp,
+                          limit_fp,
+                          idx_to_cell_fp,
+                          name_to_feats_fp,
+                          excluded_symbols_fp,
+                          streets_fp,
+                          map_dims):
+        """This is used by original OSM maps
         filepath (str) path to `name_to_idx_{location}.json` file.
         name_to_symbol (dict) maps from e.g. "Waterman Street" to "WatermanSt" symbol.
         """
@@ -231,7 +304,7 @@ class MapInfoDataset:
         for symbol in self.landmarks_for(map_name):
             for cell in self.landmark_footprint(symbol, map_name):
                 self._cell_to_symbol[map_name][cell] = symbol
-
+    #####################################################################
 
     def visualize(self, map_name, landmark_symbol, bg_path=None,
                   display=False, img=None, color=(128,128,205), res=25):

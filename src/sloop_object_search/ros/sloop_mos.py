@@ -57,8 +57,8 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
 
         # first, obtain the position in grid map coords
         metric_position = robot_pose_msg.pose.position
-        quat = robot_pose_msg.pose.rotation
-        rx, ry = self._grid_map.to_grid_pose(metric_position.x, metric_position.y)
+        quat = robot_pose_msg.pose.orientation
+        rx, ry = self._grid_map.to_grid_pos(metric_position.x, metric_position.y)
         _, _, yaw = euler_from_quaternion((quat.x, quat.y, quat.z, quat.w))
         yaw = to_degrees(yaw)
         self._init_robot_pose = (rx, ry, yaw)
@@ -72,12 +72,12 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         - grid map
         - spatial language
         """
-        print("HE!!!!!!!!!!!!!!!")
         if isinstance(observation_msg, GridMap2d):
             self._interpret_grid_map_msg(observation_msg)
         elif isinstance(observation_msg, geometry_msgs.PoseStamped):
             self._interpret_robot_pose_msg(observation_msg)
-        raise NotImplementedError
+        else:
+            rospy.logerr(f"Does not know how to handle observation of type {type(observation_msg)}")
 
     def run(self):
         # start visualization

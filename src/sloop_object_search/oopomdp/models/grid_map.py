@@ -111,9 +111,9 @@ class GridMap:
         else:
             return (metric_gx, metric_gy)
 
-    def to_grid_pose(self, metric_x, metric_y, metric_th, avoid_obstacle=False):
-        return (*self.to_grid_pos(metric_x, metric_y, avoid_obstacle=avoid_obstacle),
-                self.to_grid_yaw(metric_th))
+    # def to_grid_pose(self, metric_x, metric_y, metric_th, avoid_obstacle=False):
+    #     return (*self.to_grid_pos(metric_x, metric_y, avoid_obstacle=avoid_obstacle),
+    #             self.to_grid_yaw(metric_th))
 
     def to_grid_pos(self, metric_x, metric_y, avoid_obstacle=False):
         """

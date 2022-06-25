@@ -45,17 +45,17 @@ def register_map(grid_map):
         raise ValueError(f"map {map_name} is already present.")
 
     os.mkdir(mapdir)
-    with open(os.path.join(mapdir, "excluded_symbols.json")) as f:
+    with open(os.path.join(mapdir, "excluded_symbols.json"), "w") as f:
         f.write("[]")
-    with open(os.path.join(mapdir, "name_to_symbols.json")) as f:
+    with open(os.path.join(mapdir, "name_to_symbols.json"), "w") as f:
         f.write("{}")
-    with open(os.path.join(mapdir, "symbol_to_grids.json")) as f:
+    with open(os.path.join(mapdir, "symbol_to_grids.json"), "w") as f:
         f.write("{}")
-    with open(os.path.join(mapdir, "symbol_to_synonyms.json")) as f:
+    with open(os.path.join(mapdir, "symbol_to_synonyms.json"), "w") as f:
         f.write("{}")
-    with open(os.path.join(mapdir, "streets.json")) as f:
+    with open(os.path.join(mapdir, "streets.json"), "w") as f:
         f.write("[]")
-    with open(os.path.join(mapdir, "map_dims.json")) as f:
+    with open(os.path.join(mapdir, "map_dims.json"), "w") as f:
         f.write(f"[{grid_map.width}, {grid_map.length}]")
     print(f"Map {grid_map.name} registered")
     FILEPATHS.update(_create_fp_dict_new([map_name]))
