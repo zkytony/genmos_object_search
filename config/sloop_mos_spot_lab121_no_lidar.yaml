@@ -23,6 +23,7 @@ agent_config:
     prior:
       G: uniform
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
+  foref_model_map_name: honolulu  # we force usage of this model
   no_look: true
   object_symbol_map:
     GreenToyota: G
