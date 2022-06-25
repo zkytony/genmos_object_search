@@ -35,7 +35,10 @@ class SloopMosTopo2DAgent(SloopAgent):
             self.grid_map = osm_map_to_grid_map(
                 self.mapinfo, self.map_name)
         else:
-            grid_map = grid_map
+            ## NOTE: CURRENTLY SPECIFIC FOR SPOT
+            grid_map.label_all(grid_map.free_locations, "reachable")
+            grid_map.label_all(grid_map.obstacles, "search_region")
+            self.grid_map = grid_map
 
         # Prep work
         robot = agent_config["robot"]

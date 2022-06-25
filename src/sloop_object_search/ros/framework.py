@@ -107,7 +107,7 @@ class BaseAgentROSRunner:
         if self._plan_server is None\
            or self._action_publisher is None\
            or self._belief_publisher is None\
-           or self._observation_subscriber is None:
+           or len(self._observation_subscribers) == 0:
             rospy.logerr("Unable to run. {}\n Did you run 'setup'?"
                          .format(self._setup_help_message()))
             return

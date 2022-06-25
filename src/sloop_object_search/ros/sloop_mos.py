@@ -35,7 +35,6 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
     def _interpret_grid_map_msg(self, grid_map_msg):
         if self._grid_map is not None:
             return
-
         grid_map = ros_msg_to_grid_map(grid_map_msg)
 
         # If grid map's name is unrecognized, we would like
@@ -83,7 +82,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         # start visualization
         _config = self.agent.agent_config
         self.viz = import_class(_config["visualizer"])(self.agent.grid_map,
-                                                       bg_path=FILEPATHS[self.agent.map_name]["map_png"],
+                                                       bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
                                                        **_config["viz_params"])
         self._visualize_step()
         super().run()
@@ -91,7 +90,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
     def init_agent(self, config):
         if self.agent is not None:
             raise ValueError("Agent already initialized")
-        self.agent = make_sloop_mos_agent(config, init_pose=self._init_robot_pose)
+        self.agent = make_sloop_mos_agent(config, init_pose=self._init_robot_pose, grid_map=self._grid_map)
 
     def init_planner(self, config):
         if self._planner is not None:

@@ -21,7 +21,8 @@ def _create_fp_dict_new(map_names):
             "streets": os.path.join(DATA_PATH, map_name, "streets.json"),
             "map_dims": os.path.join(DATA_PATH, map_name, "map_dims.json"),
             "excluded_symbols": os.path.join(DATA_PATH, map_name, "excluded_symbols.json"),
-            "map_png": os.path.join(DATA_PATH, map_name, "%s.PNG" % map_name)
+            # WE DON"T HAVE IMAGE YET
+            # "map_png": os.path.join(DATA_PATH, map_name, "%s.PNG" % map_name)
         }
     return fp_dict
 
