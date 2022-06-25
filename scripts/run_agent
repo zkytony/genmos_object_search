@@ -18,7 +18,7 @@ def main():
         rate.sleep()
     if ready:
         agent = runner.make_agent(config)
-        planner = runner.make_planner(config)
+        planner = runner.make_planner(config, agent)
         runner.set_planner(planner)
         runner.run()
 

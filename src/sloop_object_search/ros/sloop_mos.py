@@ -4,8 +4,8 @@ import sloop_ros.msg as sloop_ros
 import std_msgs.msg as std_msgs
 import geometry_msgs.msg as geometry_msgs
 from tf.transformations import euler_from_quaternion
-from sloop_object_search.oopomdp.agent import make_agent
-from sloop_object_search.oopomdp.planner import make_planner
+from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
+from sloop_object_search.oopomdp.planner import make_planner as make_sloop_mos_planner
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import to_degrees
 from sloop_object_search.oopomdp.agent.visual import visualize_step
@@ -88,24 +88,10 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         super().run()
 
     def make_agent(self, config):
+        return make_sloop_mos_agent(_config, init_pose=self._init_robot_pose)
 
-def make_ros_agent(_config):
-    """
-    Args:
-        config (dict): the configuration dictionary; refer to examples
-            under sloop_ros/tests
-    """
-    _ros_config = _config.get("ros_config", {})
-    init_pose_topic = _ros_config.get("init_pose_topic", "~init_pose")
-    rospy.loginfo(f"Waiting for initial pose at topic: {init_pose_topic}")
-    init_pose_msg = sloop_ros.GridMapPose2d(x=5,y=5,yaw=0.0)
-    # rospy.wait_for_message(init_pose_topic,
-    #                                        sloop_ros.GridMapPose2d)
-    agent = make_agent(_config, init_pose=(init_pose_msg.x, init_pose_msg.y, init_pose_msg.yaw))
-    planner = make_planner(_config["planner_config"], agent)
-    return SloopMosROSAgentWrapper(agent, planner,
-                                   ros_config=_config.get("ros_config", {}))
-
+    def make_planner(self, config, agent):
+        return make_sloop_mos_planner(config["planner_config"], agent)
 
     def _visualize_step(self, action=None, **kwargs):
         colors = {j: self.agent.agent_config["objects"][j].get("color", [128, 128, 128])

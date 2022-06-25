@@ -13,5 +13,12 @@
         args="--pub-tf --pub-pose" output="log"/>
 
   <!-- run the POMDP ROS interface for SLOOP MOS -->
+  <node name="run_sloop_mos_spot"
+        pkg="sloop_ros" type="run_agent" output="screen">
+    <param name="~pomdp_name" value="sloop_mos_spot"/>
+    <!-- So strange. bug you can't do ~config -->
+    <rosparam param="config" command="load"
+              file="$(find sloop_ros)/config/sloop_mos_spot_cit_first_floor.yaml"/>
+  </node>
 
 </launch>
