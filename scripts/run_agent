@@ -20,9 +20,8 @@ def main():
         rate.sleep()
     rospy.loginfo("runner ready!")
     if ready:
-        agent = runner.make_agent(config)
-        planner = runner.make_planner(config, agent)
-        runner.set_planner(planner)
+        runner.init_agent(config)
+        runner.init_planner(config)
         rospy.loginfo("sloop agent created. Start running")
         runner.run()
 

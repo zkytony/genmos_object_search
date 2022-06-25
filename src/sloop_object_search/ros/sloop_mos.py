@@ -88,11 +88,15 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         self._visualize_step()
         super().run()
 
-    def make_agent(self, config):
-        return make_sloop_mos_agent(config, init_pose=self._init_robot_pose)
+    def init_agent(self, config):
+        if self.agent is not None:
+            raise ValueError("Agent already initialized")
+        self.agent = make_sloop_mos_agent(config, init_pose=self._init_robot_pose)
 
-    def make_planner(self, config, agent):
-        return make_sloop_mos_planner(config["planner_config"], agent)
+    def init_planner(self, config):
+        if self._planner is not None:
+            raise ValueError("Planner already initialized")
+        self._planner = make_sloop_mos_planner(config["planner_config"], self.agent)
 
     def _visualize_step(self, action=None, **kwargs):
         colors = {j: self.agent.agent_config["objects"][j].get("color", [128, 128, 128])
