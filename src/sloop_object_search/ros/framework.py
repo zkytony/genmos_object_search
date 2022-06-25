@@ -10,7 +10,7 @@ from sloop_ros.msg import (PlanNextStepAction,
 from sloop_object_search.utils.misc import import_class
 
 
-class BaseAgentROSInterface:
+class BaseAgentROSRunner:
     """
     Builds a bridge between POMDP agent and ROS.
 
@@ -164,4 +164,7 @@ class BaseAgentROSInterface:
 
     def interpret_observation_msg(self, observation_msg):
         """To Be Overriden"""
+        raise NotImplementedError
+
+    def check_if_ready(self):
         raise NotImplementedError
