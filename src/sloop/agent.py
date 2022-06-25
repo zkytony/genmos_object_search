@@ -35,7 +35,7 @@ class SloopAgent(pomdp_py.Agent):
         super().__init__(*pomdp_components)
 
 
-    def _init_oopomdp(self):
+    def _init_oopomdp(self, **pomdp_kwargs):
         """Should call the super().__init__ method
         to actually create the pomdp_py.Agent"""
         raise NotImplementedError

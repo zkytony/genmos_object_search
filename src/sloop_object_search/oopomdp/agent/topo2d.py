@@ -28,10 +28,14 @@ class SloopMosTopo2DAgent(SloopAgent):
     Note that the belief over target objects are still
     at the low-level.
     """
-    def _init_oopomdp(self):
+    def _init_oopomdp(self, grid_map=None):
         agent_config = self.agent_config
-        self.grid_map = osm_map_to_grid_map(
-            self.mapinfo, self.map_name)
+        if grid_map is None:
+            # No grid map is provided. For now, we assume self.map_name is an OSM map
+            self.grid_map = osm_map_to_grid_map(
+                self.mapinfo, self.map_name)
+        else:
+            grid_map = grid_map
 
         # Prep work
         robot = agent_config["robot"]
