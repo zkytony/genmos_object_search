@@ -16,7 +16,7 @@ def main():
         if runner.check_if_ready():
             ready = True
             break
-        # rospy.logwarn("runner not ready")
+        rospy.logwarn("runner not ready")
         rate.sleep()
     rospy.loginfo("runner ready!")
     if ready:

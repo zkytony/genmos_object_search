@@ -31,6 +31,25 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
     def check_if_ready(self):
         # Check if I have grid map and I have the robot pose
         return self._grid_map is not None and self._init_robot_pose is not None
+    def run(self):
+        # start visualization
+        _config = self.agent.agent_config
+        self.viz = import_class(_config["visualizer"])(self.agent.grid_map,
+                                                       bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
+                                                       **_config["viz_params"])
+        self._visualize_step()
+        super().run()
+
+    def init_agent(self, config):
+        if self.agent is not None:
+            raise ValueError("Agent already initialized")
+        self.agent = make_sloop_mos_agent(config, init_pose=self._init_robot_pose, grid_map=self._grid_map)
+
+    def init_planner(self, config):
+        if self._planner is not None:
+            raise ValueError("Planner already initialized")
+        self._planner = make_sloop_mos_planner(config["planner_config"], self.agent)
+
 
     def _interpret_grid_map_msg(self, grid_map_msg):
         if self._grid_map is not None:
@@ -77,25 +96,6 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
             self._interpret_robot_pose_msg(observation_msg)
         else:
             rospy.logerr(f"Does not know how to handle observation of type {type(observation_msg)}")
-
-    def run(self):
-        # start visualization
-        _config = self.agent.agent_config
-        self.viz = import_class(_config["visualizer"])(self.agent.grid_map,
-                                                       bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
-                                                       **_config["viz_params"])
-        self._visualize_step()
-        super().run()
-
-    def init_agent(self, config):
-        if self.agent is not None:
-            raise ValueError("Agent already initialized")
-        self.agent = make_sloop_mos_agent(config, init_pose=self._init_robot_pose, grid_map=self._grid_map)
-
-    def init_planner(self, config):
-        if self._planner is not None:
-            raise ValueError("Planner already initialized")
-        self._planner = make_sloop_mos_planner(config["planner_config"], self.agent)
 
     def _visualize_step(self, action=None, **kwargs):
         colors = {j: self.agent.agent_config["objects"][j].get("color", [128, 128, 128])

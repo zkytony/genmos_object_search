@@ -208,6 +208,7 @@ def waypoints_msg_to_arr(waypoints_msg):
 class GraphNavPointCloudToGridMapPublisher:
     def __init__(self, args):
         rospy.init_node("graphnav_cloud_to_grid_map")
+        self._debug = args.debug
         self.latch = not args.updating
         self.map_name = args.name
         self.grid_map_pub = rospy.Publisher(args.grid_map_topic, sloop_ros.msg.GridMap2d,
@@ -229,7 +230,7 @@ class GraphNavPointCloudToGridMapPublisher:
         pcd.points = o3d.utility.Vector3dVector(points_array)
 
         # convert pcd to grid map
-        grid_map = pcd_to_grid_map(pcd, waypoints_array, name=self.map_name)
+        grid_map = pcd_to_grid_map(pcd, waypoints_array, name=self.map_name, debug=self._debug)
         print("Grid Map created!")
 
         # Publish grid map as message
@@ -255,6 +256,7 @@ def main():
                         help="Keeps subscribing to point cloud and update the grid map; Otherwise, publishes once and latches.")
     parser.add_argument("--name", type=str, help="name of the grid map",
                         required=True)
+    parser.add_argument("--debug", action="store_true", help="Debug grid map generation")
     args, _ = parser.parse_known_args()
     gmpub = GraphNavPointCloudToGridMapPublisher(args)
     rospy.spin()

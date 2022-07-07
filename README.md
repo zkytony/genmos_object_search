@@ -183,3 +183,10 @@ ros_config:
       msg_type: sloop_ros.msg.SloopMosSpatialLanguage
 ```
 In fact the above message types should be good for SloopMosROSAgentWrapper.
+
+
+### For Spot
+Run the following test (in Lab 121):
+```
+roslaunch sloop_ros sloop_mos_spot.launch
+```

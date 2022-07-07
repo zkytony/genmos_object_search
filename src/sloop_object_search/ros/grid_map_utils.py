@@ -43,7 +43,7 @@ def ros_msg_to_grid_map(grid_map_msg):
                     if locmsg.type == "obstacle")
     free_locations = set((locmsg.loc.x, locmsg.loc.y) for locmsg in grid_map_msg.locations
                          if locmsg.type == "free")
-    labels = {(locmsg.loc.x, locmsg.loc.y): locmsg.label
+    labels = {(locmsg.loc.x, locmsg.loc.y): set(locmsg.label)
               for locmsg in grid_map_msg.locations}
     ranges_in_metric = ((grid_map_msg.metric_gx_min, grid_map_msg.metric_gx_max),
                         (grid_map_msg.metric_gy_min, grid_map_msg.metric_gy_max))

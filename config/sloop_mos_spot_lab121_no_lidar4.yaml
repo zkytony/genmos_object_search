@@ -1,11 +1,13 @@
 task_config:
-  map_name: austin
+  map_name: lab121_no_lidar4
   max_steps: 100
 ros_config:
   init_pose_topic: ~init_pose
   belief_msg_type: sloop_ros.msg.SloopMosBelief
   action_msg_type: sloop_ros.msg.SloopMosAction
   observation:
+    robot_pose:
+      msg_type: geometry_msgs.msg.PoseStamped
     detection:
       msg_type: sloop_ros.msg.SloopMosJointObjectDetections
     grid_map:
@@ -21,6 +23,7 @@ agent_config:
     prior:
       G: uniform
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
+  foref_model_map_name: honolulu  # we force usage of this model
   no_look: true
   object_symbol_map:
     GreenToyota: G
