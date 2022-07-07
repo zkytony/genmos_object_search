@@ -6,6 +6,8 @@
     <arg name="map_name" value="$(arg map_name)"/>
     <arg name="output" value="log"/>
   </include>
+  <node pkg="rbd_spot_perception" type="stream_hand_pose.py"
+        name="spot_stream_hand_pose"></node> <!-- stream hand pose -->
 
   <!-- Publishing grid map projection -->
   <node pkg="sloop_ros" type="spot_graphnav_cloud_to_grid_map.py"
@@ -26,6 +28,6 @@
               file="$(find sloop_ros)/config/sloop_mos_spot_$(arg map_name).yaml"/>
     <param name="~pomdp_name" value="sloop_mos_spot"/>
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
-    <remap from="~observation/robot_pose" to="/spot_body_pose"/>
+    <remap from="~observation/robot_pose" to="/spot_hand_pose"/>
   </node>
 </launch>
