@@ -192,8 +192,20 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
                        grid_size=grid_size)
 
     if debug:
+        # Do a test: can we get waypoints 2D coordinates back and forth?
+        wyps = []
+        for i, wyp in enumerate(waypoints):
+            wx, wy = wyp[:2]
+            wzx, wzy = grid_map.to_grid_pos(wx, wy)
+            waypoint_back = grid_map.to_metric_pos(wzx, wzy)
+            assert abs(waypoint_back[0] - wyp[0]) < 2*grid_size
+            assert abs(waypoint_back[1] - wyp[1]) < 2*grid_size
+            wyps.append((wzx, wzy))
+
         viz = GridMapVisualizer(grid_map=grid_map, res=5)
-        viz.show_img(viz.render())
+        img = viz.render()
+        img = viz.highlight(img, wyps, color=(120, 30, 30))
+        viz.show_img(img)
 
     return grid_map
 
