@@ -9,6 +9,7 @@ import argparse
 import rospy
 import ros_numpy
 import numpy as np
+import cv2
 import open3d as o3d
 from tqdm import tqdm
 from collections import deque
@@ -137,7 +138,6 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     metric_reachable_grid_points = floor_grid_coords
     metric_reachable_gx = metric_reachable_grid_points[:,0]
     metric_reachable_gy = metric_reachable_grid_points[:,1]
-    metric_reachable_gy = -metric_reachable_gy  # see [**] #length
 
     # For the obstacles, we get points above the floor - we already have them in points
     metric_obstacle_points = points
@@ -145,15 +145,12 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     metric_obstacle_grid_points = (metric_obstacle_points / grid_size).astype(int)
     metric_obstacle_gx = metric_obstacle_grid_points[:,0]
     metric_obstacle_gy = metric_obstacle_grid_points[:,1]
-    metric_obstacle_gy = -metric_obstacle_gy  # see [**] length
 
     # obtain ranges
     metric_gx = metric_obstacle_grid_points[:,0]
     metric_gy = metric_obstacle_grid_points[:,1]
     width = max(metric_gx) - min(metric_gx) + 1
     length = max(metric_gy) - min(metric_gy) + 1
-    # Because of the axis-flip coordinate issue [**]
-    metric_gy = -metric_gy
     metric_gx_range = (min(metric_gx), max(metric_gx) + 1)
     metric_gy_range = (min(metric_gy), max(metric_gy) + 1)
 
@@ -192,20 +189,16 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
                        grid_size=grid_size)
 
     if debug:
-        # Do a test: can we get waypoints 2D coordinates back and forth?
-        wyps = []
-        for i, wyp in enumerate(waypoints):
-            wx, wy = wyp[:2]
-            wzx, wzy = grid_map.to_grid_pos(wx, wy)
-            waypoint_back = grid_map.to_metric_pos(wzx, wzy)
-            assert abs(waypoint_back[0] - wyp[0]) < 2*grid_size
-            assert abs(waypoint_back[1] - wyp[1]) < 2*grid_size
-            wyps.append((wzx, wzy))
+        # Do a test: plot waypoints on the grid map
+        waypoints_gx = remap(waypoints_grid_coords[:, 0], metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+        waypoints_gy = remap(waypoints_grid_coords[:, 1], metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+        wyps = set(zip(waypoints_gx, waypoints_gy))
 
-        viz = GridMapVisualizer(grid_map=grid_map, res=5)
+        viz = GridMapVisualizer(grid_map=grid_map, res=10)
         img = viz.render()
         img = viz.highlight(img, wyps, color=(120, 30, 30))
-        viz.show_img(img)
+        img = viz.highlight(img, [(0, 2)], color=(80, 100, 230))
+        viz.show_img(img, flip_horizontally=True)
 
     return grid_map
 

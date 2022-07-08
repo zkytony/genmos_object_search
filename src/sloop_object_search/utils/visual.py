@@ -130,17 +130,28 @@ class Visualizer2D:
                 raise ValueError(f"Unknown shape {shape}")
         return img
 
-    def show_img(self, img):
+    def show_img(self, img, rotation=None, flip_horizontally=False, flip_vertically=False):
         """
         Internally, the img origin (0,0) is top-left (that is the opencv image),
         so +x is right, +z is down.
         But when displaying, to match the THOR unity's orientation, the image
         is flipped, so that in the displayed image, +x is right, +z is up.
+
+        rotation: a cv2 constant (e.g. cv2.ROTATE_90_CLOCKWISE), which
+        will rotate the image before it is drawn.
+
+        flip is applied after rotation.
         """
         if not self._initialized:
             self.on_init()
             self._initialized = True
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+        if rotation is not None:
+            img = cv2.rotate(img, rotation)
+        if flip_horizontally:
+            img = cv2.flip(img, 1)
+        if flip_vertically:
+            img = cv2.flip(img, 0)
         pygame.surfarray.blit_array(self._display_surf, img)
         pygame.display.flip()
         return img
