@@ -4,7 +4,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 # fetch values from package.xml
 setup_args = generate_distutils_setup(
-    packages=['sloop', 'sloop_object_search', 'sloop_spot'],
+    packages=['sloop', 'sloop_object_search', 'sloop_mos_spot'],
     package_dir={'': 'src'}
 )
 
