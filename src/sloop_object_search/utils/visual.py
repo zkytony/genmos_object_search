@@ -100,6 +100,7 @@ class Visualizer2D:
         return img
 
     def visualize(self, *args, **kwargs):
+        print("Deprication warning: visualize is depreciated. Use render followed show_img instead")
         return self.show_img(self.render(*args, **kwargs))
 
     def render(self):
@@ -133,9 +134,8 @@ class Visualizer2D:
     def show_img(self, img, rotation=None, flip_horizontally=False, flip_vertically=False):
         """
         Internally, the img origin (0,0) is top-left (that is the opencv image),
-        so +x is right, +z is down.
-        But when displaying, to match the THOR unity's orientation, the image
-        is flipped, so that in the displayed image, +x is right, +z is up.
+        so +x is right, +y is down.
+        But when displaying, the image is flipped, so that in the displayed image, +x is right, +y is up.
 
         rotation: a cv2 constant (e.g. cv2.ROTATE_90_CLOCKWISE), which
         will rotate the image before it is drawn.

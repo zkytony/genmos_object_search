@@ -6,10 +6,11 @@ import geometry_msgs.msg as geometry_msgs
 from tf.transformations import euler_from_quaternion
 from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
 from sloop_object_search.oopomdp.planner import make_planner as make_sloop_mos_planner
+from sloop_object_search.oopomdp.agent.visual import visualize_step
+from sloop_object_search.oopomdp.domain.action import LookAction
+from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import to_degrees
-from sloop_object_search.oopomdp.agent.visual import visualize_step
-from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
 from sloop_ros.msg import GridMap2d
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
 from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map
@@ -108,7 +109,8 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
                 draw_fov = None
         if action is None:
             draw_fov = None
-        self.viz.visualize(self.agent, {}, colors=colors, draw_fov=draw_fov, **kwargs)
+        img = self.viz.render(self.agent, {}, colors=colors, draw_fov=draw_fov, **kwargs)
+        self.viz.show_img(img, flip_horizontally=True)
 
     def belief_to_ros_msg(self, belief, stamp=None):
         if stamp is None:

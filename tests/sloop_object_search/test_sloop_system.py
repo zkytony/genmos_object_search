@@ -45,7 +45,9 @@ def visualize_step(viz, agent, env, action, _config, **kwargs):
             draw_fov = None
     if action is None:
         draw_fov = None
-    viz.visualize(agent, objlocs, colors=colors, draw_fov=draw_fov, **kwargs)
+    img = viz.render(agent, objlocs, colors=colors, draw_fov=draw_fov, **kwargs)
+    img = viz.highlight(img, [[0, 2]], color=(80, 80, 230))
+    viz.show_img(img)
 
 def main(_config):
     map_name = _config['task_config']["map_name"]
