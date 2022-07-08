@@ -20,7 +20,7 @@
   <node pkg="rbd_spot_perception" type="stream_fiducial_markers.py"
         name="stream_fiducial_markers"></node>
 
-  <!-- Run SLOOP object search decision making interface -->
+  <!-- Run SLOOP object search decision making interface (POMDP planner) -->
   <node name="run_sloop_mos_spot"
         pkg="sloop_ros" type="run_agent" output="screen">
     <!-- So strange. you can't do ~config -->

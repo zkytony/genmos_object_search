@@ -32,6 +32,7 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
     def check_if_ready(self):
         # Check if I have grid map and I have the robot pose
         return self._grid_map is not None and self._init_robot_pose is not None
+
     def run(self):
         # start visualization
         _config = self.agent.agent_config

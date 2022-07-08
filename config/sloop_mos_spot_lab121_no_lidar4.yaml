@@ -5,6 +5,7 @@ ros_config:
   init_pose_topic: ~init_pose
   belief_msg_type: sloop_ros.msg.SloopMosBelief
   action_msg_type: sloop_ros.msg.SloopMosAction
+  action_executor: sloop_spot.action_executor.SpotSloopActionExecutor
   observation:
     robot_pose:
       msg_type: geometry_msgs.msg.PoseStamped

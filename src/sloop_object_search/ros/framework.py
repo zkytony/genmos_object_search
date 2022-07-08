@@ -1,6 +1,7 @@
 import rospy
 import actionlib
 import pomdp_py
+import diagnostic_msgs
 from actionlib_msgs.msg import GoalStatus
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,
@@ -92,6 +93,9 @@ class BaseAgentROSRunner:
                 z_msg_type,
                 self._observation_cb)
 
+        # Action executor class: it informs how to convert actions to ROS messages
+        self._action_executor_class = import_class(self._ros_config["action_executor"])
+
     def _observation_cb(self, observation_msg):
         """Override this function to handle different observation types"""
         print("HE!!!!!!!!!!!!!!!")
@@ -127,10 +131,11 @@ class BaseAgentROSRunner:
             self.plan_server.set_rejected(result)
             self._last_action = None
         else:
-            action = self._planner.plan(self)
+            action = self._planner.plan(self.agent)
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
-            action_msg = self.action_to_ros_msg(action, goal.goal_id)
+            action_msg = self._action_executor_class.action_to_ros_msg(
+                self.agent, action, goal.goal_id)
             self._action_publisher.publish(action_msg)
             self._last_action = action
             result.status = GoalStatus.SUCCEEDED
@@ -170,4 +175,55 @@ class BaseAgentROSRunner:
         raise NotImplementedError
 
     def check_if_ready(self):
+        raise NotImplementedError
+
+
+class ActionExecutor:
+    """ActionExecutor is meant to be run as a node by itself,
+    which subscribes to the ~action topic that the BaseAgentROSRunner
+    publishes when one planning step is performed.
+
+    It:
+    - subscribes to actions published at a topic, by BaseAgentROSRunner
+    - executes a received action;
+    - publishes status as the robot executes.
+
+    It takes care of converting POMDP actions to the appropriate format for the
+    specific robot.
+
+    Important functions to implement:
+    - action_to_ros_msg (static): converts a POMDP action to a ROS message
+    - execute_action_cb: called when an action message is received, and
+        execute that action on the robot.
+    """
+    def __init__(self,
+                 action_topic="~action", status_topic="~status",
+                 action_msg_type=DefaultAction):
+        # The topic to subscribe to to receive actions
+        self._action_topic = action_topic
+        # The topic to publish status
+        self._status_topic = status_topic
+
+    def setup(self):
+        self._status_pub = rospy.Publisher(self._status_topic,
+                                           diagnostic_msgs.msg.DiagnosticStatus,
+                                           queue_size=10)
+        self._action_sub = rospy.Subscriber(self._action_topic,
+                                            self._action_msg_type,
+                                            self._action_received_cb)
+
+    def _execute_action_cb(self, action_msg):
+        """Handles action execution"""
+        raise NotImplementedError
+
+    @classmethod
+    def action_to_ros_msg(cls, agent, action, goal_id):
+        """
+        Given a POMDP agent and an action for that POMDP,
+        output a ROS message. (robot-specific)
+
+        Args:
+            agent (pomdp_py.Agent)
+            action (pomdp_py.Action)
+        """
         raise NotImplementedError
