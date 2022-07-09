@@ -77,10 +77,10 @@ class FindHandler(SubgoalHandler):
 class IdentityHandler(SubgoalHandler):
     """Just returns the subgoal as action"""
     def __init__(self, subgoal):
-        self._subgoal = subgoal
+        self.subgoal = subgoal
 
     def step(self):
-        return self._subgoal
+        return self.subgoal
 
     @property
     def done(self):
