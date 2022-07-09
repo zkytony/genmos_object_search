@@ -5,7 +5,7 @@ import diagnostic_msgs
 from actionlib_msgs.msg import GoalStatus
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,
-                           DefaultAction,
+                           KeyValAction,
                            DefaultBelief,
                            DefaultObservation)
 from sloop_object_search.utils.misc import import_class
@@ -64,7 +64,7 @@ class BaseAgentROSRunner:
             self._plan_service, PlanNextStepAction, self.plan, auto_start=False)
 
         # Publishes most recent action
-        action_msg_type = DefaultAction
+        action_msg_type = KeyValAction
         if "action_msg_type" in self._ros_config:
             action_msg_type = import_class(self._ros_config["action_msg_type"])
         self._action_publisher = rospy.Publisher(
@@ -166,7 +166,7 @@ class BaseAgentROSRunner:
         """To Be Overriden"""
         # All Action message types are assumed to have a goal_id
         # (actionlib goal)
-        action_msg = DefaultAction()
+        action_msg = KeyValAction()
         rospy.logwarn("Dummy action message created. You should override action_to_ros_msg")
         return action_msg
 
@@ -198,7 +198,7 @@ class ActionExecutor:
     """
     def __init__(self,
                  action_topic="~action", status_topic="~status",
-                 action_msg_type=DefaultAction):
+                 action_msg_type=KeyValAction):
         # The topic to subscribe to to receive actions
         self._action_topic = action_topic
         # The topic to publish status
