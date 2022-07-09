@@ -55,7 +55,7 @@ class SpotSloopActionExecutor(ActionExecutor):
                                 f"executing navigation goal {kv['name']}",
                                 action_id, msg.stamp)
             nav_feedback_code = rbd_spot.graphnav.navigateTo(self.conn, self.graphnav_client, goal,
-                                                             tolerance=(0.25, 0.25, 0.15), slow=True)
+                                                             tolerance=(0.25, 0.25, 0.15), speed="slow")
 
             self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
 
