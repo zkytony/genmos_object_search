@@ -1,6 +1,9 @@
+################## task config ##################
 task_config:
   map_name: lab121_no_lidar4
   max_steps: 100
+
+################## ros config ##################
 ros_config:
   init_pose_topic: ~init_pose
   belief_msg_type: sloop_ros.msg.SloopMosBelief
@@ -15,6 +18,7 @@ ros_config:
     spatial_lang:
       msg_type: sloop_ros.msg.SloopMosSpatialLanguage
 
+################## agent config ##################
 agent_config:
   action:
     h_rotation: 45.0
@@ -65,15 +69,17 @@ agent_config:
   viz_params:
     res: 20
 
+################## planner_config ##################
 planner_config:
+  planner: sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
+  handle_nav: False
+  high_level_planner_args:
+    exploration_const: 1000
+    max_depth: 20
+    planning_time: 0.25
   local_search:
     planner: pomdp_py.POUCT
     planner_args:
       exploration_const: 1000
       max_depth: 10
       planning_time: 0.15
-  planner: sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
-  subgoal_level:
-    exploration_const: 1000
-    max_depth: 20
-    planning_time: 0.25

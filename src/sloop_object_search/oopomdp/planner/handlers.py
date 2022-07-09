@@ -74,6 +74,19 @@ class FindHandler(SubgoalHandler):
         return True
 
 
+class IdentityHandler(SubgoalHandler):
+    """Just returns the subgoal as action"""
+    def __init__(self, subgoal):
+        self._subgoal = subgoal
+
+    def step(self):
+        return self._subgoal
+
+    @property
+    def done(self):
+        return True
+
+
 class NavTopoHandler(SubgoalHandler):
     def __init__(self, subgoal, topo_agent, mos2d_agent):
         self.subgoal = subgoal

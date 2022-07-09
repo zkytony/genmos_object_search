@@ -6,18 +6,35 @@ from ..agent.basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
 from ..domain.state import RobotState2D
 from ..domain.action import MotionActionTopo, StayAction, FindAction
-from .handlers import LocalSearchHandler, NavTopoHandler, FindHandler
+from .handlers import LocalSearchHandler, NavTopoHandler, FindHandler, IdentityHandler
 
 import pomdp_py
 
 class HierarchicalPlanner(pomdp_py.Planner):
+
+    """
+    configuration example (YAML format):
+
+       planner_config:
+         planner: sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
+         high_level_planner_args:
+           exploration_const: 1000
+           max_depth: 20
+           planning_time: 0.25
+         local_search:
+           planner: pomdp_py.POUCT
+           planner_args:
+             exploration_const: 1000
+             max_depth: 10
+             planning_time: 0.15
+    """
 
     def __init__(self, planner_config, topo_agent):
         assert isinstance(topo_agent, SloopMosTopo2DAgent)
         self.planner_config = planner_config
         self._topo_agent = topo_agent
         self._mos2d_agent = self._create_mos2d_agent()
-        self._subgoal_planner = pomdp_py.POUCT(**self.planner_config['subgoal_level'],
+        self._subgoal_planner = pomdp_py.POUCT(**self.planner_config['high_level_planner_args'],
                                                rollout_policy=self._topo_agent.policy_model)
         self._subgoal_handler = None
         self._current_subgoal = None
@@ -60,7 +77,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
 
         #     self._subgoal_handler = self.handle(self._current_subgoal)
 
-        ########## Always replan subgaol ########
+        ########## Always replan subgoal ########
         subgoal = self._subgoal_planner.plan(self._topo_agent)
         print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
@@ -82,10 +99,16 @@ class HierarchicalPlanner(pomdp_py.Planner):
             return LocalSearchHandler(subgoal, self._topo_agent, self._mos2d_agent,
                                       self.planner_config['local_search'])
         elif isinstance(subgoal, MotionActionTopo):
-            rnd_state = self._topo_agent.belief.random()
-            robot_trans_model = self._topo_agent.transition_model[self._topo_agent.robot_id]
-            subgoal.dst_pose = robot_trans_model.sample(rnd_state, subgoal).pose
-            return NavTopoHandler(subgoal, self._topo_agent, self._mos2d_agent)
+            # Check whether we want to plan individual movements to fulfill the navigation
+            # subgoal, or if we just want to directly output the navigation subgoal
+            handle_nav = self.planner_config.get("handle_nav", True)
+            if handle_nav:
+                rnd_state = self._topo_agent.belief.random()
+                robot_trans_model = self._topo_agent.transition_model[self._topo_agent.robot_id]
+                subgoal.dst_pose = robot_trans_model.sample(rnd_state, subgoal).pose
+                return NavTopoHandler(subgoal, self._topo_agent, self._mos2d_agent)
+            else:
+                return IdentityHandler(subgoal)
 
         elif isinstance(subgoal, FindAction):
             return FindHandler(subgoal)
