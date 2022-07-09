@@ -1,0 +1,8 @@
+
+<launch>
+  <!-- Action Executor for Spot -->
+  <node name="spot_action_executor"
+        pkg="sloop_ros" type="spot_action_executor.py" output="screen">
+    <remap from="~action"  to="/run_sloop_mos_spot/action"/>
+  </node>
+</launch>

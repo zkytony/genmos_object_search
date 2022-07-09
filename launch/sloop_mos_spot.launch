@@ -30,9 +30,4 @@
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
     <remap from="~observation/robot_pose" to="/spot_hand_pose"/>
   </node>
-
-  <!-- <!-\- Action Executor for Spot -\-> -->
-  <!-- <node name="spot_action_executor" -->
-  <!--       pkg="sloop_ros" type="spot_action_executor.py" output="screen"> -->
-  <!-- </node> -->
 </launch>

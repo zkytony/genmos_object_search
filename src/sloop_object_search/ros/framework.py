@@ -2,7 +2,6 @@ import rospy
 import actionlib
 import pomdp_py
 from actionlib_msgs.msg import GoalStatus
-from diagnostic_msgs.msg import DiagnosticStatus
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,
                            KeyValAction,
@@ -205,7 +204,7 @@ class ActionExecutor:
 
     def setup(self):
         self._status_pub = rospy.Publisher(self._status_topic,
-                                           DiagnosticStatus,
+                                           GoalStatus,
                                            queue_size=10)
         self._action_sub = rospy.Subscriber(self._action_topic,
                                             self._action_msg_type,
@@ -226,3 +225,14 @@ class ActionExecutor:
             action (pomdp_py.Action)
         """
         raise NotImplementedError
+
+    def publish_status(self, status, text, action_id, stamp):
+        status = GoalStatus(status=status,
+                            text=text)
+        status.goal_id.id = action_id
+        status.goal_id.stamp = stamp
+        if status == GoalStatus.ABORTED or status == GoalStatus.REJECTED:
+            rospy.logerr(text)
+        else:
+            rospy.loginfo(text)
+        self._status_pub.publish(status)

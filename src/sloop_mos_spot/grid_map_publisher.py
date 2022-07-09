@@ -215,6 +215,7 @@ class GraphNavPointCloudToGridMapPublisher:
         self._debug = args.debug
         self.latch = not args.updating
         self.map_name = args.name
+        self.published = False
         self.grid_map_pub = rospy.Publisher(args.grid_map_topic, sloop_ros.msg.GridMap2d,
                                             queue_size=10, latch=self.latch)
 
@@ -246,3 +247,4 @@ class GraphNavPointCloudToGridMapPublisher:
             self.ts.callbacks = {}  # unregister callback
             self.pcl_sub.sub.unregister()
             self.wyp_sub.sub.unregister()
+        self.published = True

@@ -37,7 +37,7 @@ class SloopMosTopo2DAgent(SloopAgent):
         else:
             ## NOTE: CURRENTLY SPECIFIC FOR SPOT
             grid_map.label_all(grid_map.free_locations, "reachable")
-            grid_map.label_all(grid_map.obstacles, "search_region")
+            grid_map.label_all(grid_map.free_locations, "search_region") #obstacles
             self.grid_map = grid_map
 
         # Prep work

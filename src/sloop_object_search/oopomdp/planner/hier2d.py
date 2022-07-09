@@ -99,13 +99,17 @@ class HierarchicalPlanner(pomdp_py.Planner):
             return LocalSearchHandler(subgoal, self._topo_agent, self._mos2d_agent,
                                       self.planner_config['local_search'])
         elif isinstance(subgoal, MotionActionTopo):
+            # set a destination pose; the orientation is determined by the transition
+            # model given a random state sampled from belief.
+            rnd_state = self._topo_agent.belief.random()
+            robot_trans_model = self._topo_agent.transition_model[self._topo_agent.robot_id]
+            subgoal.dst_pose = robot_trans_model.sample(rnd_state, subgoal).pose
+
             # Check whether we want to plan individual movements to fulfill the navigation
             # subgoal, or if we just want to directly output the navigation subgoal
             handle_nav = self.planner_config.get("handle_nav", True)
             if handle_nav:
-                rnd_state = self._topo_agent.belief.random()
-                robot_trans_model = self._topo_agent.transition_model[self._topo_agent.robot_id]
-                subgoal.dst_pose = robot_trans_model.sample(rnd_state, subgoal).pose
+
                 return NavTopoHandler(subgoal, self._topo_agent, self._mos2d_agent)
             else:
                 return IdentityHandler(subgoal)

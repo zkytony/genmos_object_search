@@ -68,6 +68,10 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         rospy.loginfo("Obtained grid map")
 
     def _interpret_robot_pose_msg(self, robot_pose_msg):
+        """
+        Given a geometry_msgs/PoseStamped message, return a
+        (x, y, yaw) pose.
+        """
         if self._init_robot_pose is not None:
             return
 

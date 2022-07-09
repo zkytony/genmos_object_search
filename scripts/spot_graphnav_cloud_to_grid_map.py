@@ -19,7 +19,10 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Debug grid map generation")
     args, _ = parser.parse_known_args()
     gmpub = GraphNavPointCloudToGridMapPublisher(args)
-    rospy.spin()
+    rate = rospy.Rate(5)
+    while not gmpub.published:
+        rate.sleep()
+    rospy.loginfo("grid map publisher done!")
 
 if __name__ == "__main__":
     main()
