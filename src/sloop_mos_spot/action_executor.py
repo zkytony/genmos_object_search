@@ -54,25 +54,27 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.publish_status(GoalStatus.ACTIVE,
                                 f"executing navigation goal {kv['name']}",
                                 action_id, msg.stamp)
-            nav_feedback_code = rbd_spot.graphnav.navigateTo(self.conn, self.graphnav_client, goal)
-            self.publish_nav_status(nav_feedback_code)
+            nav_feedback_code = rbd_spot.graphnav.navigateTo(self.conn, self.graphnav_client, goal,
+                                                             tolerance=(0.25, 0.25, 0.15), slow=True)
+
+            self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
 
 
     def publish_nav_status(self, nav_feedback_code, action_id, stamp):
         nav_status = self.graphnav_client.navigation_feedback(nav_feedback_code)
-        if nav_status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_REACHED_GOAL:
+        if nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_REACHED_GOAL:
             self.publish_status(GoalStatus.SUCCEEDED,
                                 "navigation succeeded",
                                 action_id, stamp)
-        elif nav_status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_LOST:
+        elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_LOST:
             self.publish_status(GoalStatus.ABORTED,
                                 "Robot got lost when navigating the route",
                                 action_id, stamp)
-        elif nav_status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_STUCK:
+        elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_STUCK:
             self.publish_status(GoalStatus.ABORTED,
                                 "Robot got stuck when navigating the route",
                                 action_id, stamp)
-        elif nav_status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_ROBOT_IMPAIRED:
+        elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_ROBOT_IMPAIRED:
             self.publish_status(GoalStatus.ABORTED,
                                 "Robot is impaired.",
                                 action_id, stamp)
