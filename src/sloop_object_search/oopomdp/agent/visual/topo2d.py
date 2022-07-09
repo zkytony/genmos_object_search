@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from .basic2d import VizSloopMosBasic2D
+from sloop_object_search.utils.colors import lighter
 
 class VizSloopMosTopo(VizSloopMosBasic2D):
     def __init__(self, grid_map, **config):
@@ -9,7 +10,7 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
 
     def render(self, agent, objlocs, colors={},
                robot_state=None, draw_fov=None,
-               draw_belief=True, img=None, draw_topo=True):
+               draw_belief=True, img=None, draw_topo=True, **mark_cell_kwargs):
         """render image"""
         if img is None:
             img = self._make_gridworld_image(self._res)
@@ -20,7 +21,8 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
         # Draw topo map
         if draw_topo:
             img = draw_topo_func(img, agent.topo_map, self._res,
-                                 draw_grid_path=self._draw_topo_grid_path)
+                                 draw_grid_path=self._draw_topo_grid_path,
+                                 **mark_cell_kwargs)
 
         # redraw robot on top of topo map
         if robot_state is None:
@@ -40,12 +42,16 @@ def draw_edge(img, pos1, pos2, r, thickness=2, color=(0, 0, 0)):
     return img
 
 def draw_topo_func(img, topo_map, r, draw_grid_path=False, path_color=(52, 235, 222),
-                   edge_color=(200, 40, 20), edge_thickness=2, linewidth=2):
+                   edge_color=(200, 40, 20), edge_thickness=2, linewidth=2,
+                   **mark_cell_kwargs):
     """
     Draws topological map on the image `img`.
 
     linewidth: the linewidth of the bounding box when drawing grid path
     edge_thickness: the thickness of the edge on the topo map.
+
+    flip: flip the text horizontally (you might need to set this False if you
+    flip the image horizontally already when calling show_img)
     """
     for eid in topo_map.edges:
         edge = topo_map.edges[eid]
@@ -69,10 +75,12 @@ def draw_topo_func(img, topo_map, r, draw_grid_path=False, path_color=(52, 235, 
 
     for nid in topo_map.nodes:
         pos = topo_map.nodes[nid].pos
-        img = mark_cell(img, pos, int(nid), r)
+        img = mark_cell(img, pos, int(nid), r, **mark_cell_kwargs)
     return img
 
-def mark_cell(img, pos, nid, r, linewidth=1, unmark=False):
+def mark_cell(img, pos, nid, r, linewidth=1, unmark=False,
+              show_img_flip_horizontally=False):
+    """show_img_flip_horizontally: True if show_img flips image horizontally; """
     if unmark:
         color = (255, 255, 255, 255)
     else:
@@ -94,6 +102,12 @@ def mark_cell(img, pos, nid, r, linewidth=1, unmark=False):
         cv2.putText(imgtxt, str(nid), text_loc, #(y*r+r//4, x*r+r//2),
                     font, fontScale, fontColor, lineType)
         imgtxt = cv2.rotate(imgtxt, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        imgtxt = cv2.flip(imgtxt, 1) # flip horizontally
+        if show_img_flip_horizontally:
+            # do this if show_img has flip_horizontally=True
+            imgtxt = cv2.flip(imgtxt, 0)
+            imgtxt = cv2.flip(imgtxt, 1)
+        else:
+            # do this if show_img has flip_horizontally=False
+            imgtxt = cv2.flip(imgtxt, 1) # flip horizontally
         img[x*r:x*r+r, y*r:y*r+r] = imgtxt
     return img

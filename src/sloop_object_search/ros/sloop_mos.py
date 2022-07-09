@@ -38,8 +38,8 @@ class SloopMosAgentROSRunner(BaseAgentROSRunner):
         _config = self.agent.agent_config
         self.viz = import_class(_config["visualizer"])(self.agent.grid_map,
                                                        bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
-                                                       **_config["viz_params"])
-        self._visualize_step()
+                                                       **_config["viz_params"]["init"])
+        self._visualize_step(**_config["viz_params"]["render"])
         super().run()
 
     def init_agent(self, config):

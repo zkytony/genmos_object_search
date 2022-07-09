@@ -67,7 +67,10 @@ agent_config:
   # visualization
   visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo
   viz_params:
-    res: 20
+    init:
+      res: 20
+    render:
+      show_img_flip_horizontally: True
 
 ################## planner_config ##################
 planner_config:
