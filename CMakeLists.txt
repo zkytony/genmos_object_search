@@ -16,7 +16,7 @@ catkin_python_setup()
 add_message_files(
   DIRECTORY msg
   FILES
-  DefaultAction.msg
+  KeyValAction.msg
   DefaultObservation.msg
   DefaultBelief.msg
   GridMapPose2d.msg

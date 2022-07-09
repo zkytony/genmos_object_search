@@ -1,8 +1,8 @@
 import rospy
 import actionlib
 import pomdp_py
-import diagnostic_msgs
 from actionlib_msgs.msg import GoalStatus
+from diagnostic_msgs.msg import DiagnosticStatus
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,
                            KeyValAction,
@@ -199,18 +199,17 @@ class ActionExecutor:
     def __init__(self,
                  action_topic="~action", status_topic="~status",
                  action_msg_type=KeyValAction):
-        # The topic to subscribe to to receive actions
-        self._action_topic = action_topic
-        # The topic to publish status
-        self._status_topic = status_topic
+        self._action_topic = action_topic  # The topic to subscribe to to receive actions
+        self._status_topic = status_topic  # The topic to publish status
+        self._action_msg_type = action_msg_type
 
     def setup(self):
         self._status_pub = rospy.Publisher(self._status_topic,
-                                           diagnostic_msgs.msg.DiagnosticStatus,
+                                           DiagnosticStatus,
                                            queue_size=10)
         self._action_sub = rospy.Subscriber(self._action_topic,
                                             self._action_msg_type,
-                                            self._action_received_cb)
+                                            self._execute_action_cb)
 
     def _execute_action_cb(self, action_msg):
         """Handles action execution"""
