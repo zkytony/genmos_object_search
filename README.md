@@ -190,3 +190,7 @@ Run the following test (in Lab 121):
 ```
 roslaunch sloop_ros sloop_mos_spot.launch
 ```
+
+
+### How to Deploy SLOOP ROS on a Robot
+TODO
