@@ -141,55 +141,7 @@ config = {
 
 ## ROS Wrapper for SLOOP Agent
 
-In terms of the ROS interface, we defined a SloopMosROSAgentWrapper
-under [src/sloop_object_search/ros/sloop_mos.py](./src/sloop_object_search/ros/sloop_mos.py).
-It extends [BaseAgentWrapper](./src/sloop_object_search/ros/framework.py).
-
-The wrapper will keep in itself a SLOOP agent object. The wrapper acts as a ROS
-node.
-
-It publishes:
-
- - actions (to `~action` by default)
- - its current belief (to `~belief`).
-
-It subscribes to:
-
-  - one or more observation topics as specified in configuration (see example next).
-
-  - an initial pose topic (by default `~init_pose`); Note that this pose should
-    be in the SLOOP agent's coordinate frame (i.e. GridMap frame).
-
-
-It provides:
-
-  - the plan service (at `~plan` by default), which triggers the planner to plan
-    the next action, if the service is called.
-
-You can configure the message types of the action, belief, and observations in
-the configuration dictionary; This time, because the configuration dictionary
-is loaded by roslaunch, it is in the YAML format. For example:
-```yaml
-ros_config:
-  init_pose_topic: ~init_pose
-  belief_msg_type: sloop_ros.msg.SloopMosBelief
-  action_msg_type: sloop_ros.msg.SloopMosAction
-  observation:
-    detection:
-      msg_type: sloop_ros.msg.SloopMosJointObjectDetections
-    grid_map:
-      msg_type: sloop_ros.msg.GridMap2d
-    spatial_lang:
-      msg_type: sloop_ros.msg.SloopMosSpatialLanguage
-```
-In fact the above message types should be good for SloopMosROSAgentWrapper.
-
-
-### For Spot
-Run the following test (in Lab 121):
-```
-roslaunch sloop_ros sloop_mos_spot.launch
-```
+TODO
 
 
 ### How to Deploy SLOOP ROS on a Robot
