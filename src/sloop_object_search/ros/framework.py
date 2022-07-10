@@ -63,7 +63,9 @@ class BaseAgentROSBridge:
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
 
-        self._belief_msg_type = self._ros_config.get("belief_msg_type", DefaultBelief)
+        self._belief_msg_type = DefaultBelief
+        if "belief_msg_type" in self._ros_config:
+            self._belief_msg_type = import_class(self._ros_config["belief_msg_type"])
         self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
 
         self._observation_topics = {}
@@ -78,15 +80,16 @@ class BaseAgentROSBridge:
 
         # Action executor class: it informs how to convert actions to ROS messages.
         self._action_executor_class = import_class(self._ros_config["action_executor"])
-        # Belief updater: it informs how to convert observations to ROS messages
-        self._belief_updater_class = import_class(self._ros_config["belief_updater"])
+        # Observation interpretor: it informs how to convert observations to ROS messages
+        self._observation_interpretor_class = import_class(self._ros_config["observation_interpreter"])
 
 
     @property
     def agent(self):
         return self._agent
 
-    def set_agent(self, agent):
+    @agent.setter
+    def agent(self, agent):
         self._agent = agent
 
     def setup(self):
@@ -111,12 +114,11 @@ class BaseAgentROSBridge:
 
         # Subscribes to observation types
         for z_type in self._observation_topics:
-            z_msg_type = self._observation_msg_types[z_type]
             self._observation_subscribers[z_type] = rospy.Subscriber(
                 self._observation_topics[z_type],
-                z_msg_type,
-                self._belief_updater_class.get_observation_callback(z_msg_type),
-                callback_args=(self,))
+                self._observation_msg_types[z_type],
+                self._observation_interpretor_class.get_observation_callback(z_type),
+                callback_args=self)
 
         rospy.loginfo(self._setup_info_message())
 
@@ -175,7 +177,7 @@ class BaseAgentROSBridge:
     def _setup_info_message(self):
         message = f"{self.__class__.__name__} subscribes to the following observation types:\n"
         for z_type in self._observation_topics:
-            message += f"- {self._observation_topics[z_type]}: {self._observation_msg_types[z_type]}\n"
+            message += f"- {self._observation_topics[z_type]}: {self._observation_msg_types[z_type].__name__}\n"
         return message
 
     def check_if_ready(self):
@@ -254,27 +256,19 @@ class ObservationInterpreter:
     """
     # Should map from observation type (class) to a callback function
     # To be filled by child class
-    MAPPERS = {}
+    CALLBACKS = {}
+
+    SKIP_WARNING_PRINTED = {}
 
     @classmethod
-    def get_observation_callback(cls, z_msg_type):
-        def dummy_cb(z_msg, bridge):
-            rospy.logwarn("skipping observation ({})".format(type(z_msg)))
+    def get_observation_callback(cls, z_type):
+        def dummy_cb(z_msg, args):
+            if not cls.SKIP_WARNING_PRINTED.get(z_type):
+                rospy.logwarn("skipping observation ({})".format(type(z_msg)))
+                cls.SKIP_WARNING_PRINTED[z_type] = True
 
-        if z_msg_type not in cls.MAPPERS:
-            rospy.logerr("Belief updater does not handle  observation type {z_type}")
+        if z_type not in cls.CALLBACKS:
+            rospy.logerr(f"Observation interpreter does not handle observation type {z_type}")
             return dummy_cb
         else:
-            return cls.observation_callback
-
-    @classmethod
-    def observation_callback(cls, z_msg, bridge):
-        """
-        In args:
-            bridge (BaseAgentROSBridge): the POMDP-ROS bridge object
-        """
-        observation = cls.MAPPERS[type(z_msg)](z_msg, bridge.agent)
-        # Note that last_planned_action does not mean the observation is
-        # _caused_ by this aciton; it is merely a piece of information that may
-        # be helpful for belief update.
-        bridge.agent.update_belief(observation, bridge.last_planned_action)
+            return cls.CALLBACKS[z_type]
