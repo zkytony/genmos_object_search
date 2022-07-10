@@ -64,11 +64,6 @@ class BaseAgentROSBridge:
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
 
-        # Action executor class: it informs how to convert actions to ROS messages.
-        self._action_executor_class = import_class(self._ros_config["action_executor"])
-        # Belief updater: it informs how to convert observations to ROS messages
-        self._belief_updater_class = import_class(self._ros_config["belief_updater"])
-
         self._observation_topics = {}
         self._observation_msg_types = {}
         for z_type in ros_config.get("observation", []):
@@ -80,6 +75,12 @@ class BaseAgentROSBridge:
             self._observation_msg_types[z_type] = z_msg_type
 
         self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
+
+        # Action executor class: it informs how to convert actions to ROS messages.
+        self._action_executor_class = import_class(self._ros_config["action_executor"])
+        # Belief updater: it informs how to convert observations to ROS messages
+        self._belief_updater_class = import_class(self._ros_config["belief_updater"])
+
 
     @property
     def agent(self):
@@ -105,7 +106,7 @@ class BaseAgentROSBridge:
             queue_size=10, latch=True)
 
         # Publishes current belief
-        self._belief_publisher = self._belief_publisher_class.create_publisher(
+        self._belief_publisher = self._belief_updater_class.create_belief_publisher(
             self._belief_topic, queue_size=10, latch=True)
 
         # Subscribes to observation types
@@ -134,7 +135,7 @@ class BaseAgentROSBridge:
 
         self._plan_server.start()
 
-        belief_msg = self._belief_publisher_class.belief_to_ros_msg(
+        belief_msg = self._belief_updater_class.belief_to_ros_msg(
             self.agent, self.agent.belief)
         rospy.Timer(rospy.Duration(1./self._belief_rate),
                     lambda event: self._belief_publisher.publish(belief_msg))
@@ -250,7 +251,10 @@ class BeliefUpdater:
        visualization.
     """
     # Should map from observation type (string) to a callback function
+    # To be filled by child class
     OBSERVATION_INTERPRETERS = {}
+
+    BELIEF_MSG_TYPE = DefaultBelief
 
     @classmethod
     def get_observation_callback(cls, z_msg_type):
@@ -274,3 +278,12 @@ class BeliefUpdater:
         # _caused_ by this aciton; it is merely a piece of information that may
         # be helpful for belief update.
         bridge.agent.update_belief(observation, bridge.last_planned_action)
+
+    @classmethod
+    def belief_to_ros_msg(cls, agent, belief):
+        """To be implemented by child class"""
+        raise NotImplementedError
+
+    @classmethod
+    def create_belief_publisher(cls, belief_topic, **kwargs):
+        return rospy.Publisher(belief_topic, cls.BELIEF_MSG_TYPE, **kwargs)
