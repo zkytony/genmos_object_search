@@ -14,11 +14,11 @@ from sloop_object_search.utils.math import to_degrees
 from sloop_ros.msg import GridMap2d
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
 from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map
-from .framework import BaseAgentROSRunner
+from .framework import BaseAgentROSBridge
 from .action_mos import action_to_ros_msg
 
 
-class SloopMosAgentROSRunner(BaseAgentROSRunner):
+class SloopMosAgentROSBridge(BaseAgentROSBridge):
     """
     Interfaces between SLOOP MOS Agent and ROS.
     """

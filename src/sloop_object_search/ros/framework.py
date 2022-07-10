@@ -10,24 +10,47 @@ from sloop_ros.msg import (PlanNextStepAction,
 from sloop_object_search.utils.misc import import_class
 
 
-class BaseAgentROSRunner:
+class BaseAgentROSBridge:
     """
     Builds a bridge between POMDP agent and ROS.
+    (note: this has nothing to do with rosbridge)
 
     A base agent serves:
     - ~plan
 
     subscribes to:
-    - ~observation
+    - ~observation/{observation_type}
 
     publishes:
     - ~action
     - ~belief
 
-    See scripts/run_pomdp_agent for how this is used.
+    Notes:
+    1. Observation types are specified through configuration:
+
+       observation:
+           <observation_type>
+               msg_type: import path of the ROS message type for this observation
+
+    2. Note that this is robot-independent; Several aspects needs to be robot-specific.
+       Specifically, in the ros_config, there should be:
+
+       - action_executor: import path of the action executor class
+       - belief updator: import path of the belief updator class
+
+       The action executor will be ran separately as a node. The implementation of this
+       class only uses the action executor's classmethod to convert a POMDP action to
+       a ROS message.
+
+       The belief updater provides the callback function for an observation type.
+       Its job is to interpret an observation and update the agent's belief. It also
+       provides a function to convert agent's belief to a ROS message suitable for visualization.
+
+    3. The planned action will be published to the ~action topic, but the actual execution
+       will be carried out by calling a service provided by the action executor class.
     """
     def __init__(self, ros_config={}, planner=None):
-        self.agent = None
+        self._agent = None
         self._planner = planner
         self._ros_config = ros_config
 
@@ -35,25 +58,35 @@ class BaseAgentROSRunner:
         # If you would like the agent
         self._plan_server = None   # calls the service to plan the next step
         self._action_publisher = None
-        self._belief_publisher = None
         self._observation_subscribers = {}
 
         self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
 
+        # Action executor class: it informs how to convert actions to ROS messages.
+        self._action_executor_class = import_class(self._ros_config["action_executor"])
+        # Belief updater: it informs how to convert observations to ROS messages
+        self._belief_updater_class = import_class(self._ros_config["belief_updater"])
+
         self._observation_topics = {}
+        self._observation_msg_types = {}
         for z_type in ros_config.get("observation", []):
             z_topic = ros_config["observation"][z_type].get("topic", z_type)
             self._observation_topics[z_type] = f"~observation/{z_type}"
+            z_msg_type = DefaultObservation
+            if "msg_type" in self._ros_config['observation'][z_type]:
+                z_msg_type = import_class(self._ros_config['observation'][z_type]["msg_type"])
+            self._observation_msg_types[z_type] = z_msg_type
 
         self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
 
-        # This will always be equal to the last planned action
-        self._last_action = None
+    @property
+    def agent(self):
+        return self._agent
 
     def set_agent(self, agent):
-        self.agent = agent
+        self._agent = agent
 
     def setup(self):
         """Override this function to create make your agent
@@ -72,35 +105,19 @@ class BaseAgentROSRunner:
             queue_size=10, latch=True)
 
         # Publishes current belief
-        belief_msg_type = DefaultBelief
-        if "belief_msg_type" in self._ros_config:
-            belief_msg_type = import_class(self._ros_config["belief_msg_type"])
-        self._belief_publisher = rospy.Publisher(
-            self._belief_topic,
-            belief_msg_type,
-            queue_size=10, latch=True)
+        self._belief_publisher = self._belief_publisher_class.create_publisher(
+            self._belief_topic, queue_size=10, latch=True)
 
         # Subscribes to observation types
         for z_type in self._observation_topics:
-            z_msg_type = DefaultObservation
-            if "msg_type" in self._ros_config['observation'][z_type]:
-                z_msg_type = import_class(self._ros_config['observation'][z_type]["msg_type"])
-            print(z_msg_type)
-            print(self._observation_topics[z_type])
+            z_msg_type = self._observation_msg_types[z_type]
             self._observation_subscribers[z_type] = rospy.Subscriber(
                 self._observation_topics[z_type],
                 z_msg_type,
-                self._observation_cb)
+                self._belief_updater_class.get_observation_callback(z_msg_type),
+                callback_args=(self,))
 
-        # Action executor class: it informs how to convert actions to ROS messages
-        self._action_executor_class = import_class(self._ros_config["action_executor"])
-
-    def _observation_cb(self, observation_msg):
-        """Override this function to handle different observation types"""
-        print("HE!!!!!!!!!!!!!!!")
-        rospy.loginfo(f"Observation received: {observation_msg}")
-        observation = self.observation_model.interpret_observation_msg(observation_msg)
-        self.agent.belief.update(self, observation, self._last_action)
+        rospy.loginfo(self._setup_info_message())
 
     def run(self):
         """Blocking call"""
@@ -112,11 +129,13 @@ class BaseAgentROSRunner:
            or self._belief_publisher is None\
            or len(self._observation_subscribers) == 0:
             rospy.logerr("Unable to run. {}\n Did you run 'setup'?"
-                         .format(self._setup_help_message()))
+                         .format(self._setup_troubleshooting_message()))
             return
 
         self._plan_server.start()
-        belief_msg = self.belief_to_ros_msg(self.agent.belief)
+
+        belief_msg = self._belief_publisher_class.belief_to_ros_msg(
+            self.agent, self.agent.belief)
         rospy.Timer(rospy.Duration(1./self._belief_rate),
                     lambda event: self._belief_publisher.publish(belief_msg))
         rospy.loginfo("Running agent {}".format(self.__class__.__name__))
@@ -128,7 +147,6 @@ class BaseAgentROSRunner:
             rospy.logerr("Agent's planner is not set. Cannot plan.")
             result.status = GoalStatus.REJECTED
             self.plan_server.set_rejected(result)
-            self._last_action = None
         else:
             action = self._planner.plan(self.agent)
             rospy.loginfo(f"Planning successful. Action: {action}")
@@ -136,14 +154,13 @@ class BaseAgentROSRunner:
             action_msg = self._action_executor_class.action_to_ros_msg(
                 self.agent, action, goal.goal_id)
             self._action_publisher.publish(action_msg)
-            self._last_action = action
             result.status = GoalStatus.SUCCEEDED
             self._plan_server.set_succeeded(result)
 
     def set_planner(self, planner):
         self._planner = planner
 
-    def _setup_help_message(self):
+    def _setup_troubleshooting_message(self):
         message = "The following objects should not be None:\n"
         if self._plan_server is None:
             message += "- self._plan_server\n"
@@ -155,23 +172,11 @@ class BaseAgentROSRunner:
             message += "- self._observation_subscriber\n"
         return message
 
-    def belief_to_ros_msg(self, belief, stamp=None):
-        """To Be Overriden"""
-        belief_msg = DefaultBelief()
-        rospy.logwarn("Dummy belief message created. You should override belief_to_ros_msg")
-        return belief_msg
-
-    def action_to_ros_msg(self, action, goal_id):
-        """To Be Overriden"""
-        # All Action message types are assumed to have a goal_id
-        # (actionlib goal)
-        action_msg = KeyValAction()
-        rospy.logwarn("Dummy action message created. You should override action_to_ros_msg")
-        return action_msg
-
-    def interpret_observation_msg(self, observation_msg):
-        """To Be Overriden"""
-        raise NotImplementedError
+    def _setup_info_message(self):
+        message = f"{self.__class__.__name__} subscribes to the following observation types:\n"
+        for z_type in self._observation_topics:
+            message += f"- {self._observation_topics[z_type]}: {self._observation_msg_types[z_type]}\n"
+        return message
 
     def check_if_ready(self):
         raise NotImplementedError
@@ -179,11 +184,11 @@ class BaseAgentROSRunner:
 
 class ActionExecutor:
     """ActionExecutor is meant to be run as a node by itself,
-    which subscribes to the ~action topic that the BaseAgentROSRunner
+    which subscribes to the ~action topic that the BaseAgentROSBridge
     publishes when one planning step is performed.
 
     It:
-    - subscribes to actions published at a topic, by BaseAgentROSRunner
+    - subscribes to actions published at a topic, by BaseAgentROSBridge
     - executes a received action;
     - publishes status as the robot executes.
 
@@ -236,3 +241,36 @@ class ActionExecutor:
         else:
             rospy.loginfo(text)
         self._status_pub.publish(status)
+
+
+class BeliefUpdater:
+    """The belief updater provides the callback function for an observation type.
+       Its job is to interpret an observation and update the agent's belief. It
+       also takes care of publishing the agent's belief in a suitable format for
+       visualization.
+    """
+    # Should map from observation type (string) to a callback function
+    OBSERVATION_INTERPRETERS = {}
+
+    @classmethod
+    def get_observation_callback(cls, z_msg_type):
+        def dummy_cb(z_msg, bridge):
+            rospy.logwarn("skipping observation ({})".format(type(z_msg)))
+
+        if z_msg_type not in cls.OBSERVATION_INTERPRETERS:
+            rospy.logerr("Belief updater does not handle  observation type {z_type}")
+            return dummy_cb
+        else:
+            return cls.observation_callback
+
+    @classmethod
+    def observation_callback(cls, z_msg, bridge):
+        """
+        In args:
+            bridge (BaseAgentROSBridge): the POMDP-ROS bridge object
+        """
+        observation = cls.OBSERVATION_INTERPRETERS[type(z_msg)]
+        # Note that last_planned_action does not mean the observation is
+        # _caused_ by this aciton; it is merely a piece of information that may
+        # be helpful for belief update.
+        bridge.agent.update_belief(observation, bridge.last_planned_action)

@@ -1,29 +1,29 @@
 #!/usr/bin/env python
 import rospy
-from sloop_object_search.ros.sloop_mos import SloopMosAgentROSRunner
+from sloop_object_search.ros.sloop_mos import SloopMosAgentROSBridge
 
 def main():
     rospy.init_node("run_agent")
     config = rospy.get_param("~config")  # access parameters together as a dictionary
 
     ros_config = config.get("ros_config", {})
-    runner = SloopMosAgentROSRunner(ros_config=ros_config)
-    rospy.loginfo("setting up SloopMosAgentROSRunner")
-    runner.setup()
+    bridge = SloopMosAgentROSBridge(ros_config=ros_config)
+    rospy.loginfo("setting up SloopMosAgentROSBridge")
+    bridge.setup()
     rate = rospy.Rate(5)
     ready = False
     while not rospy.is_shutdown():
-        if runner.check_if_ready():
+        if bridge.check_if_ready():
             ready = True
             break
-        rospy.logwarn("runner not ready")
+        rospy.logwarn("bridge not ready")
         rate.sleep()
-    rospy.loginfo("runner ready!")
+    rospy.loginfo("bridge ready!")
     if ready:
-        runner.init_agent(config)
-        runner.init_planner(config)
+        bridge.init_agent(config)
+        bridge.init_planner(config)
         rospy.loginfo("sloop agent created. Start running")
-        runner.run()
+        bridge.run()
 
 
 if __name__ == "__main__":
