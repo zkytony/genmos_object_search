@@ -36,15 +36,14 @@ class BaseAgentROSBridge:
        Specifically, in the ros_config, there should be:
 
        - action_executor: import path of the action executor class
-       - belief updator: import path of the belief updator class
+       - observation interpreter: import path of the observation interpreter class
 
        The action executor will be ran separately as a node. The implementation of this
        class only uses the action executor's classmethod to convert a POMDP action to
        a ROS message.
 
-       The belief updater provides the callback function for an observation type.
-       Its job is to interpret an observation and update the agent's belief. It also
-       provides a function to convert agent's belief to a ROS message suitable for visualization.
+       The observation interpreter provides the callback function for an observation type.
+       Its job is to interpret an observation and update the agent's belief.
 
     3. The planned action will be published to the ~action topic, but the actual execution
        will be carried out by calling a service provided by the action executor class.
@@ -64,6 +63,9 @@ class BaseAgentROSBridge:
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
 
+        self._belief_msg_type = self._ros_config.get("belief_msg_type", DefaultBelief)
+        self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
+
         self._observation_topics = {}
         self._observation_msg_types = {}
         for z_type in ros_config.get("observation", []):
@@ -73,8 +75,6 @@ class BaseAgentROSBridge:
             if "msg_type" in self._ros_config['observation'][z_type]:
                 z_msg_type = import_class(self._ros_config['observation'][z_type]["msg_type"])
             self._observation_msg_types[z_type] = z_msg_type
-
-        self._belief_rate = self._ros_config.get("belief_publish_rate", 5)  # Hz
 
         # Action executor class: it informs how to convert actions to ROS messages.
         self._action_executor_class = import_class(self._ros_config["action_executor"])
@@ -106,8 +106,8 @@ class BaseAgentROSBridge:
             queue_size=10, latch=True)
 
         # Publishes current belief
-        self._belief_publisher = self._belief_updater_class.create_belief_publisher(
-            self._belief_topic, queue_size=10, latch=True)
+        self._belief_publisher = rospy.Publisher(
+            self._belief_topic, self._belief_msg_type, queue_size=10, latch=True)
 
         # Subscribes to observation types
         for z_type in self._observation_topics:
@@ -135,8 +135,7 @@ class BaseAgentROSBridge:
 
         self._plan_server.start()
 
-        belief_msg = self._belief_updater_class.belief_to_ros_msg(
-            self.agent, self.agent.belief)
+        belief_msg = self.belief_to_ros_msg(self.agent.belief)
         rospy.Timer(rospy.Duration(1./self._belief_rate),
                     lambda event: self._belief_publisher.publish(belief_msg))
         rospy.loginfo("Running agent {}".format(self.__class__.__name__))
@@ -180,6 +179,9 @@ class BaseAgentROSBridge:
         return message
 
     def check_if_ready(self):
+        raise NotImplementedError
+
+    def belief_to_ros_msg(self, belief):
         raise NotImplementedError
 
 
@@ -244,24 +246,22 @@ class ActionExecutor:
         self._status_pub.publish(status)
 
 
-class BeliefUpdater:
-    """The belief updater provides the callback function for an observation type.
+class ObservationInterpreter:
+    """The observation interpreter provides the callback function for an observation type.
        Its job is to interpret an observation and update the agent's belief. It
        also takes care of publishing the agent's belief in a suitable format for
        visualization.
     """
-    # Should map from observation type (string) to a callback function
+    # Should map from observation type (class) to a callback function
     # To be filled by child class
-    OBSERVATION_INTERPRETERS = {}
-
-    BELIEF_MSG_TYPE = DefaultBelief
+    MAPPERS = {}
 
     @classmethod
     def get_observation_callback(cls, z_msg_type):
         def dummy_cb(z_msg, bridge):
             rospy.logwarn("skipping observation ({})".format(type(z_msg)))
 
-        if z_msg_type not in cls.OBSERVATION_INTERPRETERS:
+        if z_msg_type not in cls.MAPPERS:
             rospy.logerr("Belief updater does not handle  observation type {z_type}")
             return dummy_cb
         else:
@@ -273,17 +273,8 @@ class BeliefUpdater:
         In args:
             bridge (BaseAgentROSBridge): the POMDP-ROS bridge object
         """
-        observation = cls.OBSERVATION_INTERPRETERS[type(z_msg)]
+        observation = cls.MAPPERS[type(z_msg)](z_msg, bridge.agent)
         # Note that last_planned_action does not mean the observation is
         # _caused_ by this aciton; it is merely a piece of information that may
         # be helpful for belief update.
         bridge.agent.update_belief(observation, bridge.last_planned_action)
-
-    @classmethod
-    def belief_to_ros_msg(cls, agent, belief):
-        """To be implemented by child class"""
-        raise NotImplementedError
-
-    @classmethod
-    def create_belief_publisher(cls, belief_topic, **kwargs):
-        return rospy.Publisher(belief_topic, cls.BELIEF_MSG_TYPE, **kwargs)
