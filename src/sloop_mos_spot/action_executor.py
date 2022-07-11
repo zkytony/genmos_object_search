@@ -8,6 +8,7 @@ from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
                                                        StayAction,
                                                        FindAction,
                                                        MotionAction2D)
+from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic2D
 from sloop_object_search.utils.math import to_rad
 from actionlib_msgs.msg import GoalStatus
 
@@ -25,6 +26,8 @@ class SpotSloopActionExecutor(ActionExecutor):
                                          acquire_lease=True,
                                          take_lease=True)
         self.graphnav_client = rbd_spot.graphnav.create_client(self.conn)
+        self.robot_state_client = rbd_spot.state.create_client(self.conn)
+        self.command_client = rbd_spot.arm.create_client(self.conn)
 
 
     @classmethod
@@ -37,6 +40,21 @@ class SpotSloopActionExecutor(ActionExecutor):
             metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
             action_msg = KeyValAction(stamp=rospy.Time.now(),
                                       type="move_topo",
+                                      keys=["goal_x", "goal_y", "goal_yaw", "name"],
+                                      values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
+            return action_msg
+
+        elif isinstance(action, MotionAction2D):
+            # the motion is with respect to the robot's current pose in the grid map.
+            # we will interpret that as a map frame end effector pose, which will
+            # be accomplished by moving the arm with body follow.
+            current_robot_pose = agent.belief.mpe().s(agent.robot_id)['pose']
+            robot_pose_after_action = RobotTransBasic2D.transform_pose(current_robot_pose, action)
+            goal_pos = robot_pose_after_action[:2]
+            metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
+            goal_yaw = to_rad(robot_pose_after_action[2])
+            action_msg = KeyValAction(stamp=rospy.Time.now(),
+                                      type="move_2d",
                                       keys=["goal_x", "goal_y", "goal_yaw", "name"],
                                       values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
             return action_msg
@@ -59,6 +77,27 @@ class SpotSloopActionExecutor(ActionExecutor):
                 tolerance=(0.25, 0.25, 0.15), speed="slow")
 
             self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
+
+        elif msg.type == "move_2d":
+            goal_x = float(kv["goal_x"])
+            goal_y = float(kv["goal_y"])
+            goal_z = 0.25  # fixed height (2d)
+            goal_yaw = float(kv["goal_yaw"])
+            goal_quat = Quat.from_yaw(goal_yaw)
+            goal = (goal_x, goal_y, goal_z, *goal_quat)
+            self.publish_status(GoalStatus.ACTIVE,
+                                f"executing moveEE with body follow action {kv['name']}",
+                                action_id, msg.stamp)
+            cmd_success = rbd_spot.arm.moveToEEWithBodyFollow(
+                self.conn, self.command_client, self.robot_state_client, goal)
+            if cmd_success:
+                self.publish_status(GoalStatus.SUCCEEDED,
+                                    "arm movement succeeded",
+                                    action_id, msg.stamp)
+            else:
+                self.publish_status(GoalStatus.ABORTED,
+                                    "arm movement failed",
+                                    action_id, msg.stamp)
 
 
     def publish_nav_status(self, nav_feedback_code, action_id, stamp):
