@@ -1,4 +1,5 @@
 import rospy
+import tf2_ros
 import actionlib
 import pomdp_py
 from actionlib_msgs.msg import GoalStatus
@@ -62,6 +63,7 @@ class BaseAgentROSBridge:
         self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
+        self.map_frame = self._ros_config.get("map_frame", "graphnav_map")
 
         self._last_action_executed = None
 
@@ -85,6 +87,10 @@ class BaseAgentROSBridge:
         # Observation interpretor: it informs how to convert observations to ROS messages
         self._observation_interpretor_class = import_class(self._ros_config["observation_interpreter"])
 
+        # tf; need to create listener early enough before looking up to let tf propagate into buffer
+        # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
+        self.tfbuffer = tf2_ros.Buffer()
+        self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
 
     @property
     def agent(self):

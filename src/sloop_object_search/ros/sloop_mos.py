@@ -87,7 +87,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
                   if j != self.agent.robot_id}
         no_look = self.agent.agent_config["no_look"]
         draw_fov = list(self.agent.belief.object_beliefs.keys())
-        # If look is in action space, then we only render FOV when action is a
+        # If look is in action space, then we only render FOB when action is a
         # LookAction Otherwise, we just don't render the FOV.
         if not no_look:
             if not isinstance(action, LookAction):
@@ -97,6 +97,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         _render_kwargs = _config["viz_params"]["render"]
         img = self.viz.render(self.agent, {}, colors=colors,
                               draw_fov=draw_fov, **_render_kwargs)
+        # img = self.viz.highlight(img, [(8, 34)], color=(120, 120, 250))
         self.viz.show_img(img, flip_horizontally=True)
 
     def belief_to_ros_msg(self, belief, stamp=None):
