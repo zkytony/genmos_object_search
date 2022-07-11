@@ -13,9 +13,9 @@ ros_config:
     robot_pose:
       msg_type: geometry_msgs.msg.PoseStamped
     detection_img:
-      msg_type: vision_msgs.msg.SimpleDetection2DArray
+      msg_type: rbd_spot_perception.msg.SimpleDetection2DArray
     detection_3d:
-      msg_type: vision_msgs.msg.SimpleDetection3DArray
+      msg_type: rbd_spot_perception.msg.SimpleDetection3DArray
     grid_map:
       msg_type: sloop_ros.msg.GridMap2d
     spatial_lang:
@@ -36,7 +36,7 @@ agent_config:
 
   robot:
     detectors:
-      book:
+      chair:
         class: sloop_object_search.oopomdp.FanModelSimpleFP
         params:
         - fov: 90
@@ -47,10 +47,21 @@ agent_config:
           - 0.25
     id: robot0
 
+  targets:
+  - chair
+
+  objects:
+    chair:
+      class: chair
+      color:
+      - 100
+      - 200
+      - 80
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+
   spacy_model: en_core_web_lg
 
-  targets:
-  - G
 
   topo_map_args:
     degree:
@@ -63,23 +74,11 @@ agent_config:
     sep: 4.0
 
 
-
-
-
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
   foref_model_map_name: honolulu  # we force usage of this model
   no_look: true
   object_symbol_map:
     GreenToyota: G
-  objects:
-    G:
-      class: car
-      color:
-      - 100
-      - 200
-      - 80
-      transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
 
   # visualization
   visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo

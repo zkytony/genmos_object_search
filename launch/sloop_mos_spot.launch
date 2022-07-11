@@ -1,5 +1,6 @@
 <launch>
   <arg name="map_name"/>  <!-- Map name, a folder under rbd_spot_perception/maps e.g. lab121_no_lidar -->
+  <arg name="object_detection_camera" default="hand"/>
 
   <!-- Localization (with graphnav map & waypoint publishing -->
   <include file="$(find rbd_spot_perception)/launch/graphnav_map_publisher_with_localization.launch">
@@ -16,7 +17,7 @@
 
   <!-- Perception (object segmentation and fiducial markers -->
   <node pkg="rbd_spot_perception" type="stream_segmentation.py"
-        name="stream_segmentation" args="--camera hand --pub"></node>
+        name="stream_segmentation" args="--camera $(arg object_detection_camera) --pub"></node>
   <node pkg="rbd_spot_perception" type="stream_fiducial_markers.py"
         name="stream_fiducial_markers"></node>
 
@@ -29,5 +30,6 @@
     <param name="~pomdp_name" value="sloop_mos_spot"/>
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
     <remap from="~observation/robot_pose" to="/spot_hand_pose"/>
+    <remap from="~observation/detection_3d" to="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/>
   </node>
 </launch>

@@ -14,6 +14,8 @@ def detection_3d_msg_callback(detection_msg, bridge):
     Args:
         detection_msg (rbd_spot_perception/SimpleDetection3DArray)
     """
+    if bridge.agent is None:
+        return
     # For each detection, if the detected class is acceptable,
     # then obtain the center of the 3D pose, project it down
     # to the grid map. And use this observation to update agent belief.
