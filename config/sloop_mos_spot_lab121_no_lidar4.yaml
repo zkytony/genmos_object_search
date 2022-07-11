@@ -6,7 +6,7 @@ task_config:
 ################## ros config ##################
 ros_config:
   init_pose_topic: ~init_pose
-  belief_msg_type: sloop_ros.msg.SloopMosBelief
+  belief_msg_type: sensor_msgs.msg.Image
   action_executor: sloop_mos_spot.SpotSloopActionExecutor
   observation_interpreter: sloop_mos_spot.SpotObservationInterpreter
   observation:
@@ -32,7 +32,6 @@ agent_config:
 
   detectable_objects:
     - chair
-    - book
 
   robot:
     detectors:
