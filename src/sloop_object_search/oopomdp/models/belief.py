@@ -109,6 +109,10 @@ class BeliefTopo2D(Belief2D):
             # spatial language doesn't involve robot
             return
 
+        if self.robot_id not in observation:
+            # we don't have observation about the robot; so skip
+            return
+
         next_robot_state = RobotStateTopo.from_obz(observation.z(self.robot_id))
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
