@@ -1,6 +1,7 @@
 <launch>
   <arg name="map_name"/>  <!-- Map name, a folder under rbd_spot_perception/maps e.g. lab121_no_lidar -->
   <arg name="object_detection_camera" default="hand"/>
+  <arg name="grid_size" default="0.4"/>
 
   <!-- Localization (with graphnav map & waypoint publishing -->
   <include file="$(find rbd_spot_perception)/launch/graphnav_map_publisher_with_localization.launch">
@@ -13,7 +14,7 @@
   <!-- Publishing grid map projection -->
   <node pkg="sloop_ros" type="spot_graphnav_cloud_to_grid_map.py"
         name="graphnav_pcd_to_grid_map"
-        args="--name $(arg map_name)" output="screen"/>
+        args="--name $(arg map_name) --grid-size $(arg grid_size)" output="screen"/>
 
   <!-- Perception (object segmentation and fiducial markers -->
   <node pkg="rbd_spot_perception" type="stream_segmentation.py"

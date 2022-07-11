@@ -12,6 +12,8 @@ def main():
                         default="/graphnav_waypoints")
     parser.add_argument("--grid-map-topic", type=str, help="name of grid map topic to publish at",
                         default="/graphnav_gridmap")
+    parser.add_argument("--grid-size", type=float, help="grid size (m). Default: 0.25",
+                        default=0.25)
     parser.add_argument("--updating", action="store_true",
                         help="Keeps subscribing to point cloud and update the grid map; Otherwise, publishes once and latches.")
     parser.add_argument("--name", type=str, help="name of the grid map",
