@@ -19,18 +19,11 @@ add_message_files(
   KeyValAction.msg
   DefaultObservation.msg
   DefaultBelief.msg
-  GridMapPose2d.msg
+  Loc.msg
   GridMap2d.msg
   GridMapLoc.msg
   GridMapPose2d.msg
-  Loc.msg
-  SloopMosAction.msg
-  SloopMosBelief.msg
-  SloopMosJointObjectDetections.msg
-  SloopMosObjectBelief.msg
-  SloopMosObjectDetection.msg
-  SloopMosSpatialLanguage.msg
-  SloopMosRobotState.msg)
+  SloopMosSpatialLanguage.msg)
 
 # Adding the action file for PlanAction
 add_action_files(
