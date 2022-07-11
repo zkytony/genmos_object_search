@@ -8,7 +8,7 @@ from sloop_object_search.ros.mapinfo_utils import FILEPATHS, register_map
 from sloop_object_search.ros.sloop_mos import (grid_map_msg_callback,
                                                robot_pose_msg_callback)
 from sloop_object_search.ros.ros_utils import tf2_transform
-from sloop_object_search.oopomdp.domain.observation import ObjectDetection2D, GMOSObservation
+from sloop_object_search.oopomdp.domain.observation import (ObjectDetection2D, GMOSObservation, RobotObservationTopo)
 
 import tf2_ros
 
@@ -50,11 +50,11 @@ def detection_3d_msg_callback(detection_msg, bridge):
     bridge.agent.update_belief(z_joint, bridge.last_action_executed)
     rospy.loginfo("updated belief")
     bridge.visualize_current_belief()
-    rospy.loginfo("updated visualization")
 
 
 def detection_img_msg_callback(detection_msg, bridge):
     """For object detections in image, but we don't have depth"""
+
 
 
 class SpotObservationInterpreter(ObservationInterpreter):

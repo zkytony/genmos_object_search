@@ -36,6 +36,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         super().__init__(ros_config=ros_config)
         self.viz = None
         self.viz_pub = rospy.Publisher("~belief_viz", sensor_msgs.Image, queue_size=10, latch=True)
+        self._viz_pub_rate = ros_config.get("viz_pub_rate", 4.0)
 
         # waits to be set; used to initialize SLOOP POMDP agent.
         self.grid_map = None
@@ -48,7 +49,10 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def run(self):
         # start visualization
         self.init_visualization()
-        self.visualize_current_belief()
+        # Publish visualization periodically
+        rospy.Timer(rospy.Duration(1./self._viz_pub_rate),
+                    lambda event: self.visualize_current_belief())
+        self.viz_pub.publish(img_msg)
         super().run()
 
     def init_agent(self, config):
@@ -113,7 +117,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         img = img.astype(np.uint8)
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-        img_msg = ros_utils.convert(img, encoding='rgb8')  # convert image to image message
+        img_msg = ros_utils.convert(img, encoding='rgb8')
         self.viz_pub.publish(img_msg)
 
     def belief_to_ros_msg(self, belief, stamp=None):
@@ -165,7 +169,6 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
         # We can't interpret robot pose yet
         return
 
-    # print(robot_pose_msg)
     # first, obtain the position in grid map coords
     metric_position = robot_pose_msg.pose.position
     quat = robot_pose_msg.pose.orientation
@@ -186,16 +189,11 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
         # received robot pose observation. Update belief?
         current_robot_state = bridge.agent.belief.mpe().s(bridge.agent.robot_id)
 
-        # bridge.agent.update_belief(observation, bridge.last_planned_action)
         # NOTE: topo nid update should be done at time of completion of a navigation goal.
         robot_observation = RobotObservationTopo(bridge.agent.robot_id,
                                                  robot_pose,
                                                  current_robot_state['objects_found'],
                                                  None,
                                                  current_robot_state['topo_nid'])  # camera_direction; we don't need this
-        print("BEFORE UPDATE", bridge.agent.belief.mpe().s(bridge.agent.robot_id)["pose"])
         bridge.agent.belief.update_robot_belief(
             GMOSObservation({bridge.agent.robot_id: robot_observation}), None)
-        bridge.visualize_current_belief()
-        print("AFTER UPDATE", bridge.agent.belief.mpe().s(bridge.agent.robot_id)["pose"])
-        print("updated robot pose belief")
