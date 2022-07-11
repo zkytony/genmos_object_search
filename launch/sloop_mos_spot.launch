@@ -19,7 +19,7 @@
   <node pkg="rbd_spot_perception" type="stream_segmentation.py"
         name="stream_segmentation" args="--camera $(arg object_detection_camera) --pub"></node>
   <node pkg="rbd_spot_perception" type="stream_fiducial_markers.py"
-        name="stream_fiducial_markers"></node>
+        name="stream_fiducial_markers" output="log"></node>
 
   <!-- Run SLOOP object search decision making interface (POMDP planner) -->
   <node name="run_sloop_mos_spot"

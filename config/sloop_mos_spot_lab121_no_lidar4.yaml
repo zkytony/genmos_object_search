@@ -28,7 +28,7 @@ agent_config:
   agent_class: SloopMosTopo2DAgent
   belief:
     prior:
-      G: uniform
+      chair: uniform
 
   detectable_objects:
     - chair

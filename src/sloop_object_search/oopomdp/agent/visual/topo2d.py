@@ -15,14 +15,16 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
         if img is None:
             img = self._make_gridworld_image(self._res)
 
-        img = super().render(agent, objlocs, colors=colors,
-                              robot_state=robot_state, draw_fov=draw_fov,
-                              draw_belief=draw_belief, img=img)
         # Draw topo map
         if draw_topo:
             img = draw_topo_func(img, agent.topo_map, self._res,
                                  draw_grid_path=self._draw_topo_grid_path,
                                  **mark_cell_kwargs)
+
+        img = super().render(agent, objlocs, colors=colors,
+                              robot_state=robot_state, draw_fov=draw_fov,
+                              draw_belief=draw_belief, img=img)
+
 
         # redraw robot on top of topo map
         if robot_state is None:

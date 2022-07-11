@@ -159,6 +159,9 @@ class BaseAgentROSBridge:
             self.plan_server.set_rejected(result)
         else:
             action = self._planner.plan(self.agent)
+            if hasattr(self.agent, "tree") and self.agent.tree is not None:
+                _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
+                _dd.p(1)
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
             self._last_action_executed = action
