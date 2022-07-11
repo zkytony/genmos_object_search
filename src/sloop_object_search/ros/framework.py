@@ -144,11 +144,12 @@ class BaseAgentROSBridge:
 
         self._plan_server.start()
 
-        belief_msg = self.belief_to_ros_msg(self.agent.belief)
-        rospy.Timer(rospy.Duration(1./self._belief_rate),
-                    lambda event: self._belief_publisher.publish(belief_msg))
         rospy.loginfo("Running agent {}".format(self.__class__.__name__))
-        rospy.spin()
+        rate = rospy.Rate(self._belief_rate)
+        while not rospy.is_shutdown():
+            belief_msg = self.belief_to_ros_msg(self.agent.belief)
+            self._belief_publisher.publish(belief_msg)
+            rate.sleep()
 
     def plan(self, goal):
         result = PlanNextStepResult()

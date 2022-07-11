@@ -35,8 +35,6 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def __init__(self, ros_config={}):
         super().__init__(ros_config=ros_config)
         self.viz = None
-        self.viz_pub = rospy.Publisher("~belief_viz", sensor_msgs.Image, queue_size=10, latch=True)
-        self._viz_pub_rate = ros_config.get("viz_pub_rate", 4.0)
 
         # waits to be set; used to initialize SLOOP POMDP agent.
         self.grid_map = None
@@ -49,10 +47,6 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def run(self):
         # start visualization
         self.init_visualization()
-        # Publish visualization periodically
-        rospy.Timer(rospy.Duration(1./self._viz_pub_rate),
-                    lambda event: self.visualize_current_belief())
-        self.viz_pub.publish(img_msg)
         super().run()
 
     def init_agent(self, config):
@@ -91,16 +85,18 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
             bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
             **_config["viz_params"]["init"])
 
-    def visualize_current_belief(self, action=None):
+    def visualize_current_belief(self, belief=None, action=None):
+        if belief is None:
+            belief = self.agent.belief
         if self.viz is None:
             rospy.logwarn("visualizer not initialized")
             return
         _config = self.agent.agent_config
         colors = {j: _config["objects"][j].get("color", [128, 128, 128])
-                  for j in self.agent.belief.object_beliefs
+                  for j in belief.object_beliefs
                   if j != self.agent.robot_id}
         no_look = self.agent.agent_config["no_look"]
-        draw_fov = list(self.agent.belief.object_beliefs.keys())
+        draw_fov = list(belief.object_beliefs.keys())
         # If look is in action space, then we only render FOB when action is a
         # LookAction Otherwise, we just don't render the FOV.
         if not no_look:
@@ -118,27 +114,10 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         img = img.astype(np.uint8)
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
         img_msg = ros_utils.convert(img, encoding='rgb8')
-        self.viz_pub.publish(img_msg)
+        return img_msg
 
     def belief_to_ros_msg(self, belief, stamp=None):
-        if stamp is None:
-            stamp = rospy.Time.now()
-
-        bobj_msgs = []
-        for objid in belief.object_beliefs:
-            bobj = belief.object_beliefs[objid]
-            locations = []
-            probs = []
-            objclass = None
-            for sobj in bobj:
-                locations.append(sloop_ros.Loc(x=sobj.loc[0], y=sobj.loc[1]))
-                probs.append(bobj[sobj])
-                if objclass is None:
-                    objclass = sobj.objclass
-            bobj_msg = sloop_ros.SloopMosObjectBelief(stamp=stamp, objid=objid, objclass=objclass)
-            bobj_msgs.append(bobj_msg)
-        belief_msg = sloop_ros.SloopMosBelief(stamp=stamp, object_beliefs=bobj_msgs)
-        return belief_msg
+        return self.visualize_current_belief(belief)
 
     def action_to_ros_msg(self, action, stamp=None):
         return action_to_ros_msg(action, stamp=stamp)

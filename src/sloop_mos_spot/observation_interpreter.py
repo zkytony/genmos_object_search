@@ -49,7 +49,6 @@ def detection_3d_msg_callback(detection_msg, bridge):
     z_joint = GMOSObservation(z_joint_dict)
     bridge.agent.update_belief(z_joint, bridge.last_action_executed)
     rospy.loginfo("updated belief")
-    bridge.visualize_current_belief()
 
 
 def detection_img_msg_callback(detection_msg, bridge):
