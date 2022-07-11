@@ -8,6 +8,7 @@ import pomdp_py
 class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
     NULL = None  # empty
+    NO_POSE = "no_pose"
     def __init__(self, objid, pose):
         super().__init__((objid, pose))
 

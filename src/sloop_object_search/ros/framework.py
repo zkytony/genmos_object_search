@@ -63,6 +63,8 @@ class BaseAgentROSBridge:
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
 
+        self._last_action_executed = None
+
         self._belief_msg_type = DefaultBelief
         if "belief_msg_type" in self._ros_config:
             self._belief_msg_type = import_class(self._ros_config["belief_msg_type"])
@@ -88,8 +90,7 @@ class BaseAgentROSBridge:
     def agent(self):
         return self._agent
 
-    @agent.setter
-    def agent(self, agent):
+    def set_agent(self, agent):
         self._agent = agent
 
     def setup(self):
@@ -153,6 +154,7 @@ class BaseAgentROSBridge:
             action = self._planner.plan(self.agent)
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
+            self._last_action_executed = action
             action_msg = self._action_executor_class.action_to_ros_msg(
                 self.agent, action, goal.goal_id)
             self._action_publisher.publish(action_msg)
@@ -185,6 +187,10 @@ class BaseAgentROSBridge:
 
     def belief_to_ros_msg(self, belief):
         raise NotImplementedError
+
+    @property
+    def last_action_executed(self):
+        return self._last_action_executed
 
 
 class ActionExecutor:

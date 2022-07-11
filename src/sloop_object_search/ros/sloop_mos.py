@@ -40,20 +40,17 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
 
     def run(self):
         # start visualization
-        _config = self.agent.agent_config
-        self.viz = import_class(_config["visualizer"])(
-            self.agent.grid_map,
-            bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
-            **_config["viz_params"]["init"])
-        self._visualize_step(**_config["viz_params"]["render"])
+        self.init_visualization()
+        self.visualize_current_belief()
         super().run()
 
     def init_agent(self, config):
         if self.agent is not None:
             raise ValueError("Agent already initialized")
-        self.agent = make_sloop_mos_agent(config,
-                                          init_pose=self.init_robot_pose,
-                                          grid_map=self.grid_map)
+        agent = make_sloop_mos_agent(config,
+                                     init_pose=self.init_robot_pose,
+                                     grid_map=self.grid_map)
+        self.set_agent(agent)
 
     def init_planner(self, config):
         if self._planner is not None:
@@ -76,18 +73,30 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         else:
             rospy.logerr(f"Does not know how to handle observation of type {type(observation_msg)}")
 
-    def _visualize_step(self, action=None, **kwargs):
-        colors = {j: self.agent.agent_config["objects"][j].get("color", [128, 128, 128])
+    def init_visualization(self):
+        _config = self.agent.agent_config
+        self.viz = import_class(_config["visualizer"])(
+            self.agent.grid_map,
+            bg_path=FILEPATHS[self.agent.map_name].get("map_png", None),
+            **_config["viz_params"]["init"])
+
+    def visualize_current_belief(self, action=None):
+        _config = self.agent.agent_config
+        colors = {j: _config["objects"][j].get("color", [128, 128, 128])
                   for j in self.agent.belief.object_beliefs
                   if j != self.agent.robot_id}
         no_look = self.agent.agent_config["no_look"]
         draw_fov = list(self.agent.belief.object_beliefs.keys())
+        # If look is in action space, then we only render FOV when action is a
+        # LookAction Otherwise, we just don't render the FOV.
         if not no_look:
             if not isinstance(action, LookAction):
                 draw_fov = None
         if action is None:
             draw_fov = None
-        img = self.viz.render(self.agent, {}, colors=colors, draw_fov=draw_fov, **kwargs)
+        _render_kwargs = _config["viz_params"]["render"]
+        img = self.viz.render(self.agent, {}, colors=colors,
+                              draw_fov=draw_fov, **_render_kwargs)
         self.viz.show_img(img, flip_horizontally=True)
 
     def belief_to_ros_msg(self, belief, stamp=None):

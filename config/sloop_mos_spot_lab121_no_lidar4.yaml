@@ -12,8 +12,10 @@ ros_config:
   observation:
     robot_pose:
       msg_type: geometry_msgs.msg.PoseStamped
-    detection:
-      msg_type: sloop_ros.msg.SloopMosJointObjectDetections
+    detection_img:
+      msg_type: vision_msgs.msg.SimpleDetection2DArray
+    detection_3d:
+      msg_type: vision_msgs.msg.SimpleDetection3DArray
     grid_map:
       msg_type: sloop_ros.msg.GridMap2d
     spatial_lang:
@@ -27,6 +29,43 @@ agent_config:
   belief:
     prior:
       G: uniform
+
+  detectable_objects:
+    - chair
+    - book
+
+  robot:
+    detectors:
+      book:
+        class: sloop_object_search.oopomdp.FanModelSimpleFP
+        params:
+        - fov: 90
+          max_range: 15
+          min_range: 0
+        - - 0.9
+          - 0.1
+          - 0.25
+    id: robot0
+
+  spacy_model: en_core_web_lg
+
+  targets:
+  - G
+
+  topo_map_args:
+    degree:
+    - 3
+    - 5
+    node_coverage_radius: 3.0
+    num_place_samples: 10
+    resample_prob_thres: 0.25
+    seed: 1120
+    sep: 4.0
+
+
+
+
+
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
   foref_model_map_name: honolulu  # we force usage of this model
   no_look: true
@@ -41,30 +80,7 @@ agent_config:
       - 80
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
-  robot:
-    detectors:
-      G:
-        class: sloop_object_search.oopomdp.FanModelSimpleFP
-        params:
-        - fov: 90
-          max_range: 15
-          min_range: 0
-        - - 0.9
-          - 0.1
-          - 0.25
-    id: robot0
-  spacy_model: en_core_web_lg
-  targets:
-  - G
-  topo_map_args:
-    degree:
-    - 3
-    - 5
-    node_coverage_radius: 3.0
-    num_place_samples: 10
-    resample_prob_thres: 0.25
-    seed: 1120
-    sep: 4.0
+
   # visualization
   visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo
   viz_params:
