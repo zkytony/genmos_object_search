@@ -21,7 +21,6 @@ from sloop_ros.msg import GridMap2d
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
 from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map
 from .framework import BaseAgentROSBridge
-from .action_mos import action_to_ros_msg
 
 
 class SloopMosAgentROSBridge(BaseAgentROSBridge):
@@ -118,9 +117,6 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
 
     def belief_to_ros_msg(self, belief, stamp=None):
         return self.visualize_current_belief(belief)
-
-    def action_to_ros_msg(self, action, stamp=None):
-        return action_to_ros_msg(action, stamp=stamp)
 
 
 ### Robot-agnostic observation interpretation callback functions
