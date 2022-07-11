@@ -238,19 +238,19 @@ def remap(oldval, oldmin, oldmax, newmin, newmax):
 ### Sensor Messages ###
 import sensor_msgs.msg as sensor_msgs
 import cv_bridge
-def convert(msg_or_img):
+def convert(msg_or_img, encoding='passthrough'):
     if isinstance(msg_or_img, sensor_msgs.Image):
-        return _convert_imgmsg(msg_or_img)
+        return _convert_imgmsg(msg_or_img, encoding=encoding)
     elif isinstance(msg_or_img, np.ndarray):
-        return _convert_img(msg_or_img)
+        return _convert_img(msg_or_img, encoding=encoding)
     raise ValueError("Cannot handle message type {}".format(msg_or_img))
 
-def _convert_imgmsg(msg):
+def _convert_imgmsg(msg, encoding='passthrough'):
     bridge = cv_bridge.CvBridge()
-    cv2_image = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+    cv2_image = bridge.imgmsg_to_cv2(msg, desired_encoding=encoding)
     return cv2_image
 
-def _convert_img(img):
+def _convert_img(img, encoding='passthrough'):
     bridge = cv_bridge.CvBridge()
-    cv2_image = bridge.cv2_to_imgmsg(img, encoding='rgb8')
-    return cv2_image
+    msg = bridge.cv2_to_imgmsg(img, encoding=encoding)
+    return msg
