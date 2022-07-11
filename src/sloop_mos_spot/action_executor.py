@@ -19,8 +19,8 @@ import rbd_spot
 
 class SpotSloopActionExecutor(ActionExecutor):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # We do want lease access
         self.conn = rbd_spot.SpotSDKConn(sdk_name="SpotSloopActionExecutorClient",
                                          acquire_lease=True,
@@ -61,9 +61,12 @@ class SpotSloopActionExecutor(ActionExecutor):
 
 
     def _execute_action_cb(self, msg):
+        if msg.type == "nothing":
+            return
+
         kv = {msg.keys[i]: msg.values[i] for i in range(len(msg.keys))}
         # used to identify this action as a goal for execution
-        action_id = "{}-{}".format(msg.type, str(msg.stamp))
+        action_id = ActionExecutor.action_id(msg)
         if msg.type == "move_topo":
             goal_x = float(kv["goal_x"])
             goal_y = float(kv["goal_y"])
@@ -72,6 +75,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.publish_status(GoalStatus.ACTIVE,
                                 f"executing navigation goal {kv['name']}",
                                 action_id, msg.stamp)
+            rbd_spot.arm.stow(self.conn, self.command_client)
             nav_feedback_code = rbd_spot.graphnav.navigateTo(
                 self.conn, self.graphnav_client, goal,
                 tolerance=(0.25, 0.25, 0.15), speed="slow")
@@ -84,11 +88,12 @@ class SpotSloopActionExecutor(ActionExecutor):
             goal_z = 0.25  # fixed height (2d)
             goal_yaw = float(kv["goal_yaw"])
             goal_quat = Quat.from_yaw(goal_yaw)
-            goal = (goal_x, goal_y, goal_z, *goal_quat)
+            goal = (goal_x, goal_y, goal_z, goal_quat.x,
+                    goal_quat.y, goal_quat.z, goal_quat.w)
             self.publish_status(GoalStatus.ACTIVE,
                                 f"executing moveEE with body follow action {kv['name']}",
                                 action_id, msg.stamp)
-            cmd_success = rbd_spot.arm.moveToEEWithBodyFollow(
+            cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
                 self.conn, self.command_client, self.robot_state_client, goal)
             if cmd_success:
                 self.publish_status(GoalStatus.SUCCEEDED,

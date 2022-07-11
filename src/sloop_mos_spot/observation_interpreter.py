@@ -47,7 +47,7 @@ def detection_3d_msg_callback(detection_msg, bridge):
             z_joint_dict[det3d.label] = zobj
             rospy.loginfo("- {} ({:.3f}) grid loc: {}".format(det3d.label, det3d.score, zobj.loc))
     z_joint = GMOSObservation(z_joint_dict)
-    bridge.agent.update_belief(z_joint, bridge.last_action_executed)
+    bridge.agent.update_belief(z_joint, bridge.last_action)
     rospy.loginfo("updated belief")
 
 
@@ -60,3 +60,8 @@ class SpotObservationInterpreter(ObservationInterpreter):
     CALLBACKS = {"grid_map": grid_map_msg_callback,
                  "robot_pose": robot_pose_msg_callback,
                  "detection_3d": detection_3d_msg_callback}
+
+    # observation types that will be collected once an action
+    # is completed and a round of planner and belief update is
+    # performed.
+    SOURCES_FOR_REGULAR_UPDATE = ["robot_pose", "detection_3d"]

@@ -65,7 +65,8 @@ class BaseAgentROSBridge:
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
         self.map_frame = self._ros_config.get("map_frame", "graphnav_map")
 
-        self._last_action_executed = None
+        self._last_action = None
+        self._last_action_msg = None
 
         self._belief_msg_type = DefaultBelief
         if "belief_msg_type" in self._ros_config:
@@ -84,6 +85,7 @@ class BaseAgentROSBridge:
 
         # Action executor class: it informs how to convert actions to ROS messages.
         self._action_executor_class = import_class(self._ros_config["action_executor"])
+        self._action_exec_status_topic = self._ros_config["action_exec_status_topic"]
         # Observation interpretor: it informs how to convert observations to ROS messages
         self._observation_interpretor_class = import_class(self._ros_config["observation_interpreter"])
 
@@ -127,6 +129,11 @@ class BaseAgentROSBridge:
                 self._observation_interpretor_class.get_observation_callback(z_type),
                 callback_args=self)
 
+        # subscribes to action executor status
+        self._action_exec_status_sub = rospy.Subscriber(
+            self._action_exec_status_topic, GoalStatus,
+            self._action_exec_status_cb)
+
         rospy.loginfo(self._setup_info_message())
 
     def run(self):
@@ -164,15 +171,33 @@ class BaseAgentROSBridge:
                 _dd.p(1)
             rospy.loginfo(f"Planning successful. Action: {action}")
             rospy.loginfo("Action published")
-            self._last_action_executed = action
             action_msg = self._action_executor_class.action_to_ros_msg(
                 self.agent, action, goal.goal_id)
+            self._last_action_msg = action_msg
+            self._last_action = action
             self._action_publisher.publish(action_msg)
             result.status = GoalStatus.SUCCEEDED
             self._plan_server.set_succeeded(result)
 
     def set_planner(self, planner):
         self._planner = planner
+
+    def _action_exec_status_cb(self, status):
+        if ActionExecutor.action_id(self._last_action_msg)\
+           == status.goal_id.id:
+            rospy.logerr("action status is not for most recently planned action")
+        if status.status == GoalStatus.ACTIVE:
+            rospy.loginfo(f"action {status.goal_id.id} is in progress...")
+            self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
+        elif status.status == GoalStatus.SUCCEEDED:
+            # Update planner and agent's belief after action success (e.g. topo nid).
+            # Let's actually wait for a round of observation, and use them
+            # in the update process.
+            observation = self.collect_observation()
+            self.planner.update(self._last_action, observation)
+            self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
+        else:
+            rospy.logwarn(f"action {status.goal_id.id} did not succeed.")
 
     def _setup_troubleshooting_message(self):
         message = "The following objects should not be None:\n"
@@ -199,8 +224,14 @@ class BaseAgentROSBridge:
         raise NotImplementedError
 
     @property
-    def last_action_executed(self):
-        return self._last_action_executed
+    def last_action(self):
+        return self._last_action
+
+    def collect_observation(self):
+        """First, wait for an observation from each observation source
+        that should be collected (determined by observation interpreter);
+        Then, merge those observations into a single observation object
+        and return."""
 
 
 class ActionExecutor:
@@ -222,11 +253,15 @@ class ActionExecutor:
         execute that action on the robot.
     """
     def __init__(self,
-                 action_topic="~action", status_topic="~status",
-                 action_msg_type=KeyValAction):
+                 action_topic="~action", status_topic="~status"):
+        self.node_name = rospy.get_name()
         self._action_topic = action_topic  # The topic to subscribe to to receive actions
         self._status_topic = status_topic  # The topic to publish status
-        self._action_msg_type = action_msg_type
+        self._action_msg_type = KeyValAction
+
+    @property
+    def status_topic(self):
+        return "{}/{}".format(self.node_name, self._status_topic)
 
     def setup(self):
         self._status_pub = rospy.Publisher(self._status_topic,
@@ -239,6 +274,11 @@ class ActionExecutor:
     def _execute_action_cb(self, action_msg):
         """Handles action execution"""
         raise NotImplementedError
+
+    @classmethod
+    def aciton_id(cls, action_msg):
+        assert isinstance(action_msg, KeyValAction)
+        return "{}-{}".format(action_msg.type, str(action_msg.stamp))
 
     @classmethod
     def action_to_ros_msg(cls, agent, action, goal_id):
@@ -273,6 +313,10 @@ class ObservationInterpreter:
     # Should map from observation type (class) to a callback function
     # To be filled by child class
     CALLBACKS = {}
+
+    # observation types that will be collected once an action
+    # is completed and a round of planner and belief update is performed.
+    SOURCES_FOR_REGULAR_UPDATE = []
 
     SKIP_WARNING_PRINTED = {}
 
