@@ -35,6 +35,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         print(action)
 
         if isinstance(action, MotionActionTopo):
+            # The navigation goal is specified with respect to the global map frame.
             goal_pos = action.dst_pose[:2]
             goal_yaw = to_rad(action.dst_pose[2])
             metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
@@ -45,11 +46,9 @@ class SpotSloopActionExecutor(ActionExecutor):
             return action_msg
 
         elif isinstance(action, MotionAction2D):
-            # the motion is with respect to the robot's current pose in the grid map.
-            # we will interpret that as a map frame end effector pose, which will
-            # be accomplished by moving the arm with body follow.
-            current_robot_pose = agent.belief.mpe().s(agent.robot_id)['pose']
-            robot_pose_after_action = RobotTransBasic2D.transform_pose(current_robot_pose, action)
+            # We will make the robot move its arm with body follow; The robot arm
+            # movement is specified with respect to the robot frame.
+            robot_pose_after_action = RobotTransBasic2D.transform_pose((0, 0, 0.0), action)
             goal_pos = robot_pose_after_action[:2]
             metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
             goal_yaw = to_rad(robot_pose_after_action[2])
@@ -111,7 +110,10 @@ class SpotSloopActionExecutor(ActionExecutor):
                                     action_id, msg.stamp)
 
         elif msg.type == "find":
-            # nothing needs to be done; just publish success
+            # signal find action with a bit of arm motion and then stow.
+            rbd_spot.arm.moveEETo(
+                self.conn, self.command_client, self.robot_state_client, (0.65, 0.0, 0.35))
+            rbd_spot.arm.stow(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
                                     "find action succeeded",
                                     action_id, msg.stamp)
