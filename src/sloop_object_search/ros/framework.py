@@ -2,6 +2,7 @@ import rospy
 import tf2_ros
 import actionlib
 import pomdp_py
+import std_msgs.msg as std_msgs
 from actionlib_msgs.msg import GoalStatus
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,
@@ -25,7 +26,8 @@ class BaseAgentROSBridge:
 
     publishes:
     - ~action
-    - ~belief
+    - ~belief  (for visualization)
+    - ~progress    (for checking task progress; String type)
 
     Notes:
     1. Observation types are specified through configuration:
@@ -64,6 +66,7 @@ class BaseAgentROSBridge:
         self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
+        self._progress_topic = self._ros_config.get("progress_topic", "~progress")
         self.map_frame = self._ros_config.get("map_frame", "graphnav_map")
 
         self._last_action = None
@@ -123,6 +126,10 @@ class BaseAgentROSBridge:
         self._belief_publisher = rospy.Publisher(
             self._belief_topic, self._belief_msg_type, queue_size=10, latch=True)
 
+        # Publishes task progress
+        self._progress_publisher = rospy.Publisher(
+            self._progress_topic, std_msgs.String, queue_size=10)
+
         # Subscribes to observation types
         for z_type in self._observation_topics:
             self._observation_subscribers[z_type] = rospy.Subscriber(
@@ -158,6 +165,8 @@ class BaseAgentROSBridge:
         while not rospy.is_shutdown():
             belief_msg = self.belief_to_ros_msg(self.agent.belief)
             self._belief_publisher.publish(belief_msg)
+            progress_msg = self.current_progress_msg()
+            self._progress_publisher.publish(progress_msg)
             rate.sleep()
 
     def plan(self, goal):
@@ -238,6 +247,10 @@ class BaseAgentROSBridge:
         raise NotImplementedError
 
     def belief_to_ros_msg(self, belief):
+        raise NotImplementedError
+
+    def current_progress_msg(self):
+        """returns a std_msgs/String message to report task progress"""
         raise NotImplementedError
 
     @property

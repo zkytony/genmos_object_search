@@ -35,6 +35,9 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         super().__init__(ros_config=ros_config)
         self.viz = None
 
+        # publish task progress, i.e.
+        self._task_progress_pub_rate = 4.0
+
         # waits to be set; used to initialize SLOOP POMDP agent.
         self.grid_map = None
         self.init_robot_pose = None
@@ -43,9 +46,15 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         # Check if I have grid map and I have the robot pose
         return self.grid_map is not None and self.init_robot_pose is not None
 
+    def setup(self):
+        super().setup()
+
     def run(self):
         # start visualization
         self.init_visualization()
+        # publish found objects robot state periodically
+        rospy.Timer(rospy.Duration(1.0/self._task_progress_pub_rate),
+                    labmda event: self.)
         super().run()
 
     def init_agent(self, config):
@@ -117,6 +126,15 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
 
     def belief_to_ros_msg(self, belief, stamp=None):
         return self.visualize_current_belief(belief)
+
+    def current_progress_msg(self):
+        objects_found = set(self.agent.belief.mpe().s(self.agent.robot_id)['objects_found'])
+        all_targets = set(self.agent.agent_config.get("targets"))
+        if len(objects_found) == len(all_targets):
+            return std_msgs.String(data="all found.")
+        else:
+            not_yet_found = all_targets - objects_found
+            return std_msgs.String(data=f"found: {objects_found}.  not yet: {not_yet_found}")
 
 
 ### Robot-agnostic observation interpretation callback functions
