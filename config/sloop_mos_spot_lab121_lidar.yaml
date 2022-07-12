@@ -39,7 +39,7 @@ agent_config:
         class: sloop_object_search.oopomdp.FanModelSimpleFP
         params:
         - fov: 90
-          max_range: 15
+          max_range: 4
           min_range: 0
         - - 0.9
           - 0.1
