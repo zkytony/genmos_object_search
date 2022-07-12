@@ -101,6 +101,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.publish_status(GoalStatus.ACTIVE,
                                 f"executing moveEE with body follow action {kv['name']}",
                                 action_id, msg.stamp)
+            rbd_spot.arm.open_gripper()
             cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
                 self.conn, self.command_client, self.robot_state_client, goal)
             if cmd_success:
