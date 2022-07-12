@@ -6,7 +6,10 @@ from ..agent.basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
 from ..domain.state import RobotState2D
 from ..domain.action import MotionActionTopo, StayAction, FindAction
-from .handlers import LocalSearchHandler, NavTopoHandler, FindHandler, IdentityHandler
+from .handlers import (LocalSearchHandler,
+                       NavTopoHandler,
+                       FindHandler,
+                       NavTopoIdentityHandler)
 
 import pomdp_py
 
@@ -107,12 +110,11 @@ class HierarchicalPlanner(pomdp_py.Planner):
 
             # Check whether we want to plan individual movements to fulfill the navigation
             # subgoal, or if we just want to directly output the navigation subgoal
-            handle_nav = self.planner_config.get("handle_nav", True)
-            if handle_nav:
-
+            plan_nav_actions = self.planner_config.get("plan_nav_actions", True)
+            if plan_nav_actions:
                 return NavTopoHandler(subgoal, self._topo_agent, self._mos2d_agent)
             else:
-                return IdentityHandler(subgoal)
+                return NavTopoIdentityHandler(subgoal, self._topo_agent)
 
         elif isinstance(subgoal, FindAction):
             return FindHandler(subgoal)

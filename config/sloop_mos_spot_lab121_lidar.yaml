@@ -90,7 +90,7 @@ agent_config:
 ################## planner_config ##################
 planner_config:
   planner: sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
-  handle_nav: False
+  plan_nav_actions: False
   high_level_planner_args:
     exploration_const: 1000
     max_depth: 20

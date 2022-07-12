@@ -74,17 +74,32 @@ class FindHandler(SubgoalHandler):
         return True
 
 
-class IdentityHandler(SubgoalHandler):
-    """Just returns the subgoal as action"""
-    def __init__(self, subgoal):
+class NavTopoIdentityHandler(SubgoalHandler):
+    """Just returns the subgoal as action; but performs
+    update appropriately for navigation topo subgoal"""
+    def __init__(self, subgoal, topo_agent):
         self.subgoal = subgoal
+        self._topo_agent = topo_agent
+        self._done = False
 
     def step(self):
         return self.subgoal
 
     @property
     def done(self):
-        return True
+        return self._done
+
+    def update(self, action, observation):
+        self._done = True
+        zrobot = observation.z(self._topo_agent.robot_id)
+        topo_nid = self._topo_agent.topo_map.closest_node(*zrobot.pose[:2])
+        srobot_topo = RobotStateTopo(zrobot.robot_id,
+                                     zrobot.pose,
+                                     zrobot.objects_found,
+                                     zrobot.camera_direction,
+                                     topo_nid)
+        self._topo_agent.belief.set_object_belief(self._topo_agent.robot_id,
+                                                  pomdp_py.Histogram({srobot_topo: 1.0}))
 
 
 class NavTopoHandler(SubgoalHandler):
