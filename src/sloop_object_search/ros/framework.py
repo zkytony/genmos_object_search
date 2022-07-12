@@ -202,6 +202,8 @@ class BaseAgentROSBridge:
             self._plan_server.set_succeeded(result)
 
     def _action_exec_status_cb(self, status):
+        if self._last_action_msg is None:
+            return
         if ActionExecutor.action_id(self._last_action_msg)\
            == status.goal_id.id:
             rospy.logerr("action status is not for most recently planned action")
@@ -327,7 +329,8 @@ class ActionExecutor:
 
     @classmethod
     def action_id(cls, action_msg):
-        assert isinstance(action_msg, KeyValAction)
+        assert isinstance(action_msg, KeyValAction),\
+            f"action_msg should be KeyValAction, but got {type(action_msg)}"
         return "{}-{}".format(action_msg.type, str(action_msg.stamp))
 
     @classmethod

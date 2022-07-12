@@ -16,6 +16,9 @@ from bosdyn.client.math_helpers import Quat
 from bosdyn.api.graph_nav import graph_nav_pb2
 import rbd_spot
 
+# distance between hand and body frame origin
+SPOT_HAND_TO_BODY_DISTANCE = 0.65
+
 
 class SpotSloopActionExecutor(ActionExecutor):
 
@@ -116,6 +119,12 @@ class SpotSloopActionExecutor(ActionExecutor):
             rbd_spot.arm.stow(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
                                     "find action succeeded",
+                                    action_id, msg.stamp)
+
+        elif msg.type == "stow_arm":
+            rbd_spot.arm.stow(self.conn, self.command_client)
+            self.publish_status(GoalStatus.SUCCEEDED,
+                                    "arm stowed",
                                     action_id, msg.stamp)
 
 
