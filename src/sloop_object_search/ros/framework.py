@@ -374,7 +374,7 @@ class ObservationInterpreter:
                 cls.SKIP_WARNING_PRINTED[z_type] = True
 
         if z_type not in cls.CALLBACKS:
-            rospy.logerr(f"Observation interpreter does not handle observation type {z_type}")
+            rospy.logwarn(f"Observation interpreter does not handle observation type {z_type}")
             return dummy_cb
         else:
             return cls.CALLBACKS[z_type]
