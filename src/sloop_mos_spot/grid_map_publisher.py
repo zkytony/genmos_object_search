@@ -243,7 +243,8 @@ class GraphNavPointCloudToGridMapPublisher:
         grid_map = pcd_to_grid_map(pcd, waypoints_array,
                                    name=self.map_name,
                                    debug=self._debug,
-                                   grid_size=self.grid_size)
+                                   grid_size=self.grid_size,
+                                   layout_cut=self.layout_cut)
         print("Grid Map created!")
 
         # Publish grid map as message
