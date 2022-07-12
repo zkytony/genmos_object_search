@@ -182,6 +182,10 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
     if robot_pose is None:
         return
 
+    if bridge.init_robot_pose is None:
+        bridge.init_robot_pose = robot_pose
+        rospy.loginfo(f"initial robot pose (on grid map) set to {bridge.init_robot_pose}")
+
     else:
         if bridge.agent is None:
             # haven't initialized agent yet
