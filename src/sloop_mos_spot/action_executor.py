@@ -83,6 +83,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.publish_status(GoalStatus.ACTIVE,
                                 f"executing navigation goal {kv['name']}",
                                 action_id, msg.stamp)
+            rbd_spot.arm.close_gripper(self.conn, self.command_client)
             rbd_spot.arm.stow(self.conn, self.command_client)
             nav_feedback_code = rbd_spot.graphnav.navigateTo(
                 self.conn, self.graphnav_client, goal,
@@ -101,7 +102,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.publish_status(GoalStatus.ACTIVE,
                                 f"executing moveEE with body follow action {kv['name']}",
                                 action_id, msg.stamp)
-            rbd_spot.arm.open_gripper()
+            rbd_spot.arm.open_gripper(self.conn, self.command_client)
             cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
                 self.conn, self.command_client, self.robot_state_client, goal)
             if cmd_success:
