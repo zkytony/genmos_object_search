@@ -52,13 +52,15 @@ class SpotSloopActionExecutor(ActionExecutor):
             # We will make the robot move its arm with body follow; The robot arm
             # movement is specified with respect to the robot frame.
             robot_pose_after_action = RobotTransBasic2D.transform_pose((0, 0, 0.0), action)
-            goal_pos = robot_pose_after_action[:2]
-            metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
-            goal_yaw = to_rad(robot_pose_after_action[2])
+
+            # note that by default the gripper is a bit forward with respect to the body origin
+            metric_pos_x = 0.65 + robot_pose_after_action[0] * GRID_MAP.grid_size
+            metric_pos_y = robot_pose_after_action[1] * GRID_MAP.grid_size
+            metric_yaw = to_rad(-robot_pose_after_action[2])  # For spot's frame, we needed to reverse the angle
             action_msg = KeyValAction(stamp=rospy.Time.now(),
                                       type="move_2d",
                                       keys=["goal_x", "goal_y", "goal_yaw", "name"],
-                                      values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
+                                      values=[str(metric_pos_x), str(metric_pos_y), str(metric_yaw), action.name])
             return action_msg
 
         elif isinstance(action, FindAction):
