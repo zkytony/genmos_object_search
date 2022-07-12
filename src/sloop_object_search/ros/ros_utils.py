@@ -7,6 +7,8 @@ import rospy
 import geometry_msgs
 import std_msgs
 
+import message_filters
+
 import tf
 import tf2_ros
 #!!! NEED THIS:
@@ -254,3 +256,38 @@ def _convert_img(img, encoding='passthrough'):
     bridge = cv_bridge.CvBridge()
     msg = bridge.cv2_to_imgmsg(img, encoding=encoding)
     return msg
+
+
+
+### Communication ###
+class WaitForMessages:
+    """deals with waiting for messages to arrive at multiple
+    topics. Uses ApproximateTimeSynchronizer. Simply returns
+    a list of messages that were received."""
+    def __init__(self, topics, mtypes, queue_size=10,
+                 delay=0.2, allow_headerless=False, sleep=0.5):
+        """
+        Args:
+            topics (list) List of topics
+            mtypes (list) List of message types, one for each topic.
+            delay  (float) The delay in seconds for which the messages
+                could be synchronized.
+            allow_headerless (bool): Whether it's ok for there to be
+                no header in the messages.
+            sleep (float) the amount of time to wait before checking
+                whether messages are received
+        """
+        self.subs = [message_filters.Subscriber(topic, mtype)
+                     for topic, mtype in zip(topics, mtypes)]
+        self.ts = message_filters.ApproximateTimeSynchronizer(
+            self.subs, queue_size, delay, allow_headerless=allow_headerless)
+        self.ts.registerCallback(self._cb)
+        self.messages = None
+        rate = rospy.Rate(sleep)
+        while not rospy.is_shutdown():
+            if self.messages is not None:
+                break
+            rate.sleep()
+
+    def _cb(self, messages):
+        self.messages = messages

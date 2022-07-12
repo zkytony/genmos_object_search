@@ -9,6 +9,7 @@ from sloop_ros.msg import (PlanNextStepAction,
                            DefaultBelief,
                            DefaultObservation)
 from sloop_object_search.utils.misc import import_class
+from . import ros_utils
 
 
 class BaseAgentROSBridge:
@@ -67,6 +68,7 @@ class BaseAgentROSBridge:
 
         self._last_action = None
         self._last_action_msg = None
+        self._last_action_status = None
 
         self._belief_msg_type = DefaultBelief
         if "belief_msg_type" in self._ros_config:
@@ -186,18 +188,33 @@ class BaseAgentROSBridge:
         if ActionExecutor.action_id(self._last_action_msg)\
            == status.goal_id.id:
             rospy.logerr("action status is not for most recently planned action")
+            return
+        self._last_action_status = status
         if status.status == GoalStatus.ACTIVE:
             rospy.loginfo(f"action {status.goal_id.id} is in progress...")
-            self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
-        elif status.status == GoalStatus.SUCCEEDED:
-            # Update planner and agent's belief after action success (e.g. topo nid).
-            # Let's actually wait for a round of observation, and use them
-            # in the update process.
-            observation = self.collect_observation()
-            self.planner.update(self._last_action, observation)
-            self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
+            self._action_exec_is_active()
         else:
-            rospy.logwarn(f"action {status.goal_id.id} did not succeed.")
+            # action execution finished. Whether it is successful, we
+            # need to update the agent belief and the planner.
+            sources = self._observation_interpretor_class.SOURCES_FOR_REGULAR_UPDATE
+            rospy.loginfo(f"collecting observations from {sources}")
+            observation = self.collect_observation(sources)
+            self.agent.update_belief(observation, self.last_action)
+            rospy.loginfo(f"updated belief")
+            self.planner.update(self._last_action, observation)
+            rospy.loginfo(f"updated planner")
+
+            if status.status == GoalStatus.SUCCEEDED:
+                rospy.loginfo(f"action {status.goal_id.id} succeeded!")
+            else:
+                rospy.logwarn(f"action {status.goal_id.id} did not succeed.")
+            self._clear_last_action()
+            self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
+
+    def _clear_last_action(self):
+        self._last_action = None
+        self._last_action_msg = None
+        self._last_action_status = None
 
     def _setup_troubleshooting_message(self):
         message = "The following objects should not be None:\n"
@@ -227,11 +244,23 @@ class BaseAgentROSBridge:
     def last_action(self):
         return self._last_action
 
-    def collect_observation(self):
+    @property
+    def last_action_status(self):
+        return self._last_action_status
+
+    def collect_observation(self, sources):
         """First, wait for an observation from each observation source
         that should be collected (determined by observation interpreter);
         Then, merge those observations into a single observation object
         and return."""
+        observation_messages = ros_utils.WaitForMessages(
+            [self._observation_topics[s] for s in sources],
+            [self._observation_msg_types[s] for s in sources],
+            queue_size=10,
+            delay=0.3,
+            sleep=0.1).messages
+        return self._observation_interpretor_class.merge_observation_msgs(
+            observation_messages, self)
 
 
 class ActionExecutor:
@@ -311,7 +340,7 @@ class ObservationInterpreter:
        visualization.
     """
     # Should map from observation type (class) to a callback function
-    # To be filled by child class
+    # To be filled by child class. The callback may affect the agent's belief.
     CALLBACKS = {}
 
     # observation types that will be collected once an action
@@ -332,3 +361,13 @@ class ObservationInterpreter:
             return dummy_cb
         else:
             return cls.CALLBACKS[z_type]
+
+    @classmethod
+    def merge_observation_msgs(cls, observation_msgs, bridge):
+        """
+        Given multiple observation messages, return a single Observation object
+        (useful for object-oriented POMDPs, where different observation messages
+        are observations for different objects, while the belief update happens
+        given a single POMDP observation object that is the joint of those observations.).
+        """
+        raise NotImplementedError

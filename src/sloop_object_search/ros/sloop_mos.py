@@ -17,7 +17,7 @@ from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import to_degrees
 from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
 import sloop_object_search.ros.ros_utils as ros_utils
-from sloop_ros.msg import GridMap2d
+from sloop_ros.msg import GridMap2d, KeyValAction
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
 from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map
 from .framework import BaseAgentROSBridge
@@ -120,11 +120,17 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
 
 
 ### Robot-agnostic observation interpretation callback functions
-def grid_map_msg_callback(grid_map_msg, bridge):
+def interpret_grid_map_msg(grid_map_msg, bridge):
     if bridge.grid_map is not None:
         return
 
     grid_map = ros_msg_to_grid_map(grid_map_msg)
+    return grid_map
+
+def grid_map_msg_callback(grid_map_msg, bridge):
+    grid_map = interpret_grid_map_msg(grid_map_msg, bridge)
+    if grid_map is None:
+        return
 
     # If grid map's name is unrecognized, we would like
     # to register this map into our database.
@@ -135,11 +141,10 @@ def grid_map_msg_callback(grid_map_msg, bridge):
     rospy.loginfo("Obtained grid map")
 
 
-def robot_pose_msg_callback(robot_pose_msg, bridge):
-    """
-    Given a geometry_msgs/PoseStamped message, return a
-    (x, y, yaw) pose.
-    """
+def interpret_robot_pose_msg(robot_pose_msg, bridge):
+    """It's helpful to have an interpret_* function for
+    a message type, especially if this message type's
+    interpretation may be later merged with others."""
     if bridge.grid_map is None:
         # We can't interpret robot pose yet
         return
@@ -151,10 +156,16 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
     _, _, yaw = euler_from_quaternion((quat.x, quat.y, quat.z, quat.w))
     yaw = to_degrees(yaw)
     robot_pose = (rx, ry, yaw)
+    return robot_pose
 
-    if bridge.init_robot_pose is None:
-        bridge.init_robot_pose = robot_pose
-        rospy.loginfo(f"initial robot pose (on grid map) set to {bridge.init_robot_pose}")
+def robot_pose_msg_callback(robot_pose_msg, bridge):
+    """
+    Given a geometry_msgs/PoseStamped message, return a
+    (x, y, yaw) pose.
+    """
+    robot_pose = interpret_robot_pose_msg(robot_pose_msg, bridge)
+    if robot_pose is None:
+        return
 
     else:
         if bridge.agent is None:
