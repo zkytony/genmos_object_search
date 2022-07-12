@@ -212,7 +212,11 @@ def waypoints_msg_to_arr(waypoints_msg):
 class GraphNavPointCloudToGridMapPublisher:
     def __init__(self, args):
         rospy.init_node("graphnav_cloud_to_grid_map")
+
+        # parameters for grid map creation
         self.grid_size = args.grid_size
+        self.layout_cut = args.layout_cut
+
         self._debug = args.debug
         self.latch = not args.updating
         self.map_name = args.name
