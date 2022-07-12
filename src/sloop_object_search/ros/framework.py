@@ -173,6 +173,13 @@ class BaseAgentROSBridge:
             self._progress_publisher.publish(progress_msg)
             rate.sleep()
 
+    @property
+    def planner(self):
+        return self._planner
+
+    def set_planner(self, planner):
+        self._planner = planner
+
     def plan(self, goal):
         result = PlanNextStepResult()
         if self._planner is None:
@@ -193,9 +200,6 @@ class BaseAgentROSBridge:
             self._action_publisher.publish(action_msg)
             result.status = GoalStatus.SUCCEEDED
             self._plan_server.set_succeeded(result)
-
-    def set_planner(self, planner):
-        self._planner = planner
 
     def _action_exec_status_cb(self, status):
         if ActionExecutor.action_id(self._last_action_msg)\
@@ -322,7 +326,7 @@ class ActionExecutor:
         raise NotImplementedError
 
     @classmethod
-    def aciton_id(cls, action_msg):
+    def action_id(cls, action_msg):
         assert isinstance(action_msg, KeyValAction)
         return "{}-{}".format(action_msg.type, str(action_msg.stamp))
 
