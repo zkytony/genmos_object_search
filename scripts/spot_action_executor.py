@@ -7,8 +7,7 @@ from sloop_mos_spot.action_executor import SpotSloopActionExecutor
 def main():
     rospy.init_node("spot_sloop_action_executor")
     print(f"initialized node {rospy.get_name()}")
-    status_topic = rospy.get_param("~status_topic")
-    s = SpotSloopActionExecutor(status_topic=status_topic)
+    s = SpotSloopActionExecutor()
     s.setup()
     rospy.spin()
 

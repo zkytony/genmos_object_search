@@ -15,7 +15,7 @@
   <!-- Publishing grid map projection -->
   <node pkg="sloop_ros" type="spot_graphnav_cloud_to_grid_map.py"
         name="graphnav_pcd_to_grid_map"
-        args="--name $(arg map_name) --grid-size $(arg grid_size) --layout-cut $(arg layuout_cut)" output="screen"/>
+        args="--name $(arg map_name) --grid-size $(arg grid_size) --layout-cut $(arg layout_cut)" output="screen"/>
 
   <!-- Perception (object segmentation and fiducial markers -->
   <node pkg="rbd_spot_perception" type="stream_segmentation.py"
@@ -33,5 +33,6 @@
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
     <remap from="~observation/robot_pose" to="/spot_hand_pose"/>
     <remap from="~observation/detection_3d" to="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/>
+    <remap from="~action_status" to="/spot_action_executor/status"/>
   </node>
 </launch>

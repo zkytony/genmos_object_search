@@ -66,6 +66,7 @@ class BaseAgentROSBridge:
         self._plan_service = self._ros_config.get("plan_service", "~plan")  # would become <node_name>/plan
         self._action_topic = self._ros_config.get("action_topic", "~action")
         self._belief_topic = self._ros_config.get("belief_topic", "~belief")
+
         self._progress_topic = self._ros_config.get("progress_topic", "~progress")
         self.map_frame = self._ros_config.get("map_frame", "graphnav_map")
 
@@ -90,7 +91,10 @@ class BaseAgentROSBridge:
 
         # Action executor class: it informs how to convert actions to ROS messages.
         self._action_executor_class = import_class(self._ros_config["action_executor"])
-        self._action_exec_status_topic = self._ros_config["action_exec_status_topic"]
+
+        # topic to subscribe for action execution status, published by ActionExecutor
+        self._action_exec_status_topic = self._ros_config.get("action_status_topic", "~action_status")
+
         # Observation interpretor: it informs how to convert observations to ROS messages
         self._observation_interpretor_class = import_class(self._ros_config["observation_interpreter"])
 
