@@ -63,7 +63,7 @@ def detection_3d_msg_callback(detection_msg, bridge):
     bridge.agent.update_belief(z_joint, bridge.last_action)
     rospy.loginfo("updated belief")
     if bridge.last_action is not None:
-        bridge.planner.update(bridge.last_action, z_joint)
+        bridge.planner.update(bridge.agent, bridge.last_action, z_joint)
         rospy.loginfo("updated planner")
 
 def detection_img_msg_callback(detection_msg, bridge):

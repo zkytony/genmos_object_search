@@ -203,4 +203,4 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
         bridge.agent.belief.update_robot_belief(
             GMOSObservation({bridge.agent.robot_id: robot_observation}), None)
         if bridge.last_action is not None:
-            bridge.planner.update(bridge.last_action, GMOSObservation({bridge.agent.robot_id: robot_observation}))
+            bridge.planner.update(bridge.agent, bridge.last_action, GMOSObservation({bridge.agent.robot_id: robot_observation}))
