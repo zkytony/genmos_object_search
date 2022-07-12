@@ -61,8 +61,8 @@ def detection_3d_msg_callback(detection_msg, bridge):
 
     z_joint = GMOSObservation(z_joint_dict)
     bridge.agent.update_belief(z_joint, bridge.last_action)
-    rospy.loginfo("updated belief")
-    if bridge.last_action is not None:
+    rospy.loginfo("updated belief. Robot state: {}".format(bridge.agent.belief.mpe().s(bridge.agent.robot_id)))
+    if bridge.last_action is not None and hasattr(bridge.agent, "tree"):
         bridge.planner.update(bridge.agent, bridge.last_action, z_joint)
         rospy.loginfo("updated planner")
 
