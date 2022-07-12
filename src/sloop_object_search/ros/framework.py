@@ -217,9 +217,10 @@ class BaseAgentROSBridge:
             # need to update the agent belief and the planner.
             sources = self._observation_interpretor_class.SOURCES_FOR_REGULAR_UPDATE
             rospy.loginfo(f"collecting observations from {sources}")
+            import pdb; pdb.set_trace()
             observation = self.collect_observation(sources)
             self.agent.update_belief(observation, self.last_action)
-            rospy.loginfo(f"updated belief")
+            rospy.loginfo(f"updated belief. Robot state:", self.agent.belief.mpe().s(self.agent.robot_id))
             self.planner.update(self._last_action, observation)
             rospy.loginfo(f"updated planner")
 
