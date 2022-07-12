@@ -47,8 +47,8 @@ def interpret_detection_3d_msg(detection_msg, bridge):
             zobj = ObjectDetection2D(det3d.label, (obj_grid_x, obj_grid_y))
             z_joint_dict[det3d.label] = zobj
             rospy.loginfo("- {} ({:.3f}) grid loc: {}".format(det3d.label, det3d.score, zobj.loc))
-
     return z_joint_dict
+
 
 def detection_3d_msg_callback(detection_msg, bridge):
     """For object detections which have depth readings.
@@ -62,7 +62,9 @@ def detection_3d_msg_callback(detection_msg, bridge):
     z_joint = GMOSObservation(z_joint_dict)
     bridge.agent.update_belief(z_joint, bridge.last_action)
     rospy.loginfo("updated belief")
-
+    if bridge.last_action is not None:
+        bridge.planner.update(bridge.last_action, z_joint)
+        rospy.loginfo("updated planner")
 
 def detection_img_msg_callback(detection_msg, bridge):
     """For object detections in image, but we don't have depth"""
@@ -113,7 +115,7 @@ class SpotObservationInterpreter(ObservationInterpreter):
         robot_observation = RobotObservationTopo(
             bridge.agent.robot_id,
             robot_pose,
-            objects_found
+            objects_found,
             None,
             topo_nid)
         z_joint_dict[bridge.agent.robot_id] = robot_observation
