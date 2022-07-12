@@ -52,9 +52,6 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def run(self):
         # start visualization
         self.init_visualization()
-        # publish found objects robot state periodically
-        rospy.Timer(rospy.Duration(1.0/self._task_progress_pub_rate),
-                    labmda event: self.)
         super().run()
 
     def init_agent(self, config):
@@ -131,7 +128,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         objects_found = set(self.agent.belief.mpe().s(self.agent.robot_id)['objects_found'])
         all_targets = set(self.agent.agent_config.get("targets"))
         if len(objects_found) == len(all_targets):
-            return std_msgs.String(data="all found.")
+            return std_msgs.String(data="all found")
         else:
             not_yet_found = all_targets - objects_found
             return std_msgs.String(data=f"found: {objects_found}.  not yet: {not_yet_found}")

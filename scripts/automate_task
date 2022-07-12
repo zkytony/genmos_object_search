@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+#
+# Automatically interact with a Sloop MOS ROS bridge until task finishes
+# This script will periodically call the plan service - because belief
+# update happens all the time, so it's ok to replan (based on current belief).
+import rospy
+import argparse
+import std_msgs.msg as std_msgs
+from sloop_ros.msg import PlanNextStepActionGoal
+
+class AutomateTask:
+    def __init__(self, plan_goal_topic, progress_topic, replan_freq, max_steps):
+        self.done = False
+        self.max_steps = max_steps
+        self.step_count = 0
+        self.plan_freq = replan_freq
+        self._plan_goal_pub = rospy.Publisher(
+            plan_goal_topic, PlanNextStepActionGoal, queue_size=10)
+        self._progress_sub = rospy.Subscriber(
+            progress_topic, std_msgs.String, self._progress_cb)
+
+    def _progress_cb(self, msg):
+        if msg.data == "all found":
+            self.done = True
+
+    def run(self):
+        # periodically send plan request
+        rospy.Timer(rospy.Duration(self.plan_freq),
+                    lambda event: self.send_plan_request)
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            if self.step_count >= self.max_steps:
+                rospy.logwarn("Used up all planning steps. Task not finished.")
+                return
+            if self.done:
+                rospy.loginfo("Task finished!")
+                return
+            rate.sleep()
+
+    def send_plan_request(self):
+        if self.step_count < self.max_steps:
+            g = PlanNextStepActionGoal()
+            g.header.stamp = rospy.Time.now()
+            self.plan_goal_pub.publish(g)
+            self.steps
+        else:
+            rospy.logwarn("Used up all planning steps.")
+
+
+def main():
+    rospy.init_node("automate_task")
+    parser = argparse.ArgumentParser(description="Automate SLOOP MOS task on a robot.")
+    parser.add_argument("--plan-goal-topic", type=str, help="a topic that accepts plan requests (PlanNextStepActionGaol)",
+                        required=True)
+    parser.add_argument("--progress-topic", type=str, help="name of the topic checking progress",
+                        required=True)
+    parser.add_argument("--max-steps", type=int, help="Maximum number of planning steps", default=10)
+    parser.add_argument("--replan-freq", type=float, help="Time to wait before sending another plan request", default=1.0)
+    args, _ = parser.parse_known_args()
+    t = AutomateTask(args.plan_goal_topic, args.progerss_topic, args.replan_freq, args.max_steps)
+    t.run()
+
+
+if __name__ == "__main__":
+    main()
