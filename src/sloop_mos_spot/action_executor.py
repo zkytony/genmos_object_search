@@ -59,6 +59,12 @@ class SpotSloopActionExecutor(ActionExecutor):
                                       values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
             return action_msg
 
+        elif isinstance(action, FindAction):
+            return KeyValAction(stamp=rospy.Time.now(),
+                                type="find",
+                                keys=[],
+                                values=[])
+
 
     def _execute_action_cb(self, msg):
         if msg.type == "nothing":
@@ -102,6 +108,12 @@ class SpotSloopActionExecutor(ActionExecutor):
             else:
                 self.publish_status(GoalStatus.ABORTED,
                                     "arm movement failed",
+                                    action_id, msg.stamp)
+
+        elif msg.type == "find":
+            # nothing needs to be done; just publish success
+            self.publish_status(GoalStatus.SUCCEEDED,
+                                    "find action succeeded",
                                     action_id, msg.stamp)
 
 
