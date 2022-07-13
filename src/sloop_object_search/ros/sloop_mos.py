@@ -152,6 +152,17 @@ def grid_map_msg_callback(grid_map_msg, bridge):
     if grid_map.name not in FILEPATHS:
         register_map(grid_map)
 
+    # TODO: AD-HOC
+    # Label the grid map. For free locations that are a certain
+    # distance away from obstacles, assign them as reachable locations.
+    # Label free locations as search region.
+
+
+
+    ## NOTE: CURRENTLY SPECIFIC FOR SPOT
+    grid_map.label_all(grid_map.free_locations, "reachable")
+    grid_map.label_all(grid_map.free_locations, "search_region") #obstacles
+
     bridge.grid_map = grid_map
     rospy.loginfo("Obtained grid map")
 
