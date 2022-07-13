@@ -224,11 +224,6 @@ class BaseAgentROSBridge:
             rospy.loginfo(f"updated belief. Robot state:", self.agent.belief.mpe().s(self.agent.robot_id))
             self.planner.update(self._last_action, observation)
             rospy.loginfo(f"updated planner")
-
-            if status.status == GoalStatus.SUCCEEDED:
-                rospy.loginfo(typ.success(f"action {self._last_action} succeeded!"))
-            else:
-                rospy.logwarn(typ.warning(f"action {self._last_action} did not succeed."))
             self._clear_last_action()
             self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
 
