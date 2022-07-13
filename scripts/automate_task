@@ -27,16 +27,18 @@ class AutomateTask:
                  plan_goal_topic,
                  progress_topic,
                  action_status_topic,
-                 max_steps):
+                 max_steps,
+                 max_plan_freq=2):
         self.done = False
         self.max_steps = max_steps
         self.step_count = 0
+        self.max_plan_freq = max_plan_freq
 
         self._wait_for_status = False
         self._action_active = False
 
         self._plan_goal_pub = rospy.Publisher(
-            plan_goal_topic, PlanNextStepActionGoal, queue_size=10)
+            plan_goal_topic, PlanNextStepActionGoal, queue_size=10, latch=True)
         self._progress_sub = rospy.Subscriber(
             progress_topic, std_msgs.String, self._progress_cb)
         self._action_status_topic = rospy.Subscriber(
@@ -58,10 +60,7 @@ class AutomateTask:
                 self._wait_for_status = False
 
     def run(self):
-        # periodically send plan request
-        rospy.Timer(rospy.Duration(1.0/self.plan_freq),
-                    lambda event: self.send_plan_request())
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(self.max_plan_freq)
         while not rospy.is_shutdown():
             if self.step_count >= self.max_steps:
                 rospy.logwarn("Used up all planning steps. Task not finished.")
