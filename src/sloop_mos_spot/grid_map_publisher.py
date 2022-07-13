@@ -62,7 +62,7 @@ def flood_fill(grid_points, seed_point, brush_size=2):
     grid_points_set = set(map(tuple, grid_points))
     # BFS
     worklist = deque([seed_point])
-    visited = set()
+    visited = set(seed_point)
     new_points = set()
     while len(worklist) > 0:
         point = worklist.popleft()

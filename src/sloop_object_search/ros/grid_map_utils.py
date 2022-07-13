@@ -78,7 +78,7 @@ def cells_with_minimum_distance_from_obstacles(grid_map, dist=1):
         seed_loc = random.sample(free_locs_not_considered, 1)[0]
         # BFS
         worklist = deque([seed_loc])
-        visited = set()
+        visited = set(seed_loc)
         while len(worklist) > 0:
             loc = worklist.popleft()
             # Check whether
@@ -92,4 +92,5 @@ def cells_with_minimum_distance_from_obstacles(grid_map, dist=1):
                         visited.add(neighbor_loc)
         free_locs_not_considered -= visited
         assert grid_map.free_locations != free_locs_not_considered
+        import pdb; pdb.set_trace()
     return desired_cells
