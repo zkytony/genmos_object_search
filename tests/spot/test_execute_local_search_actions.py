@@ -33,14 +33,14 @@ def stow_arm(pub, wait=5):
     action_msg = KeyValAction(stamp=rospy.Time.now(),
                               type="stow_arm")
     pub.publish(action_msg)
-    time.sleep(5)
+    # time.sleep(5)
 
 
 def test():
     rospy.init_node("test_execute_local_search_action")
     grid_map_msg = rospy.Subscriber("/graphnav_gridmap", GridMap2d, grid_map_cb)
     pub = rospy.Publisher("/run_sloop_mos_spot/action", KeyValAction, queue_size=10)
-    while GRID_MAP is None:
+    while GRID_MAP is None and not rospy.is_shutdown():
         print("Waiting for grid map")
         time.sleep(0.5)
     print("Got grid map")
@@ -50,6 +50,14 @@ def test():
     test_movement_action(pub, "TurnRight")
     stow_arm(pub)
     test_movement_action(pub, "Forward")
+    stow_arm(pub)
+    test_movement_action(pub, "TurnLeft")
+    stow_arm(pub)
+    test_movement_action(pub, "TurnLeft")
+    stow_arm(pub)
+    test_movement_action(pub, "TurnRight")
+    stow_arm(pub)
+    test_movement_action(pub, "TurnRight")
     stow_arm(pub)
 
 

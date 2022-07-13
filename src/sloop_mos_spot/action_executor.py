@@ -15,6 +15,7 @@ from actionlib_msgs.msg import GoalStatus
 
 from bosdyn.client.math_helpers import Quat
 from bosdyn.api.graph_nav import graph_nav_pb2
+from bosdyn.api import robot_command_pb2
 import rbd_spot
 
 # distance between hand and body frame origin
@@ -90,7 +91,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             rbd_spot.arm.stow(self.conn, self.command_client)
             nav_feedback_code = rbd_spot.graphnav.navigateTo(
                 self.conn, self.graphnav_client, goal,
-                tolerance=(0.25, 0.25, 0.15), speed="slow")
+                tolerance=(0.25, 0.25, 0.15))
             self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
 
         elif msg.type == "move_2d":
@@ -107,6 +108,13 @@ class SpotSloopActionExecutor(ActionExecutor):
             rbd_spot.arm.open_gripper(self.conn, self.command_client)
             cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
                 self.conn, self.command_client, self.robot_state_client, goal)
+            # also, rotate the body a little bit; TODO: ad-hoc
+            if "TurnLeft" in kv['name']:
+                rbd_spot.body.velocityCommand(
+                    self.conn, self.command_client, 0.0, 0.0, 0.5, duration=1.0)  # 1s is roughtly ~<45deg
+            elif "TurnRight" in kv['name']:
+                rbd_spot.body.velocityCommand(
+                    self.conn, self.command_client, 0.0, 0.0, -0.5, duration=1.0)
             if cmd_success:
                 self.publish_status(GoalStatus.SUCCEEDED,
                                     "arm movement succeeded",
