@@ -8,7 +8,7 @@ def test():
     messages = WaitForMessages(
         ["/spot_hand_pose", "/spot/segmentation/hand/result_boxes3d"],
         [PoseStamped, SimpleDetection3DArray],
-        delay=1.0,
+        delay=0.5,
         sleep=0.05,
         verbose=True).messages
     print("number of messages:", messages)
