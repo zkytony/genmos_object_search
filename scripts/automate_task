@@ -27,8 +27,8 @@ class AutomateTask:
 
     def run(self):
         # periodically send plan request
-        rospy.Timer(rospy.Duration(self.plan_freq),
-                    lambda event: self.send_plan_request)
+        rospy.Timer(rospy.Duration(1.0/self.plan_freq),
+                    lambda event: self.send_plan_request())
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             if self.step_count >= self.max_steps:
@@ -43,9 +43,9 @@ class AutomateTask:
         if self.step_count < self.max_steps:
             g = PlanNextStepActionGoal()
             g.header.stamp = rospy.Time.now()
-            self.plan_goal_pub.publish(g)
+            self._plan_goal_pub.publish(g)
             rospy.loginfo("Published plan goal")
-            self.steps += 1
+            self.step_count += 1
         else:
             rospy.logwarn("Used up all planning steps.")
 
@@ -58,7 +58,7 @@ def main():
     parser.add_argument("--progress-topic", type=str, help="name of the topic checking progress",
                         required=True)
     parser.add_argument("--max-steps", type=int, help="Maximum number of planning steps", default=10)
-    parser.add_argument("--replan-freq", type=float, help="Time to wait before sending another plan request", default=1.0)
+    parser.add_argument("--replan-freq", type=float, help="Time (s) to wait before sending another plan request", default=1.0)
     args, _ = parser.parse_known_args()
     t = AutomateTask(args.plan_goal_topic, args.progress_topic, args.replan_freq, args.max_steps)
     t.run()
