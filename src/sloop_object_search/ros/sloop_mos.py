@@ -15,7 +15,8 @@ from sloop_object_search.oopomdp.domain.action import LookAction
 from sloop_object_search.oopomdp.domain.observation import RobotObservationTopo, GMOSObservation
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import to_degrees
-from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
+from sloop_object_search.ros.grid_map_utils import (ros_msg_to_grid_map,
+                                                    cells_with_minimum_distance_from_obstacles)
 import sloop_object_search.ros.ros_utils as ros_utils
 from sloop_ros.msg import GridMap2d, KeyValAction
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
@@ -143,6 +144,7 @@ def interpret_grid_map_msg(grid_map_msg, bridge):
     return grid_map
 
 def grid_map_msg_callback(grid_map_msg, bridge):
+    rospy.loginfo("Received grid map message. Converting...")
     grid_map = interpret_grid_map_msg(grid_map_msg, bridge)
     if grid_map is None:
         return
@@ -156,12 +158,9 @@ def grid_map_msg_callback(grid_map_msg, bridge):
     # Label the grid map. For free locations that are a certain
     # distance away from obstacles, assign them as reachable locations.
     # Label free locations as search region.
-
-
-
-    ## NOTE: CURRENTLY SPECIFIC FOR SPOT
-    grid_map.label_all(grid_map.free_locations, "reachable")
-    grid_map.label_all(grid_map.free_locations, "search_region") #obstacles
+    cells = cells_with_minimum_distance_from_obstacles(grid_map, dist=1)
+    grid_map.label_all(cells, "reachable")
+    grid_map.label_all(grid_map.free_locations, "search_region")
 
     bridge.grid_map = grid_map
     rospy.loginfo("Obtained grid map")
