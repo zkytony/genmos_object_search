@@ -140,15 +140,15 @@ class SpotSloopActionExecutor(ActionExecutor):
                                 action_id, stamp)
         elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_LOST:
             self.publish_status(GoalStatus.ABORTED,
-                                "Robot got lost when navigating the route",
+                                typ.error("Robot got lost when navigating the route"),
                                 action_id, stamp)
         elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_STUCK:
             self.publish_status(GoalStatus.ABORTED,
-                                "Robot got stuck when navigating the route",
+                                typ.error("Robot got stuck when navigating the route"),
                                 action_id, stamp)
         elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_ROBOT_IMPAIRED:
             self.publish_status(GoalStatus.ABORTED,
-                                "Robot is impaired.",
+                                typ.error("Robot is impaired."),
                                 action_id, stamp)
         else:
             self.publish_status(GoalStatus.PENDING,
