@@ -105,7 +105,7 @@ class SpotObservationInterpreter(ObservationInterpreter):
                 if det3d.label in bridge.agent.agent_config["targets"]:
                     newly_found_objects.add(det3d.label)
         current_robot_state = bridge.agent.belief.mpe().s(bridge.agent.robot_id)
-        objects_found = tuple(sorted(set(current_robot_state["objects_found"]) + newly_found_objects))
+        objects_found = tuple(sorted(set(current_robot_state["objects_found"]) | newly_found_objects))
 
         # If the last action is MoveTopo, then just update the topo nid to
         # be the closest node the robot is at now (doesn't matter if it's not

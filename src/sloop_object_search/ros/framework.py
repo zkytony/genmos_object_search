@@ -221,7 +221,7 @@ class BaseAgentROSBridge:
             rospy.loginfo(f"collecting observations from {sources}")
             observation = self.collect_observation(sources)
             self.agent.update_belief(observation, self.last_action)
-            rospy.loginfo(f"updated belief. Robot state:", self.agent.belief.mpe().s(self.agent.robot_id))
+            rospy.loginfo("updated belief. Robot state: {}".format(self.agent.belief.mpe().s(self.agent.robot_id)))
             self.planner.update(self._last_action, observation)
             rospy.loginfo(f"updated planner")
             self._clear_last_action()
