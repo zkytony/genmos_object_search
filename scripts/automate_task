@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 # Automatically interact with a Sloop MOS ROS bridge until task finishes
+# This script calls the plan service when an action is successful
 # This script will periodically call the plan service - because belief
 # update happens all the time, so it's ok to replan (based on current belief).
 import rospy
@@ -8,22 +9,53 @@ import argparse
 import std_msgs.msg as std_msgs
 from pomdp_py.utils import typ
 from sloop_ros.msg import PlanNextStepActionGoal
+from actionlib_msgs.msg import GoalStatus
+
+GOAL_STATUS = ["PENDING",
+               "ACTIVE",
+               "PREEMPTED",
+               "SUCCEEDED",
+               "ABORTED",
+               "REJECTED",
+               "PREEMPTING",
+               "RECALLING",
+               "RECALLED",
+               "LOST"]
 
 class AutomateTask:
-    def __init__(self, plan_goal_topic, progress_topic, replan_freq, max_steps):
+    def __init__(self,
+                 plan_goal_topic,
+                 progress_topic,
+                 action_status_topic,
+                 max_steps):
         self.done = False
         self.max_steps = max_steps
         self.step_count = 0
-        self.plan_freq = replan_freq
+
+        self._wait_for_status = False
+        self._action_active = False
+
         self._plan_goal_pub = rospy.Publisher(
             plan_goal_topic, PlanNextStepActionGoal, queue_size=10)
         self._progress_sub = rospy.Subscriber(
             progress_topic, std_msgs.String, self._progress_cb)
+        self._action_status_topic = rospy.Subscriber(
+            action_status_topic, GoalStatus, self._action_status_cb)
 
     def _progress_cb(self, msg):
         rospy.loginfo(typ.info(msg.data))
         if msg.data == "all found":
             self.done = True
+
+    def _action_status_cb(self, status_msg):
+        if self._wait_for_status:
+            rospy.loginfo(f"{status_msg.goal_id.id} status: {GOAL_STATUS[status_msg.status]}")
+            if status_msg.status == GoalStatus.ACTIVE:
+                self._action_active = True
+                self._wait_for_status = True
+            else:
+                self._action_active = False
+                self._wait_for_status = False
 
     def run(self):
         # periodically send plan request
@@ -37,30 +69,44 @@ class AutomateTask:
             if self.done:
                 rospy.loginfo("Task finished!")
                 return
+
+            if self.step_count == 0:
+                self.send_plan_request()
+
+            if not (self._wait_for_status or self._action_active):
+                self.send_plan_request()
+
             rate.sleep()
 
     def send_plan_request(self):
-        if self.step_count < self.max_steps:
-            g = PlanNextStepActionGoal()
-            g.header.stamp = rospy.Time.now()
-            self._plan_goal_pub.publish(g)
-            rospy.loginfo("Published plan goal")
-            self.step_count += 1
+        if not self._action_active:
+            if self.step_count < self.max_steps:
+                g = PlanNextStepActionGoal()
+                g.header.stamp = rospy.Time.now()
+                self._wait_for_status = True
+                self._plan_goal_pub.publish(g)
+                rospy.loginfo("Published plan goal")
+                self.step_count += 1
+            else:
+                rospy.logwarn("Used up all planning steps.")
         else:
-            rospy.logwarn("Used up all planning steps.")
+            rospy.logwarn("another action is active. Will not plan right now.")
 
 
 def main():
     rospy.init_node("automate_task")
     parser = argparse.ArgumentParser(description="Automate SLOOP MOS task on a robot.")
-    parser.add_argument("--plan-goal-topic", type=str, help="a topic that accepts plan requests (PlanNextStepActionGaol)",
-                        required=True)
-    parser.add_argument("--progress-topic", type=str, help="name of the topic checking progress",
-                        required=True)
     parser.add_argument("--max-steps", type=int, help="Maximum number of planning steps", default=10)
-    parser.add_argument("--replan-freq", type=float, help="Time (s) to wait before sending another plan request", default=1.0)
     args, _ = parser.parse_known_args()
-    t = AutomateTask(args.plan_goal_topic, args.progress_topic, args.replan_freq, args.max_steps)
+
+    plan_goal_topic = rospy.get_param("~plan_goal_topic")
+    progress_topic = rospy.get_param("~progress_topic")
+    action_status_topic = rospy.get_param("~action_status_topic")
+
+    t = AutomateTask(plan_goal_topic,
+                     progress_topic,
+                     action_status_topic,
+                     args.max_steps)
     t.run()
 
 
