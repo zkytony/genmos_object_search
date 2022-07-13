@@ -263,7 +263,7 @@ def _convert_img(img, encoding='passthrough'):
 class WaitForMessages:
     """deals with waiting for messages to arrive at multiple
     topics. Uses ApproximateTimeSynchronizer. Simply returns
-    a list of messages that were received."""
+    a tuple of messages that were received."""
     def __init__(self, topics, mtypes, queue_size=10,
                  delay=0.2, allow_headerless=False, sleep=0.5):
         """
@@ -289,5 +289,5 @@ class WaitForMessages:
                 break
             rate.sleep()
 
-    def _cb(self, messages):
+    def _cb(self, *messages):
         self.messages = messages
