@@ -2,8 +2,8 @@
   <arg name="max_steps" value="10"/>
   <arg name="replan_freq" value="1.0"/>
   <!-- Action Executor for Spot -->
-  <node name="spot_action_executor"
+  <node name="spot_sloop_mos_automate_task"
         pkg="sloop_ros" type="automate_task" output="screen"
-        args="--plan-goal-topic /run_sloop_mos_spot/plan/goal --progress-topic /run_sloop_mos_spot/plan/goal --max-steps $(arg max_steps) --replan-freq $(arg replan_freq)">
+        args="--plan-goal-topic /run_sloop_mos_spot/plan/goal --progress-topic /run_sloop_mos_spot/progress --max-steps $(arg max_steps) --replan-freq $(arg replan_freq)">
   </node>
 </launch>

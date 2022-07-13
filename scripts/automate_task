@@ -6,6 +6,7 @@
 import rospy
 import argparse
 import std_msgs.msg as std_msgs
+from pomdp_py.utils import typ
 from sloop_ros.msg import PlanNextStepActionGoal
 
 class AutomateTask:
@@ -20,6 +21,7 @@ class AutomateTask:
             progress_topic, std_msgs.String, self._progress_cb)
 
     def _progress_cb(self, msg):
+        rospy.loginfo(typ.info(msg.data))
         if msg.data == "all found":
             self.done = True
 
@@ -42,7 +44,8 @@ class AutomateTask:
             g = PlanNextStepActionGoal()
             g.header.stamp = rospy.Time.now()
             self.plan_goal_pub.publish(g)
-            self.steps
+            rospy.loginfo("Published plan goal")
+            self.steps += 1
         else:
             rospy.logwarn("Used up all planning steps.")
 
@@ -57,7 +60,7 @@ def main():
     parser.add_argument("--max-steps", type=int, help="Maximum number of planning steps", default=10)
     parser.add_argument("--replan-freq", type=float, help="Time to wait before sending another plan request", default=1.0)
     args, _ = parser.parse_known_args()
-    t = AutomateTask(args.plan_goal_topic, args.progerss_topic, args.replan_freq, args.max_steps)
+    t = AutomateTask(args.plan_goal_topic, args.progress_topic, args.replan_freq, args.max_steps)
     t.run()
 
 
