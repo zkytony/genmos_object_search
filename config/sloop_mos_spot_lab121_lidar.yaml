@@ -59,23 +59,22 @@ agent_config:
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
 
-  spacy_model: en_core_web_lg
-
-
   topo_map_args:
     degree:
     - 3
     - 5
     node_coverage_radius: 3.0
     num_place_samples: 10
-    resample_prob_thres: 0.25
+    resample_prob_thres: 0.5
     seed: 1120
     sep: 4.0
 
+  no_look: true
 
+
+  spacy_model: en_core_web_lg
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
   foref_model_map_name: honolulu  # we force usage of this model
-  no_look: true
   object_symbol_map:
     GreenToyota: G
 
