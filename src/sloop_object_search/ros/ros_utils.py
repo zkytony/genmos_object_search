@@ -265,7 +265,7 @@ class WaitForMessages:
     topics. Uses ApproximateTimeSynchronizer. Simply returns
     a tuple of messages that were received."""
     def __init__(self, topics, mtypes, queue_size=10,
-                 delay=0.2, allow_headerless=False, sleep=0.5):
+                 delay=0.2, allow_headerless=False, sleep=0.5, verbose=False):
         """
         Args:
             topics (list) List of topics
@@ -277,17 +277,27 @@ class WaitForMessages:
             sleep (float) the amount of time to wait before checking
                 whether messages are received
         """
+        self.messages = None
+        self.verbose = verbose
+        if self.verbose:
+            rospy.loginfo("initializing message filter ApproximateTimeSynchronizer")
         self.subs = [message_filters.Subscriber(topic, mtype)
                      for topic, mtype in zip(topics, mtypes)]
         self.ts = message_filters.ApproximateTimeSynchronizer(
             self.subs, queue_size, delay, allow_headerless=allow_headerless)
         self.ts.registerCallback(self._cb)
-        self.messages = None
-        rate = rospy.Rate(sleep)
+        rate = rospy.Rate(1.0/sleep)
         while not rospy.is_shutdown():
             if self.messages is not None:
+                rospy.loginfo("Received messages! Done!")
                 break
+            if self.verbose:
+                rospy.loginfo("waiting for messages from {}".format(topics))
             rate.sleep()
 
     def _cb(self, *messages):
+        if self.messages is not None:
+            return
+        if self.verbose:
+            rospy.loginfo("got messages!")
         self.messages = messages

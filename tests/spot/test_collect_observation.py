@@ -6,16 +6,13 @@ from rbd_spot_perception.msg import SimpleDetection3DArray
 def test():
     rospy.init_node("test_collect_observation")
     messages = WaitForMessages(
-        ["/spot_hand_pose", "/spot/segmentation/hand/result_boxes3d"],
+        ["/spot_hand_pose"],
         [PoseStamped, SimpleDetection3DArray],
         delay=1.0,
-        sleep=0.1).messages
+        sleep=0.05,
+        verbose=True).messages
     print("number of messages:", messages)
-    print(len(messages))
-    print(type(messages[0]))
-    assert type(messages[0]) == PoseStamped
-    print(type(messages[1]))
-    assert type(messages[1]) == SimpleDetection3DArray
+    print([type(m) for m in messages])
 
 
 if __name__ == "__main__":
