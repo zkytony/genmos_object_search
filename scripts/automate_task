@@ -8,7 +8,7 @@ import rospy
 import argparse
 import std_msgs.msg as std_msgs
 from pomdp_py.utils import typ
-from sloop_ros.msg import PlanNextStepActionGoal
+from sloop_ros.msg import PlanNextStepActionGoal, PlanNextStepActionResult
 from actionlib_msgs.msg import GoalStatus
 
 GOAL_STATUS = ["PENDING",
@@ -39,6 +39,8 @@ class AutomateTask:
 
         self._plan_goal_pub = rospy.Publisher(
             plan_goal_topic, PlanNextStepActionGoal, queue_size=10, latch=True)
+        self._plan_status_pub = rospy.Subscriber(
+            "plan_goal_topic".split("/goal")[0] + "/result", PlanNextStepActionResult, self._plan_status_cb)
         self._progress_sub = rospy.Subscriber(
             progress_topic, std_msgs.String, self._progress_cb)
         self._action_status_topic = rospy.Subscriber(
@@ -58,6 +60,11 @@ class AutomateTask:
             else:
                 self._action_active = False
                 self._wait_for_status = False
+
+    def _plan_status_cb(self, result_msg):
+        rospy.loginfo("Plan service request response: " + GOAL_STATUS[result_msg.status])
+        if result_msg.status == GoalStatus.REJECTED:
+            self._wait_for_status = False
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
@@ -84,7 +91,7 @@ class AutomateTask:
                 g.header.stamp = rospy.Time.now()
                 self._wait_for_status = True
                 self._plan_goal_pub.publish(g)
-                rospy.loginfo("Published plan goal")
+                rospy.loginfo("Published plan goal {}".format(self.step_count))
                 self.step_count += 1
             else:
                 rospy.logwarn("Used up all planning steps.")

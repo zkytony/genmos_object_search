@@ -16,6 +16,7 @@ from actionlib_msgs.msg import GoalStatus
 from bosdyn.client.math_helpers import Quat
 from bosdyn.api.graph_nav import graph_nav_pb2
 from bosdyn.api import robot_command_pb2
+from bosdyn.api.geometry_pb2 import Vec2, Vec3, SE2VelocityLimit, SE2Velocity
 import rbd_spot
 
 # distance between hand and body frame origin
@@ -91,7 +92,8 @@ class SpotSloopActionExecutor(ActionExecutor):
             rbd_spot.arm.stow(self.conn, self.command_client)
             nav_feedback_code = rbd_spot.graphnav.navigateTo(
                 self.conn, self.graphnav_client, goal,
-                tolerance=(0.25, 0.25, 0.15))
+                tolerance=(0.25, 0.25, 0.15),
+                speed=None)
             self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
 
         elif msg.type == "move_2d":
