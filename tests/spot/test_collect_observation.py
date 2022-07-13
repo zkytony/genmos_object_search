@@ -6,7 +6,7 @@ from rbd_spot_perception.msg import SimpleDetection3DArray
 def test():
     rospy.init_node("test_collect_observation")
     messages = WaitForMessages(
-        ["/spot_hand_pose"],
+        ["/spot_hand_pose", "/spot/segmentation/hand/result_boxes3d"],
         [PoseStamped, SimpleDetection3DArray],
         delay=1.0,
         sleep=0.05,
