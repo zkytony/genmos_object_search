@@ -3,6 +3,7 @@ import tf2_ros
 import actionlib
 import pomdp_py
 import std_msgs.msg as std_msgs
+from pomdp_py.utils import typ
 from actionlib_msgs.msg import GoalStatus
 from sloop_ros.msg import (PlanNextStepAction,
                            PlanNextStepResult,
@@ -204,20 +205,20 @@ class BaseAgentROSBridge:
     def _action_exec_status_cb(self, status):
         if self._last_action_msg is None:
             return
-        if ActionExecutor.action_id(self._last_action_msg)\
-           == status.goal_id.id:
-            rospy.logerr("action status is not for most recently planned action")
+        last_action_id = ActionExecutor.action_id(self._last_action_msg)
+        if last_action_id != status.goal_id.id:
+            rospy.logerr("action status is not for most recently planned action;"\
+                         f"{last_action_id} != {status.goal_id.id}")
             return
         self._last_action_status = status
         if status.status == GoalStatus.ACTIVE:
-            rospy.loginfo(f"action {status.goal_id.id} is in progress...")
-            self._action_exec_is_active()
+            rospy.loginfo(f"action {self.last_action} is active: {status.text}")
         else:
             # action execution finished. Whether it is successful, we
             # need to update the agent belief and the planner.
+            rospy.loginfo(f"action {self.last_action} is finished: {status.text}")
             sources = self._observation_interpretor_class.SOURCES_FOR_REGULAR_UPDATE
             rospy.loginfo(f"collecting observations from {sources}")
-            import pdb; pdb.set_trace()
             observation = self.collect_observation(sources)
             self.agent.update_belief(observation, self.last_action)
             rospy.loginfo(f"updated belief. Robot state:", self.agent.belief.mpe().s(self.agent.robot_id))
@@ -225,9 +226,9 @@ class BaseAgentROSBridge:
             rospy.loginfo(f"updated planner")
 
             if status.status == GoalStatus.SUCCEEDED:
-                rospy.loginfo(f"action {status.goal_id.id} succeeded!")
+                rospy.loginfo(typ.success(f"action {self._last_action} succeeded!"))
             else:
-                rospy.logwarn(f"action {status.goal_id.id} did not succeed.")
+                rospy.logwarn(typ.warning(f"action {self._last_action} did not succeed."))
             self._clear_last_action()
             self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
 

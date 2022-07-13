@@ -2,6 +2,7 @@
 
 import rospy
 import diagnostic_msgs
+from pomdp_py.utils import typ
 from sloop_ros.msg import KeyValAction
 from sloop_object_search.ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
@@ -83,14 +84,13 @@ class SpotSloopActionExecutor(ActionExecutor):
             goal_yaw = float(kv["goal_yaw"])
             goal = (goal_x, goal_y, goal_yaw)
             self.publish_status(GoalStatus.ACTIVE,
-                                f"executing navigation goal {kv['name']}",
+                                typ.info(f"executing navigation goal {kv['name']}"),
                                 action_id, msg.stamp)
             rbd_spot.arm.close_gripper(self.conn, self.command_client)
             rbd_spot.arm.stow(self.conn, self.command_client)
             nav_feedback_code = rbd_spot.graphnav.navigateTo(
                 self.conn, self.graphnav_client, goal,
                 tolerance=(0.25, 0.25, 0.15), speed="slow")
-
             self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
 
         elif msg.type == "move_2d":
@@ -136,7 +136,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         nav_status = self.graphnav_client.navigation_feedback(nav_feedback_code)
         if nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_REACHED_GOAL:
             self.publish_status(GoalStatus.SUCCEEDED,
-                                "navigation succeeded",
+                                typ.success("navigation succeeded"),
                                 action_id, stamp)
         elif nav_status.status == graph_nav_pb2.NavigationFeedbackResponse.STATUS_LOST:
             self.publish_status(GoalStatus.ABORTED,
