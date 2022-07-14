@@ -185,12 +185,12 @@ class BaseAgentROSBridge:
         result = PlanNextStepResult()
         if self._planner is None:
             rospy.logerr("Agent's planner is not set. Cannot plan.")
-            result.status = GoalStatus.REJECTED
+            result.status = GoalStatus(status=GoalStatus.REJECTED)
             self._plan_server.set_aborted(result)
         else:
             if self._last_action is not None:
                 rospy.logwarn(f"last action {self._last_action} is still executing")
-                result.status = GoalStatus.ABORTED
+                result.status = GoalStatus(status=GoalStatus.ABORTED)
                 self._plan_server.set_aborted(result)
             else:
                 rospy.loginfo("POMDP planning")
@@ -205,7 +205,7 @@ class BaseAgentROSBridge:
                 self._last_action_msg = action_msg
                 self._last_action = action
                 self._action_publisher.publish(action_msg)
-                result.status = GoalStatus.SUCCEEDED
+                result.status = GoalStatus(status=GoalStatus.SUCCEEDED)
                 self._plan_server.set_succeeded(result)
 
     def _action_exec_status_cb(self, status):

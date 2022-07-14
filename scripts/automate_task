@@ -64,10 +64,13 @@ class AutomateTask:
                 self._wait_for_status = False
 
     def _plan_status_cb(self, result_msg):
-        rospy.loginfo("Plan service request response: " + GOAL_STATUS[result_msg.status])
-        if result_msg.status == GoalStatus.ABORTED:
+        rospy.loginfo("Plan service request response: " + GOAL_STATUS[result_msg.status.status])
+        if result_msg.status.status == GoalStatus.ABORTED:
             self._wait_for_status = False
             self._wait_and_try_again = True
+        elif result_msg.status.status == GoalStatus.SUCCEEDED:
+            self.step_count += 1
+            self._wait_and_try_again = False
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
