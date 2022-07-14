@@ -82,8 +82,6 @@ class AutomateTask:
                 rospy.loginfo("Task finished!")
                 return
 
-            self.send_plan_request()
-
             if not (self._wait_for_status or self._action_active):
                 self.send_plan_request()
 
