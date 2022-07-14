@@ -85,7 +85,7 @@ class SpotLandmarkRecorder:
                                            self._detection_3d_cb)
 
         self.viz = None
-        self._grid_map_viz_pub = rospy.Publisher("/spot_landmark_recorder/viz",
+        self._grid_map_viz_pub = rospy.Publisher("~viz",
                                                  sensor_msgs.Image, queue_size=10, latch=True)
         self._landmark_colors = {}
 
