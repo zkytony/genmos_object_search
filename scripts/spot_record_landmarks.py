@@ -17,6 +17,7 @@
 #   Ideally, that the landmarks should be saved by their metric locations,
 #   because the resolution of the grid map may change. But, I am coding this
 #   now just for a demo.
+import cv2
 import rospy
 import argparse
 import numpy as np
@@ -28,9 +29,13 @@ from sloop_object_search.ros.ros_utils import tf2_transform
 from rbd_spot_perception.msg import SimpleDetection3DArray
 from sloop_ros.msg import GridMap2d
 from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
-from sloop_object_search.ros.mapinfo_utils import FILEPATHS, MapInfoDataset, register_map
+from sloop_object_search.ros.mapinfo_utils import (FILEPATHS,
+                                                   MapInfoDataset,
+                                                   register_map,
+                                                   load_filepaths)
 from sloop_object_search.utils.visual import GridMapVisualizer
-from sloop_object_search.utils.colors import random_unique_color
+from sloop_object_search.utils.colors import random_unique_color, rgb_to_hex
+from sloop_object_search.ros import ros_utils
 
 def _confirm(message):
     while True:
@@ -68,7 +73,6 @@ class SpotLandmarkRecorder:
 
         # We would like to load the map and then modify its landmark information
         self.mapinfo = MapInfoDataset()
-        self.mapinfo.load_by_name(self.map_name)
 
         self._cell_to_symbol = {}
         self._reject_overlaps = reject_overlaps
@@ -89,11 +93,18 @@ class SpotLandmarkRecorder:
                                                  sensor_msgs.Image, queue_size=10, latch=True)
         self._landmark_colors = {}
 
-    def grid_map_cb(self, grid_map_msg):
+    def _grid_map_cb(self, grid_map_msg):
         if self.grid_map is None:
             self.grid_map = ros_msg_to_grid_map(grid_map_msg)
             rospy.loginfo("grid map received!")
             self.viz = GridMapVisualizer(grid_map=self.grid_map, res=20)
+
+            if load_filepaths(self.map_name, self.grid_map.grid_size):
+                self.mapinfo.load_by_name(self.map_name)
+            else:
+                register_map(self.grid_map)
+                self.mapinfo.load_by_name(self.map_name)
+
 
     def _detection_3d_cb(self, detection_msg):
         if self.grid_map is None:
@@ -110,7 +121,7 @@ class SpotLandmarkRecorder:
 
             # Get detected object pose in 2D. We will save the bounding
             # box as the footprint of the landmark
-            obj_metric_position = det_pose_stamped_map_frame.position
+            obj_metric_position = det_pose_stamped_map_frame.pose.position
             obj_metric_x, obj_metric_y = obj_metric_position.x, obj_metric_position.y
             landmark_metric_footprint = np.array([[obj_metric_x - det3d.box.size.x/2, obj_metric_y - det3d.box.size.y/2],
                                                   [obj_metric_x - det3d.box.size.x/2, obj_metric_y + det3d.box.size.y/2],
@@ -122,7 +133,7 @@ class SpotLandmarkRecorder:
             landmark_grid_bottomright = self.grid_map.to_grid_pos(*landmark_metric_footprint[3])
             # obtain the grid cells within the box.
             landmark_footprint_grids = set()
-            overlapping_symbols = {}
+            overlapping_symbols = set()
             for x in range(landmark_grid_topleft[0], landmark_grid_topright[0]+1):
                 for y in range(landmark_grid_topleft[1], landmark_grid_bottomleft[1]+1):
                     if (x, y) in self._cell_to_symbol:
@@ -135,11 +146,11 @@ class SpotLandmarkRecorder:
 
             # Now, try to figure out a symbol for this landmark
             _count = 0
-            landmark_symbol = "{}_{:03d}".format(det3d.label, _count)
+            landmark_symbol = "{}_{:03d}".format(det3d.label.capitalize(), _count)
             existing_landmarks = self.mapinfo.landmarks_for(self.map_name)
             while landmark_symbol in existing_landmarks:
                 _count += 1
-                landmark_symbol = "{}_{:03d}".format(det3d.label, _count)
+                landmark_symbol = "{}_{:03d}".format(det3d.label.capitalize(), _count)
 
             # Now, we make a visualization as if this landmark is added.
             img = self._make_grid_map_landmarks_img()
@@ -153,7 +164,11 @@ class SpotLandmarkRecorder:
                     continue
 
             add_landmark(self.mapinfo, self.map_name, landmark_symbol, landmark_footprint_grids)
-            rospy.loginfo("landmark added!")
+            rospy.loginfo(f"landmark {landmark_symbol} added!")
+
+            for cell in landmark_footprint_grids:
+                self._cell_to_symbol[cell] = landmark_symbol
+
 
     def done(self):
         if self.grid_map is None:
@@ -178,7 +193,7 @@ class SpotLandmarkRecorder:
     def _make_grid_map_landmarks_img(self):
         img = self.viz.render()
         for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
-            _colors = set(self._landmark_colors[s] for s in self._landmark_colors)
+            _colors = set(rgb_to_hex(self._landmark_colors[s]) for s in self._landmark_colors)
             if landmark_symbol not in self._landmark_colors:
                 self._landmark_colors[landmark_symbol] = random_unique_color(_colors, fmt="rgb")
             landmark_footprint = self.mapinfo.landmarks[self.map_name][landmark_symbol]
@@ -192,20 +207,19 @@ class SpotLandmarkRecorder:
                 img = pub_img
             else:
                 img = self._make_grid_map_landmarks_img()
-            img_msg = rbd_spot.image.imgmsg_from_imgarray(img)
+            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            img_msg = ros_utils.convert(img, encoding="rgba8")
             img_msg.header.stamp = rospy.Time.now()
             self._grid_map_viz_pub.publish(img_msg)
-        else:
-            rospy.logwarn("viz not ready")
+            rospy.loginfo("Published grid map with landmarks visualization")
 
     def run(self):
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(5)
         try:
             while not rospy.is_shutdown():
                 if self.grid_map is None:
                     rospy.loginfo("waiting for grid map...")
                 self.publish_grid_map_viz()
-                rospy.loginfo("Published grid map with landmarks visualization")
                 rate.sleep()
         except KeyboardInterrupt:
             self.done()
@@ -213,7 +227,7 @@ class SpotLandmarkRecorder:
 def main():
     rospy.init_node("spot_record_landmarks")
     parser = argparse.ArgumentParser(description="spot record landmarks")
-    parser.add_argument("map-name", type=str, help="map name.")
+    parser.add_argument("--map-name", type=str, help="map name.", required=True)
     parser.add_argument("--map-frame", type=str, help="map fixed frame.", default="graphnav_map")
     parser.add_argument("--reject-overlaps", action="store_true", help="reject landmarks with overlaps with existing.")
     parser.add_argument("--need-confirm", action="store_true", help="need to confirm whether to accept a landmark")

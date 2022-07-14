@@ -23,7 +23,7 @@
   <!-- Spot recorder -->
   <node name="spot_record_landmarks"
         pkg="sloop_ros" type="spot_record_landmarks.py" output="screen"
-        args="$(arg map_name)">
+        args="--map-name $(arg map_name)">
     <param name="detection_3d_topic" value="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/>
     <param name="grid_map_topic" value="/graphnav_gridmap"/>
   </node>

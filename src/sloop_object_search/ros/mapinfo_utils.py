@@ -79,4 +79,9 @@ def register_map(grid_map, exist_ok=False,
     FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_map.grid_size))
 
 def load_filepaths(map_name, grid_size):
-    FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_size))
+    mapdir = os.path.join(DATA_PATH, map_name, f"g{grid_size}")
+    if os.path.exists(mapdir):
+        FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_size))
+        return True
+    else:
+        return False
