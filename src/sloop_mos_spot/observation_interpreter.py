@@ -13,8 +13,9 @@ from sloop_object_search.ros.sloop_mos import (grid_map_msg_callback,
 from sloop_object_search.ros.ros_utils import tf2_transform
 from sloop_object_search.utils.colors import lighter, inverse_color_rgb
 from sloop_object_search.oopomdp.domain.observation import (
-    ObjectDetection2D, GMOSObservation, RobotObservationTopo)
+    ObjectDetection, ObjectDetection2D, GMOSObservation, RobotObservationTopo)
 from sloop_object_search.oopomdp.domain.action import FindAction
+from sloop_object_search.oopomdp.models.detection_models import FanModelSimpleFPLabelOnly
 
 import tf2_ros
 
@@ -89,6 +90,17 @@ class SpotObservationInterpreter(ObservationInterpreter):
         robot_pose = interpret_robot_pose_msg(robot_pose_msg, bridge)
         detection_3d_msg = observation_msgs[1]
         z_joint_dict = interpret_detection_3d_msg(detection_3d_msg, bridge)
+
+        # Note that this function is called when the planner is updated.
+        # If the robot's observation model doesn't want, the search tree
+        # would have object detection observations with "NO_POSE" as the location.
+        # We want to match that.
+        for objid in bridge.agent.observation_model.detection_models:
+            detection_model = bridge.agent.observation_model.detection_models[objid]
+            if isinstance(detection_model, FanModelSimpleFPLabelOnly):
+                z_obj = z_joint_dict[objid]
+                if z_obj.loc is not None:
+                    z_joint_dict = ObjectDetection2D(objid, ObjectDetection.NO_POSE)
 
         # Now, we need to figure out the robot observation, which
         # involves figuring out whether an object is found, and what

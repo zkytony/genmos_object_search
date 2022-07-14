@@ -2,7 +2,7 @@ import math
 import random
 from pomdp_py import Gaussian
 from sloop_object_search.utils.math import fround, euclidean_dist
-from ..domain.observation import ObjectDetection2D
+from ..domain.observation import ObjectDetection2D, ObjectDetection
 from .observation_model import ObjectDetectionModel
 from .sensors import FanSensor
 
@@ -424,6 +424,84 @@ class FanModelFarRange(FanModel):
                 zi = ObjectDetection2D(si.id, loc)
                 event = "detected"
 
+            else:
+                zi = ObjectDetection2D(si.id, None)
+                event = "missed"
+        else:
+            zi = ObjectDetection2D(si.id, None)
+            event = "out_of_range"
+
+        if return_event:
+            return zi, event
+        else:
+            return zi
+
+
+class FanModelSimpleFPLabelOnly(FanModel):
+    """Intended for 2D-level observation; Pr(zi | si, srobot')
+
+    The difference between this model and FanModelSimpleFP is that
+    this model does not care whether the detected object's location
+    matches the object location in the state. As long as, if the object
+    is within the field of view, and when the detection is non-null,
+    that counts as a positive detection. This is useful when there is
+    a lot of noise related to object detection's locations.
+
+    Pros: semantic parameter;
+    Cons: false positive is not sampled & out of context
+    """
+    def __init__(self, objid, fan_params, quality_params, round_to="int"):
+        """
+        Args:
+            objid (int) object id to detect
+            quality_params; (detection_prob, false_pos_rate, sigma);
+                detection_prob is essentially true positive rate.
+        """
+        super().__init__(objid, fan_params,
+                         quality_params, round_to="int")
+        self.sensor = FanSensor(**fan_params)
+        self.params = quality_params
+
+    @property
+    def detection_prob(self):
+        return self.params[0]
+
+    @property
+    def false_pos_rate(self):
+        return self.params[1]
+
+    def probability(self, zi, si, srobot, a=None):
+        """
+        zi (LocDetection)
+        si (HLObjectstate)
+        srobot (HLObjectstate)
+        """
+        in_range = srobot.in_range(self.sensor, si)
+        if in_range:
+            if zi.loc is None:
+                # false negative
+                return 1.0 - self.detection_prob
+            else:
+                if not srobot.loc_in_range(self.sensor, zi.loc):
+                    # the robot would not have received such a positive observation,
+                    # because it is outside of the FOV. It is treatd as a false positive,
+                    # that comes uniformly likely outside of the FOV.
+                    return self.false_pos_rate
+                # true positive
+                return self.detection_prob
+        else:
+            if zi.loc is None:
+                # True negative;
+                return 1.0 - self.false_pos_rate
+            else:
+                return self.false_pos_rate
+
+    def sample(self, si, srobot, a=None, return_event=False):
+        in_range = srobot.in_range(self.sensor, si)
+        if in_range:
+            if random.uniform(0,1) <= self.detection_prob:
+                zi = ObjectDetection2D(si.id, ObjectDetection.NO_POSE)
+                event = "detected"
             else:
                 zi = ObjectDetection2D(si.id, None)
                 event = "missed"
