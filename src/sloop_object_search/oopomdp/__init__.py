@@ -1,2 +1,2 @@
-from .models.detection_models import FanModelSimpleFP
+from .models.detection_models import FanModelSimpleFP, FanModelSimpleFPLabelOnly
 from .models.transition_model import StaticObjectTransitionModel

@@ -36,14 +36,13 @@ agent_config:
   robot:
     detectors:
       chair:
-        class: sloop_object_search.oopomdp.FanModelSimpleFP
+        class: sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly
         params:
         - fov: 60
           max_range: 5
           min_range: 0
         - - 0.9
-          - 0.1
-          - 0.25
+          - 0.15
     id: robot0
 
   targets:
