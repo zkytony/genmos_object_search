@@ -105,7 +105,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             goal = (goal_x, goal_y, goal_z, goal_quat.x,
                     goal_quat.y, goal_quat.z, goal_quat.w)
             self.publish_status(GoalStatus.ACTIVE,
-                                f"executing moveEE with body follow action {kv['name']}",
+                                typ.info(f"executing {kv['name']} with moveEE with body follow"),
                                 action_id, msg.stamp)
             rbd_spot.arm.open_gripper(self.conn, self.command_client)
             cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
@@ -119,11 +119,11 @@ class SpotSloopActionExecutor(ActionExecutor):
                     self.conn, self.command_client, 0.0, 0.0, -0.5, duration=1.0)
             if cmd_success:
                 self.publish_status(GoalStatus.SUCCEEDED,
-                                    "arm movement succeeded",
+                                    typ.success("arm movement succeeded"),
                                     action_id, msg.stamp)
             else:
                 self.publish_status(GoalStatus.ABORTED,
-                                    "arm movement failed",
+                                    typ.error("arm movement failed"),
                                     action_id, msg.stamp)
 
         elif msg.type == "find":
@@ -132,13 +132,13 @@ class SpotSloopActionExecutor(ActionExecutor):
                 self.conn, self.command_client, self.robot_state_client, (0.65, 0.0, 0.35))
             rbd_spot.arm.stow(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
-                                    "find action succeeded",
+                                    typ.success("find action succeeded"),
                                     action_id, msg.stamp)
 
         elif msg.type == "stow_arm":
             rbd_spot.arm.stow(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
-                                    "arm stowed",
+                                    typ.success("arm stowed"),
                                     action_id, msg.stamp)
 
 
