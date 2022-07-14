@@ -1,5 +1,5 @@
 <launch>
-  <arg name="max_steps" value="10"/>
+  <arg name="max_steps" value="50"/>
   <arg name="replan_freq" value="1.0"/>
   <!-- Action Executor for Spot -->
   <node name="spot_sloop_mos_automate_task"
