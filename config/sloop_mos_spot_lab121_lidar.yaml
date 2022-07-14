@@ -38,8 +38,8 @@ agent_config:
       chair:
         class: sloop_object_search.oopomdp.FanModelSimpleFP
         params:
-        - fov: 90
-          max_range: 4
+        - fov: 60
+          max_range: 5
           min_range: 0
         - - 0.9
           - 0.1
