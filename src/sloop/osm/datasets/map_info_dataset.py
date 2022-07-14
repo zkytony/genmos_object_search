@@ -60,10 +60,10 @@ class MapInfoDataset:
 
     def name_for(self, symbol, map_name=None):
         if map_name is None:
-            map_name = self.map_name_of(landmark_symbol)
+            map_name = self.map_name_of(symbol)
             if type(map_name) == list:
                 raise ValueError("Landmark symbol %s corresponds to multiple maps: %s"
-                                 % (landmark_symbol, str(map_name)))
+                                 % (symbol, str(map_name)))
         return self._symbol_to_name[map_name][symbol]
 
     def streets(self, map_name):
@@ -164,7 +164,7 @@ class MapInfoDataset:
                 # This will assume the map_name is registered with new organization;
                 # The difference is:
                 # - there is no *_idx_* files
-                # - landmark is specified by grid coordinates directly
+                # - landmark is specified by grid coordinates directly TODO: change this to be metric.
                 return self.load_by_name_new(map_name)
         else:
             raise ValueError(f"map {map_name} not found")
@@ -216,10 +216,10 @@ class MapInfoDataset:
         for landmark_name in name_to_symbols:
             symbol = name_to_symbols[landmark_name]
             self._name_to_symbols[landmark_name] = symbol
+            self._symbol_to_name[map_name][symbol] = landmark_name
 
         for symbol in symbol_to_grids:
             self.landmarks[map_name][symbol] = symbol_to_grids[symbol]
-            self._symbol_to_name[map_name][symbol] = landmark_name
             if symbol not in self._symbol_to_maps:
                 self._symbol_to_maps[symbol] = set()
             self._symbol_to_maps[symbol].add(map_name)
