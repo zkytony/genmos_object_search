@@ -482,11 +482,6 @@ class FanModelSimpleFPLabelOnly(FanModel):
                 # false negative
                 return 1.0 - self.detection_prob
             else:
-                if not srobot.loc_in_range(self.sensor, zi.loc):
-                    # the robot would not have received such a positive observation,
-                    # because it is outside of the FOV. It is treatd as a false positive,
-                    # that comes uniformly likely outside of the FOV.
-                    return self.false_pos_rate
                 # true positive
                 return self.detection_prob
         else:
