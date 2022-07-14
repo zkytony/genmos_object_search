@@ -97,7 +97,7 @@ class SpotLandmarkRecorder:
 
     def _detection_3d_cb(self, detection_msg):
         if self.grid_map is None:
-            continue
+            return
 
         for det3d in detection_msg.detections:
             # Get detection position in map frame

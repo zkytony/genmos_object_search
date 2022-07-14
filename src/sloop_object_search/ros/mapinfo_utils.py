@@ -25,10 +25,6 @@ def _create_fp_dict_new(map_names, grid_size):
         }
     return fp_dict
 
-# We will update FILEPATHS with additional maps in DATA_PATH
-FILEPATHS.update(_create_fp_dict_new(os.listdir(DATA_PATH)))
-
-
 ################## Functions ##############################3
 def register_map(grid_map, exist_ok=False,
                  symbol_to_grids=None,
@@ -81,3 +77,6 @@ def register_map(grid_map, exist_ok=False,
     grid_map.save(os.path.join(mapdir, "grid_map.json"))
     print(f"Map {grid_map.name} registered")
     FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_map.grid_size))
+
+def load_filepaths(map_name, grid_size):
+    FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_size))

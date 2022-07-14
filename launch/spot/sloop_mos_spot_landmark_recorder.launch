@@ -1,6 +1,8 @@
 <launch>
   <arg name="max_name"/>
   <arg name="object_detection_camera" default="hand"/>
+  <arg name="grid_size"  default="0.4"/>
+  <arg name="layout_cut" default="0.1"/>
 
   <!-- Localization (with graphnav map & waypoint publishing -->
   <include file="$(find rbd_spot_perception)/launch/graphnav_map_publisher_with_localization.launch">
