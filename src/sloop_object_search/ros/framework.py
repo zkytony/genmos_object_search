@@ -195,8 +195,6 @@ class BaseAgentROSBridge:
             else:
                 rospy.loginfo("POMDP planning")
                 action = self._planner.plan(self.agent)
-                from sloop_object_search.oopomdp.domain.action import FindAction
-                action = FindAction()
                 if hasattr(self.agent, "tree") and self.agent.tree is not None:
                     _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
                     _dd.p(1)
