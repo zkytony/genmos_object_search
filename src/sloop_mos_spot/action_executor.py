@@ -80,6 +80,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         kv = {msg.keys[i]: msg.values[i] for i in range(len(msg.keys))}
         # used to identify this action as a goal for execution
         action_id = ActionExecutor.action_id(msg)
+        rospy.loginfo("CCCCCCCCCCC")
         if msg.type == "move_topo":
             goal_x = float(kv["goal_x"])
             goal_y = float(kv["goal_y"])
@@ -93,7 +94,9 @@ class SpotSloopActionExecutor(ActionExecutor):
             nav_feedback_code = rbd_spot.graphnav.navigateTo(
                 self.conn, self.graphnav_client, goal,
                 tolerance=(0.25, 0.25, 0.15),
-                speed=None)
+                speed=None,
+                travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
+                                                         disable_alternate_route_finding=True))
             self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
 
         elif msg.type == "move_2d":
@@ -132,14 +135,14 @@ class SpotSloopActionExecutor(ActionExecutor):
                 self.conn, self.command_client, self.robot_state_client, (0.65, 0.0, 0.35))
             rbd_spot.arm.stow(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
-                                    typ.success("find action succeeded"),
-                                    action_id, msg.stamp)
+                                typ.success("find action succeeded"),
+                                action_id, msg.stamp)
 
         elif msg.type == "stow_arm":
             rbd_spot.arm.stow(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
-                                    typ.success("arm stowed"),
-                                    action_id, msg.stamp)
+                                typ.success("arm stowed"),
+                                action_id, msg.stamp)
 
 
     def publish_nav_status(self, nav_feedback_code, action_id, stamp):

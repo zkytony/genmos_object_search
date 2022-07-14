@@ -4,6 +4,7 @@
 # This script calls the plan service when an action is successful
 # This script will periodically call the plan service - because belief
 # update happens all the time, so it's ok to replan (based on current belief).
+import time
 import rospy
 import argparse
 import std_msgs.msg as std_msgs
@@ -28,7 +29,7 @@ class AutomateTask:
                  progress_topic,
                  action_status_topic,
                  max_steps,
-                 max_plan_freq=2):
+                 max_plan_freq=1):
         self.done = False
         self.max_steps = max_steps
         self.step_count = 0
@@ -36,11 +37,12 @@ class AutomateTask:
 
         self._wait_for_status = False
         self._action_active = False
+        self._wait_and_try_again = False
 
         self._plan_goal_pub = rospy.Publisher(
             plan_goal_topic, PlanNextStepActionGoal, queue_size=10, latch=True)
         self._plan_status_pub = rospy.Subscriber(
-            "plan_goal_topic".split("/goal")[0] + "/result", PlanNextStepActionResult, self._plan_status_cb)
+            plan_goal_topic.split("/goal")[0] + "/result", PlanNextStepActionResult, self._plan_status_cb)
         self._progress_sub = rospy.Subscriber(
             progress_topic, std_msgs.String, self._progress_cb)
         self._action_status_topic = rospy.Subscriber(
@@ -63,8 +65,9 @@ class AutomateTask:
 
     def _plan_status_cb(self, result_msg):
         rospy.loginfo("Plan service request response: " + GOAL_STATUS[result_msg.status])
-        if result_msg.status == GoalStatus.REJECTED:
+        if result_msg.status == GoalStatus.ABORTED:
             self._wait_for_status = False
+            self._wait_and_try_again = True
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
@@ -76,11 +79,16 @@ class AutomateTask:
                 rospy.loginfo("Task finished!")
                 return
 
-            if self.step_count == 0:
-                self.send_plan_request()
+            self.send_plan_request()
 
             if not (self._wait_for_status or self._action_active):
                 self.send_plan_request()
+
+            if self._wait_and_try_again:
+                rospy.loginfo("wait and try sending plan request again")
+                time.sleep(1.0)
+                self.send_plan_request()
+                self._wait_and_try_again = False
 
             rate.sleep()
 
@@ -91,8 +99,8 @@ class AutomateTask:
                 g.header.stamp = rospy.Time.now()
                 self._wait_for_status = True
                 self._plan_goal_pub.publish(g)
+                rospy.loginfo("AAAAAAAAAAA")
                 rospy.loginfo("Published plan goal {}".format(self.step_count))
-                self.step_count += 1
             else:
                 rospy.logwarn("Used up all planning steps.")
         else:
@@ -102,7 +110,7 @@ class AutomateTask:
 def main():
     rospy.init_node("automate_task")
     parser = argparse.ArgumentParser(description="Automate SLOOP MOS task on a robot.")
-    parser.add_argument("--max-steps", type=int, help="Maximum number of planning steps", default=10)
+    parser.add_argument("--max-steps", type=int, help="Maximum number of planning steps", default=50)
     args, _ = parser.parse_known_args()
 
     plan_goal_topic = rospy.get_param("~plan_goal_topic")

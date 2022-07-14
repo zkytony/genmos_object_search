@@ -186,11 +186,15 @@ class BaseAgentROSBridge:
         if self._planner is None:
             rospy.logerr("Agent's planner is not set. Cannot plan.")
             result.status = GoalStatus.REJECTED
-            self.plan_server.set_rejected(result)
+            self._plan_server.set_aborted(result)
         else:
             if self._last_action is not None:
-                rospy.logwarn("last action is still executing")
+                rospy.loginfo("!!! BBBBBBBBBBBBB !!!")
+                rospy.logwarn(f"last action {self._last_action} is still executing")
+                result.status = GoalStatus.ABORTED
+                self._plan_server.set_aborted(result)
             else:
+                rospy.loginfo("BBBBBBBBBBBBB")
                 action = self._planner.plan(self.agent)
                 if hasattr(self.agent, "tree") and self.agent.tree is not None:
                     _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
@@ -214,6 +218,7 @@ class BaseAgentROSBridge:
                          f"{last_action_id} != {status.goal_id.id}")
             return
         self._last_action_status = status
+        rospy.loginfo("DDDDDDDDDDDDDD")
         if status.status == GoalStatus.ACTIVE:
             rospy.loginfo(f"action {self.last_action} is active: {status.text}")
         else:
@@ -223,13 +228,15 @@ class BaseAgentROSBridge:
             sources = self._observation_interpretor_class.SOURCES_FOR_REGULAR_UPDATE
             rospy.loginfo(f"collecting observations from {sources}")
             observation = self.collect_observation(sources)
+            rospy.loginfo(f"observations collected")
             self.agent.update_belief(observation, self.last_action)
-            rospy.loginfo("updated belief. Robot state: {}".format(self.agent.belief.mpe().s(self.agent.robot_id)))
+            rospy.loginfo("updated belief (action finished). Robot state: {}".format(self.agent.belief.mpe().s(self.agent.robot_id)))
             if hasattr(self.agent, "tree"):
                 self.planner.update(self.agent, self._last_action, observation)
                 print("############### action exec status planner update")
             rospy.loginfo(f"updated planner")
             self._clear_last_action()
+            rospy.loginfo(typ.bold(f"CLEARED LAST ACTION."))
             self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))
 
     def _clear_last_action(self):
@@ -283,7 +290,8 @@ class BaseAgentROSBridge:
             [self._observation_msg_types[s] for s in sources],
             queue_size=10,
             delay=0.5,
-            sleep=0.05).messages
+            sleep=0.05,
+            verbose=True).messages
         return self._observation_interpretor_class.merge_observation_msgs(
             observation_messages, self)
 
@@ -320,7 +328,7 @@ class ActionExecutor:
     def setup(self):
         self._status_pub = rospy.Publisher(self._status_topic,
                                            GoalStatus,
-                                           queue_size=10)
+                                           queue_size=10, latch=True)
         self._action_sub = rospy.Subscriber(self._action_topic,
                                             self._action_msg_type,
                                             self._execute_action_cb)
