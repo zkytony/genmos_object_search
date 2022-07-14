@@ -80,7 +80,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         kv = {msg.keys[i]: msg.values[i] for i in range(len(msg.keys))}
         # used to identify this action as a goal for execution
         action_id = ActionExecutor.action_id(msg)
-        rospy.loginfo("CCCCCCCCCCC")
+        rospy.loginfo("received action to execute")
         if msg.type == "move_topo":
             goal_x = float(kv["goal_x"])
             goal_y = float(kv["goal_y"])

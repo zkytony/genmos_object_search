@@ -99,7 +99,6 @@ class AutomateTask:
                 g.header.stamp = rospy.Time.now()
                 self._wait_for_status = True
                 self._plan_goal_pub.publish(g)
-                rospy.loginfo("AAAAAAAAAAA")
                 rospy.loginfo("Published plan goal {}".format(self.step_count))
             else:
                 rospy.logwarn("Used up all planning steps.")

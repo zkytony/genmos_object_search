@@ -189,12 +189,11 @@ class BaseAgentROSBridge:
             self._plan_server.set_aborted(result)
         else:
             if self._last_action is not None:
-                rospy.loginfo("!!! BBBBBBBBBBBBB !!!")
                 rospy.logwarn(f"last action {self._last_action} is still executing")
                 result.status = GoalStatus.ABORTED
                 self._plan_server.set_aborted(result)
             else:
-                rospy.loginfo("BBBBBBBBBBBBB")
+                rospy.loginfo("POMDP planning")
                 action = self._planner.plan(self.agent)
                 if hasattr(self.agent, "tree") and self.agent.tree is not None:
                     _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
@@ -218,7 +217,7 @@ class BaseAgentROSBridge:
                          f"{last_action_id} != {status.goal_id.id}")
             return
         self._last_action_status = status
-        rospy.loginfo("DDDDDDDDDDDDDD")
+        rospy.loginfo("received action execution status")
         if status.status == GoalStatus.ACTIVE:
             rospy.loginfo(f"action {self.last_action} is active: {status.text}")
         else:
