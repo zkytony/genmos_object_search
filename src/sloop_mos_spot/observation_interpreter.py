@@ -49,10 +49,10 @@ def interpret_detection_3d_msg(detection_msg, bridge):
             zobj = ObjectDetection2D(det3d.label, (obj_grid_x, obj_grid_y))
             z_joint_dict[det3d.label] = zobj
             rospy.loginfo("- {} ({:.3f}) grid loc: {}".format(det3d.label, det3d.score, zobj.loc))
-            # highlight the object detection location on the map
-            bridge.add_visual_highlights([(obj_grid_x, obj_grid_y)],
-                                         inverse_color_rgb(bridge.object_color(det3d.label)),
-                                         shape="circle", alpha=0.4, scale=0.8)
+            # # highlight the object detection location on the map
+            # bridge.add_visual_highlights([(obj_grid_x, obj_grid_y)],
+            #                              inverse_color_rgb(bridge.object_color(det3d.label)),
+            #                              shape="circle", alpha=0.4, scale=0.8)
     return z_joint_dict
 
 
@@ -100,7 +100,7 @@ class SpotObservationInterpreter(ObservationInterpreter):
             if isinstance(detection_model, FanModelSimpleFPLabelOnly):
                 z_obj = z_joint_dict[objid]
                 if z_obj.loc is not None:
-                    z_joint_dict = ObjectDetection2D(objid, ObjectDetection.NO_POSE)
+                    z_joint_dict[objid] = ObjectDetection2D(objid, ObjectDetection.NO_POSE)
 
         # Now, we need to figure out the robot observation, which
         # involves figuring out whether an object is found, and what
