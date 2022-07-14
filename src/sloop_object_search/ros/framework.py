@@ -195,6 +195,8 @@ class BaseAgentROSBridge:
             else:
                 rospy.loginfo("POMDP planning")
                 action = self._planner.plan(self.agent)
+                from sloop_object_search.oopomdp.domain.action import FindAction
+                action = FindAction()
                 if hasattr(self.agent, "tree") and self.agent.tree is not None:
                     _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
                     _dd.p(1)
@@ -288,7 +290,7 @@ class BaseAgentROSBridge:
             [self._observation_topics[s] for s in sources],
             [self._observation_msg_types[s] for s in sources],
             queue_size=10,
-            delay=0.5,
+            delay=0.2,
             sleep=0.05,
             verbose=True).messages
         return self._observation_interpretor_class.merge_observation_msgs(
