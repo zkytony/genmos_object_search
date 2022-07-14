@@ -188,19 +188,22 @@ class BaseAgentROSBridge:
             result.status = GoalStatus.REJECTED
             self.plan_server.set_rejected(result)
         else:
-            action = self._planner.plan(self.agent)
-            if hasattr(self.agent, "tree") and self.agent.tree is not None:
-                _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
-                _dd.p(1)
-            rospy.loginfo(f"Planning successful. Action: {action}")
-            rospy.loginfo("Action published")
-            action_msg = self._action_executor_class.action_to_ros_msg(
-                self.agent, action, goal.goal_id)
-            self._last_action_msg = action_msg
-            self._last_action = action
-            self._action_publisher.publish(action_msg)
-            result.status = GoalStatus.SUCCEEDED
-            self._plan_server.set_succeeded(result)
+            if self._last_action is not None:
+                rospy.logwarn("last action is still executing")
+            else:
+                action = self._planner.plan(self.agent)
+                if hasattr(self.agent, "tree") and self.agent.tree is not None:
+                    _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
+                    _dd.p(1)
+                rospy.loginfo(f"Planning successful. Action: {action}")
+                rospy.loginfo("Action published")
+                action_msg = self._action_executor_class.action_to_ros_msg(
+                    self.agent, action, goal.goal_id)
+                self._last_action_msg = action_msg
+                self._last_action = action
+                self._action_publisher.publish(action_msg)
+                result.status = GoalStatus.SUCCEEDED
+                self._plan_server.set_succeeded(result)
 
     def _action_exec_status_cb(self, status):
         if self._last_action_msg is None:
@@ -224,6 +227,7 @@ class BaseAgentROSBridge:
             rospy.loginfo("updated belief. Robot state: {}".format(self.agent.belief.mpe().s(self.agent.robot_id)))
             if hasattr(self.agent, "tree"):
                 self.planner.update(self.agent, self._last_action, observation)
+                print("############### action exec status planner update")
             rospy.loginfo(f"updated planner")
             self._clear_last_action()
             self._action_publisher.publish(KeyValAction(type="nothing", stamp=rospy.Time.now()))

@@ -212,5 +212,3 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
                                                  current_robot_state['topo_nid'])  # camera_direction; we don't need this
         bridge.agent.belief.update_robot_belief(
             GMOSObservation({bridge.agent.robot_id: robot_observation}), None)
-        if bridge.last_action is not None and hasattr(bridge.agent, "tree"):
-            bridge.planner.update(bridge.agent, bridge.last_action, GMOSObservation({bridge.agent.robot_id: robot_observation}))
