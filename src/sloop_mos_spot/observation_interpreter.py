@@ -11,6 +11,7 @@ from sloop_object_search.ros.sloop_mos import (grid_map_msg_callback,
                                                interpret_grid_map_msg,
                                                interpret_robot_pose_msg)
 from sloop_object_search.ros.ros_utils import tf2_transform
+from sloop_object_search.utils.colors import lighter, inverse_color_rgb
 from sloop_object_search.oopomdp.domain.observation import (
     ObjectDetection2D, GMOSObservation, RobotObservationTopo)
 from sloop_object_search.oopomdp.domain.action import FindAction
@@ -47,6 +48,10 @@ def interpret_detection_3d_msg(detection_msg, bridge):
             zobj = ObjectDetection2D(det3d.label, (obj_grid_x, obj_grid_y))
             z_joint_dict[det3d.label] = zobj
             rospy.loginfo("- {} ({:.3f}) grid loc: {}".format(det3d.label, det3d.score, zobj.loc))
+            # highlight the object detection location on the map
+            bridge.add_visual_highlights([(obj_grid_x, obj_grid_y)],
+                                         inverse_color_rgb(bridge.object_color(det3d.label)),
+                                         shape="circle", alpha=0.4, scale=0.8)
     return z_joint_dict
 
 

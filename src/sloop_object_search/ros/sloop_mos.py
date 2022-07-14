@@ -35,6 +35,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def __init__(self, ros_config={}):
         super().__init__(ros_config=ros_config)
         self.viz = None
+        self._viz_highlights = []  # highlights per viz
 
         # publish task progress, i.e.
         self._task_progress_pub_rate = 4.0
@@ -98,7 +99,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
             rospy.logwarn("visualizer not initialized")
             return
         _config = self.agent.agent_config
-        colors = {j: _config["objects"][j].get("color", [128, 128, 128])
+        colors = {j: self.object_color(j)
                   for j in belief.object_beliefs
                   if j != self.agent.robot_id}
         no_look = self.agent.agent_config["no_look"]
@@ -113,6 +114,8 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         _render_kwargs = _config["viz_params"]["render"]
         img = self.viz.render(self.agent, {}, colors=colors,
                               draw_fov=draw_fov, **_render_kwargs)
+        for locations, color, kwargs in self._viz_highlights:
+            img = self.viz.highlight(img, locations, color=color, **kwargs)
         # Instead of using pygame visualizer, just publish the visualization as
         # a ROS message; Because the pygame visualizer actually causes latency
         # problems with ROS.
@@ -121,6 +124,21 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
         img_msg = ros_utils.convert(img, encoding='rgb8')
         return img_msg
+
+    def object_color(self, objid):
+        _config = self.agent.agent_config
+        return _config["objects"][objid].get("color", [128, 128, 128])
+
+    def add_visual_highlights(self, locations, color, **kwargs):
+        """
+        Add highlights to be visualized in the next rendering. The locations
+        should be 2D grid cells on the grid map. The color should be a tuple
+        of (R, G, B) each ranging [0-255]
+        """
+        if len(kwargs) > 0:
+            self._viz_highlights.append((locations, color, kwargs))
+        else:
+            self._viz_highlights.append((locations, color, {}))
 
     def belief_to_ros_msg(self, belief, stamp=None):
         return self.visualize_current_belief(belief)
