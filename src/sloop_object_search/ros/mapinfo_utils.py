@@ -21,6 +21,7 @@ def _create_fp_dict_new(map_names, grid_size):
             "streets": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "streets.json"),
             "map_dims": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "map_dims.json"),
             "excluded_symbols": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "excluded_symbols.json"),
+            "grid_map": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "grid_map.json"),
         }
     return fp_dict
 
@@ -32,14 +33,17 @@ FILEPATHS.update(_create_fp_dict_new(os.listdir(DATA_PATH)))
 def register_map(grid_map, exist_ok=False,
                  symbol_to_grids=None,
                  name_to_symbols=None,
-                 symbol_to_synonyms=None):
+                 symbol_to_synonyms=None,
+                 save_grid_map=False):
     """
     Registers a new map; This means creating a folder under DATA_PATH
     that is named 'map_name' and its content structured just like the
     other OSM maps. Of course, we will skip all the geo-info files.
     Those don't really matter; See neighborhoods for an example.
 
-    Note that the grid_map itself is not saved; only the landmarks.
+    Note that although grid map is saved here, it is not loaded by
+    MapInfoDataset - you need to load it separately. Its path is,
+    however, stored in FILEPATHS
 
     By default, if the map already exists, then we won't register.
     However, one could overwrite with additional data by setting
@@ -73,5 +77,7 @@ def register_map(grid_map, exist_ok=False,
         f.write("[]")
     with open(os.path.join(mapdir, "map_dims.json"), "w") as f:
         f.write(f"[{grid_map.width}, {grid_map.length}]")
+
+    grid_map.save(os.path.join(mapdir, "grid_map.json"))
     print(f"Map {grid_map.name} registered")
     FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_map.grid_size))
