@@ -38,7 +38,7 @@ class GridMap:
             The unknown locations of a grid map is
                 ALL_CELLS(width, length) - obstacles - unknown
             this has higher priority than unknown.
-        labels (dict): maps from location to a string label
+        labels (dict): maps from location to a set of strings
         """
         self.width = width
         self.length = length
@@ -335,6 +335,10 @@ class GridMap:
         output['grid_size'] = self.grid_size\
             if self.grid_size is not None else "null"
 
+        output['labels'] = {}
+        for loc in self.labels:
+            output['labels'][f"loc-{loc}"] = list(self.labels[loc])
+
         with open(savepath, 'w') as f:
             json.dump(output, f)
 
@@ -345,10 +349,16 @@ class GridMap:
 
         obstacles = set(map(tuple, data["obstacles"]))
         unknown = set(map(tuple, data["unknown"]))
+
+        labels = {}
+        for loc_str in data['labels']:
+            loc = eval(loc_str.split('-')[1])
+            labels[loc] = set(data['labels'][loc_str])
         return GridMap(data["width"],
                        data["length"],
                        obstacles,
                        unknown=unknown,
                        name=data["name"],
                        ranges_in_metric=data["ranges_in_metric"],
-                       grid_size=data["grid_size"])
+                       grid_size=data["grid_size"],
+                       labels=labels)
