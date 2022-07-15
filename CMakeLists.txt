@@ -22,8 +22,7 @@ add_message_files(
   Loc.msg
   GridMap2d.msg
   GridMapLoc.msg
-  GridMapPose2d.msg
-  SloopMosSpatialLanguage.msg)
+  GridMapPose2d.msg)
 
 # Adding the action file for PlanAction
 add_action_files(

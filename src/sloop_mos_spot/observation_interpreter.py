@@ -1,5 +1,7 @@
 # Observation interpretation specific to Spot
 import rospy
+import sloop.observation
+from pomdp_py.utils import typ
 from geometry_msgs.msg import PoseStamped
 from actionlib_msgs.msg import GoalStatus
 from sloop_ros.msg import GridMap2d
@@ -73,11 +75,24 @@ def detection_img_msg_callback(detection_msg, bridge):
     """For object detections in image, but we don't have depth"""
 
 
+def spatial_lang_callback(splang_msg, bridge):
+    splang = splang_msg.data
+    map_name = bridge.agent.map_name
+    splang_obz = sloop.observation.parse(splang,
+                                         map_name,
+                                         kwfile=FILEPATHS[map_name]["symbol_to_synonyms"],
+                                         spacy_model=bridge.agent.spacy_model,
+                                         verbose_level=1)
+    bridge.agent.update_belief(splang_obz, None)
+    rospy.loginfo(typ.bold("updated belief based on spatial language."))
+
+
 ###### The actual ObservationInterpreter #########
 class SpotObservationInterpreter(ObservationInterpreter):
     CALLBACKS = {"grid_map": grid_map_msg_callback,
                  "robot_pose": robot_pose_msg_callback,
-                 "detection_3d": detection_3d_msg_callback}
+                 "detection_3d": detection_3d_msg_callback,
+                 "spatial_lang": spatial_lang_callback}
 
     # observation types that will be collected once an action
     # is completed and a round of planner and belief update is

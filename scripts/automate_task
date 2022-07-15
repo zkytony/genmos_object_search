@@ -28,6 +28,7 @@ class AutomateTask:
                  plan_goal_topic,
                  progress_topic,
                  action_status_topic,
+                 spatial_lang_topic,
                  max_steps,
                  max_plan_freq=1):
         self.done = False
@@ -41,12 +42,19 @@ class AutomateTask:
 
         self._plan_goal_pub = rospy.Publisher(
             plan_goal_topic, PlanNextStepActionGoal, queue_size=10, latch=True)
+
         self._plan_status_pub = rospy.Subscriber(
             plan_goal_topic.split("/goal")[0] + "/result", PlanNextStepActionResult, self._plan_status_cb)
+
         self._progress_sub = rospy.Subscriber(
             progress_topic, std_msgs.String, self._progress_cb)
+
         self._action_status_topic = rospy.Subscriber(
             action_status_topic, GoalStatus, self._action_status_cb)
+
+        self._spatial_lang_pub = rospy.Publisher(
+            spatial_lang_topic, std_msgs.String, queue_size=10, latch=True)
+
 
     def _progress_cb(self, msg):
         rospy.loginfo(typ.info(msg.data))
@@ -74,6 +82,13 @@ class AutomateTask:
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
+
+        # Ask for spatial language input.
+        spatial_lang = input("Input spatial language (Enter to skip): ")
+        if len(spatial_lang) > 0:
+            self._spatial_lang_pub.publish(std_msgs.String(data=spatial_lang))
+            time.sleep(2)
+
         while not rospy.is_shutdown():
             if self.step_count >= self.max_steps:
                 rospy.logwarn("Used up all planning steps. Task not finished.")
@@ -107,6 +122,7 @@ class AutomateTask:
             rospy.logwarn("another action is active. Will not plan right now.")
 
 
+
 def main():
     rospy.init_node("automate_task")
     parser = argparse.ArgumentParser(description="Automate SLOOP MOS task on a robot.")
@@ -115,10 +131,12 @@ def main():
 
     plan_goal_topic = rospy.get_param("~plan_goal_topic")
     progress_topic = rospy.get_param("~progress_topic")
+    spatial_lang_topic = rospy.get_param("~spatial_lang_topic")
     action_status_topic = rospy.get_param("~action_status_topic")
 
     t = AutomateTask(plan_goal_topic,
                      progress_topic,
+                     spatial_lang_topic,
                      action_status_topic,
                      args.max_steps)
     t.run()

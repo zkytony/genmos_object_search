@@ -19,7 +19,7 @@ ros_config:
     grid_map:
       msg_type: sloop_ros.msg.GridMap2d
     spatial_lang:
-      msg_type: sloop_ros.msg.SloopMosSpatialLanguage
+      msg_type: std_msgs.String
 
 ################## agent config ##################
 agent_config:
@@ -31,7 +31,7 @@ agent_config:
       chair: uniform
 
   detectable_objects:
-    - chair
+    - book
 
   robot:
     detectors:
@@ -46,14 +46,14 @@ agent_config:
     id: robot0
 
   targets:
-  - chair
+  - book
 
   objects:
     chair:
-      class: chair
+      class: book
       color:
-      - 100
       - 200
+      - 100
       - 80
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
@@ -70,12 +70,12 @@ agent_config:
 
   no_look: true
 
-
+  # Language Related
   spacy_model: en_core_web_lg
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
   foref_model_map_name: honolulu  # we force usage of this model
   object_symbol_map:
-    GreenToyota: G
+    RedBook: R
 
   # visualization
   visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo
