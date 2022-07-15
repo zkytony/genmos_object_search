@@ -36,6 +36,7 @@ class AutomateTask:
         self.step_count = 0
         self.max_plan_freq = max_plan_freq
 
+        self._started = False
         self._wait_for_status = False
         self._action_active = False
         self._wait_and_try_again = False
@@ -57,9 +58,10 @@ class AutomateTask:
 
 
     def _progress_cb(self, msg):
-        rospy.loginfo(typ.info(msg.data))
-        if msg.data == "all found":
-            self.done = True
+        if self._started:
+            rospy.loginfo(typ.info(msg.data))
+            if msg.data == "all found":
+                self.done = True
 
     def _action_status_cb(self, status_msg):
         if self._wait_for_status:
@@ -89,6 +91,7 @@ class AutomateTask:
             self._spatial_lang_pub.publish(std_msgs.String(data=spatial_lang))
             time.sleep(2)
 
+        self._started = True
         while not rospy.is_shutdown():
             if self.step_count >= self.max_steps:
                 rospy.logwarn("Used up all planning steps. Task not finished.")

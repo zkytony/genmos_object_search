@@ -33,6 +33,7 @@
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
     <remap from="~observation/robot_pose" to="/spot_hand_pose"/>
     <remap from="~observation/detection_3d" to="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/>
+    <remap from="~observation/spatial_lang" to="/spatial_lang"/>
     <remap from="~action_status" to="/spot_action_executor/status"/>
   </node>
 </launch>

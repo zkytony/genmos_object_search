@@ -7,6 +7,7 @@
         args=" --max-steps $(arg max_steps)">
     <param name="plan_goal_topic" value="/run_sloop_mos_spot/plan/goal"/>
     <param name="progress_topic" value="/run_sloop_mos_spot/progress"/>
+    <param name="spatial_lang_topic" value="/spatial_lang"/>
     <param name="action_status_topic" value="/spot_action_executor/status"/>
   </node>
 </launch>
