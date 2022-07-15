@@ -165,7 +165,7 @@ class SpotLandmarkRecorder:
             existing_landmarks = self.mapinfo.landmarks_for(self.map_name)
             while landmark_symbol in existing_landmarks:
                 word = random.sample(NINE_LETTER_WORDS, 1)[0]
-                landmark_symbol = "{}_{}".format(word, det3d.label.capitalize(), _count)
+                landmark_symbol = "{}_{}".format(word, det3d.label.capitalize())
 
             # Now, we make a visualization as if this landmark is added.
             img = self._make_grid_map_landmarks_img()
@@ -222,6 +222,64 @@ class SpotLandmarkRecorder:
             self.publish_grid_map_viz()
             rate.sleep()
 
+    def _create_symbol_to_synonyms(self):
+        """for legacy reasons, symbol_to_synonyms has to be of a certain format to be parsable"""
+        return {"objects": {},
+                f"landmarks_{self.map_name}": {},
+                "spatial_relations": {
+                    "left": [
+                        "left"
+                    ],
+                    "right": [
+                        "right"
+                    ],
+                    "north": [
+                        "north",
+                        "northern"
+                    ],
+                    "south": [
+                        "south",
+                        "southern"
+                    ],
+                    "east": [
+                        "east",
+                        "eastern"
+                    ],
+                    "west": [
+                        "west",
+                        "western"
+                    ],
+                    "northeast": [
+                        "northeast",
+                        "northeastern"
+                    ],
+                    "northwest": [
+                        "northwest",
+                        "northwestern"
+                    ],
+                    "southeast": [
+                        "southeast",
+                        "southeastern"
+                    ],
+                    "southwest": [
+                        "southwest",
+                        "southwestern"
+                    ]
+                },
+                "swaps": {
+                    "the green toyota and the red honda": [
+                        "both cars",
+                        "the two cars"
+                    ]
+                },
+                "_thresholds_": {
+                    "objects": 0.8,
+                    "landmarks": 0.85,
+                    "spatial_relations": 0.98,
+                    "swaps": 0.9
+                }
+            }
+
     def done(self, *args):
         self._done = True
         if self.grid_map is None:
@@ -229,17 +287,18 @@ class SpotLandmarkRecorder:
             return
         # Ask for some synonyms
         name_to_symbols = {}
-        symbol_to_synonyms = {}
+
+        symbol_to_synonyms = self._create_symbol_to_synonyms()
         for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
             names_input = input(f"Give some names to this symbol {landmark_symbol}"
                                 f"at {self._symbol_centers[landmark_symbol]}? (comma separated list): ")
             names = list(map(str.strip, names_input.split(",")))
-            if len(names) == 0:
+            if len(names_input) == 0:
                 name = " ".join(landmark_symbol.split("_"))
-                symbol_to_synonyms[landmark_symbol] = [name]
+                symbol_to_synonyms[f"landmarks_{self.map_name}"][landmark_symbol] = [name]
                 name_to_symbols[landmark_symbol] = name
             else:
-                symbol_to_synonyms[landmark_symbol] = names
+                symbol_to_synonyms[f"landmarks_{self.map_name}"][landmark_symbol] = names
                 for name in names:
                     name_to_symbols[name] = landmark_symbol
         print(self.mapinfo.landmarks[self.map_name])
