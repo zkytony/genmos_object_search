@@ -63,7 +63,7 @@ agent_config:
   foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_ros/tests/sloop_object_search/../../models
   foref_model_map_name: honolulu  # we force usage of this model
   object_symbol_map:
-    RedBook: book  # must be an object id
+    NovelBook: book  # must be an object id
 
   # Topo map generation
   topo_map_args:
