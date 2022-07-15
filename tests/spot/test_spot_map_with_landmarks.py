@@ -31,6 +31,7 @@ def test():
     landmark_colors = {}
     img = viz.render()
     landmarks = dict(mapinfo.landmarks[map_name])
+    landmarks = {"Recycling_Chair"}
     for landmark_symbol in landmarks:
         _colors = set(rgb_to_hex(landmark_colors[s]) for s in landmark_colors)
         if landmark_symbol not in landmark_colors:
