@@ -174,27 +174,6 @@ class SpotLandmarkRecorder:
             rospy.loginfo(f"landmark {landmark_symbol} added! Total landmarks: {len(self.mapinfo.landmarks[self.map_name])}")
             self._pub_this_img = None
 
-
-    def done(self):
-        if self.grid_map is None:
-            rospy.logwarn("Nothing to do. Grid map is not received.")
-            return
-        # Ask for some synonyms
-        name_to_symbols = {}
-        symbol_to_synonyms = {}
-        for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
-            names_input = input(f"Give some names to this symbol {landmark_symbol}? (comma separated list): ")
-            names = list(map(str.strip, names_input.split(",")))
-            symbol_to_synonyms[landmark_symbol] = names
-            for name in names:
-                name_to_symbols[name] = landmark_symbol
-        register_map(self.grid_map, exist_ok=True,
-                     symbol_to_grids=self.mapinfo.landmarks[self.map_name],
-                     name_to_symbols=name_to_symbols,
-                     symbol_to_synonyms=symbol_to_synonyms,
-                     save_grid_map=True)
-        rospy.loginfo(f"Done recording for {self.map_name}")
-
     def _make_grid_map_landmarks_img(self):
         img = self.viz.render()
         landmarks = dict(self.mapinfo.landmarks[self.map_name])
@@ -223,14 +202,35 @@ class SpotLandmarkRecorder:
 
     def run(self):
         rate = rospy.Rate(5)
-        try:
-            while not rospy.is_shutdown():
-                if self.grid_map is None:
-                    rospy.loginfo("waiting for grid map...")
-                self.publish_grid_map_viz()
-                rate.sleep()
-        except KeyboardInterrupt:
-            self.done()
+        while not rospy.is_shutdown():
+            if self.grid_map is None:
+                rospy.loginfo("waiting for grid map...")
+            self.publish_grid_map_viz()
+            rate.sleep()
+
+    def __del__(self):
+        if self.grid_map is None:
+            rospy.logwarn("Nothing to do. Grid map is not received.")
+            return
+        # Ask for some synonyms
+        name_to_symbols = {}
+        symbol_to_synonyms = {}
+        for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
+            names_input = input(f"Give some names to this symbol {landmark_symbol}? (comma separated list): ")
+            names = list(map(str.strip, names_input.split(",")))
+            if len(names) == 0:
+                symbol_to_synonyms[landmark_symbol] = [landmark_symbol]
+            else:
+                symbol_to_synonyms[landmark_symbol] = names
+            for name in names:
+                name_to_symbols[name] = landmark_symbol
+        register_map(self.grid_map, exist_ok=True,
+                     symbol_to_grids=self.mapinfo.landmarks[self.map_name],
+                     name_to_symbols=name_to_symbols,
+                     symbol_to_synonyms=symbol_to_synonyms,
+                     save_grid_map=True)
+        rospy.loginfo(f"Done recording for {self.map_name}")
+
 
 def main():
     rospy.init_node("spot_record_landmarks")
