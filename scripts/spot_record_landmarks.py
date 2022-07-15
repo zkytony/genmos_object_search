@@ -290,13 +290,13 @@ class SpotLandmarkRecorder:
 
         symbol_to_synonyms = self._create_symbol_to_synonyms()
         for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
-            names_input = input(f"Give some names to this symbol {landmark_symbol}"
+            names_input = input(f"Give some names to this symbol {landmark_symbol} "
                                 f"at {self._symbol_centers[landmark_symbol]}? (comma separated list): ")
             names = list(map(str.strip, names_input.split(",")))
             if len(names_input) == 0:
                 name = " ".join(landmark_symbol.split("_"))
                 symbol_to_synonyms[f"landmarks_{self.map_name}"][landmark_symbol] = [name]
-                name_to_symbols[landmark_symbol] = name
+                name_to_symbols[name] = landmark_symbol
             else:
                 symbol_to_synonyms[f"landmarks_{self.map_name}"][landmark_symbol] = names
                 for name in names:
