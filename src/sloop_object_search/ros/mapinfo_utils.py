@@ -51,7 +51,7 @@ def register_map(grid_map, exist_ok=False,
         if not exist_ok:
             raise ValueError(f"map {map_name} is already present.")
 
-    os.mkdir(mapdir, exist_ok=exist_ok)
+    os.makedirs(mapdir, exist_ok=exist_ok)
     with open(os.path.join(mapdir, "excluded_symbols.json"), "w") as f:
         f.write("[]")
     with open(os.path.join(mapdir, "name_to_symbols.json"), "w") as f:
