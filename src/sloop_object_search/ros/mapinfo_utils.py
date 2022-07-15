@@ -15,13 +15,13 @@ def _create_fp_dict_new(map_names, grid_size):
     fp_dict = {}
     for map_name in map_names:
         fp_dict[map_name] = {
-            "name_to_symbols": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "name_to_symbols.json"),
-            "symbol_to_grids": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "symbol_to_grids.json"),
-            "symbol_to_synonyms": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "symbol_to_synonyms.json"),
-            "streets": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "streets.json"),
-            "map_dims": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "map_dims.json"),
-            "excluded_symbols": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "excluded_symbols.json"),
-            "grid_map": os.path.join(DATA_PATH, map_name, f"g{grid_size}", "grid_map.json"),
+            "name_to_symbols": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "name_to_symbols.json"),
+            "symbol_to_grids": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "symbol_to_grids.json"),
+            "symbol_to_synonyms": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "symbol_to_synonyms.json"),
+            "streets": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "streets.json"),
+            "map_dims": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "map_dims.json"),
+            "excluded_symbols": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "excluded_symbols.json"),
+            "grid_map": os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}", "grid_map.json"),
         }
     return fp_dict
 
@@ -46,7 +46,7 @@ def register_map(grid_map, exist_ok=False,
     'exist_ok' to be True.
     """
     map_name = grid_map.name
-    mapdir = os.path.join(DATA_PATH, map_name, f"g{grid_map.grid_size:.1f}")
+    mapdir = os.path.join(DATA_PATH, map_name, f"g{grid_map.grid_size:.2f}")
     if os.path.exists(mapdir):
         if not exist_ok:
             raise ValueError(f"map {map_name} is already present.")
@@ -79,7 +79,7 @@ def register_map(grid_map, exist_ok=False,
     FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_map.grid_size))
 
 def load_filepaths(map_name, grid_size):
-    mapdir = os.path.join(DATA_PATH, map_name, f"g{grid_size}")
+    mapdir = os.path.join(DATA_PATH, map_name, f"g{grid_size:.2f}")
     if os.path.exists(mapdir):
         FILEPATHS.update(_create_fp_dict_new([map_name], grid_size=grid_size))
         return True
