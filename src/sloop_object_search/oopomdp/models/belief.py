@@ -84,6 +84,9 @@ class Belief2D(pomdp_py.OOBelief):
                 observation_model = agent.observation_model[objid]
             pr_z = observation_model.probability(zobj, snext, action)
             belief_dist[object_state] = pr_z * self.b(objid)[object_state]
+            if isinstance(observation, SpatialLanguageObservation):
+                print(observation_model, zobj, snext, action)
+                print(pr_z, self.b(objid)[object_state], pr_z * self.b(objid)[object_state])
 
         belief_dist = pomdp_py.Histogram(normalize(belief_dist))
         self.set_object_belief(objid, belief_dist)
