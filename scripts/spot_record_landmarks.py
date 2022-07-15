@@ -23,6 +23,7 @@ import argparse
 import numpy as np
 import tf2_ros
 import sensor_msgs.msg as sensor_msgs
+import std_msgs.msg as std_msgs
 import rbd_spot
 from geometry_msgs.msg import PoseStamped
 from sloop_object_search.ros.ros_utils import tf2_transform
@@ -88,6 +89,10 @@ class SpotLandmarkRecorder:
         self._det3d_sub = rospy.Subscriber(self._detection_3d_topic,
                                            SimpleDetection3DArray,
                                            self._detection_3d_cb)
+
+        self._done_sub = rospy.Subscriber("~done",
+                                          std_msgs.String,
+                                          self.done)
 
         self.viz = None
         self._grid_map_viz_pub = rospy.Publisher("~viz",
@@ -210,7 +215,7 @@ class SpotLandmarkRecorder:
             self.publish_grid_map_viz()
             rate.sleep()
 
-    def __del__(self):
+    def done(self, *args):
         if self.grid_map is None:
             rospy.logwarn("Nothing to do. Grid map is not received.")
             return
