@@ -92,25 +92,25 @@ class AutomateTask:
             rospy.loginfo(f"Published spatial language: {spatial_lang}")
             time.sleep(20)
 
-        # self._started = True
-        # while not rospy.is_shutdown():
-        #     if self.step_count >= self.max_steps:
-        #         rospy.logwarn("Used up all planning steps. Task not finished.")
-        #         return
-        #     if self.done:
-        #         rospy.loginfo("Task finished!")
-        #         return
+        self._started = True
+        while not rospy.is_shutdown():
+            if self.step_count >= self.max_steps:
+                rospy.logwarn("Used up all planning steps. Task not finished.")
+                return
+            if self.done:
+                rospy.loginfo("Task finished!")
+                return
 
-        #     if not (self._wait_for_status or self._action_active):
-        #         self.send_plan_request()
+            if not (self._wait_for_status or self._action_active):
+                self.send_plan_request()
 
-        #     if self._wait_and_try_again:
-        #         rospy.loginfo("wait and try sending plan request again")
-        #         time.sleep(1.0)
-        #         self.send_plan_request()
-        #         self._wait_and_try_again = False
+            if self._wait_and_try_again:
+                rospy.loginfo("wait and try sending plan request again")
+                time.sleep(1.0)
+                self.send_plan_request()
+                self._wait_and_try_again = False
 
-        #     rate.sleep()
+            rate.sleep()
 
     def send_plan_request(self):
         if not self._action_active:
