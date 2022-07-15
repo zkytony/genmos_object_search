@@ -14,14 +14,17 @@
 #
 #   rostopic pub /spot_record_landmarks/done std_msgs/String "data: ''"
 
+import os
 import cv2
 import rospy
+import random
 import argparse
 import numpy as np
 import tf2_ros
 import sensor_msgs.msg as sensor_msgs
 import std_msgs.msg as std_msgs
 import rbd_spot
+import json
 from geometry_msgs.msg import PoseStamped
 from sloop_object_search.ros.ros_utils import tf2_transform
 from rbd_spot_perception.msg import SimpleDetection3DArray
@@ -56,6 +59,9 @@ def add_landmark(mapinfo, map_name, landmark_symbol, landmark_footprint_grids):
             print(f"WARNING: cell occupied originally by {original_landmark_symbol}. Now by {landmark_symbol}")
             mapinfo.cell_to_landmark(map_name)[loc] = landmark_symbol
 
+DIR_PATH = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(DIR_PATH, "../data/nine_letter_words.json")) as f:
+    NINE_LETTER_WORDS = set(json.load(f))
 
 class SpotLandmarkRecorder:
     def __init__(self,
@@ -154,12 +160,12 @@ class SpotLandmarkRecorder:
                 continue
 
             # Now, try to figure out a symbol for this landmark
-            _count = 0
-            landmark_symbol = "{}_{:03d}".format(det3d.label.capitalize(), _count)
+            word = random.sample(NINE_LETTER_WORDS, 1)[0]
+            landmark_symbol = "{}_{}".format(word, det3d.label.capitalize())
             existing_landmarks = self.mapinfo.landmarks_for(self.map_name)
             while landmark_symbol in existing_landmarks:
-                _count += 1
-                landmark_symbol = "{}_{:03d}".format(det3d.label.capitalize(), _count)
+                word = random.sample(NINE_LETTER_WORDS, 1)[0]
+                landmark_symbol = "{}_{}".format(word, det3d.label.capitalize(), _count)
 
             # Now, we make a visualization as if this landmark is added.
             img = self._make_grid_map_landmarks_img()
@@ -229,11 +235,13 @@ class SpotLandmarkRecorder:
                                 f"at {self._symbol_centers[landmark_symbol]}? (comma separated list): ")
             names = list(map(str.strip, names_input.split(",")))
             if len(names) == 0:
-                symbol_to_synonyms[landmark_symbol] = [landmark_symbol]
+                name = " ".join(landmark_symbol.split("_"))
+                symbol_to_synonyms[landmark_symbol] = [name]
+                name_to_symbols[landmark_symbol] = name
             else:
                 symbol_to_synonyms[landmark_symbol] = names
-            for name in names:
-                name_to_symbols[name] = landmark_symbol
+                for name in names:
+                    name_to_symbols[name] = landmark_symbol
         print(self.mapinfo.landmarks[self.map_name])
         register_map(self.grid_map, exist_ok=True,
                      symbol_to_grids=self.mapinfo.landmarks[self.map_name],
