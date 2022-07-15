@@ -92,6 +92,8 @@ class SpotLandmarkRecorder:
         self._grid_map_viz_pub = rospy.Publisher("~viz",
                                                  sensor_msgs.Image, queue_size=10, latch=True)
         self._landmark_colors = {}
+        self._viz_msg_printed = False
+        self._pub_this_img = None
 
     def _grid_map_cb(self, grid_map_msg):
         if self.grid_map is None:
@@ -141,7 +143,7 @@ class SpotLandmarkRecorder:
                     landmark_footprint_grids.add((x, y))
 
             if self._reject_overlaps and len(overlapping_symbols) > 0:
-                rospy.loginfo(f"Detected {det.label} but it is overlapping with {overlapping_symbols}")
+                rospy.loginfo(f"Detected {det3d.label} but it is overlapping with {overlapping_symbols}")
                 continue
 
             # Now, try to figure out a symbol for this landmark
@@ -155,19 +157,22 @@ class SpotLandmarkRecorder:
             # Now, we make a visualization as if this landmark is added.
             img = self._make_grid_map_landmarks_img()
             img = self.viz.highlight(img, landmark_footprint_grids, [224, 224, 20])
-            self.publish_grid_map_viz(pub_img=img)
+            self._pub_this_img = img
+            self.publish_grid_map_viz()
 
             # ask whether to save this landmark
             if self._confirm_landmarks:
                 if not _confirm(f"Save landmark {landmark_symbol}?"):
                     rospy.loginfo("landmark skipped.")
+                    self._pub_this_img = None
                     continue
 
+            # Add landmark
             add_landmark(self.mapinfo, self.map_name, landmark_symbol, landmark_footprint_grids)
-            rospy.loginfo(f"landmark {landmark_symbol} added!")
-
             for cell in landmark_footprint_grids:
                 self._cell_to_symbol[cell] = landmark_symbol
+            rospy.loginfo(f"landmark {landmark_symbol} added! Total landmarks: {len(self.mapinfo.landmarks[self.map_name])}")
+            self._pub_this_img = None
 
 
     def done(self):
@@ -192,7 +197,8 @@ class SpotLandmarkRecorder:
 
     def _make_grid_map_landmarks_img(self):
         img = self.viz.render()
-        for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
+        landmarks = dict(self.mapinfo.landmarks[self.map_name])
+        for landmark_symbol in landmarks:
             _colors = set(rgb_to_hex(self._landmark_colors[s]) for s in self._landmark_colors)
             if landmark_symbol not in self._landmark_colors:
                 self._landmark_colors[landmark_symbol] = random_unique_color(_colors, fmt="rgb")
@@ -200,18 +206,20 @@ class SpotLandmarkRecorder:
             img = self.viz.highlight(img, landmark_footprint, self._landmark_colors[landmark_symbol])
         return img
 
-    def publish_grid_map_viz(self, pub_img=None):
+    def publish_grid_map_viz(self):
         if self.viz is not None:
-            if pub_img is not None:
+            if self._pub_this_img is not None:
                 # We will just publish the given image.
-                img = pub_img
+                img = self._pub_this_img
             else:
                 img = self._make_grid_map_landmarks_img()
             img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
             img_msg = ros_utils.convert(img, encoding="rgba8")
             img_msg.header.stamp = rospy.Time.now()
             self._grid_map_viz_pub.publish(img_msg)
-            rospy.loginfo("Published grid map with landmarks visualization")
+            if not self._viz_msg_printed:
+                rospy.loginfo("Publishing grid map with landmarks visualization")
+                self._viz_msg_printed = True
 
     def run(self):
         rate = rospy.Rate(5)
@@ -229,7 +237,7 @@ def main():
     parser = argparse.ArgumentParser(description="spot record landmarks")
     parser.add_argument("--map-name", type=str, help="map name.", required=True)
     parser.add_argument("--map-frame", type=str, help="map fixed frame.", default="graphnav_map")
-    parser.add_argument("--reject-overlaps", action="store_true", help="reject landmarks with overlaps with existing.")
+    parser.add_argument("--overlaps-ok", action="store_true", help="reject landmarks with overlaps with existing.")
     parser.add_argument("--need-confirm", action="store_true", help="need to confirm whether to accept a landmark")
     args, _ = parser.parse_known_args()
 
@@ -240,7 +248,7 @@ def main():
                              detection_3d_topic,
                              grid_map_topic,
                              map_frame=args.map_frame,
-                             reject_overlaps=args.reject_overlaps,
+                             reject_overlaps=not args.overlaps_ok,
                              confirm_landmarks=args.need_confirm)
     r.run()
 
