@@ -90,7 +90,7 @@ class AutomateTask:
         if len(spatial_lang) > 0:
             self._spatial_lang_pub.publish(std_msgs.String(data=spatial_lang))
             rospy.loginfo(f"Published spatial language: {spatial_lang}")
-            time.sleep(20)
+            time.sleep(2)
 
         self._started = True
         while not rospy.is_shutdown():

@@ -40,7 +40,7 @@ agent_config:
         params:
         - fov: 60
           max_range: 5
-          min_range: 0
+          min_range: 1
         - - 0.9
           - 0.15
     id: robot0

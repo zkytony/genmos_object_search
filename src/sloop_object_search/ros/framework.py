@@ -288,7 +288,7 @@ class BaseAgentROSBridge:
             [self._observation_topics[s] for s in sources],
             [self._observation_msg_types[s] for s in sources],
             queue_size=10,
-            delay=0.2,
+            delay=0.5,
             sleep=0.05,
             verbose=True).messages
         return self._observation_interpretor_class.merge_observation_msgs(
