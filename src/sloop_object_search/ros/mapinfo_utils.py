@@ -4,6 +4,7 @@
 # Instead we create some functionality related to mapinfo
 # here.
 import os
+import json
 from sloop.osm.datasets import FILEPATHS, MapInfoDataset
 
 # Path to the 'for_robots' folder that contains maps for robot tests.
@@ -56,17 +57,17 @@ def register_map(grid_map, exist_ok=False,
         f.write("[]")
     with open(os.path.join(mapdir, "name_to_symbols.json"), "w") as f:
         if name_to_symbols is not None:
-            f.write(name_to_symbols)
+            json.dump(name_to_symbols, f, indent=4)
         else:
             f.write("{}")
     with open(os.path.join(mapdir, "symbol_to_grids.json"), "w") as f:
         if symbol_to_grids is not None:
-            f.write(symbol_to_grids)
+            json.dump(symbol_to_grids, f, indent=4)
         else:
             f.write("{}")
     with open(os.path.join(mapdir, "symbol_to_synonyms.json"), "w") as f:
         if symbol_to_synonyms is not None:
-            f.write(symbol_to_synonyms)
+            json.dump(symbol_to_synonyms, f, indent=4)
         else:
             f.write("{}")
     with open(os.path.join(mapdir, "streets.json"), "w") as f:

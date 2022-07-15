@@ -10,13 +10,10 @@
 #
 # - grid map
 #
-# Optional:
-# - run the whole sloop_mos bridge with belief, if you'd like
-#   to visualize the detection on a grid map.
+# To terminate and save:
+#
+#   rostopic pub /spot_record_landmarks/done std_msgs/String "data: ''"
 
-#   Ideally, that the landmarks should be saved by their metric locations,
-#   because the resolution of the grid map may change. But, I am coding this
-#   now just for a demo.
 import cv2
 import rospy
 import argparse
@@ -93,6 +90,7 @@ class SpotLandmarkRecorder:
         self._done_sub = rospy.Subscriber("~done",
                                           std_msgs.String,
                                           self.done)
+        self._done = False
 
         self.viz = None
         self._grid_map_viz_pub = rospy.Publisher("~viz",
@@ -115,6 +113,9 @@ class SpotLandmarkRecorder:
 
 
     def _detection_3d_cb(self, detection_msg):
+        if self._done:
+            return
+
         if self.grid_map is None:
             return
 
@@ -216,6 +217,7 @@ class SpotLandmarkRecorder:
             rate.sleep()
 
     def done(self, *args):
+        self._done = True
         if self.grid_map is None:
             rospy.logwarn("Nothing to do. Grid map is not received.")
             return
