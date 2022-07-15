@@ -20,7 +20,7 @@ from sloop_object_search.ros.grid_map_utils import (ros_msg_to_grid_map,
 import sloop_object_search.ros.ros_utils as ros_utils
 from sloop_ros.msg import GridMap2d, KeyValAction
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
-from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map
+from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map, load_filepaths
 from .framework import BaseAgentROSBridge
 
 
@@ -167,9 +167,11 @@ def grid_map_msg_callback(grid_map_msg, bridge):
     if grid_map is None:
         return
 
-    # If grid map's name is unrecognized, we would like
-    # to register this map into our database.
-    if grid_map.name not in FILEPATHS:
+    # We would like to load the map's filepaths if available, which
+    # will later be used by MapInfoDataset (e.g. when creating agent).
+    # If a map with grid_map.name is not found, we register it.
+    if not load_filepaths(grid_map.name, grid_map.grid_size):
+        rospy.logwarn(f"{map_name} is not recognized. Registering...")
         register_map(grid_map)
 
     # TODO: AD-HOC
