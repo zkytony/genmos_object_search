@@ -19,7 +19,7 @@ ros_config:
     grid_map:
       msg_type: sloop_ros.msg.GridMap2d
     spatial_lang:
-      msg_type: std_msgs.String
+      msg_type: std_msgs.msg.String
 
 ################## agent config ##################
 agent_config:
@@ -35,7 +35,7 @@ agent_config:
 
   robot:
     detectors:
-      chair:
+      book:
         class: sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly
         params:
         - fov: 60
