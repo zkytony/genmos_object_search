@@ -219,7 +219,7 @@ class MapInfoDataset:
             self._symbol_to_name[map_name][symbol] = landmark_name
 
         for symbol in symbol_to_grids:
-            self.landmarks[map_name][symbol] = symbol_to_grids[symbol]
+            self.landmarks[map_name][symbol] = list(map(tuple, symbol_to_grids[symbol]))
             if symbol not in self._symbol_to_maps:
                 self._symbol_to_maps[symbol] = set()
             self._symbol_to_maps[symbol].add(map_name)
