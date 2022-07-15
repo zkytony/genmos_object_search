@@ -75,6 +75,7 @@ class SpotLandmarkRecorder:
         self.mapinfo = MapInfoDataset()
 
         self._cell_to_symbol = {}
+        self._symbol_centers = {}
         self._reject_overlaps = reject_overlaps
         self._confirm_landmarks = confirm_landmarks
 
@@ -171,6 +172,7 @@ class SpotLandmarkRecorder:
             add_landmark(self.mapinfo, self.map_name, landmark_symbol, landmark_footprint_grids)
             for cell in landmark_footprint_grids:
                 self._cell_to_symbol[cell] = landmark_symbol
+            self._symbol_centers[landmark_symbol] = self.grid_map.to_grid_pos(obj_metric_position.x, obj_metric_position.y)
             rospy.loginfo(f"landmark {landmark_symbol} added! Total landmarks: {len(self.mapinfo.landmarks[self.map_name])}")
             self._pub_this_img = None
 
@@ -216,7 +218,8 @@ class SpotLandmarkRecorder:
         name_to_symbols = {}
         symbol_to_synonyms = {}
         for landmark_symbol in self.mapinfo.landmarks[self.map_name]:
-            names_input = input(f"Give some names to this symbol {landmark_symbol}? (comma separated list): ")
+            names_input = input(f"Give some names to this symbol {landmark_symbol}"
+                                f"at {self._symbol_centers[landmark_symbol]}? (comma separated list): ")
             names = list(map(str.strip, names_input.split(",")))
             if len(names) == 0:
                 symbol_to_synonyms[landmark_symbol] = [landmark_symbol]
@@ -224,6 +227,7 @@ class SpotLandmarkRecorder:
                 symbol_to_synonyms[landmark_symbol] = names
             for name in names:
                 name_to_symbols[name] = landmark_symbol
+        print(self.mapinfo.landmarks[self.map_name])
         register_map(self.grid_map, exist_ok=True,
                      symbol_to_grids=self.mapinfo.landmarks[self.map_name],
                      name_to_symbols=name_to_symbols,
