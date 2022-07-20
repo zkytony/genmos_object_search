@@ -16,7 +16,7 @@
 import math
 import random
 import pomdp_py
-from sloop_object_search.utils.math import (euclidean_dist)
+from sloop_object_search.utils.math import (euclidean_dist, fround)
 from .sensors import yaw_facing
 from ..domain import action
 from ..domain.observation import ObjectDetection
@@ -118,9 +118,9 @@ class PolicyModelBasic2D(PolicyModel):
         if srobot in self._legal_moves:
             return self._legal_moves[srobot]
         else:
-            robot_pose = srobot["pose"]
+            robot_pose = fround("int", srobot["pose"])
             valid_moves = set(self.movements[a] for a in self.movements
-                if self.robot_trans_model.sample(state, self.movements[a])["pose"] != robot_pose)
+                if fround("int", self.robot_trans_model.sample(state, self.movements[a])["pose"]) != robot_pose)
             self._legal_moves[srobot] = valid_moves
             return valid_moves
 
