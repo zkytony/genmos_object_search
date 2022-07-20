@@ -48,7 +48,14 @@ class LocalSearchHandler(SubgoalHandler):
         )
 
     def step(self):
-        return self.planner.plan(self._mos2d_agent)
+        import pdb; pdb.set_trace()
+        action = self.planner.plan(self._mos2d_agent)
+        if hasattr(self._mos2d_agent, "tree") and self._mos2d_agent.tree is not None:
+            _dd = pomdp_py.utils.TreeDebugger(self._mos2d_agent.tree)
+            print("vvvvvvvvvvvvvvvvvvv local planner vvvvvvvvvvvvvvvvvvvv-")
+            _dd.p(1)
+            print("^^^^^^^^^^^^^^^^^^^ local planner ^^^^^^^^^^^^^^^^^^^^-")
+        return action
 
     def update(self, action, observation):
         self.planner.update(self._mos2d_agent, action, observation)
