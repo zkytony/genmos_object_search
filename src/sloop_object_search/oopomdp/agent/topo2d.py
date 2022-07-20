@@ -115,7 +115,7 @@ class SloopMosTopo2DAgent(SloopAgent):
 
     def _update_topo_map(self, combined_dist, init=False):
         """combined_dist (dict): mapping from location to probability"""
-        reachable_positions = self.grid_map.filter_by_label("reachable")
+        reachable_positions = self.grid_map.filter_by_label("reachable_for_topo")
         topo_map_args = self.agent_config["topo_map_args"]
         print("Sampling topological graph...")
         if init:

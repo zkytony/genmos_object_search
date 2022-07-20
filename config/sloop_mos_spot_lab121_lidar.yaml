@@ -73,7 +73,7 @@ agent_config:
     node_coverage_radius: 3.0
     num_place_samples: 10
     resample_prob_thres: 0.25
-    seed: 1120
+    seed: 1509
     sep: 4.0
 
   no_look: true
