@@ -16,7 +16,8 @@ from sloop_object_search.oopomdp.domain.observation import RobotObservationTopo,
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import to_degrees
 from sloop_object_search.ros.grid_map_utils import (ros_msg_to_grid_map,
-                                                    cells_with_minimum_distance_from_obstacles)
+                                                    cells_with_minimum_distance_from_obstacles,
+                                                    obstacles_around_free_locations)
 import sloop_object_search.ros.ros_utils as ros_utils
 from sloop_ros.msg import GridMap2d, KeyValAction
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
@@ -181,6 +182,8 @@ def grid_map_msg_callback(grid_map_msg, bridge):
     cells = cells_with_minimum_distance_from_obstacles(grid_map, dist=1)
     grid_map.label_all(cells, "reachable")
     grid_map.label_all(grid_map.free_locations, "search_region")
+    additional_search_region = obstacles_around_free_locations(grid_map, dist=1)
+    grid_map.label_all(additional_search_region, "search_region")
 
     bridge.grid_map = grid_map
     rospy.loginfo("Obtained grid map")
