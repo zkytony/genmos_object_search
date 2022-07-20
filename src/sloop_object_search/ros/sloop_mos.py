@@ -232,3 +232,8 @@ def robot_pose_msg_callback(robot_pose_msg, bridge):
                                                  current_robot_state['topo_nid'])  # camera_direction; we don't need this
         bridge.agent.belief.update_robot_belief(
             GMOSObservation({bridge.agent.robot_id: robot_observation}), None)
+
+        # if the grid map has an obstacle at the robot pose location, remove it.
+        if robot_pose[:2] in bridge.grid_map.obstacles:
+            bridge.grid_map.obstacles.remove(robot_pose[:2])
+            bridge.grid_map.free_locations.add(robot_pose[:2])
