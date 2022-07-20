@@ -3,7 +3,7 @@
   <arg name="replan_freq" value="1.0"/>
   <!-- Action Executor for Spot -->
   <node name="spot_sloop_mos_automate_task"
-        pkg="sloop_ros" type="automate_task" output="screen"
+        pkg="sloop_ros" type="automate_task_and_grasp.sh" output="screen"
         args=" --max-steps $(arg max_steps)">
     <param name="plan_goal_topic" value="/run_sloop_mos_spot/plan/goal"/>
     <param name="progress_topic" value="/run_sloop_mos_spot/progress"/>
