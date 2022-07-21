@@ -74,6 +74,7 @@ class BaseAgentROSBridge:
         self._last_action = None
         self._last_action_msg = None
         self._last_action_status = None
+        self._is_planning = False
 
         self._belief_msg_type = DefaultBelief
         if "belief_msg_type" in self._ros_config:
@@ -188,12 +189,19 @@ class BaseAgentROSBridge:
             result.status = GoalStatus(status=GoalStatus.REJECTED)
             self._plan_server.set_aborted(result)
         else:
+            if self._is_planning:
+                rospy.logwarn(f"planning in progress")
+                result.status = GoalStatus(status=GoalStatus.ABORTED)
+                self._plan_server.set_aborted(result)
+                return
+
             if self._last_action is not None:
                 rospy.logwarn(f"last action {self._last_action} is still executing")
                 result.status = GoalStatus(status=GoalStatus.ABORTED)
                 self._plan_server.set_aborted(result)
             else:
                 rospy.loginfo("POMDP planning")
+                self._is_planning = True
                 action = self._planner.plan(self.agent)
                 if hasattr(self.agent, "tree") and self.agent.tree is not None:
                     _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)

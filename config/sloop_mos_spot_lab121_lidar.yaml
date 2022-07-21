@@ -93,10 +93,10 @@ planner_config:
   high_level_planner_args:
     exploration_const: 1000
     max_depth: 20
-    planning_time: 0.25
+    num_sims: 600
   local_search:
     planner: pomdp_py.POUCT
     planner_args:
       exploration_const: 1000
       max_depth: 10
-      planning_time: 0.15
+      num_sims: 600
