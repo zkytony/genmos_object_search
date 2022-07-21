@@ -186,36 +186,41 @@ class BaseAgentROSBridge:
         result = PlanNextStepResult()
         if self._planner is None:
             rospy.logerr("Agent's planner is not set. Cannot plan.")
-            result.status = GoalStatus(status=GoalStatus.REJECTED)
+            result.status = GoalStatus(status=GoalStatus.REJECTED,
+                                       text="Agent's planner is not set. Cannot plan.")
+            self._plan_server.set_aborted(result)
+            return
+
+        if self._is_planning:
+            rospy.logerr("Planner is currently planning. Please wait.")
+            result.status = GoalStatus(status=GoalStatus.REJECTED,
+                                       text="Planner is currently planning. Please wait.")
+            self._plan_server.set_aborted(result)
+            return
+
+        if self._last_action is not None:
+            rospy.logwarn(f"last action {self._last_action} is still executing")
+            result.status = GoalStatus(status=GoalStatus.ABORTED,
+                                       text=f"last action {self._last_action} is still executing")
             self._plan_server.set_aborted(result)
         else:
-            if self._is_planning:
-                rospy.logwarn(f"planning in progress")
-                result.status = GoalStatus(status=GoalStatus.ABORTED)
-                self._plan_server.set_aborted(result)
-                return
-
-            if self._last_action is not None:
-                rospy.logwarn(f"last action {self._last_action} is still executing")
-                result.status = GoalStatus(status=GoalStatus.ABORTED)
-                self._plan_server.set_aborted(result)
-            else:
-                rospy.loginfo("POMDP planning")
-                self._is_planning = True
-                action = self._planner.plan(self.agent)
-                if hasattr(self.agent, "tree") and self.agent.tree is not None:
-                    _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
-                    _dd.p(1)
-                rospy.loginfo(f"Planning successful. Action: {action}")
-                rospy.loginfo("Action published")
-                action_msg = self._action_executor_class.action_to_ros_msg(
-                    self.agent, action, goal.goal_id)
-                self._last_action_msg = action_msg
-                self._last_action = action
-                self._action_publisher.publish(action_msg)
-                result.status = GoalStatus(status=GoalStatus.SUCCEEDED)
-                self._plan_server.set_succeeded(result)
-                self._is_planning = False
+            rospy.loginfo("POMDP planning")
+            self._is_planning = True
+            action = self._planner.plan(self.agent)
+            if hasattr(self.agent, "tree") and self.agent.tree is not None:
+                _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
+                _dd.p(1)
+            rospy.loginfo(f"Planning successful. Action: {action}")
+            rospy.loginfo("Action published")
+            action_msg = self._action_executor_class.action_to_ros_msg(
+                self.agent, action, goal.goal_id)
+            self._last_action_msg = action_msg
+            self._last_action = action
+            self._action_publisher.publish(action_msg)
+            result.status = GoalStatus(status=GoalStatus.SUCCEEDED,
+                                       text="planning succeeded. Action published.")
+            self._plan_server.set_succeeded(result)
+            self._is_planning = False
 
     def _action_exec_status_cb(self, status):
         if self._last_action_msg is None:
