@@ -203,7 +203,15 @@ class BaseAgentROSBridge:
         else:
             rospy.loginfo("POMDP planning")
             self._is_planning = True
-            action = self._planner.plan(self.agent)
+            try:
+                action = self._planner.plan(self.agent)
+            except Exception as ex:
+                rospy.logerr("Planning failed: {}".format(ex))
+                result.status = GoalStatus(status=GoalStatus.ABORTED)
+                self._plan_server.set_aborted(result)
+                self._is_planning = False
+                return
+
             if hasattr(self.agent, "tree") and self.agent.tree is not None:
                 _dd = pomdp_py.utils.TreeDebugger(self.agent.tree)
                 _dd.p(1)
