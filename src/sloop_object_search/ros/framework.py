@@ -215,6 +215,7 @@ class BaseAgentROSBridge:
                 self._action_publisher.publish(action_msg)
                 result.status = GoalStatus(status=GoalStatus.SUCCEEDED)
                 self._plan_server.set_succeeded(result)
+                self._is_planning = False
 
     def _action_exec_status_cb(self, status):
         if self._last_action_msg is None:
