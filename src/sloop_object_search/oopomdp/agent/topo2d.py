@@ -164,7 +164,7 @@ class SloopMosTopo2DAgent(SloopAgent):
             # to prevent replanning goals from the same, out-dated tree while
             # a goal is in execution.
             if hasattr(self, "tree"):
-                del self.tree # remove the search tree after planning
+                self.tree = None # remove the search tree after planning
 
     def _should_resample_topo_map(self, combined_dist):
         # We will compute coverage of the probabilities

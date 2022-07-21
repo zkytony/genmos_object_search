@@ -40,7 +40,6 @@ class AutomateTask:
         self._waiting_for_action_status = False
         self._action_active = False
         self._wait_and_try_again = False
-        self._planner_is_planning = False
 
         self._plan_goal_pub = rospy.Publisher(
             plan_goal_topic, PlanNextStepActionGoal, queue_size=10, latch=True)
@@ -80,16 +79,9 @@ class AutomateTask:
         if result_msg.status.status == GoalStatus.ABORTED:
             self._waiting_for_action_status = False
             self._wait_and_try_again = True
-            self._planner_is_planning = False
         elif result_msg.status.status == GoalStatus.SUCCEEDED:
             self.step_count += 1
             self._wait_and_try_again = False
-            self._planner_is_planning = False
-        elif result_msg.status.status == GoalStatus.REJECTED:
-            if result_msg.status.text.startswith("Planner is currently planning"):
-                self._planner_is_planning = True
-            else:
-                self._planner_is_planning = False
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
@@ -110,7 +102,7 @@ class AutomateTask:
                 rospy.loginfo("Task finished!")
                 return
 
-            if not (self._waiting_for_action_status or self._action_active or self._planner_is_planning):
+            if not (self._waiting_for_action_status or self._action_active):
                 self.send_plan_request()
 
             if self._wait_and_try_again:
