@@ -179,7 +179,7 @@ def grid_map_msg_callback(grid_map_msg, bridge):
     # Label the grid map. For free locations that are a certain
     # distance away from obstacles, assign them as reachable locations.
     # Label free locations as search region.
-    cells = cells_with_minimum_distance_from_obstacles(grid_map, dist=2)
+    cells = cells_with_minimum_distance_from_obstacles(grid_map, dist=1)
     grid_map.label_all(cells, "reachable_for_topo")
     grid_map.label_all(grid_map.free_locations, "reachable")
     grid_map.label_all(grid_map.free_locations, "search_region")

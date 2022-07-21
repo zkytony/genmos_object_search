@@ -82,6 +82,9 @@ class AutomateTask:
         elif result_msg.status.status == GoalStatus.SUCCEEDED:
             self.step_count += 1
             self._wait_and_try_again = False
+        elif result_msg.status.status == GoalStatus.REJECTED:
+            self._waiting_for_action_status = False
+            self._wait_and_try_again = True
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
