@@ -132,30 +132,32 @@ class PolicyModelBasic2D(PolicyModel):
             self.policy_model = policy_model
 
         def get_preferred_actions(self, state, history):
-            if self.policy_model.no_look:
-                preferences = set()
-            else:
-                preferences = set({(action.LookAction(), self.num_visits_init, self.val_init)})
+            # if self.policy_model.no_look:
+            #     preferences = set()
+            # else:
+            #     preferences = set({(action.LookAction(), self.num_visits_init, self.val_init)})
 
-            robot_id = self.policy_model.robot_id
-            srobot = state.s(robot_id)
-            for move in self.policy_model.valid_moves(state):
-                srobot_next = self.policy_model.robot_trans_model.sample(state, move)
-                for target_id in self.policy_model.target_ids:
-                    starget = state.s(target_id)
-                    cur_dist = euclidean_dist(srobot.loc, starget.loc)
-                    # (1) 'move' brings the robot closer to target
-                    if euclidean_dist(srobot_next.loc, starget.loc) < cur_dist:
-                        preferences.add((move, self.num_visits_init, self.val_init))
-                        break
-                    # (2) After 'move', if robot moves forward, it gets closer to target
-                    if move.motion[0] == 0.0:
-                        srobot_nextnext_pose = self.policy_model.robot_trans_model.sample_motion(
-                            srobot_next["pose"], self.policy_model.movements['Forward'])
-                        if euclidean_dist(srobot_nextnext_pose[:2], starget.loc) <= cur_dist:
-                            preferences.add((move, self.num_visits_init, self.val_init))
-                            break
-            return preferences
+            # robot_id = self.policy_model.robot_id
+            # srobot = state.s(robot_id)
+            # for move in self.policy_model.valid_moves(state):
+            #     srobot_next = self.policy_model.robot_trans_model.sample(state, move)
+            #     for target_id in self.policy_model.target_ids:
+            #         starget = state.s(target_id)
+            #         cur_dist = euclidean_dist(srobot.loc, starget.loc)
+            #         # (1) 'move' brings the robot closer to target
+            #         if euclidean_dist(srobot_next.loc, starget.loc) < cur_dist:
+            #             preferences.add((move, self.num_visits_init, self.val_init))
+            #             break
+            #         # (2) After 'move', if robot moves forward, it gets closer to target
+            #         if move.motion[0] == 0.0:
+            #             srobot_nextnext_pose = self.policy_model.robot_trans_model.sample_motion(
+            #                 srobot_next["pose"], self.policy_model.movements['Forward'])
+            #             if euclidean_dist(srobot_nextnext_pose[:2], starget.loc) <= cur_dist:
+            #                 preferences.add((move, self.num_visits_init, self.val_init))
+            #                 break
+            # return preferences
+            return set()
+
 
 
 class PolicyModelTopo(PolicyModel):
