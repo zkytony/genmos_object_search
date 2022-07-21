@@ -72,6 +72,10 @@ class AutomateTask:
             else:
                 self._action_active = False
                 self._waiting_for_action_status = False
+        print("flags after action_status cb:")
+        print("waiting_for_action_status", self._waiting_for_action_status)
+        print("wait_and_try_again", self._wait_and_try_again)
+        print("action_active", self._action_active)
 
     def _plan_status_cb(self, result_msg):
         rospy.loginfo("Plan service request response: {}: '{}'".format(GOAL_STATUS[result_msg.status.status],
@@ -85,6 +89,10 @@ class AutomateTask:
         elif result_msg.status.status == GoalStatus.REJECTED:
             self._waiting_for_action_status = False
             self._wait_and_try_again = True
+        print("flags after plan_status cb:")
+        print("waiting_for_action_status", self._waiting_for_action_status)
+        print("wait_and_try_again", self._wait_and_try_again)
+        print("action_active", self._action_active)
 
     def run(self):
         rate = rospy.Rate(self.max_plan_freq)
@@ -113,6 +121,12 @@ class AutomateTask:
                 time.sleep(1.5)
                 self.send_plan_request()
                 self._wait_and_try_again = False
+
+            print("==== normal flags check ====:")
+            print("waiting_for_action_status", self._waiting_for_action_status)
+            print("wait_and_try_again", self._wait_and_try_again)
+            print("action_active", self._action_active)
+            print("=============================")
 
             rate.sleep()
 
