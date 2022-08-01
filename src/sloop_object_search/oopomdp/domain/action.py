@@ -44,11 +44,21 @@ class MotionAction2D(MotionAction):
         if motion_name is None:
             motion_name = str(motion)
         self.motion_name = motion_name
-        super().__init__("move-{}".format(motion_name))
+        super().__init__("move2d-{}".format(motion_name))
 
     @property
     def dyaw(self):
         return self.motion[1]
+
+class ChangePose2D(MotionAction):
+    """directly changes the robot pose to the given pose;
+    Action cost should be computed using current robot pose"""
+    def __init__(self, goal_pose, goal_name=None):
+        self.goal_pose = goal_pose
+        if goal_name is None:
+            goal_name = str(goal_pose)
+        self.goal_name = goal_name
+        super().__init__("chgp2d-{}".format(goal_name))
 
 def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False):
     """returns mapping from action name to Action"""
@@ -83,3 +93,78 @@ class MotionActionTopo(MotionAction):
 class StayAction(MotionActionTopo):
     def __init__(self, nid, cost_scaling_factor=1.0):
         super().__init__(nid, nid, gdist=0.0, cost_scaling_factor=1.0, atype="stay")
+
+
+##################### 3D Motion Action ##############################
+class MotionAction3D(MotionAction):
+    """The motion tuple for 3D is (dx, dy, dz, dthx, dthy, dthz)
+    where dthx, dthy, dthz are rotations with respect to x, y, z
+    axes"""
+    def __init__(self, motion, step_cost=-1,
+                 motion_name=None):
+        """
+        motion (tuple): a tuple of floats that describes the motion;
+        scheme (str): description of the motion scheme; Either
+                      "xy" or "vw"
+        """
+        self.motion = motion
+        self.step_cost = step_cost
+        if motion_name is None:
+            motion_name = str(motion)
+        self.motion_name = motion_name
+        super().__init__("move3d-({})".format(motion_name))
+
+class ChangePose3D(MotionAction):
+    """directly changes the robot pose to the given pose;
+    Action cost should be computed using current robot pose"""
+    def __init__(self, goal_pose, goal_name=None):
+        self.goal_pose = goal_pose
+        if goal_name is None:
+            goal_name = str(goal_pose)
+        self.goal_name = goal_name
+        super().__init__("chgp3d-{}".format(goal_name))
+
+def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
+    """returns mapping from action name to Action"""
+    # This comes from the AXIS motion model in mos3d
+    schemes = {
+        "axis": {
+            "-x": ((-step_size,0,0), (0,0,0)),
+            "+x": ((step_size,0,0), (0,0,0)),
+            "-y": ((0,-step_size,0), (0,0,0)),
+            "+y": ((0,step_size,0), (0,0,0)),
+            "-z": ((0,0,-step_size), (0,0,0)),
+            "+z": ((0,0,step_size), (0,0,0)),
+            "+thx": ((0,0,0), (rotation,0,0)),
+            "-thx": ((0,0,0), (-rotation,0,0)),
+            "+thy": ((0,0,0), (0,rotation,0)),
+            "-thy": ((0,0,0), (0,-rotation,0)),
+            "+thz": ((0,0,0), (0,0,rotation)),
+            "-thz": ((0,0,0), (0,0,-rotation))
+        },
+        "trans": {
+            "-x": ((-step_size,0,0), (0,0,0)),
+            "+x": ((step_size,0,0), (0,0,0)),
+            "-y": ((0,-step_size,0), (0,0,0)),
+            "+y": ((0,step_size,0), (0,0,0)),
+            "-z": ((0,0,-step_size), (0,0,0)),
+            "+z": ((0,0,step_size), (0,0,0))
+        },
+        "forward": {
+            "forward":  ( step_size, (0,0,0)  ),
+            "backward": (-step_size, (0,0,0)  ),
+            "+thx":     ( 0, (rotation,0,0) ),
+            "-thx":     ( 0, (-rotation,0,0)),
+            "+thy":     ( 0, (0,rotation,0) ),
+            "-thy":     ( 0, (0,-rotation,0)),
+            "+thz":     ( 0, (0,0,rotation) ),
+            "-thz":     ( 0, (0,0,-rotation))
+        }
+    }
+
+    actions = []
+    for name in schemes[scheme]:
+        motion = schemes[scheme][name]
+        action = MotionAction3D(motion, motion_name=name)
+        actions.append(action)
+    return actions
