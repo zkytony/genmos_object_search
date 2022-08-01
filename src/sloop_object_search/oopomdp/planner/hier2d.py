@@ -4,7 +4,7 @@ from sloop.agent import SloopAgent
 from ..agent.topo2d import SloopMosTopo2DAgent
 from ..agent.basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
-from ..domain.state import RobotState2D
+from ..domain.state import RobotState
 from ..domain.action import MotionActionTopo, StayAction, FindAction
 from .handlers import (LocalSearchHandler,
                        NavTopoHandler,
@@ -50,10 +50,10 @@ class HierarchicalPlanner(pomdp_py.Planner):
         agent_config = self._topo_agent.agent_config.copy()
 
         srobot_topo = self._topo_agent.belief.mpe().s(self._topo_agent.robot_id)
-        init_robot_state = RobotState2D(self._topo_agent.robot_id,
-                                        srobot_topo.pose,
-                                        srobot_topo.objects_found,
-                                        srobot_topo.camera_direction)
+        init_robot_state = RobotState(self._topo_agent.robot_id,
+                                      srobot_topo.pose,
+                                      srobot_topo.objects_found,
+                                      srobot_topo.camera_direction)
         init_belief = BeliefBasic2D(init_robot_state,
                                     self._topo_agent.target_objects,
                                     object_beliefs=dict(self._topo_agent.belief.object_beliefs))

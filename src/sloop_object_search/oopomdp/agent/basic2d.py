@@ -3,7 +3,7 @@ from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
 from sloop_object_search.utils.osm import osm_map_to_grid_map
 from sloop_object_search.utils.misc import import_class
-from ..domain.state import RobotState2D
+from ..domain.state import RobotState
 from ..models.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
 from ..models.observation_model import (GMOSObservationModel,
@@ -78,10 +78,10 @@ class MosBasic2DAgent(pomdp_py.Agent):
 
         # Belief
         if init_belief is None:
-            init_robot_state = RobotState2D(robot["id"],
-                                            robot["init_pose"],
-                                            robot.get("objects_found", tuple()),
-                                            robot.get("camera_direction", None))
+            init_robot_state = RobotState(robot["id"],
+                                          robot["init_pose"],
+                                          robot.get("objects_found", tuple()),
+                                          robot.get("camera_direction", None))
 
             target_objects = {objid: objects[objid]
                               for objid in target_ids}

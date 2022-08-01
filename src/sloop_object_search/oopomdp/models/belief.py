@@ -1,8 +1,8 @@
 import pomdp_py
 from tqdm import tqdm
 from .transition_model import StaticObjectTransitionModel
-from ..domain.state import (ObjectState2D,
-                            RobotState2D,
+from ..domain.state import (ObjectState,
+                            RobotState,
                             RobotStateTopo)
 from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.domain.observation import GMOSObservation
@@ -20,7 +20,7 @@ class Belief2D(pomdp_py.OOBelief):
         if type(object_prior_dist) != dict:
             object_prior_dist = {}
         for loc in search_region:
-            state = ObjectState2D(objid, objclass, loc)
+            state = ObjectState(objid, objclass, loc)
             if loc in object_prior_dist:
                 belief_dist[state] = object_prior_dist[loc]
             else:
@@ -75,7 +75,7 @@ class Belief2D(pomdp_py.OOBelief):
         belief_dist = {}
         for loc in self.search_region:
             objclass = self.target_objects[objid]["class"]
-            object_state = ObjectState2D(objid, objclass, loc)
+            object_state = ObjectState(objid, objclass, loc)
             snext = pomdp_py.OOState({
                 objid: object_state,
                 self.robot_id: next_robot_state
@@ -96,7 +96,7 @@ class BeliefBasic2D(Belief2D):
             # spatial language doesn't involve robot
             return
 
-        next_robot_state = RobotState2D.from_obz(observation.z(self.robot_id))
+        next_robot_state = RobotState.from_obz(observation.z(self.robot_id))
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
 
@@ -138,6 +138,6 @@ class BeliefTopo2D(Belief2D):
             dist[loc] = 1e-9
             for objid in object_beliefs:
                 random_sobj = object_beliefs[objid].random()
-                sobj = ObjectState2D(objid, random_sobj.objclass, loc)
+                sobj = ObjectState(objid, random_sobj.objclass, loc)
                 dist[loc] += object_beliefs[objid][sobj]
         return dist

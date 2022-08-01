@@ -12,9 +12,7 @@ import pomdp_py
 from pomdp_py.framework.basics import State
 import copy
 from ..domain.state import (ObjectState,
-                            ObjectState2D,
                             RobotState,
-                            RobotState2D,
                             RobotStateTopo)
 
 from ..domain.observation import *
@@ -158,10 +156,10 @@ class RobotTransBasic2D(RobotTransitionModel):
 
     def argmax(self, state, action):
         srobot_next = super().argmax(state, action)
-        return RobotState2D(srobot_next['id'],
-                            srobot_next['pose'],
-                            srobot_next['objects_found'],
-                            srobot_next['camera_direction'])
+        return RobotState(srobot_next['id'],
+                          srobot_next['pose'],
+                          srobot_next['objects_found'],
+                          srobot_next['camera_direction'])
 
 
 class RobotTransTopo(RobotTransitionModel):

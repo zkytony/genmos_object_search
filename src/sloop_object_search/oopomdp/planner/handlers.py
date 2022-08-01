@@ -1,7 +1,7 @@
 from collections import deque
 import pomdp_py
 from ..domain.action import FindAction
-from ..domain.state import RobotState2D, RobotStateTopo
+from ..domain.state import RobotState, RobotStateTopo
 from ..models.belief import BeliefBasic2D
 from ..models.transition_model import RobotTransBasic2D
 from sloop_object_search.utils.misc import import_class
@@ -20,10 +20,10 @@ class SubgoalHandler:
     def _copy_topo_agent_belief(self):
         robot_id = self._topo_agent.robot_id
         srobot_topo = self._topo_agent.belief.mpe().s(robot_id)
-        srobot = RobotState2D(robot_id,
-                              srobot_topo.pose,
-                              srobot_topo.objects_found,
-                              srobot_topo.camera_direction)
+        srobot = RobotState(robot_id,
+                            srobot_topo.pose,
+                            srobot_topo.objects_found,
+                            srobot_topo.camera_direction)
         belief = BeliefBasic2D(srobot,
                                self._topo_agent.target_objects,
                                object_beliefs=dict(self._topo_agent.belief.object_beliefs))

@@ -37,7 +37,7 @@ class VizSloopMosBasic2D(GridMapVisualizer):
         """
         Args:
             agent (CosAgent)
-            robot_state (RobotState2D)
+            robot_state (RobotState): 2d robot state
             target_belief (Histogram) target belief
             objlocs (dict): maps from object id to true object (x,y) location tuple
             colors (dict): maps from objid to [R,G,B]
@@ -45,6 +45,8 @@ class VizSloopMosBasic2D(GridMapVisualizer):
         """
         if robot_state is None:
             robot_state = agent.belief.mpe().s(agent.robot_id)
+
+        assert robot_state.is_2d, "2D visualizer expects 2D robot state"
 
         if img is None:
             img = self._make_gridworld_image(self._res)

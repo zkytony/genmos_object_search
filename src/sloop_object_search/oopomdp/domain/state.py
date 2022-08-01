@@ -18,6 +18,12 @@ class ObjectState(pomdp_py.ObjectState):
         return self['pose']
 
     @property
+    def loc(self):
+        """object location; we don't consider orientation for now,
+        so pose is the rotation."""
+        return self.pose
+
+    @property
     def id(self):
         return self['id']
 
@@ -25,6 +31,10 @@ class ObjectState(pomdp_py.ObjectState):
         return ObjectState(self.id,
                            self.objclass,
                            self.pose)
+
+    @property
+    def is_2d(self):
+        return len(self.loc) == 2
 
 
 class RobotState(pomdp_py.ObjectState):
@@ -89,28 +99,24 @@ class RobotState(pomdp_py.ObjectState):
         """
         raise NotImplementedError
 
+    @property
+    def is_2d(self):
+        return len(self.pose) == 3  # x, y, th
 
-class ObjectState2D(ObjectState):
     @property
     def loc(self):
-        return self.pose
-
-    def copy(self):
-        return ObjectState2D(self.id,
-                             self.objclass,
-                             self.pose)
-
-class RobotState2D(RobotState):
-    @property
-    def loc(self):
-        return self.pose[:2]
+        if self.is_2d:
+            return self.pose[:2]
+        else:
+            # 3d
+            return self.pose[:3]
 
     @staticmethod
     def from_obz(zrobot):
-        return RobotState2D(zrobot.robot_id,
-                            zrobot.pose,
-                            zrobot.objects_found,
-                            zrobot.camera_direction)
+        return RobotState(zrobot.robot_id,
+                          zrobot.pose,
+                          zrobot.objects_found,
+                          zrobot.camera_direction)
 
     def in_range(self, sensor, sobj, **kwargs):
         return sensor.in_range(sobj.loc, self["pose"], **kwargs)
@@ -119,7 +125,7 @@ class RobotState2D(RobotState):
         return sensor.in_range(loc, self["pose"], **kwargs)
 
 
-class RobotStateTopo(RobotState2D):
+class RobotStateTopo(RobotState):
     def __init__(self,
                  robot_id,
                  pose,
