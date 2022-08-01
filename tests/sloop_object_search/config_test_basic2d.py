@@ -9,7 +9,7 @@ config = {
         "planner_params": {
             "max_depth": 20,
             "exploration_const": 1000,
-            "planning_time": 0.25
+            "planning_time": 1.0
         }
     },
 
