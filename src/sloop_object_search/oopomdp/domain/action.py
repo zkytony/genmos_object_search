@@ -24,6 +24,10 @@ class LookAction(pomdp_py.SimpleAction):
     def __init__(self):
         super().__init__("look")
 
+# Define some constant actions
+Look = LookAction()
+Find = FindAction()
+
 ##################### 2D Motion Action ##############################
 MOTION_SCHEME="vw"  # can be either xy or vw
 STEP_SIZE=3
@@ -39,16 +43,30 @@ class MotionAction2D(MotionAction):
         self.step_cost = step_cost
         if motion_name is None:
             motion_name = str(motion)
+        self.motion_name = motion_name
         super().__init__("move-{}".format(motion_name))
 
     @property
     def dyaw(self):
         return self.motion[1]
 
-# Define some constant actions
-Look = LookAction()
-Find = FindAction()
+def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False):
+    """returns mapping from action name to Action"""
+    # scheme vw: (vt, vw) translational, rotational velocities.
+    FORWARD = (step_size, 0)
+    BACKWARD = (-step_size, 0)
+    LEFT = (0, -h_rotation)  # left 45 deg
+    RIGHT = (0, h_rotation)  # right 45 deg
+    MoveForward = MotionAction2D(FORWARD, motion_name="Forward")
+    MoveBackward = MotionAction2D(BACKWARD, motion_name="Backward")
+    TurnLeft = MotionAction2D(LEFT, motion_name="TurnLeft")
+    TurnRight = MotionAction2D(RIGHT, motion_name="TurnRight")
+    if back:
+        return [MoveForward, MoveBackward, TurnLeft, TurnRight]
+    else:
+        return [MoveForward, TurnLeft, TurnRight]
 
+################## Topological movement ###########################
 class MotionActionTopo(MotionAction):
     def __init__(self, src_nid, dst_nid, gdist=None,
                  cost_scaling_factor=1.0, atype="move"):

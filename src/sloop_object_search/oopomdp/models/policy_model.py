@@ -33,15 +33,10 @@ class PolicyModel(pomdp_py.RolloutPolicy):
         self.num_visits_init = num_visits_init
         self.val_init = val_init
         self.no_look = no_look
-        self._observation_model = None  # this can be helpful for the action prior
 
     @property
     def robot_id(self):
         return self.robot_trans_model.robot_id
-
-    @property
-    def observation_model(self):
-        return self._observation_model
 
     def sample(self, state):
         return random.sample(self.get_all_actions(state=state), 1)[0]
@@ -84,34 +79,17 @@ class PolicyModel(pomdp_py.RolloutPolicy):
 class PolicyModelBasic2D(PolicyModel):
     def __init__(self, target_ids,
                  robot_trans_model,
+                 primitive_movements,
                  no_look=True,
                  num_visits_init=10,
-                 val_init=100,
-                 **action_args):
+                 val_init=100):
         super().__init__(robot_trans_model, no_look=no_look,
                          num_visits_init=num_visits_init, val_init=val_init)
-        self.movements = PolicyModelBasic2D.all_movements(**action_args)
+        self.movements = {a.motion_name: a for a in primitive_movements}
         self.target_ids = target_ids
         self._legal_moves = {}
         self.action_prior = PolicyModelBasic2D.ActionPriorVW(
             num_visits_init, val_init, self)
-
-    @staticmethod
-    def all_movements(step_size=1, h_rotation=45.0):
-        """returns mapping from action name to Action"""
-        # scheme vw: (vt, vw) translational, rotational velocities.
-        FORWARD = (step_size, 0)
-        BACKWARD = (-step_size, 0)
-        LEFT = (0, -h_rotation)  # left 45 deg
-        RIGHT = (0, h_rotation)  # right 45 deg
-        MoveForward = action.MotionAction2D(FORWARD, motion_name="Forward")
-        MoveBackward = action.MotionAction2D(BACKWARD, motion_name="Backward")
-        MoveLeft = action.MotionAction2D(LEFT, motion_name="TurnLeft")
-        MoveRight = action.MotionAction2D(RIGHT, motion_name="TurnRight")
-        movements = {"Forward": MoveForward,
-                     "TurnLeft": MoveLeft,  # rotate left
-                     "TurnRight": MoveRight} # rotate right
-        return movements
 
     def valid_moves(self, state):
         srobot = state.s(self.robot_id)
@@ -154,7 +132,6 @@ class PolicyModelBasic2D(PolicyModel):
                         break
             return {(a, preferences[a][0], preferences[a][1])
                     for a in preferences}
-
 
 
 class PolicyModelTopo(PolicyModel):

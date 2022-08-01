@@ -2,8 +2,9 @@ import pomdp_py
 from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
 from sloop_object_search.utils.osm import osm_map_to_grid_map
-from sloop_object_search.utils.misc import import_class
+from sloop_object_search.utils.misc import import_class, import_func
 from ..domain.state import RobotState
+from ..domain import action
 from ..models.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
 from ..models.observation_model import (GMOSObservationModel,
@@ -35,6 +36,33 @@ def init_object_transition_models(agent_config):
         transition_models[objid] = object_trans_model
     return transition_models
 
+def init_primitive_movements(action_config):
+    """
+    actions could be configured by:
+    - either a list of dicts, {'class': "<action_class>",
+                               'params': ... [params to build an action object]}
+    - or a single dict {'function': "<function>",
+                        'params': ...[params to the function]],
+         where the function returns a list of actions.
+
+    The result of parsing action_config should be
+    a list of action objects, used as part of the action space during planning.
+    """
+    if type(action_config) != list\
+       and "func" not in action_config:
+        raise ValueError("Invalid action config; needs 'func',"
+                         "or a list of action specs")
+    if type(action_config) == list:
+        actions = []
+        for action_spec in action_config:
+            action = import_class(action_spec["class"])(
+                **action_spec["params"])
+            actions.append(action)
+    else:
+        actions = import_func(action_config["func"])(
+            **action_config["params"])
+    return actions
+
 
 class MosBasic2DAgent(pomdp_py.Agent):
     def __init__(self, agent_config, grid_map, init_belief=None):
@@ -43,7 +71,7 @@ class MosBasic2DAgent(pomdp_py.Agent):
         # Prep work
         robot = agent_config["robot"]
         objects = agent_config["objects"]
-        action_config = agent_config["action"]
+        movement_config = robot["primitive_moves"]
         no_look = agent_config.get("no_look", True)
         detection_models = init_detection_models(agent_config)
         search_region = grid_map.filter_by_label("search_region")
@@ -68,10 +96,10 @@ class MosBasic2DAgent(pomdp_py.Agent):
 
         # Policy Model
         target_ids = agent_config["targets"]
+        primitive_movements = init_primitive_movements(movement_config)
         policy_model = PolicyModelBasic2D(target_ids,
                                           robot_trans_model,
-                                          observation_model,
-                                          **action_config)
+                                          primitive_movements)
 
         # Reward Model
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])

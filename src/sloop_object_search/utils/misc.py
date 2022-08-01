@@ -8,3 +8,10 @@ def import_class(class_string):
     class_name = parts[-1]
     module = importlib.import_module(module_path)
     return getattr(module, class_name)
+
+
+def import_func(func_string):
+    """Returns the function pointed to by 'func_string',
+    which looks something like 'module1.sub1.func1'"""
+    # works the same way as import class
+    return import_class(func_string)
