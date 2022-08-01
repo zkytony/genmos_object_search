@@ -43,11 +43,8 @@ class SloopMosTopo2DAgent(SloopAgent):
         target_ids = agent_config["targets"]
         self.target_objects = {objid: objects[objid] for objid in target_ids}
         search_region = self.grid_map.filter_by_label("search_region")
-        action_config = agent_config["action"]
-        action_config["h_rotation"] = action_config.get("h_rotation", 45.0)
-        h_angles = [i*action_config["h_rotation"]
-                    for i in range(int(360/action_config["h_rotation"]))]
         no_look = agent_config.get("no_look", True)
+        h_angle_res = agent_config["topo_trans_args"]["h_angle_res"]
 
         # generate topo map (and initialize robot state)
         combined_dist, init_object_beliefs =\
@@ -57,7 +54,8 @@ class SloopMosTopo2DAgent(SloopAgent):
         # transition models and observation models
         detection_models = init_detection_models(agent_config)
         robot_trans_model = RobotTransTopo(robot["id"], target_ids,
-                                           self.topo_map, detection_models, h_angles,
+                                           self.topo_map, detection_models,
+                                           h_angle_res=h_angle_res,
                                            no_look=no_look)
         transition_models = {robot["id"]: robot_trans_model,
                              **init_object_transition_models(agent_config)}
@@ -115,7 +113,12 @@ class SloopMosTopo2DAgent(SloopAgent):
 
     def _update_topo_map(self, combined_dist, init=False):
         """combined_dist (dict): mapping from location to probability"""
+        # TODO: this way of obtaining reachable positions may not be the best
         reachable_positions = self.grid_map.filter_by_label("reachable_for_topo")
+        if len(reachable_positions) == 0:
+            print("Warning: using search region as reachable positions.")
+            reachable_positions = self.grid_map.filter_by_label("search_region")
+
         topo_map_args = self.agent_config["topo_map_args"]
         print("Sampling topological graph...")
         if init:
@@ -149,7 +152,8 @@ class SloopMosTopo2DAgent(SloopAgent):
         if init:
             return robot_state
         else:
-            self.belief.set_object_belief(self.robot_id, pomdp_py.Histogram({robot_state: 1.0}))
+            self.belief.set_object_belief(
+                self.robot_id, pomdp_py.Histogram({robot_state: 1.0}))
 
     def update_belief(self, observation, action):
         super().update_belief(observation, action)

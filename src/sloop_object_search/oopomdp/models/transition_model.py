@@ -164,15 +164,19 @@ class RobotTransBasic2D(RobotTransitionModel):
 
 class RobotTransTopo(RobotTransitionModel):
     def __init__(self, robot_id, target_ids, topo_map,
-                 detection_models, h_angles, **kwargs):
+                 detection_models, h_angle_res=45.0, **kwargs):
         """
-        h_angles (list): List of horizontal rotation (i.e. yaw)
-            angles considered for planning
+        h_angle_res (float): resolution of horizontal rotation
+            angle (in degrees) considered at the low level. It
+            is used to create the set of rotation angles, which is used
+            to sample a rotation angle facing the target as a
+            result of a topo movement action.
         """
         super().__init__(robot_id, detection_models, **kwargs)
         self.topo_map = topo_map
         self._target_ids = target_ids
-        self._h_angles = h_angles
+        self._h_angles = [i*h_angle_res
+                          for i in range(int(360/h_angle_res))]
 
     def sample_motion(self, state, action, round_to="int"):
         srobot = state.s(self.robot_id)

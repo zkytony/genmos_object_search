@@ -139,8 +139,7 @@ class PolicyModelTopo(PolicyModel):
                  robot_trans_model,
                  no_look=True,
                  num_visits_init=10,
-                 val_init=100,
-                 **action_args):
+                 val_init=100):
         assert no_look is True,\
             "planning over topological graph, no_look must be True!x"
         assert isinstance(robot_trans_model, RobotTransTopo),\

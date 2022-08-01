@@ -24,9 +24,6 @@ config = {
 
     "agent_config": {
         "agent_class": "SloopMosTopo2DAgent",  # This agent works in 2D grids
-        "action": {
-            "h_rotation": 45.0
-        },
         "topo_map_args": {
             "num_place_samples": 10,
             "degree": [3, 5],
@@ -34,6 +31,9 @@ config = {
             "seed": 1120,
             "node_coverage_radius": 3.0,
             "resample_prob_thres": 0.15
+        },
+        "topo_trans_args": {
+            "h_angle_res": 45.0
         },
         "no_look": True,
         "belief": {
