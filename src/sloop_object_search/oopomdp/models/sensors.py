@@ -541,4 +541,24 @@ class FrustumCamera(SensorModel):
 
 
 ## Utility functions regarding 3D sensors
-def get_camera_direction()
+def get_camera_direction3d(current_pose,
+                           default_camera_direction=(0, 0, -1)):
+    """
+    Given a current 3D camera pose, return a
+    vector that indicates its look direction.
+    The default look direction is -z, or (0, 0, -1)
+
+    Args:
+        current_pose (array-like)
+    Returns:
+        np.array
+    """
+    if len(pose) == 7:
+        x, y, z, qx, qy, qz, qw = pose
+        R = R_quat(qx, qy, qz, qw, affine=True)
+    elif len(pose) == 6:
+        x, y, z, thx, thy, thz = pose
+        R = R_euler(thx, thy, thz, affine=True)
+    d = np.array([*default_camera_direction, 1])
+    d_transformed = np.transpose(np.matmul(R, np.transpose(d)))
+    return d_transformed
