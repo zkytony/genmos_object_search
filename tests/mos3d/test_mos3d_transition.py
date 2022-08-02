@@ -1,9 +1,13 @@
 import pytest
+import numpy as np
 import pomdp_py
 from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
 from sloop_object_search.oopomdp.domain import action
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
-from sloop_object_search.utils.math import euler_to_quat, approx_equal
+from sloop_object_search.utils.math import (euler_to_quat,
+                                            approx_equal,
+                                            R_to_quat,
+                                            R_quat)
 
 def _make_state(robot_state, state):
     """returns an OOState where the robot state is given
@@ -36,6 +40,27 @@ def target_states():
     return {"green_car": ObjectState("green_car", "car", (2, 2, 0)),
             "red_car": ObjectState("red_car", "car", (1, 5, 3))}
 
+def test_quaternion_fact():
+    """Test the fact that
+    1. The rotation matrix for rotating first by z then by y
+       is different from first rotating by y then by z.
+       (order matters for 'roll-pitch-yaw' representation of rotation)
+    2. quaternion represents a unique rotation matrix; As a result,
+       it tells the difference between the two.
+    """
+    R1 = R_quat(*euler_to_quat(0, 0, 90))
+    R2 = R_quat(*euler_to_quat(0, 90, 0))
+
+    # this should be read as first rotate around y by 90, then around z by 90
+    # because of the 'roll-pitch-yaw' convention, default for 'euler_to_quat'
+    R3 = R_quat(*euler_to_quat(0, 90, 90))
+
+    # R1*R2 --> first apply R2 then apply R1 --> equivalent to R3
+    assert np.all(R_to_quat(R1*R2) == R_to_quat(R3))
+    # R2*R1 --> first apply R1 then apply R2 --> DIFFERENT from R3
+    assert not np.all(R_to_quat(R2*R1) == R_to_quat(R3))
+    assert not np.all(R_to_quat(R2*R1) == R_to_quat(R1*R2)) # obvious
+
 def test_robot_trans3d_without_detection_models(
         positions, init_robot_state, target_states):
 
@@ -61,7 +86,7 @@ def test_robot_trans3d_without_detection_models(
     saved_next_robot_state = next_robot_state
 
     ### below is a sequence of tests where the robot first rotates
-    ### and moves forward. This is used to test whether the rotation
+    ### and moves forward. This is used to test whether the relative rotation
     ### transition works correctly. In the beginning, the robot camera
     ### points to -z
 
