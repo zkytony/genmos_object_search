@@ -9,7 +9,13 @@ import pomdp_py
 
 ##################### Generic definitions ###########################
 class MotionAction(pomdp_py.SimpleAction):
-    """MotionAction moves the robot.
+    """MotionAction moves the robot relative to its current pose.
+    The specific definition is domain-dependent"""
+    def __repr__(self):
+        return str(self)
+
+class ChangePoseAction(pomdp_py.SimpleAction):
+    """Moves the robot directly to a given pose.
     The specific definition is domain-dependent"""
     def __repr__(self):
         return str(self)
@@ -50,7 +56,7 @@ class MotionAction2D(MotionAction):
     def dyaw(self):
         return self.motion[1]
 
-class ChangePose2D(MotionAction):
+class ChangePoseAction2D(ChangePoseAction):
     """directly changes the robot pose to the given pose;
     Action cost should be computed using current robot pose"""
     def __init__(self, goal_pose, goal_name=None):
@@ -112,9 +118,9 @@ class MotionAction3D(MotionAction):
         if motion_name is None:
             motion_name = str(motion)
         self.motion_name = motion_name
-        super().__init__("move3d-({})".format(motion_name))
+        super().__init__("move3d-{}".format(motion_name))
 
-class ChangePose3D(MotionAction):
+class ChangePoseAction3D(ChangePoseAction):
     """directly changes the robot pose to the given pose;
     Action cost should be computed using current robot pose"""
     def __init__(self, goal_pose, goal_name=None):
@@ -165,6 +171,6 @@ def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
     actions = []
     for name in schemes[scheme]:
         motion = schemes[scheme][name]
-        action = MotionAction3D(motion, motion_name=name)
+        action = MotionAction3D(motion, motion_name=f"{scheme}({name})")
         actions.append(action)
     return actions
