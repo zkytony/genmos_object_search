@@ -21,10 +21,12 @@ from ..domain.state import (ObjectState,
 from ..domain.observation import *
 from ..domain.action import *
 from .sensors import yaw_facing, get_camera_direction3d
+
 from sloop_object_search.utils.math import (fround,
                                             to_rad,
                                             R_quat,
-                                            euler_to_quat)
+                                            euler_to_quat,
+                                            proj)
 
 ##################### Object Transition ##############################
 class ObjectTransitionModel(pomdp_py.TransitionModel):
@@ -257,13 +259,14 @@ class RobotTransBasic3D(RobotTransitionModel):
         super().__init__(robot_id, detection_models, **kwargs)
         self.reachable_positions = reachable_positions
 
-    def sample_by_pose(self, pose, action, round_to="int"):
+    def sample_by_pose(self, pose, action, **kwargs):
         return RobotTransBasic3D.transform_pose(
-            pose, action, self.reachable_positions, round_to=round_to)
+            pose, action, self.reachable_positions, **kwargs)
 
     @classmethod
     def transform_pose(cls, pose, action,
-                       reachable_positions=None, round_to="int"):
+                       reachable_positions=None,
+                       **kwargs):
         """
         Args:
             pose (tuple): 7-element tuple that specify position and rotation.
@@ -284,28 +287,35 @@ class RobotTransBasic3D(RobotTransitionModel):
 
         if type(motion[0]) == tuple:
             return cls._transform_pose_axis(pose, motion,
-                                            reachable_positions=reachable_positions)
+                                            reachable_positions=reachable_positions,
+                                            **kwargs)
         else:
             return cls._transform_pose_forward(pose, motion,
-                                               reachable_positions=reachable_positions)
+                                               reachable_positions=reachable_positions,
+                                               **kwargs)
 
     @classmethod
-    def _transform_pose_axis(cls, pose, motion, reachable_positions=None):
+    def _transform_pose_axis(cls, pose, motion,
+                             reachable_positions=None,
+                             pos_precision="int",
+                             rot_precision=0.001):
         """
         pose transform where the action is specified by change
 
         Note that motion in action is specified by
            ((dx, dy, dz), (dthx, dthy, dthz))
+
+        Args:
+            pos_precision ('int' or float): precision of position
+            rot_precision ('int' or float): precision of rotation
         """
         x, y, z, qx, qy, qz, qw = pose
         R = R_quat(qx, qy, qz, qw)
         dpos, dth = motion
 
-        x += dpos[0]
-        y += dpos[1]
-        z += dpos[2]
+        new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
         if reachable_positions is not None:
-            if (x,y,z) not in reachable_positions:
+            if new_pos not in reachable_positions:
                 return pose
 
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
@@ -313,10 +323,13 @@ class RobotTransBasic3D(RobotTransitionModel):
             R_change = R_quat(*euler_to_quat(dth[0], dth[1], dth[2]))
             R = R_change * R_prev
         new_qrot = R.as_quat()
-        return (x, y, z, *new_qrot)
+        return (*new_pos, *fround(rot_precision, new_qrot))
 
     @classmethod
-    def _transform_pose_forward(cls, pose, motion, reachable_positions=None):
+    def _transform_pose_forward(cls, pose, motion,
+                                reachable_positions=None,
+                                pos_precision="int",
+                                rot_precision=0.001):
         """
         pose transform where the action is specified by change
 
@@ -330,17 +343,15 @@ class RobotTransBasic3D(RobotTransitionModel):
 
         # project this vector to xy plane, then obtain the "shadow" on xy plane
         forward_vec = robot_facing*forward
-        xy_shadow = forward_vec - util.proj(forward_vec, np.array([0,0,1]))
-        dy = util.proj(xy_shadow[:2], np.array([0,1]), scalar=True)
-        dx = util.proj(xy_shadow[:2], np.array([1,0]), scalar=True)
-        yz_shadow = forward_vec - util.proj(forward_vec, np.array([1,0,0]))
-        dz = util.proj(yz_shadow[1:], np.array([0,1]), scalar=True)
+        xy_shadow = forward_vec - proj(forward_vec, np.array([0,0,1]))
+        dy = proj(xy_shadow[:2], np.array([0,1]), scalar=True)
+        dx = proj(xy_shadow[:2], np.array([1,0]), scalar=True)
+        yz_shadow = forward_vec - proj(forward_vec, np.array([1,0,0]))
+        dz = proj(yz_shadow[1:], np.array([0,1]), scalar=True)
 
         dpos = (dx, dy, dz)
         x, y, z, qx, qy, qz, qw = pose
-        x += dpos[0]
-        y += dpos[1]
-        z += dpos[2]
+        new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
 
         R = R_quat(qx, qy, qz, qw)
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
@@ -348,4 +359,4 @@ class RobotTransBasic3D(RobotTransitionModel):
             R_change = R_quat(*euler_to_quat(dth[0], dth[1], dth[2]))
             R = R_change * R_prev
         new_qrot = R.as_quat()
-        return (x, y, z, *new_qrot)
+        return (*new_pos, *fround(rot_precision, new_qrot))
