@@ -273,7 +273,13 @@ def roundany(x, base):
     rounds the number x (integer or float) to
     the closest number that increments by `base`.
     """
-    return base * round(x / base)
+    n_digits = math.log10(base)
+    if n_digits.is_integer():
+        # using built-in round function avoids numerical instability
+        # for the case of rounding to 0.00...001
+        return round(x, abs(int(n_digits)))
+    else:
+        return base * round(x / base)
 
 def fround(round_to, loc_cont):
     """My own 'float'-rounding (hence fround) method.
@@ -286,14 +292,23 @@ def fround(round_to, loc_cont):
     If 'int-', will floor `loc_cont`
     """
     if round_to == "int":
-        return tuple(map(lambda x: int(round(x)), loc_cont))
+        if hasattr(loc_cont, "__len__"):
+            return tuple(map(lambda x: int(round(x)), loc_cont))
+        else:
+            return int(round(loc_cont))
     elif round_to == "int-":
-        return tuple(map(lambda x: int(math.floor(x)), loc_cont))
+        if hasattr(loc_cont, "__len__"):
+            return tuple(map(lambda x: int(math.floor(x)), loc_cont))
+        else:
+            return int(math.floor(loc_cont))
     elif type(round_to) == float:
-        return tuple(map(lambda x: roundany(x, round_to),
-                         loc_cont))
+        if hasattr(loc_cont, "__len__"):
+            return tuple(map(lambda x: roundany(x, round_to),
+                             loc_cont))
+        else:
+            return roundany(loc_cont, round_to)
     else:
-        return loc_cont
+        raise ValueError(f"unrecognized option for 'round_to': {round_to}")
 
 def approx_equal(v1, v2, epsilon=1e-6):
     if len(v1) != len(v2):
