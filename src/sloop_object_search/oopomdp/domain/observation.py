@@ -31,15 +31,17 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     def null_observation(objid):
         return ObjectDetection(objid, ObjectDetection.NULL)
 
+    @property
+    def is_2d(self):
+        return len(self.loc) == 2
 
-class ObjectDetection2D(ObjectDetection):
     @property
     def loc(self):
         return self.pose
 
     @staticmethod
     def null_observation(objid):
-        return ObjectDetection2D(objid, ObjectDetection.NULL)
+        return ObjectDetection(objid, ObjectDetection.NULL)
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
@@ -54,20 +56,26 @@ class RobotObservation(pomdp_py.SimpleObservation):
     def __str__(self):
         return f"{self.robot_id}({self.pose, self.camera_direction, self.objects_found})"
 
+    @property
+    def is_2d(self):
+        return len(self.pose) == 3  # x, y, th
 
-class RobotObservation2D(RobotObservation):
     @property
     def loc(self):
-        return self.pose[:2]
+        if self.is_2d:
+            return self.pose[:2]
+        else:
+            # 3d
+            return self.pose[:3]
 
     @staticmethod
     def from_state(srobot):
-        return RobotObservation2D(srobot['id'],
-                                  srobot['pose'],
-                                  srobot['objects_found'],
-                                  srobot['camera_direction'])
+        return RobotObservation(srobot['id'],
+                                srobot['pose'],
+                                srobot['objects_found'],
+                                srobot['camera_direction'])
 
-class RobotObservationTopo(RobotObservation2D):
+class RobotObservationTopo(RobotObservation):
     def __init__(self, robot_id, robot_pose, objects_found, camera_direction, topo_nid):
         super().__init__(robot_id,
                          robot_pose,

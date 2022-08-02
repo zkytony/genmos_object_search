@@ -2,7 +2,7 @@ import math
 import random
 from pomdp_py import Gaussian
 from sloop_object_search.utils.math import fround, euclidean_dist
-from ..domain.observation import ObjectDetection2D, ObjectDetection
+from ..domain.observation import ObjectDetection
 from .observation_model import ObjectDetectionModel
 from .sensors import FanSensor
 
@@ -25,7 +25,7 @@ class FanModel(ObjectDetectionModel):
 
     @property
     def observation_class(self):
-        return ObjectDetection2D
+        return ObjectDetection
 
 
 class FanModelYoonseon(FanModel):
@@ -120,7 +120,7 @@ class FanModelYoonseon(FanModel):
             loc = fround(self._round_to, loc_cont)
         else:  # event == C
             loc = None
-        zi = ObjectDetection2D(si.objid, loc)
+        zi = ObjectDetection(si.objid, loc)
         if return_event:
             return zi, event_occured
         else:
@@ -190,14 +190,14 @@ class FanModelNoFP(FanModel):
                                     [[self.sigma**2, 0],
                                      [0, self.sigma**2]])
                 loc = tuple(fround(self._round_to, gaussian.random()))
-                zi = ObjectDetection2D(si.id, loc)
+                zi = ObjectDetection(si.id, loc)
                 event = "detected"
 
             else:
-                zi = ObjectDetection2D(si.id, None)
+                zi = ObjectDetection(si.id, None)
                 event = "missed"
         else:
-            zi = ObjectDetection2D(si.id, None)
+            zi = ObjectDetection(si.id, None)
             event = "out_of_range"
         if return_event:
             return zi, event
@@ -290,14 +290,14 @@ class FanModelSimpleFP(FanModel):
                                     [[self.sigma**2, 0],
                                      [0, self.sigma**2]])
                 loc = tuple(fround(self._round_to, gaussian.random()))
-                zi = ObjectDetection2D(si.id, loc)
+                zi = ObjectDetection(si.id, loc)
                 event = "detected"
 
             else:
-                zi = ObjectDetection2D(si.id, None)
+                zi = ObjectDetection(si.id, None)
                 event = "missed"
         else:
-            zi = ObjectDetection2D(si.id, None)
+            zi = ObjectDetection(si.id, None)
             event = "out_of_range"
         if return_event:
             return zi, event
@@ -421,14 +421,14 @@ class FanModelFarRange(FanModel):
                                     [[self.sigma**2, 0],
                                      [0, self.sigma**2]])
                 loc = tuple(fround(self._round_to, gaussian.random()))
-                zi = ObjectDetection2D(si.id, loc)
+                zi = ObjectDetection(si.id, loc)
                 event = "detected"
 
             else:
-                zi = ObjectDetection2D(si.id, None)
+                zi = ObjectDetection(si.id, None)
                 event = "missed"
         else:
-            zi = ObjectDetection2D(si.id, None)
+            zi = ObjectDetection(si.id, None)
             event = "out_of_range"
 
         if return_event:
@@ -495,13 +495,13 @@ class FanModelSimpleFPLabelOnly(FanModel):
         in_range = srobot.in_range(self.sensor, si)
         if in_range:
             if random.uniform(0,1) <= self.detection_prob:
-                zi = ObjectDetection2D(si.id, ObjectDetection.NO_POSE)
+                zi = ObjectDetection(si.id, ObjectDetection.NO_POSE)
                 event = "detected"
             else:
-                zi = ObjectDetection2D(si.id, None)
+                zi = ObjectDetection(si.id, None)
                 event = "missed"
         else:
-            zi = ObjectDetection2D(si.id, None)
+            zi = ObjectDetection(si.id, None)
             event = "out_of_range"
 
         if return_event:

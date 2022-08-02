@@ -27,9 +27,7 @@ from ..domain.action import (MotionAction,
                              LookAction,
                              FindAction)
 from ..domain.observation import (ObjectDetection,
-                                  ObjectDetection2D,
                                   RobotObservation,
-                                  RobotObservation2D,
                                   RobotObservationTopo,
                                   GMOSObservation)
 
@@ -88,11 +86,6 @@ class RobotObservationModel(pomdp_py.ObservationModel):
         srobot_from_z = srobot_next.__class__.from_obz(zrobot)
         return identity(srobot_from_z, srobot)
 
-
-class RobotObservationModel2D(RobotObservationModel):
-    @property
-    def observation_class(self):
-        return RobotObservation2D
 
 class RobotObservationModelTopo(RobotObservationModel):
     @property
