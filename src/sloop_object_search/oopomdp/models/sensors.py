@@ -23,40 +23,6 @@ from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
                                             in_range_inclusive, closest,
                                             law_of_cos, inverse_law_of_cos)
 
-def yaw_facing(robot_pos, target_pos, angles=None):
-    rx, ry = robot_pos
-    tx, ty = target_pos
-    yaw = to_deg(math.atan2(ty - ry,
-                            tx - rx)) % 360
-    if angles is not None:
-        return closest(angles, yaw)
-    else:
-        return yaw
-
-def pitch_facing(robot_pos3d, target_pos3d, angles=None):
-    """
-    Returns a pitch angle rotation such that
-    if the robot is at `robot_position` and target is at
-    `target_position`, the robot is facing the target.
-
-    Args:
-       robot_pos3d (tuple): x, y, z position
-       target_pos3d (tuple): x, y, z position
-       angles (list): Valid pitch angles (possible values for pitch
-           in ai2thor agent rotation). Note that negative
-           negative is up, positive is down
-    Returns:
-        .pitch angle between 0 - 360 degrees
-    """
-    rx, _, rz = robot_pos3d
-    tx, _, tz = target_pos3d
-    pitch = to_deg(math.atan2(tx - rx,
-                              tz - rz)) % 360
-    if angles is not None:
-        return closest(angles, pitch)
-    else:
-        return pitch
-
 class SensorModel:
     IS_3D = False
     def in_range(self, point, sensor_pose):
@@ -72,6 +38,7 @@ class SensorModel:
 
 # sensor_pose is synonymous to robot_pose, outside of this file.
 
+###################### 2D Fan Sensor ########################
 class FanSensor(SensorModel):
 
     def init_params(self, name, **params):
@@ -173,8 +140,20 @@ class FanSensor(SensorModel):
         bearing = (math.atan2(point[1] - ry, point[0] - rx) - rth) % (2*math.pi)  # bearing (i.e. orientation)
         return (dist, bearing)
 
+## Utility functions
+def yaw_facing(robot_pos, target_pos, angles=None):
+    """robot_pos and target_pos are 2D"""
+    rx, ry = robot_pos
+    tx, ty = target_pos
+    yaw = to_deg(math.atan2(ty - ry,
+                            tx - rx)) % 360
+    if angles is not None:
+        return closest(angles, yaw)
+    else:
+        return yaw
 
 
+###################### 3D Fan Sensor - tilted Fan Sensor ########################
 class FanSensor3D(FanSensor):
     """
     This is a simplified 3D sensor model; Instead of
@@ -274,7 +253,33 @@ class FanSensor3D(FanSensor):
             and abs(desired_yaw - current_yaw) % 360 <= angular_tolerance\
             and abs(desired_pitch - current_pitch) % 360 <= v_angular_tolerance
 
+## Utility functions
+def pitch_facing(robot_pos3d, target_pos3d, angles=None):
+    """
+    Returns a pitch angle rotation such that
+    if the robot is at `robot_position` and target is at
+    `target_position`, the robot is facing the target.
 
+    Args:
+       robot_pos3d (tuple): x, y, z position
+       target_pos3d (tuple): x, y, z position
+       angles (list): Valid pitch angles (possible values for pitch
+           in ai2thor agent rotation). Note that negative
+           negative is up, positive is down
+    Returns:
+        .pitch angle between 0 - 360 degrees
+    """
+    rx, _, rz = robot_pos3d
+    tx, _, tz = target_pos3d
+    pitch = to_deg(math.atan2(tx - rx,
+                              tz - rz)) % 360
+    if angles is not None:
+        return closest(angles, pitch)
+    else:
+        return pitch
+
+
+###################### 3D Frustum Sensor ########################
 class FrustumCamera(SensorModel):
 
     @property
@@ -533,3 +538,7 @@ class FrustumCamera(SensorModel):
         point_in_parallel = point_in_parallel/ point_in_parallel[-1]
 
         return point_in_parallel
+
+
+## Utility functions regarding 3D sensors
+def get_camera_direction()
