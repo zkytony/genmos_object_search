@@ -115,13 +115,6 @@ class RobotTransitionModel(ObjectTransitionModel):
     def sample_motion(self, state_or_pose, action):
         """Given a state or a pose, and a motion action,
         returns the resulting pose
-
-        round_to (str): specifies rounding method of the location
-            of transitioned pose. See utils.math.fround for definition.
-
-            TODO: round_to setting to int is not great for rotation.
-                  should simply ask if the transition model is discrete
-                  or continuo
         """
         if type(state_or_pose) != tuple:
             state = state_or_pose
@@ -155,7 +148,9 @@ class RobotTransBasic2D(RobotTransitionModel):
 
     @classmethod
     def transform_pose(cls, pose, action,
-                       reachable_positions=None, round_to="int"):
+                       reachable_positions=None,
+                       pos_precision="int",
+                       rot_precision=0.001):
         original_pose = pose
         rx, ry, rth = pose
         # odometry motion model
@@ -166,7 +161,8 @@ class RobotTransBasic2D(RobotTransitionModel):
         rth = (rth + angle) % 360
         rx = rx + forward*math.cos(to_rad(rth))
         ry = ry + forward*math.sin(to_rad(rth))
-        rx, ry, rth = fround(round_to, (rx, ry, rth))
+        rx, ry, rth = (*fround(pos_precision, (rx, ry)),
+                       fround(rot_precision, rth))
         if reachable_positions is not None:
             if (rx, ry) in reachable_positions:
                 return (rx, ry, rth)
