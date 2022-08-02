@@ -8,7 +8,7 @@ from ..domain import action
 from ..models.transition_model import (StaticObjectTransitionModel,
                                        RobotTransBasic2D)
 from ..models.observation_model import (GMOSObservationModel,
-                                        RobotObservationModel2D)
+                                        RobotObservationModel)
 from ..models.policy_model import PolicyModelBasic2D
 from ..models.reward_model import GoalBasedRewardModel
 from ..models.belief import BeliefBasic2D
@@ -88,7 +88,7 @@ class MosBasic2DAgent(pomdp_py.Agent):
         transition_model = pomdp_py.OOTransitionModel(transition_models)
 
         # Observation Model (Mos)
-        robot_observation_model = RobotObservationModel2D(robot['id'])
+        robot_observation_model = RobotObservationModel(robot['id'])
         observation_model = GMOSObservationModel(
             robot["id"], detection_models,
             robot_observation_model=robot_observation_model,
