@@ -523,7 +523,7 @@ class FrustumCamera(SensorModel):
         norm_mat[0, 0] = p_norm
         norm_mat[1, 1] = p_norm
         norm_mat[2, 2] = 1.0 / self._params[-1]
-        point_in_norm = np.matmul(norm_mat, point_in_camera)
+        point_in_norm = np.vmatmul(norm_mat, point_in_camera)
 
         #Transform point in normalized perspective Camera Space to parallel camera viewing space
         c = - self._params[2] / self._params[3]
@@ -541,24 +541,29 @@ class FrustumCamera(SensorModel):
 
 
 ## Utility functions regarding 3D sensors
+DEFAULT_3DCAMERA_DIRECTION = (0, 0, -1)
 def get_camera_direction3d(current_pose,
-                           default_camera_direction=(0, 0, -1)):
+                           default_camera_direction=DEFAULT_3DCAMERA_DIRECTION):
     """
     Given a current 3D camera pose, return a
     vector that indicates its look direction.
     The default look direction is -z, or (0, 0, -1)
+
+    Tip: default_camera_direction refers to the normal
+    vector of the 0th plane in the frustum modeled by
+    FrustumCamera.
 
     Args:
         current_pose (array-like)
     Returns:
         np.array
     """
-    if len(pose) == 7:
-        x, y, z, qx, qy, qz, qw = pose
+    if len(current_pose) == 7:
+        x, y, z, qx, qy, qz, qw = current_pose
         R = R_quat(qx, qy, qz, qw, affine=True)
-    elif len(pose) == 6:
-        x, y, z, thx, thy, thz = pose
+    elif len(current_pose) == 6:
+        x, y, z, thx, thy, thz = current_pose
         R = R_euler(thx, thy, thz, affine=True)
     d = np.array([*default_camera_direction, 1])
     d_transformed = np.transpose(np.matmul(R, np.transpose(d)))
-    return d_transformed
+    return d_transformed[:3]

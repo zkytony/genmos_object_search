@@ -112,7 +112,7 @@ class RobotTransitionModel(ObjectTransitionModel):
                 objects_in_range.append(objid)
         return objects_in_range
 
-    def sample_motion(self, state_or_pose, action, round_to="int"):
+    def sample_motion(self, state_or_pose, action):
         """Given a state or a pose, and a motion action,
         returns the resulting pose
 
@@ -143,13 +143,15 @@ class RobotTransitionModel(ObjectTransitionModel):
 class RobotTransBasic2D(RobotTransitionModel):
     """robot movements over 2D grid"""
     def __init__(self, robot_id, reachable_positions,
-                 detection_models, **kwargs):
-        super().__init__(robot_id, detection_models, **kwargs)
+                 detection_models, no_look=False, **transform_kwargs):
+        super().__init__(robot_id, detection_models, no_look=no_look)
         self.reachable_positions = reachable_positions
+        self.transform_kwargs = transform_kwargs
 
-    def sample_by_pose(self, pose, action, round_to="int"):
+    def sample_by_pose(self, pose, action):
         return RobotTransBasic2D.transform_pose(
-            pose, action, self.reachable_positions, round_to=round_to)
+            pose, action, self.reachable_positions,
+            **self.transform_kwargs)
 
     @classmethod
     def transform_pose(cls, pose, action,
@@ -177,7 +179,7 @@ class RobotTransBasic2D(RobotTransitionModel):
 ##################### Robot Transition (Topo) ##############################
 class RobotTransTopo(RobotTransitionModel):
     def __init__(self, robot_id, target_ids, topo_map,
-                 detection_models, h_angle_res=45.0, **kwargs):
+                 detection_models, h_angle_res=45.0, no_look=False):
         """
         h_angle_res (float): resolution of horizontal rotation
             angle (in degrees) considered at the low level. It
@@ -185,7 +187,7 @@ class RobotTransTopo(RobotTransitionModel):
             to sample a rotation angle facing the target as a
             result of a topo movement action.
         """
-        super().__init__(robot_id, detection_models, **kwargs)
+        super().__init__(robot_id, detection_models, no_look=no_look)
         self.topo_map = topo_map
         self._target_ids = target_ids
         self._h_angles = [i*h_angle_res
@@ -251,17 +253,19 @@ class RobotTransTopo(RobotTransitionModel):
 class RobotTransBasic3D(RobotTransitionModel):
     """robot movements over 3D grid"""
     def __init__(self, robot_id, reachable_positions,
-                 detection_models, **kwargs):
+                 detection_models, no_look=False, **transform_kwargs):
         """
         Note that the detection models are expected to contain 3D frustum
         camera models.
         """
-        super().__init__(robot_id, detection_models, **kwargs)
+        super().__init__(robot_id, detection_models, no_look=no_look)
         self.reachable_positions = reachable_positions
+        self.transform_kwargs = transform_kwargs
 
-    def sample_by_pose(self, pose, action, **kwargs):
+    def sample_by_pose(self, pose, action):
         return RobotTransBasic3D.transform_pose(
-            pose, action, self.reachable_positions, **kwargs)
+            pose, action, self.reachable_positions,
+            **self.transform_kwargs)
 
     @classmethod
     def transform_pose(cls, pose, action,
@@ -299,19 +303,22 @@ class RobotTransBasic3D(RobotTransitionModel):
                              reachable_positions=None,
                              pos_precision="int",
                              rot_precision=0.001):
-        """
-        pose transform where the action is specified by change
+        """pose transform where the action is specified by change
 
-        Note that motion in action is specified by
-           ((dx, dy, dz), (dthx, dthy, dthz))
+        By default, motion specifies relative position and
+        rotation change.
 
         Args:
             pos_precision ('int' or float): precision of position
             rot_precision ('int' or float): precision of rotation
+
         """
         x, y, z, qx, qy, qz, qw = pose
         R = R_quat(qx, qy, qz, qw)
         dpos, dth = motion
+
+        # if len(dth) == 3:
+        #     raise ValueError("Rotation motion should be specified by quaternion.")
 
         new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
         if reachable_positions is not None:
@@ -320,7 +327,7 @@ class RobotTransBasic3D(RobotTransitionModel):
 
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
             R_prev = R
-            R_change = R_quat(*euler_to_quat(dth[0], dth[1], dth[2]))
+            R_change = R_quat(*euler_to_quat(*dth))
             R = R_change * R_prev
         new_qrot = R.as_quat()
         return (*new_pos, *fround(rot_precision, new_qrot))

@@ -6,6 +6,7 @@ is the job of individual domains
 """
 import math
 import pomdp_py
+from sloop_object_search.utils.math import euler_to_quat
 
 ##################### Generic definitions ###########################
 class MotionAction(pomdp_py.SimpleAction):
@@ -136,11 +137,11 @@ def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
     schemes = {
         "axis": {
             "-x": ((-step_size,0,0), (0,0,0)),
-            "+x": ((step_size,0,0), (0,0,0)),
+            "+x": ((step_size,0,0),  (0,0,0)),
             "-y": ((0,-step_size,0), (0,0,0)),
-            "+y": ((0,step_size,0), (0,0,0)),
+            "+y": ((0,step_size,0),  (0,0,0)),
             "-z": ((0,0,-step_size), (0,0,0)),
-            "+z": ((0,0,step_size), (0,0,0)),
+            "+z": ((0,0,step_size),  (0,0,0)),
             "+thx": ((0,0,0), (rotation,0,0)),
             "-thx": ((0,0,0), (-rotation,0,0)),
             "+thy": ((0,0,0), (0,rotation,0)),
