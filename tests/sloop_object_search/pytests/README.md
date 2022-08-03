@@ -1,6 +1,3 @@
-tests multi-object search in 3D. This is implemented
-through the basic3d agent.
-
 Tests here use pytest. Install:
 ```
 pip install pytest-testmon
