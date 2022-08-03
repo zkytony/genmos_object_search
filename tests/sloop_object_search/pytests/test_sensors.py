@@ -15,12 +15,14 @@
 import pytest
 import random
 import math
+import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from sloop_object_search.oopomdp.models.sensors import (FanSensor,
                                                         FrustumCamera,
                                                         FanSensor3D,
                                                         pitch_facing)
-from sloop_object_search.utils.math import to_rad
+from sloop_object_search.utils.math import to_rad, euler_to_quat
 from sloop_object_search.utils.plotting import plot_pose
 from sloop_object_search.utils.colors import lighter, rgb_to_hex
 
@@ -44,7 +46,6 @@ def robot_pose():
 def show_plots():
     return True
 
-@pytest.mark.skip()
 def test_fansensor_geometry(fansensor, dim, show_plots):
     if show_plots:
         fig, ax = plt.subplots()
@@ -78,6 +79,7 @@ def test_fansensor_geometry(fansensor, dim, show_plots):
         plt.pause(1)
         plt.close()
 
+@pytest.mark.skip(reason="test takes too long.")
 def test_fansensor3d_geometry(fansensor_big, dim, show_plots):
     if show_plots:
         fig, ax = plt.subplots()
@@ -136,13 +138,13 @@ def test_fansensor3d_geometry(fansensor_big, dim, show_plots):
 
 @pytest.fixture
 def camera():
-    return FrustumCamera(fov=90, aspect_ratio=1.0, near=1, far=5)
+    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=10)
 
-@pytest.mark.skip()
+
 def test_frustum_camera(camera, show_plots):
     points = []
     w, l, h = 30, 30, 30
-    for i in range(500):
+    for i in range(50000):
         x = random.uniform(0,w)
         y = random.uniform(0,l)
         z = random.uniform(0,h)
@@ -153,7 +155,22 @@ def test_frustum_camera(camera, show_plots):
         ax = fig.add_subplot(1,1,1,projection="3d")
 
     for i, th in enumerate([0, 45, 90, 135, 180, 225, 270, 315]):
-        pose = (15, 15, 15, 0, th, 0)
+        pose = (15, 15, 15, *euler_to_quat(0, th, 0))
+
+        # First, plot the FOV using get_volume
+        points_in_volume = camera.get_volume(pose)
+        valid_points = []
+        for p in points_in_volume:
+            if camera.in_range(p, pose):
+                valid_points.append(p)
+        valid_points = np.array(valid_points)
+        if show_plots:
+            px = valid_points[:, 0]
+            py = valid_points[:, 1]
+            pz = valid_points[:, 2]
+            ax.scatter(px, py, pz)
+
+        # Then, plot FOV based on sampled continuous points in the space
         if show_plots:
             plot_camera_fov(camera, pose, (w,l,h), points, ax)
             ax.set_xlabel("X")
@@ -165,14 +182,6 @@ def test_frustum_camera(camera, show_plots):
             plt.pause(1)
             ax.clear()
 
-        points = camera.get_volume(pose)
-        for p in points:
-            assert camera.in_range(p, pose)
-        if show_plots:
-            px = points[:, 0]
-            py = points[:, 1]
-            pz = points[:, 2]
-            ax.scatter(px, py, pz)
 
 def plot_camera_fov(camera, pose, dim, points, ax):
     w, l, h = dim
