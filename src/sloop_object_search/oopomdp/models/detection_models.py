@@ -4,8 +4,9 @@ from pomdp_py import Gaussian
 from sloop_object_search.utils.math import fround, euclidean_dist
 from ..domain.observation import ObjectDetection
 from .observation_model import ObjectDetectionModel
-from .sensors import FanSensor
+from .sensors import FanSensor, FrustumCamera
 
+################# Models based on FanSensor ############
 class FanModel(ObjectDetectionModel):
     def __init__(self, objid, fan_params,
                  quality_params, round_to="int", **kwargs):
@@ -508,3 +509,48 @@ class FanModelSimpleFPLabelOnly(FanModel):
             return zi, event
         else:
             return zi
+
+
+################# Models based on FrustumCamera ############
+class FrustumModel(ObjectDetectionModel):
+    def __init__(self, objid, frustum_params,
+                 quality_params, round_to="int", **kwargs):
+        self.frustum_params = frustum_params
+        self.quality_params = quality_params
+        self._round_to = round_to
+        self._kwargs = kwargs
+        self.__dict__.update(kwargs)
+        super().__init__(objid)
+
+    def copy(self):
+        return self.__class__(self.objid,
+                              self.frustum_params,
+                              self.quality_params,
+                              round_to=self._round_to,
+                              **self._kwargs)
+
+    @property
+    def observation_class(self):
+        return ObjectDetection
+
+
+class FrustumAlphaBeta(FrustumModel):
+    """The alpha-beta model in MOS 3D"""
+    def __init__(self, objid, frustum_params, quality_params, round_to="int"):
+        """
+        Args:
+            objid (int) object id to detect
+            quality_params; (alpha, beta, gamma)
+                detection_prob is essentially true positive rate.
+        """
+        super().__init__(objid, fan_params,
+                         quality_params, round_to="int")
+        self.sensor = FrustumCamera(**frustum_params)
+        self.params = quality_params
+
+    def probability(self, zi, si, srobot, a=None):
+        pass
+
+
+    def sample(self, si, srobot, a=None, return_event=False):
+        pass
