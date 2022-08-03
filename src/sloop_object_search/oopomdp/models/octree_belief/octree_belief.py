@@ -1,11 +1,11 @@
 # Copyright 2022 Kaiyu Zheng
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,9 +13,8 @@
 # limitations under the License.
 
 from mos3d.oopomdp import TargetObjectState
-from mos3d.planning.belief.octree import LOG, DEFAULT_VAL, OctNode, Octree
-from mos3d.models.observation import OOObservation, Voxel
-import mos3d.util as util
+from .octree import LOG, DEFAULT_VAL, OctNode, Octree
+import sloop_object_search.util.math as util
 import pomdp_py
 import math
 import random
@@ -291,12 +290,13 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                     self._propagate_helper(*child_pos, res // 2, val / 8)
 
 
+from ..domain.observation import GMOSObservation, Voxel
 def update_octree_belief(octree_belief, real_action, real_observation,
                          alpha=1000., beta=0., gamma=DEFAULT_VAL):
     """
     real_observation (Observation)
     """
-    if not isinstance(real_observation, OOObservation):
+    if not isinstance(real_observation, GMOSObservation):
        raise TypeError("Belief update should happen using "\
                        "unfactored ob                                                          servation (type Observation)")
     # Make a copy

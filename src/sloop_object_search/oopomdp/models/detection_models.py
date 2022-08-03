@@ -534,13 +534,14 @@ class FrustumModel(ObjectDetectionModel):
         return ObjectDetection
 
 
-class FrustumAlphaBeta(FrustumModel):
+from .octree import DEFAULT_VAL, LOG
+class FrustumVoxelAlphaBeta(FrustumModel):
     """The alpha-beta model in MOS 3D"""
     def __init__(self, objid, frustum_params, quality_params, round_to="int"):
         """
         Args:
             objid (int) object id to detect
-            quality_params; (alpha, beta, gamma)
+            quality_params; (alpha, beta) or (alpha, beta, gamma)
                 detection_prob is essentially true positive rate.
         """
         super().__init__(objid, fan_params,
@@ -548,9 +549,31 @@ class FrustumAlphaBeta(FrustumModel):
         self.sensor = FrustumCamera(**frustum_params)
         self.params = quality_params
 
-    def probability(self, zi, si, srobot, a=None):
-        pass
+    @property
+    def alpha(self):
+        return self.params[0]
 
+    @property
+    def beta(self):
+        return self.params[1]
+
+    @property
+    def gamma(self):
+        if len(self.params) == 3:
+            return self.params[2]
+        else:
+            return DEFAULT_VAL
+
+    def probability(self, zi, si, srobot, a=None):
+        in_range = srobot.in_range(self.sensor, si)
+        # TODO: THIS NEEDS WORK
+        if in_range:
+            if zi.loc == si.loc:
+                return self.alpha
+            else:
+                return self.beta
+        else:
+            return self.gamma
 
     def sample(self, si, srobot, a=None, return_event=False):
         pass
