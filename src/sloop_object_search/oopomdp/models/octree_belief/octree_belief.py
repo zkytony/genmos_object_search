@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mos3d.oopomdp import TargetObjectState
-from .octree import LOG, DEFAULT_VAL, OctNode, Octree
-import sloop_object_search.util.math as util
 import pomdp_py
 import math
 import random
 import numpy as np
 import sys
 import copy
+import sloop_object_search.utils.math as util
+from sloop_object_search.oopomdp.domain.state import ObjectState
+from .octree import LOG, DEFAULT_VAL, OctNode, Octree
+from sloop_object_search.oopomdp.domain.observation import GMOSObservation, Voxel
 
 class OctreeBelief(pomdp_py.GenerativeDistribution):
 
@@ -161,11 +162,11 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
 
     def random(self, res=1):
         voxel_pose = self._random_path(res, argmax=False)
-        return TargetObjectState(self._objid, self._objclass, voxel_pose, res=res)
+        return ObjectState(self._objid, self._objclass, voxel_pose, res=res)
 
     def mpe(self, res=1):
         voxel_pose = self._random_path(res, argmax=True)
-        return TargetObjectState(self._objid, self._objclass, voxel_pose, res=res)
+        return ObjectState(self._objid, self._objclass, voxel_pose, res=res)
 
     def random_child(self, pos=None, res=None, argmax=False, return_pos=False, node=None):
         """Returns a state that is at a location considered the 'child' of
@@ -187,8 +188,8 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                 if return_pos:
                     return chosen_pos
                 else:
-                    return TargetObjectState(self._objid, self._objclass,
-                                             chosen_pos, res=res)
+                    return ObjectState(self._objid, self._objclass,
+                                       chosen_pos, res=res)
 
         # Choose a child position
         child_poses = list(OctNode.child_poses(*node.pos, node.res))
@@ -206,7 +207,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         if return_pos:
             return chosen_pos
         else:
-            return TargetObjectState(self._objid, self._objclass, chosen_pos, res=res)
+            return ObjectState(self._objid, self._objclass, chosen_pos, res=res)
 
     def random_ground_child_pos(self, pos, res):
         """Returns (x,y,z) of a ground voxel which is covered by the
@@ -289,8 +290,6 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                     # want to compute: val / 8
                     self._propagate_helper(*child_pos, res // 2, val / 8)
 
-
-from ..domain.observation import GMOSObservation, Voxel
 def update_octree_belief(octree_belief, real_action, real_observation,
                          alpha=1000., beta=0., gamma=DEFAULT_VAL):
     """
@@ -347,7 +346,7 @@ def init_octree_belief(gridworld, init_robot_state, prior=None):
         octree_belief = OctreeBelief(w, l, h, objid, objclass, octree)
         if prior is not None and objid in prior:
             for x,y,z,r in prior[objid]:
-                state = TargetObjectState(objid, objclass, (x,y,z), res=r)
+                state = ObjectState(objid, objclass, (x,y,z), res=r)
                 octree_belief.assign(state, prior[objid][(x,y,z,r)])
         object_beliefs[objid] = octree_belief
     object_beliefs[gridworld.robot_id] = pomdp_py.Histogram({init_robot_state: 1.0})

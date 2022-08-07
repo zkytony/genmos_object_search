@@ -7,11 +7,22 @@ import pomdp_py
 class ObjectState(pomdp_py.ObjectState):
     """A object's state; The target object has
     a pose, with an ID, and a class."""
-    def __init__(self, objid, objclass, pose):
-        super().__init__(objclass, {"pose": pose, "id": objid})
+    def __init__(self, objid, objclass, pose, res=None):
+        """
+        Args:
+            objid (str): object id
+            objclass (str): object class
+            pose (hashable): object pose
+            res (None or int): resolution of pose.
+                Used by 3D multi-res POMDP. None by default.
+        """
+        super().__init__(objclass,
+                         {"pose": pose,
+                          "id": objid,
+                          "res": res})
 
     def __hash__(self):
-        return hash((self.id, self.pose))
+        return hash((self.id, self.pose, self.res))
 
     @property
     def pose(self):
@@ -27,10 +38,15 @@ class ObjectState(pomdp_py.ObjectState):
     def id(self):
         return self['id']
 
+    @property
+    def res(self):
+        return self['res']
+
     def copy(self):
         return ObjectState(self.id,
                            self.objclass,
-                           self.pose)
+                           self.pose,
+                           res=self.res)
 
     @property
     def is_2d(self):
