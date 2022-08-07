@@ -60,6 +60,9 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         res = object_state.res
         return self._probability(x, y, z, res)
 
+    def prob_at(self, x, y, z, res, fast=True):
+        return self._probability(x, y, z, res, fast=fast)
+
     def _probability(self, x, y, z, res, fast=True):
         """
         Probability of object present at voxel centered at the position (x, y, z)
@@ -270,6 +273,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
             cur_supernode = cur_supernode.parent
         # cur_node is the root node. Also need to call update_node_weight
         assert cur_node.res == self._octree.root.res
+        cur_node_val = cur_node.value()
         self._octree.update_node_weight(*cur_node.pose, cur_node.res, cur_node_val)
 
     def _propagate(self, node):
