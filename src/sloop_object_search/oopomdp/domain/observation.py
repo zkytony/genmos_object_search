@@ -4,6 +4,7 @@ GMOS observation breaks down to:
 - robot observation about itself
 """
 import pomdp_py
+from sloop_object_search.utils.misc import det_dict_hash
 
 class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
@@ -97,7 +98,14 @@ class RobotObservationTopo(RobotObservation):
 
 
 class GMOSObservation(pomdp_py.Observation):
-    """Joint observation of objects for GMOS"""
+    """Joint observation of objects for GMOS;
+    Note that underneath the hood, object observations
+    are independently factored.
+
+    Refer to FovVoxels which is meant to contain
+    a set of voxels that represent the unfactored observation
+    of multiple objects.
+    """
     def __init__(self, objobzs):
         """
         objobzs (dict): Maps from object id to Observation.
@@ -143,8 +151,9 @@ class GMOSObservation(pomdp_py.Observation):
     def __contains__(self, objid):
         return objid in self._objobzs
 
+
 ################## Voxel, ported over from 3D-MOS ######################
-class Voxel:
+class Voxel(pomdp_py.Observation):
     FREE = "free"
     OTHER = "other" #i.e. not i (same as FREE but for object observation)
     UNKNOWN = "unknown"
@@ -177,9 +186,11 @@ class Voxel:
                 and self._label == other.label
 
 
-class FovVoxels:
+class FovVoxels(pomdp_py.Observation):
 
-    """Voxels in the field of view."""
+    """Voxels in the field of view.
+
+    Immutable object."""
 
 
     def __init__(self, voxels):
@@ -189,6 +200,7 @@ class FovVoxels:
                 voxels in this set. Otherwise, voxels can either be labeled i or OTHER,
         """
         self._voxels = voxels
+        self._hashcache = -1
 
     def __contains__(self, item):
         if type(item) == tuple  or type(item) == int:
@@ -217,3 +229,9 @@ class FovVoxels:
             return False
         else:
             return self._voxels == other.voxels
+
+    def __hash__(self):
+        if self._hashcache == -1:
+            self._hashcache = det_dict_hash(self._voxels)
+        else:
+            return self._hashcache

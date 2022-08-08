@@ -21,7 +21,7 @@ import copy
 import sloop_object_search.utils.math as util
 from sloop_object_search.oopomdp.domain.state import ObjectState
 from .octree import LOG, DEFAULT_VAL, OctNode, Octree
-from sloop_object_search.oopomdp.domain.observation import GMOSObservation, Voxel
+from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
 class OctreeBelief(pomdp_py.GenerativeDistribution):
 
@@ -299,9 +299,10 @@ def update_octree_belief(octree_belief, real_action, real_observation,
     """
     real_observation (Observation)
     """
-    if not isinstance(real_observation, GMOSObservation):
+    if not isinstance(real_observation, FovVoxels):
        raise TypeError("Belief update should happen using "\
-                       "unfactored ob                                                          servation (type Observation)")
+                       "unfactored observation (type Observation)")
+
     # Make a copy
     octree_belief = copy.deepcopy(octree_belief)  # ? is this necessary?
     for voxel_pose in real_observation.voxels:

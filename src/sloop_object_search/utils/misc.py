@@ -1,4 +1,5 @@
 import importlib
+import hashlib
 
 def import_class(class_string):
     """Returns the class pointed to by 'class_string',
@@ -15,3 +16,10 @@ def import_func(func_string):
     which looks something like 'module1.sub1.func1'"""
     # works the same way as import class
     return import_class(func_string)
+
+
+def det_dict_hash(dct, keep=9):
+    """deterministic hash of a dictionary."""
+    content = str(list(sorted(dct.items()))).encode()
+    hashcode = int(str(int(hashlib.sha1(content).hexdigest(), 16))[:keep])
+    return hashcode

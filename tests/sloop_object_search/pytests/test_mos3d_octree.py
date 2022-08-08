@@ -26,6 +26,8 @@ from sloop_object_search.oopomdp.models.octree_belief\
 
 from sloop_object_search.oopomdp import ObjectState
 from sloop_object_search.utils.math import approx_equal
+from sloop_object_search.oopomdp.models.sensors import FrustumCamera
+from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
 
 if LOG:
@@ -174,68 +176,57 @@ def test_mpe_random(octree_belief, res=1):
     test_round(octree_belief)
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = DEFAULT_VAL
 
-# def test_time(octree_belief):
-#     """Try setting cells to be BETA and see if it affects the
-#     likelihood of sampling from the remaining cells."""
-#     start = time.time()
-#     for i in range(1000):
-#         octree_belief.random(res=1)
-#     tot_res1 = time.time() - start
+def test_time(octree_belief):
+    """Try setting cells to be BETA and see if it affects the
+    likelihood of sampling from the remaining cells."""
+    start = time.time()
+    for i in range(1000):
+        octree_belief.random(res=1)
+    tot_res1 = time.time() - start
 
-#     start = time.time()
-#     for i in range(1000):
-#         octree_belief.random(res=2)
-#     tot_res2 = time.time() - start
+    start = time.time()
+    for i in range(1000):
+        octree_belief.random(res=2)
+    tot_res2 = time.time() - start
 
-#     start = time.time()
-#     for i in range(1000):
-#         octree_belief.random(res=4)
-#     tot_res4 = time.time() - start
-#     print("Avg sample time (res=1): %.3f" % (tot_res1 % 1000))
-#     print("Avg sample time (res=2): %.3f" % (tot_res2 % 1000))
-#     print("Avg sample time (res=4): %.3f" % (tot_res4 % 1000))
+    start = time.time()
+    for i in range(1000):
+        octree_belief.random(res=4)
+    tot_res4 = time.time() - start
+    print("Avg sample time (res=1): %.3f" % (tot_res1 % 1000))
+    print("Avg sample time (res=2): %.3f" % (tot_res2 % 1000))
+    print("Avg sample time (res=4): %.3f" % (tot_res4 % 1000))
 
+def test_visualize(octree_belief):
+    import matplotlib.pyplot as plt
+    fig = plt.gcf()
+    ax = fig.add_subplot(1,1,1,projection="3d")
+    m = plot_octree_belief(ax, octree_belief,
+                           alpha="clarity", edgecolor="black", linewidth=0.1)
+    ax.set_xlim([0, octree_belief._width])
+    ax.set_ylim([0, octree_belief._length])
+    ax.set_zlim([0, octree_belief._height])
+    ax.grid(False)
+    fig.colorbar(m, ax=ax)
+    plt.show(block=False)
+    plt.pause(1)
+    ax.clear()
 
+def test_belief_update(octree_belief):
+    print("** Testing belief update")
 
-# def test_belief_update(octree_belief, state, observation_model):
-#     print("** Testing belief update")
-#     mpe = octree_belief.mpe()
-#     print(mpe)
-#     print(octree_belief[mpe])
+    # We will make a camera, and place it at a pose.
+    camera = FrustumCamera(fov=60, aspect_ratio=0.85, near=1, far=5)
+    robot_pose = (3, 4, 5, 90, 0, 0)
 
-#     objo = observation_model.sample(state, LookAction("look-thx"))
-#     print(objo)
-#     octree_belief = update_octree_belief(octree_belief, LookAction("look-thx"), objo,
-#                                          alpha=TEST_ALPHA, beta=TEST_BETA)  # this setting is for log space
+    objid = octree_belief.objid
+    voxels = {(x,y,z): Voxel((x,y,z), Voxel.FREE)
+              for (x,y,z) in camera.get_volume(robot_pose)}
+    voxels[(2, 2, 2)] = Voxel((2,2,2), objid)
+    voxels_obz = FovVoxels(voxels)
 
-#     mpe = octree_belief.mpe()
-#     print(mpe)
-#     print(octree_belief[mpe])
-#     return octree_belief
+    octree_belief = update_octree_belief(
+        octree_belief, None, voxels_obz,
+        alpha=TEST_ALPHA, beta=TEST_BETA)  # this setting is for log space
 
-
-# def test_visualize(octree_belief):
-#     import matplotlib.pyplot as plt
-#     fig = plt.gcf()
-#     ax = fig.add_subplot(1,1,1,projection="3d")
-#     m = plot_octree_belief(ax, octree_belief,
-#                            alpha="clarity", edgecolor="black", linewidth=0.1)
-#     ax.set_xlim([0, octree_belief._width])
-#     ax.set_ylim([0, octree_belief._length])
-#     ax.set_zlim([0, octree_belief._height])
-#     ax.grid(False)
-#     fig.colorbar(m, ax=ax)
-#     plt.show()
-
-
-# if __name__ == '__main__':
-#     octree_belief, init_state, oom = init()
-#     test_basics(octree_belief)
-#     test_mpe_random(octree_belief)
-#     test_assign_prior1(octree_belief)
-#     test_assign_prior2(octree_belief)
-#     test_assign_prior3(octree_belief)
-#     test_visualize(octree_belief)
-#     octree_belief = test_belief_update(octree_belief, init_state, oom)
-#     test_visualize(octree_belief)
-#     test_time(octree_belief)
+    test_visualize(octree_belief)
