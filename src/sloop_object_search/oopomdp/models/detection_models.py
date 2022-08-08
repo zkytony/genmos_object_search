@@ -2,9 +2,10 @@ import math
 import random
 from pomdp_py import Gaussian
 from sloop_object_search.utils.math import fround, euclidean_dist
-from ..domain.observation import ObjectDetection
+from ..domain.observation import ObjectDetection, Voxel
 from .observation_model import ObjectDetectionModel
 from .sensors import FanSensor, FrustumCamera
+from .octree_belief import octree
 
 ################# Models based on FanSensor ############
 class FanModel(ObjectDetectionModel):
@@ -514,10 +515,9 @@ class FanModelSimpleFPLabelOnly(FanModel):
 ################# Models based on FrustumCamera ############
 class FrustumModel(ObjectDetectionModel):
     def __init__(self, objid, frustum_params,
-                 quality_params, round_to="int", **kwargs):
+                 quality_params, **kwargs):
         self.frustum_params = frustum_params
         self.quality_params = quality_params
-        self._round_to = round_to
         self._kwargs = kwargs
         self.__dict__.update(kwargs)
         super().__init__(objid)
@@ -526,7 +526,6 @@ class FrustumModel(ObjectDetectionModel):
         return self.__class__(self.objid,
                               self.frustum_params,
                               self.quality_params,
-                              round_to=self._round_to,
                               **self._kwargs)
 
     @property
@@ -534,46 +533,50 @@ class FrustumModel(ObjectDetectionModel):
         return ObjectDetection
 
 
-# from .octree import DEFAULT_VAL, LOG
-# class FrustumVoxelAlphaBeta(FrustumModel):
-#     """The alpha-beta model in MOS 3D"""
-#     def __init__(self, objid, frustum_params, quality_params, round_to="int"):
-#         """
-#         Args:
-#             objid (int) object id to detect
-#             quality_params; (alpha, beta) or (alpha, beta, gamma)
-#                 detection_prob is essentially true positive rate.
-#         """
-#         super().__init__(objid, fan_params,
-#                          quality_params, round_to="int")
-#         self.sensor = FrustumCamera(**frustum_params)
-#         self.params = quality_params
+class FrustumVoxelAlphaBeta(FrustumModel):
+    """The alpha-beta model in MOS 3D
 
-#     @property
-#     def alpha(self):
-#         return self.params[0]
+    This observation model is designed for planning. This
+    basically corresponds to VoxelObservationModel in 3D-MOS."""
+    def __init__(self, objid, frustum_params, quality_params):
+        """
+        Args:
+            objid (int) object id to detect
+            quality_params; (alpha, beta) or (alpha, beta, gamma)
+                detection_prob is essentially true positive rate.
+        """
+        super().__init__(objid, frustum_params,
+                         quality_params)
+        self.sensor = FrustumCamera(**frustum_params)
+        self.params = quality_params
+        if octree.LOG:
+            raise NotImplementedError("Does not handle log-space probability for now.")
 
-#     @property
-#     def beta(self):
-#         return self.params[1]
+    @property
+    def alpha(self):
+        return self.params[0]
 
-#     @property
-#     def gamma(self):
-#         if len(self.params) == 3:
-#             return self.params[2]
-#         else:
-#             return DEFAULT_VAL
+    @property
+    def beta(self):
+        return self.params[1]
 
-#     def probability(self, zi, si, srobot, a=None):
-#         in_range = srobot.in_range(self.sensor, si)
-#         # TODO: THIS NEEDS WORK
-#         if in_range:
-#             if zi.loc == si.loc:
-#                 return self.alpha
-#             else:
-#                 return self.beta
-#         else:
-#             return self.gamma
+    @property
+    def gamma(self):
+        if len(self.params) == 3:
+            return self.params[2]
+        else:
+            return octree.DEFAULT_VAL
 
-#     def sample(self, si, srobot, a=None, return_event=False):
-#         pass
+    def sample(self, si, srobot, a=None, return_event=False):
+        voxel = Voxel(si.loc, Voxel.UNKNOWN)
+        if srobot.in_range(self.sensor, si):
+            if FrustumCamera.sensor_functioning(
+                    self.alpha, self.beta, log=octree.LOG):
+                voxel.label = si.id
+            else:
+                voxel.label = Voxel.OTHER
+        return voxel
+
+    def probability(self, zi, si, srobot, a=None):
+        raise ValueError("per-voxel observation model is not"
+                         "meant for belief update.")
