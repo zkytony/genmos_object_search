@@ -42,9 +42,16 @@ def test_reward_model(init_robot_state, positions):
     trobot = RobotTransBasic3D("robot", positions,
                                {objid: detection_model})
 
-    # Test 'find' when target is visible
+    # Test 'find' when target is visible, and within angular tolerance (30 degrees, default)
     state = pomdp_py.OOState({objid: object_state_visible,
                               init_robot_state.id: init_robot_state})
     action = FindAction()
     next_robot_state = trobot.sample(state, action)
     assert next_robot_state.objects_found == (objid,)
+
+    # Test 'find' when target is not visible
+    state = pomdp_py.OOState({objid: object_state_not_visible,
+                              init_robot_state.id: init_robot_state})
+    action = FindAction()
+    next_robot_state = trobot.sample(state, action)
+    assert len(next_robot_state.objects_found) == 0
