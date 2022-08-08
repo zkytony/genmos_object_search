@@ -21,7 +21,8 @@ from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
                                             euclidean_dist, pol2cart,
                                             vec, R_quat, R_euler, T, R_y,
                                             in_range_inclusive, closest,
-                                            law_of_cos, inverse_law_of_cos)
+                                            law_of_cos, inverse_law_of_cos,
+                                            quat_to_euler)
 
 class SensorModel:
     IS_3D = False
@@ -280,6 +281,10 @@ def pitch_facing(robot_pos3d, target_pos3d, angles=None):
 
 
 ###################### 3D Frustum Sensor ########################
+# By default, the camera is always at (0,0,0), looking at direction (0,0,-1).
+# Direction of camera's look vector in camera's own frame
+DEFAULT_3DCAMERA_LOOK_DIRECTION = (0, 0, -1)
+
 class FrustumCamera(SensorModel):
 
     @property
@@ -310,7 +315,8 @@ class FrustumCamera(SensorModel):
         print("         far: " + str(self.far))
         print(" volume size: " + str(len(self.volume)))
 
-    def __init__(self, fov=90, aspect_ratio=1, near=1, far=5, occlusion_enabled=True):
+    def __init__(self, fov=90, aspect_ratio=1, near=1,
+                 far=5, occlusion_enabled=True):
         """
         fov: angle (degree), how wide the viewing angle is.
         near: near-plane's distance to the camera
@@ -382,6 +388,8 @@ class FrustumCamera(SensorModel):
         self._p = p
         self._r = r
 
+        self._look = DEFAULT_3DCAMERA_LOOK_DIRECTION
+
         # compute the volume inside the frustum
         volume = []
         count = 0
@@ -393,6 +401,10 @@ class FrustumCamera(SensorModel):
         self._volume = np.array(volume, dtype=int)
         self._occlusion_enabled = occlusion_enabled
         self._observation_cache = {}
+
+    @property
+    def look(self):
+        return self._look
 
     def transform_camera(self, pose, permanent=False):#x, y, z, thx, thy, thz, permanent=False):
         """Transformation relative to current pose; Affects where the sensor's field of view.
@@ -412,6 +424,8 @@ class FrustumCamera(SensorModel):
             self._r = r_moved
             self._volume = np.transpose(np.matmul(T(x, y, z),
                                                   np.matmul(R, np.transpose(self._volume))))
+            self._look = get_camera_direction3d(
+                pose, default_camera_direction=self.look)
         return p_moved, r_moved
 
 
@@ -432,6 +446,30 @@ class FrustumCamera(SensorModel):
                 # print("       Measure: %.3f" % np.dot(vec(r[i], point), p[i]))
                 return False
         return True
+
+    def in_range_facing(self, point, sensor_pose,
+                        angular_tolerance=15,
+                        v_angular_tolerance=20):
+        if len(sensor_pose) == 7:
+            x, y, z, qx, qy, qz, qw = sensor_pose
+            thx, thy, thz = quat_to_euler(qx, qy, qz, qw)
+
+        elif len(sensor_pose) == 6:
+            x, y, z, thx, thy, thz = sensor_pose
+        else:
+            raise ValueError(f"invalid pose: {pose}. Expects to a tuple of length 6 or 7.")
+
+        # yaw is on the x-y plane, which means it is around the z-axis
+        desired_yaw = yaw_facing(sensor_pose[:2], point[:2])
+        current_yaw = thz
+
+        # pitch is on the x-z plane, which means it is around the y-axis
+        desired_pitch = pitch_facing((x,y,z), point)
+        current_pitch = thy
+
+        return self.in_range(point, sensor_pose)\
+            and abs(desired_yaw - current_yaw) % 360 <= angular_tolerance\
+            and abs(desired_pitch - current_pitch) % 360 <= v_angular_tolerance
 
     @property
     def config(self):
@@ -541,9 +579,8 @@ class FrustumCamera(SensorModel):
 
 
 ## Utility functions regarding 3D sensors
-DEFAULT_3DCAMERA_DIRECTION = (0, 0, -1)
 def get_camera_direction3d(current_pose,
-                           default_camera_direction=DEFAULT_3DCAMERA_DIRECTION):
+                           default_camera_direction=DEFAULT_3DCAMERA_LOOK_DIRECTION):
     """
     Given a current 3D camera pose, return a
     vector that indicates its look direction.

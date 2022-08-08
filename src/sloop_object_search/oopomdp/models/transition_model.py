@@ -20,7 +20,7 @@ from ..domain.state import (ObjectState,
 
 from ..domain.observation import *
 from ..domain.action import *
-from .sensors import yaw_facing, get_camera_direction3d
+from .sensors import yaw_facing, get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
 
 from sloop_object_search.utils.math import (fround,
                                             to_rad,
@@ -249,10 +249,21 @@ class RobotTransTopo(RobotTransitionModel):
 class RobotTransBasic3D(RobotTransitionModel):
     """robot movements over 3D grid"""
     def __init__(self, robot_id, reachable_positions,
-                 detection_models, no_look=False, **transform_kwargs):
+                 detection_models, no_look=False,
+                 **transform_kwargs):
         """
         Note that the detection models are expected to contain 3D frustum
         camera models.
+
+        transform_kwargs:
+            pos_precision (default: 'int'): precision setting for transformed position
+            rot_precision (default: '0.001'): precision setting for transformed rotation
+            default_camera_direction (tuple): DEFAULT_3DCAMERA_LOOK_DIRECTION
+                [used by forward motion scheme]. Note that this corresponds to
+                the default robot's forward direction. If the robot has multiple
+                cameras, this should be set to the robot's default forward direction.
+                Note that the default camera direction is (0,0,-1) as the camera
+                model (FrustumCamera) by default looks at -z.
         """
         super().__init__(robot_id, detection_models, no_look=no_look)
         self.reachable_positions = reachable_positions
@@ -332,16 +343,22 @@ class RobotTransBasic3D(RobotTransitionModel):
     def _transform_pose_forward(cls, pose, motion,
                                 reachable_positions=None,
                                 pos_precision="int",
-                                rot_precision=0.001):
+                                rot_precision=0.001,
+                                default_camera_direction=DEFAULT_3DCAMERA_LOOK_DIRECTION):
         """
         pose transform where the action is specified by change
 
         Note that motion in action is specified by
            ((dx, dy, dz), (dthx, dthy, dthz))
+
+        camera_default_look_direction (tuple): Used to calculate
+            the current camera facing direction, which is given
+            by pose, relative to this default look direction.
         """
         # We transform this direction vector to the given pose, which gives
         # us the current camera direction
-        robot_facing = get_camera_direction3d(pose) # camere by default looks at (0,0,-1)
+        robot_facing = get_camera_direction3d(
+            pose, default_camera_direction=default_camera_direction) # camere by default looks at (0,0,-1)
         forward, dth = motion
 
         # project this vector to xy plane, then obtain the "shadow" on xy plane
