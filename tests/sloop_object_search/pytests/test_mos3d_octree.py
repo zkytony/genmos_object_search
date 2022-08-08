@@ -99,26 +99,28 @@ def test_assign_prior1(octree_belief):
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
 
-# def test_assign_prior2(octree_belief):
-#     print("** Testing Prior assignment (2)")
-#     print("[start]")
-#     state = TargetObjectState(1, "cube", (5,6,7), res=2)
-#     print("Probability at")
-#     print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
-#     print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
-#     print("MPE: %s" % octree_belief.mpe())
-#     print("assigning high probability to (1,1,1,2)...")
-#     if LOG:
-#         octree_belief.assign(state, TEST_ALPHA - math.log(10))
-#     else:
-#         octree_belief.assign(state, TEST_ALPHA/10)
-#     print("MPE: %s" % octree_belief.mpe())
-#     print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
-#     print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
-#     print("(3,3,3,1): %.5f" % octree_belief._probability(3,3,3,1))
-#     print("**** Sub test:")
-#     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
-#     print("[end]")
+def test_assign_prior2(octree_belief):
+    print("** Testing Prior assignment (2)")
+    print("[start]")
+    state = ObjectState(1, "cube", (5,6,7), res=2)
+    print("Probability at")
+    print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
+    print("MPE: %s" % octree_belief.mpe())
+    print("assigning high probability to (1,1,1,2)...")
+    if LOG:
+        octree_belief.assign(state, TEST_ALPHA - math.log(10))
+    else:
+        octree_belief.assign(state, TEST_ALPHA/10)
+    print("MPE: %s" % octree_belief.mpe())
+    assert octree_belief.prob_at(0,0,0,1) < octree_belief.prob_at(11,13,15,1)
+    assert octree_belief.mpe(res=2).loc == (5,6,7)
+    print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
+    print("(3,3,3,1): %.5f" % octree_belief._probability(3,3,3,1))
+    print("**** Sub test:")
+    test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
+    print("[end]")
 
 # def test_assign_prior3(octree_belief):
 #     print("** Testing Prior assignment (3) ZERO Prior")
