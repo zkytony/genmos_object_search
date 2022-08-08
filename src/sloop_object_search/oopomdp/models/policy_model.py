@@ -75,7 +75,7 @@ class PolicyModel(pomdp_py.RolloutPolicy):
         else:
             return random.sample(self.get_all_actions(state=state, history=history), 1)[0]
 
-
+######################### Policy Model Basic 2D ########################
 class PolicyModelBasic2D(PolicyModel):
     def __init__(self, target_ids,
                  robot_trans_model,
@@ -133,7 +133,7 @@ class PolicyModelBasic2D(PolicyModel):
             return {(a, preferences[a][0], preferences[a][1])
                     for a in preferences}
 
-
+######################### Policy Model Topo ########################
 class PolicyModelTopo(PolicyModel):
     def __init__(self, target_ids,
                  robot_trans_model,
@@ -224,3 +224,62 @@ class PolicyModelTopo(PolicyModel):
                             preferences.add((move, self.num_visits_init, self.val_init))
                             break
             return preferences
+
+
+######################### Policy Model Basic 3D ########################
+class PolicyModelBasic3D(PolicyModel):
+    def __init__(self, target_ids,
+                 robot_trans_model,
+                 primitive_movements,
+                 no_look=True,
+                 num_visits_init=10,
+                 val_init=100):
+        super().__init__(robot_trans_model, no_look=no_look,
+                         num_visits_init=num_visits_init, val_init=val_init)
+        self.movements = {a.motion_name: a for a in primitive_movements}
+        self.target_ids = target_ids
+        self._legal_moves = {}
+        self.action_prior = PolicyModelBasic3D.ActionPriorAxis(
+            num_visits_init, val_init, self)
+
+    def valid_moves(self, state):
+        srobot = state.s(self.robot_id)
+        if srobot in self._legal_moves:
+            return self._legal_moves[srobot]
+        else:
+            robot_pose = fround("int", srobot["pose"])
+            valid_moves = set(self.movements[a] for a in self.movements
+                if fround("int", self.robot_trans_model.sample(state, self.movements[a])["pose"]) != robot_pose)
+            self._legal_moves[srobot] = valid_moves
+            return valid_moves
+
+    ############# Action Prior VW ############
+    class ActionPriorAxis(pomdp_py.ActionPrior):
+        def __init__(self, num_visits_init, val_init, policy_model):
+            self.num_visits_init = num_visits_init
+            self.val_init = val_init
+            self.policy_model = policy_model
+
+        def get_preferred_actions(self, state, history):
+            last_action = history[-1][0] if len(history) > 0 else None
+
+            robot_id = self.policy_model.robot_id
+            srobot = state.s(robot_id)
+
+            if self.policy_model.no_look:
+                preferences = {}
+            else:
+                preferences = {action.LookAction(): (self.num_visits_init, self.val_init)}
+
+            srobot = state.s(self.policy_model.robot_id)
+            for move in self.policy_model.valid_moves(state):
+                srobot_next = self.policy_model.robot_trans_model.sample(state, move)
+                for target_id in self.policy_model.target_ids:
+                    starget = state.s(target_id)
+                    # (1) 'move' brings the robot closer to target
+                    if euclidean_dist(srobot_next.loc, starget.loc)\
+                       <= euclidean_dist(srobot.loc, starget.loc):
+                        preferences[move] = (self.num_visits_init, self.val_init)
+                        break
+            return {(a, preferences[a][0], preferences[a][1])
+                    for a in preferences}
