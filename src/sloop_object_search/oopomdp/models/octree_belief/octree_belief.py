@@ -52,10 +52,10 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         return self._octree
 
     def __getitem__(self, object_state):
-        if object_state.objid != self._objid:
+        if object_state.id != self._objid:
             raise TypeError("Given object state has object id %d\n"\
                             "but this belief is for object id %d"
-                            % (object_state.objid, self._objid))
+                            % (object_state.id, self._objid))
         x,y,z = object_state.pose
         res = object_state.res
         return self._probability(x, y, z, res)

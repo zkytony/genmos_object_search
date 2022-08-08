@@ -76,26 +76,28 @@ def test_basics(octree_belief):
     assert abs(octree_belief.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
     assert abs(octree_belief.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
 
-# def test_assign_prior1(octree_belief):
-#     print("** Testing Prior assignment (1)")
-#     print("[start]")
-#     state = TargetObjectState(1, "cube", (1,1,1), res=2)
-#     print("Probability at")
-#     print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
-#     print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
-#     print("MPE: %s" % octree_belief.mpe())
-#     print("assigning high probability to (1,1,1,2)...")
-#     if LOG:
-#         octree_belief.assign(state, TEST_ALPHA - math.log(10))
-#     else:
-#         octree_belief.assign(state, TEST_ALPHA/10)
-#     print("MPE: %s" % octree_belief.mpe())
-#     print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
-#     print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
-#     print("(3,3,3,1): %.5f" % octree_belief._probability(3,3,3,1))
-#     print("**** Sub test:")
-#     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
-#     print("[end]")
+def test_assign_prior1(octree_belief):
+    print("** Testing Prior assignment (1)")
+    print("[start]")
+    state = ObjectState(1, "cube", (1,1,1), res=2)
+    print("Probability at")
+    print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
+    print("MPE: %s" % octree_belief.mpe())
+    print("assigning high probability to (1,1,1,2)...")
+    if LOG:
+        octree_belief.assign(state, TEST_ALPHA - math.log(10))
+    else:
+        octree_belief.assign(state, TEST_ALPHA/10)
+    print("MPE: %s" % octree_belief.mpe())
+    assert octree_belief.prob_at(0,0,0,1) < octree_belief.prob_at(3,3,3,1)
+    assert octree_belief.mpe(res=2).loc == (1,1,1)
+    print("(1,1,1,2): %.5f" % octree_belief._probability(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief._probability(0,0,0,1))
+    print("(3,3,3,1): %.5f" % octree_belief._probability(3,3,3,1))
+    print("**** Sub test:")
+    test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
+    print("[end]")
 
 # def test_assign_prior2(octree_belief):
 #     print("** Testing Prior assignment (2)")
@@ -143,30 +145,30 @@ def test_basics(octree_belief):
 #     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
 #     print("[end]")
 
-# def test_mpe_random(octree_belief, res=1):
-#     def test_round(octree_belief):
-#         print("-- Round --")
-#         mpe_state = octree_belief.mpe(res=res)
-#         mpe_prob = octree_belief[mpe_state]
-#         print(mpe_state)
+def test_mpe_random(octree_belief, res=1):
+    def test_round(octree_belief):
+        print("-- Round --")
+        mpe_state = octree_belief.mpe(res=res)
+        mpe_prob = octree_belief[mpe_state]
+        print(mpe_state)
 
-#         results = []
-#         num_same = 0
-#         for i in range(10000):
-#             rnd_state = octree_belief.random(res=res)
-#             results.append(rnd_state)
-#             if mpe_state == rnd_state:
-#                 num_same += 1
-#         if LOG:
-#             mpe_prob = math.exp(mpe_prob)
-#         print("Expected probability: %.5f; Actual frequency: %.5f"
-#               % (mpe_prob, num_same / len(results)))
-#         assert abs(num_same / len(results) - mpe_prob) <= 1e-2
-#     print("** Testing MPE and Random (res=%d)" % res)
-#     test_round(octree_belief)
-#     octree_belief[TargetObjectState(1, "cube", (0,0,1), res=1)] = TEST_ALPHA
-#     test_round(octree_belief)
-#     octree_belief[TargetObjectState(1, "cube", (0,0,1), res=1)] = DEFAULT_VAL
+        results = []
+        num_same = 0
+        for i in range(10000):
+            rnd_state = octree_belief.random(res=res)
+            results.append(rnd_state)
+            if mpe_state == rnd_state:
+                num_same += 1
+        if LOG:
+            mpe_prob = math.exp(mpe_prob)
+        print("Expected probability: %.5f; Actual frequency: %.5f"
+              % (mpe_prob, num_same / len(results)))
+        assert abs(num_same / len(results) - mpe_prob) <= 1e-2
+    print("** Testing MPE and Random (res=%d)" % res)
+    test_round(octree_belief)
+    octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = TEST_ALPHA
+    test_round(octree_belief)
+    octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = DEFAULT_VAL
 
 # def test_time(octree_belief):
 #     """Try setting cells to be BETA and see if it affects the
