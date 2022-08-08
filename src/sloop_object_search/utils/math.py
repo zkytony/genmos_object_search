@@ -209,6 +209,12 @@ def proj(vec1, vec2, scalar=False):
     else:
         return vec2 * scale
 
+def angle_between(v1, v2):
+    """returns the angle between two vectors. The result is in degrees
+    reference: https://stackoverflow.com/a/13849249/2893053"""
+    return to_deg(np.arccos(
+        np.clip(np.dot(v1, v2)/(np.linalg.norm(v1)*np.linalg.norm(v2)), -1.0, 1.0)))
+
 # Probability
 def sep_spatial_sample(candidates, sep, num_samples,
                        sample_func=None, rnd=random):
@@ -249,6 +255,8 @@ def normalize(ss):
     if type(ss) == dict:
         total = sum(ss.values())
         return {k:ss[k]/total for k in ss}
+    elif type(ss) == np.ndarray:
+        return ss/np.linalg.norm(ss)
     else:
         total = sum(ss)
         return type(ss)(ss[i]/total for i in range(len(ss)))

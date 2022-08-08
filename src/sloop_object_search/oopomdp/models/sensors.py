@@ -22,7 +22,7 @@ from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
                                             vec, R_quat, R_euler, T, R_y,
                                             in_range_inclusive, closest,
                                             law_of_cos, inverse_law_of_cos,
-                                            quat_to_euler)
+                                            angle_between)
 
 class SensorModel:
     IS_3D = False
@@ -447,29 +447,14 @@ class FrustumCamera(SensorModel):
                 return False
         return True
 
-    def in_range_facing(self, point, sensor_pose,
-                        angular_tolerance=15,
-                        v_angular_tolerance=20):
-        if len(sensor_pose) == 7:
-            x, y, z, qx, qy, qz, qw = sensor_pose
-            thx, thy, thz = quat_to_euler(qx, qy, qz, qw)
-
-        elif len(sensor_pose) == 6:
-            x, y, z, thx, thy, thz = sensor_pose
-        else:
-            raise ValueError(f"invalid pose: {pose}. Expects to a tuple of length 6 or 7.")
-
-        # yaw is on the x-y plane, which means it is around the z-axis
-        desired_yaw = yaw_facing(sensor_pose[:2], point[:2])
-        current_yaw = thz
-
-        # pitch is on the x-z plane, which means it is around the y-axis
-        desired_pitch = pitch_facing((x,y,z), point)
-        current_pitch = thy
+    def in_range_facing(self, point, sensor_pose, tolerance=30):
+        robot_facing = get_camera_direction3d(sensor_pose,
+                                              default_camera_direction=self.look)
+        robot_to_point = vec(sensor_pose[:3], point)
+        angle_diff = angle_between(robot_facing, robot_to_point) % 360
 
         return self.in_range(point, sensor_pose)\
-            and abs(desired_yaw - current_yaw) % 360 <= angular_tolerance\
-            and abs(desired_pitch - current_pitch) % 360 <= v_angular_tolerance
+            and angle_diff <= tolerance
 
     @property
     def config(self):
