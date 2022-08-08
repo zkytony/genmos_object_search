@@ -49,6 +49,8 @@ class GoalBasedRewardModel(MosRewardModel):
 
         if isinstance(action, MotionAction):
             reward = reward + (-self.small) + action.step_cost
+        elif isinstance(action, ChangePoseAction):
+            raise NotImplementedError("Change pose action not working yet")
         elif isinstance(action, LookAction):
             reward = reward + (-self.small)
         elif isinstance(action, FindAction):
