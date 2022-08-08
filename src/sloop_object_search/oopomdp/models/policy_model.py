@@ -88,7 +88,7 @@ class PolicyModelBasic2D(PolicyModel):
         self.movements = {a.motion_name: a for a in primitive_movements}
         self.target_ids = target_ids
         self._legal_moves = {}
-        self.action_prior = PolicyModelBasic2D.ActionPriorVW(
+        self.action_prior = PolicyModelBasic2D.ActionPrior(
             num_visits_init, val_init, self)
 
     def valid_moves(self, state):
@@ -103,7 +103,7 @@ class PolicyModelBasic2D(PolicyModel):
             return valid_moves
 
     ############# Action Prior VW ############
-    class ActionPriorVW(pomdp_py.ActionPrior):
+    class ActionPrior(pomdp_py.ActionPrior):
         def __init__(self, num_visits_init, val_init, policy_model):
             self.num_visits_init = num_visits_init
             self.val_init = val_init
@@ -239,7 +239,7 @@ class PolicyModelBasic3D(PolicyModel):
         self.movements = {a.motion_name: a for a in primitive_movements}
         self.target_ids = target_ids
         self._legal_moves = {}
-        self.action_prior = PolicyModelBasic3D.ActionPriorAxis(
+        self.action_prior = PolicyModelBasic3D.ActionPrior(
             num_visits_init, val_init, self)
 
     def valid_moves(self, state):
@@ -254,7 +254,7 @@ class PolicyModelBasic3D(PolicyModel):
             return valid_moves
 
     ############# Action Prior VW ############
-    class ActionPriorAxis(pomdp_py.ActionPrior):
+    class ActionPrior(pomdp_py.ActionPrior):
         def __init__(self, num_visits_init, val_init, policy_model):
             self.num_visits_init = num_visits_init
             self.val_init = val_init
