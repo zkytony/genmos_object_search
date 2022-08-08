@@ -149,14 +149,6 @@ def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
             "+thz": ((0,0,0), (0,0,rotation)),
             "-thz": ((0,0,0), (0,0,-rotation))
         },
-        "trans": {
-            "-x": ((-step_size,0,0), (0,0,0)),
-            "+x": ((step_size,0,0), (0,0,0)),
-            "-y": ((0,-step_size,0), (0,0,0)),
-            "+y": ((0,step_size,0), (0,0,0)),
-            "-z": ((0,0,-step_size), (0,0,0)),
-            "+z": ((0,0,step_size), (0,0,0))
-        },
         "forward": {
             "forward":  ( step_size, (0,0,0)  ),
             "backward": (-step_size, (0,0,0)  ),

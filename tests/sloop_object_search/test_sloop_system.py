@@ -101,9 +101,9 @@ def main(_config):
 
     for i in range(max_steps):
         action = planner.plan(agent)
-        # if hasattr(agent, "tree") and agent.tree is not None:
-        #     _dd = pomdp_py.utils.TreeDebugger(agent.tree)
-        #     _dd.p(1)
+        if hasattr(agent, "tree") and agent.tree is not None:
+            _dd = pomdp_py.utils.TreeDebugger(agent.tree)
+            _dd.p(1)
 
         if isinstance(planner, HierarchicalPlanner):
             # note: planner-specific (but ok since this is just a test!)

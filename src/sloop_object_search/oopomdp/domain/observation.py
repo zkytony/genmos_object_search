@@ -164,6 +164,9 @@ class Voxel(pomdp_py.Observation):
     def pose(self):
         return self._pose
     @property
+    def loc(self):
+        return self.pose
+    @property
     def label(self):
         return self._label
     @label.setter

@@ -4,11 +4,12 @@ from .transition_model import StaticObjectTransitionModel
 from ..domain.state import (ObjectState,
                             RobotState,
                             RobotStateTopo)
+from .octree_belief import OctreeBelief, Octree
 from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.domain.observation import GMOSObservation
 from sloop.observation import SpatialLanguageObservation
 
-
+##################### Belief 2D ##########################
 class Belief2D(pomdp_py.OOBelief):
 
     @staticmethod
@@ -141,3 +142,19 @@ class BeliefTopo2D(Belief2D):
                 sobj = ObjectState(objid, random_sobj.objclass, loc)
                 dist[loc] += object_beliefs[objid][sobj]
         return dist
+
+
+##################### Belief 3D ##########################
+class BeliefBasic3D(pomdp_py.OOBelief):
+    def __init__(self, robot_state, target_objects, belief_config):
+        robot_belief = pomdp_py.Histogram({robot_state:1.0})
+
+        # Super basic for now. No consideration of prior, or
+        # the size and shape of the search region. TODO.
+        object_beliefs = {robot_state["id"]: robot_belief}
+        for objid in target_objects:
+            target = target_objects[objid]
+            octree = Octree(objid, (16, 16, 16))
+            object_beliefs[objid] = OctreeBelief(16, 16, 16,
+                                                 objid, target["class"], octree)
+        super().__init__(object_beliefs)
