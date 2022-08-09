@@ -9,8 +9,9 @@ public:
     void run();
 private:
     ros::NodeHandle nh_;
-    ros::Subscriber pcl_sub_;
+    ros::Subscriber pcl_global_sub_;
     ros::Publisher pcl_local_pub_;
+    double pub_rate_;
 
 };
 
