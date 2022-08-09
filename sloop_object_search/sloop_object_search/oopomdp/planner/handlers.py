@@ -327,6 +327,5 @@ def transform_pose(robot_pose, action):
     action_name, delta = action
     x, y = robot_pose[0]
     yaw = robot_pose[1][0]
-    nx, ny, nyaw = RobotTransBasic2D.transform_pose((x, y, yaw), delta,
-                                                    round_to='int')
+    nx, ny, nyaw = RobotTransBasic2D.transform_pose((x, y, yaw), delta)
     return ((nx, ny), (nyaw,))

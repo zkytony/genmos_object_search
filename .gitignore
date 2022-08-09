@@ -96,6 +96,8 @@ spot/ros_ws/src/rbd_spot_perception/maps/*.yaml
 venv/
 
 # SL_OSM_Dataset
+*sloop_object_search/data/SL_OSM_Dataset*
+*sloop_object_search/models/*foref*
 ros/data/SL_OSM_Dataset*
 ros/data/robot_tests*
 ros/models/*foref*
