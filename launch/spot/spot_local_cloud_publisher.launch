@@ -1,0 +1,6 @@
+<launch>
+  <node name="spot_local_cloud_publisher"
+        pkg="sloop_ros" type="local_cloud_publisher" output="screen">
+    <param name="global_cloud_topic" value="/graphnav_map_publisher/graphnav_points"/>
+  </node>
+</launch>
