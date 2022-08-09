@@ -9,6 +9,8 @@ from sloop_object_search.utils.math import normalize, euler_to_quat
 from sloop_object_search.oopomdp.planner import make_planner
 from sloop_object_search.oopomdp.agent.basic3d import MosBasic3DAgent
 
+from viztracer import VizTracer
+
 
 def main(_config):
 
@@ -47,7 +49,9 @@ def main(_config):
             agent.belief.set_object_belief(objid, pomdp_py.Histogram(normalize(belief_obj)))
 
     for i in range(max_steps):
-        action = planner.plan(agent)
+        with VizTracer(output_file="tracer.html", tracer_entries=5000000) as tracer:
+            action = planner.plan(agent)
+        exit(0)
         if hasattr(agent, "tree") and agent.tree is not None:
             _dd = pomdp_py.utils.TreeDebugger(agent.tree)
             _dd.p(1)

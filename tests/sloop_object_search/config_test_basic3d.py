@@ -7,7 +7,7 @@ config = {
     "planner_config": {
         "planner": "pomdp_py.POUCT",
         "planner_params": {
-            "max_depth": 20,
+            "max_depth": 8,
             "exploration_const": 1000,
             "planning_time": 1.0
         }
