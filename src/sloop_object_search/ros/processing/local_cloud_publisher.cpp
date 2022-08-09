@@ -2,36 +2,44 @@
 #include <string>
 
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
-#include "local_cloud_publisher.h"
+#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseStamped.h>
 
 using std::string;
+using sensor_msgs::PointCloud2;
+using geometry_msgs::PoseStamped;
 
-void globalCloudCallback(const sensor_msgs::PointCloud2 &msg) {
+using namespace message_filters;
+using namespace message_filters::sync_policies;
+
+typedef Synchronizer<ApproximateTime<PointCloud2, PoseStamped>> CloudPoseSync;
+
+void cloudPoseCallback(const PointCloud2 &cloud, const PoseStamped &pose_stamped) {
+
+    double x = pose_stamped.pose.position.x;
+    double y = pose_stamped.pose.position.y;
+    double z = pose_stamped.pose.position.z;
+
     std::cout << "RECEIVED MESSAGE!" << std::endl;
-}
-
-LocalCloudPublisher::LocalCloudPublisher():
-    nh_(ros::NodeHandle("~")) {
-    string global_cloud_topic = nh_.param<string>("global_cloud_topic", "global_points");
-    std::cout << "global point cloud topic: " << global_cloud_topic << std::endl;
-
-    pub_rate_ = nh_.param<double>("local_cloud_publish_rate", 4.0);
-
-    pcl_global_sub_ = nh_.subscribe(global_cloud_topic, 10, globalCloudCallback);
-}
-
-void LocalCloudPublisher::run() {
-    ros::Rate loop_rate(this->pub_rate_);
-    while (this->nh_.ok()) {
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
 }
 
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "local_cloud_publisher");
-    LocalCloudPublisher locPub = LocalCloudPublisher();
-    locPub.run();
+
+    ros::NodeHandle nh(ros::NodeHandle("~"));
+
+    string global_cloud_topic = nh.param<string>("global_cloud_topic", "global_points");
+    string robot_pose_topic = nh.param<string>("robot_pose_topic", "robot_pose");
+
+    message_filters::Subscriber<PointCloud2> pcl_global_sub(nh, global_cloud_topic, 10);
+    message_filters::Subscriber<PoseStamped> robot_pose_sub(nh, robot_pose_topic, 10);
+
+    CloudPoseSync sync(10, pcl_global_sub, robot_pose_sub);
+    sync.registerCallback(cloudPoseCallback);
+
+    ros::spin();
 }
