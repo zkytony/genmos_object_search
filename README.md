@@ -1,8 +1,5 @@
 # sloop_object_search
 
-**NOTE: UPON MERGING THIS BRANCH, YOU SHOULD CHANGE THE REPO NAME TO 'sloop_object_search'**
-
-
 SLOOP (Spatial Language Understanding Object-Oriented POMDP)
 for Multi-Object Search.
 
