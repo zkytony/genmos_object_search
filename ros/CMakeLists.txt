@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(sloop_ros)
+project(sloop_object_search)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
