@@ -6,7 +6,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   genmsg
-  actionlib_msgs)
+  actionlib_msgs
+  message_filters
+  pcl_ros
+  pcl_conversions)
 
 catkin_python_setup()
 

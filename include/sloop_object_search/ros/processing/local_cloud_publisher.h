@@ -37,7 +37,10 @@ private:
     message_filters::Subscriber<PointCloud2> *pcl_global_sub_;
     message_filters::Subscriber<PoseStamped> *robot_pose_sub_;
     CloudPoseSync *sync_;
-    double pub_rate_;
+
+    double region_size_x_;
+    double region_size_y_;
+    double region_size_z_;
 };
 
 #endif

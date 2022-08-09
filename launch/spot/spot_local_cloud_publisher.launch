@@ -2,6 +2,10 @@
   <node name="spot_local_cloud_publisher"
         pkg="sloop_ros" type="local_cloud_publisher" output="screen">
     <param name="global_cloud_topic" value="/graphnav_map_publisher/graphnav_points"/>
+    <param name="region_cloud_topic" value="region_points"/>
     <param name="robot_pose_topic" value="/spot_body_pose"/>
+    <param name="region_size_x" value="4.0"/>
+    <param name="region_size_y" value="4.0"/>
+    <param name="region_size_z" value="2.5"/>
   </node>
 </launch>
