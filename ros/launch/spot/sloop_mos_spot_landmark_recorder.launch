@@ -11,7 +11,7 @@
   </include>
 
   <!-- Publishing grid map projection -->
-  <node pkg="sloop_ros" type="spot_graphnav_cloud_to_grid_map.py"
+  <node pkg="sloop_object_search" type="spot_graphnav_cloud_to_grid_map.py"
         name="graphnav_pcd_to_grid_map"
         args="--name $(arg map_name) --grid-size $(arg grid_size) --layout-cut $(arg layout_cut)" output="screen"/>
 
@@ -22,7 +22,7 @@
 
   <!-- Spot recorder -->
   <node name="spot_record_landmarks"
-        pkg="sloop_ros" type="spot_record_landmarks.py" output="screen"
+        pkg="sloop_object_search" type="spot_record_landmarks.py" output="screen"
         args="--map-name $(arg map_name)">
     <param name="detection_3d_topic" value="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/>
     <param name="grid_map_topic" value="/graphnav_gridmap"/>

@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import PIL.Image
 import rospy
-import sloop_ros.msg as sloop_ros
+import sloop_object_search.msg as sloop_object_search
 import std_msgs.msg as std_msgs
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
@@ -19,7 +19,7 @@ from sloop_object_search.ros.grid_map_utils import (ros_msg_to_grid_map,
                                                     cells_with_minimum_distance_from_obstacles,
                                                     obstacles_around_free_locations)
 import sloop_object_search.ros.ros_utils as ros_utils
-from sloop_ros.msg import GridMap2d, KeyValAction
+from sloop_object_search.msg import GridMap2d, KeyValAction
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
 from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map, load_filepaths
 from .framework import BaseAgentROSBridge

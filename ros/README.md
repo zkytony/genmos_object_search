@@ -1,4 +1,4 @@
-# sloop_ros
+# sloop_object_search
 ROS Package for SLOOP (Spatial Language Understanding Object-Oriented POMDP)
 
 

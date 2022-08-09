@@ -34,7 +34,7 @@ python -m spacy download en_core_web_lg
 
 ## Build the ROS package
 
-Normally, you just need to run `catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_ros"`.
+Normally, you just need to run `catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_object_search"`.
 
 ### As part of robotdev/spot
 (Optional) To enable rtags indexing in emacs (for C++):
@@ -43,12 +43,12 @@ export SPOT_ADDITIONAL_BUILD_OPTIONS=-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 ```
 Then, to build just sloop\_ros,
 ```
-build_spot -DCATKIN_WHITELIST_PACKAGES="sloop_ros"
+build_spot -DCATKIN_WHITELIST_PACKAGES="sloop_object_search"
 ```
 
 
 ## Test it out
-Go to `sloop_ros/tests/sloop_object_search`, run any one (or all) of the following three tests:
+Go to `sloop_object_search/tests/sloop_object_search`, run any one (or all) of the following three tests:
 ```
 python test_sloop_system.py config_test_basic2d.py
 python test_sloop_system.py config_test_topo2d.py
@@ -58,7 +58,7 @@ python test_sloop_system.py config_test_hier2d.py
 
 # Documentation OUTDATED
 
-The sloop_ros package can be thought of as wrapping a ROS interface around
+The sloop_object_search package can be thought of as wrapping a ROS interface around
 a SLOOP agent, which allows the SLOOP agent to interact with real robot sensor
 inputs and execute actions in the real world.
 

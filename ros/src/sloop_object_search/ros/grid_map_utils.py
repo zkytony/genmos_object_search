@@ -1,7 +1,7 @@
 import rospy
 import random
 from collections import deque
-from sloop_ros.msg import GridMap2d, GridMapLoc
+from sloop_object_search.msg import GridMap2d, GridMapLoc
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 
 def grid_map_to_ros_msg(grid_map, stamp=None):

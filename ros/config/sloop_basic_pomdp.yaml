@@ -2,27 +2,27 @@
 # on top of a grid map
 
 # Transition Model
-transition_model: sloop_ros.generic.SLOOPTransitionModel
+transition_model: sloop_object_search.generic.SLOOPTransitionModel
 robot_trans_model: default
 
 # Observation Model
-observation_model: sloop_ros.basic.JointObservationModel
+observation_model: sloop_object_search.basic.JointObservationModel
 
 # Reward Model
-reward_model: sloop_ros.basic.RewardModel
+reward_model: sloop_object_search.basic.RewardModel
 
 # Policy Model
-policy_model: sloop_ros.basic.LowLevelPolicyModel2D
+policy_model: sloop_object_search.basic.LowLevelPolicyModel2D
 
 # Belief
-belief_dist: sloop_ros.basic.JointBelief
+belief_dist: sloop_object_search.basic.JointBelief
 belief_params:
   init_belief: uniform
-  object_belief: sloop_ros.basic.LowLevelObjectBelief2D
-  robot_belief: sloop_ros.basic.ObservableRobotBelief2D
+  object_belief: sloop_object_search.basic.LowLevelObjectBelief2D
+  robot_belief: sloop_object_search.basic.ObservableRobotBelief2D
 
 # Agent
-agent: sloop_ros.basic.SLOOPBasicAgent
+agent: sloop_object_search.basic.SLOOPBasicAgent
 
 # Planner
 planner: pomdp_py.POUCT

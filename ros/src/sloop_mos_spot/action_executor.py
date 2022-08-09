@@ -3,7 +3,7 @@
 import rospy
 import diagnostic_msgs
 from pomdp_py.utils import typ
-from sloop_ros.msg import KeyValAction
+from sloop_object_search.msg import KeyValAction
 from sloop_object_search.ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
                                                        StayAction,

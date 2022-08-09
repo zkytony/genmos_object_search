@@ -9,7 +9,7 @@ import rospy
 import argparse
 import std_msgs.msg as std_msgs
 from pomdp_py.utils import typ
-from sloop_ros.msg import PlanNextStepActionGoal, PlanNextStepActionResult
+from sloop_object_search.msg import PlanNextStepActionGoal, PlanNextStepActionResult
 from actionlib_msgs.msg import GoalStatus
 
 GOAL_STATUS = ["PENDING",
