@@ -25,6 +25,16 @@ def det_dict_hash(dct, keep=9):
     hashcode = int(str(int(hashlib.sha1(content).hexdigest(), 16))[:keep])
     return hashcode
 
+# https://stackoverflow.com/a/67219726/2893053
+def hash16(v):
+    return int.from_bytes(hashlib.sha256(str(v).encode()).digest()[:2], 'little')
+
+def hash32(v):
+    return int.from_bytes(hashlib.sha256(str(v).encode()).digest()[:4], 'little')
+
+def hash64(v):
+    return int.from_bytes(hashlib.sha256(str(v).encode()).digest()[:8], 'little')
+
 
 class timeout:
     # https://stackoverflow.com/a/22348885/2893053
