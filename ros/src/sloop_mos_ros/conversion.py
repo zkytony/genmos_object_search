@@ -97,9 +97,9 @@ def _region2searchspace(region_point, search_space_resolution):
     """Convert region point to a cube's coordinate in the search space.
     Assume that the search space's origin is at the region coordinate frame's
     origin. The `search_space_resolution` has unit m/cell."""
-    return (int(math.floor(region_point[0] / search_space_resolution)),
-            int(math.floor(region_point[1] / search_space_resolution)),
-            int(math.floor(region_point[2] / search_space_resolution)))
+    return (int(round(region_point[0] / search_space_resolution)),
+            int(round(region_point[1] / search_space_resolution)),
+            int(round(region_point[2] / search_space_resolution)))
 
 def _searchspace2region(search_space_point, search_space_resolution):
     return (search_space_point[0] * search_space_resolution,

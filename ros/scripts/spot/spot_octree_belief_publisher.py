@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 #
 # Generates octree belief from given point cloud
+#
+# Issues (as of 08/10/2022)
+#
+# - Prior is hard coded and it DOES NOT SEEM TO WORK.
+#   (I try to set prior at tall grids to be 0 but
+#    it has no effect; Also, we need a way to automatically
+#    deal with rectangular search space by setting prior
+#    appropriately)
+# - Probability as alpha for marker is hacky
+# - Larger OctNodes always have higher probability and
+#    blocks the nodes of smaller OctNodes
+#    However, this is not occupancy grid map, so
+#    not displaying the larger OctNodes may discard
+#    information (Basically, how to make the visualization
+#    clearer and better)
+# - Also, it looks shifted and buggy
+# - Handling of conversion from world coords to POMDP coords
+#   right now it is clipping - but that is problematic for
+#   out of boudn world coords. Deal with that
+
 import argparse
 import numpy as np
 import rospy
@@ -14,6 +34,7 @@ from sloop_mos_ros.conversion import convert, Frame
 from sloop_object_search.oopomdp import ObjectState
 from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
 from sloop_object_search.utils.misc import hash16
+from sloop_object_search.utils.math import clip
 
 OBJID = "obj"
 
@@ -24,6 +45,37 @@ def change_res(point, r1, r2):
     return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
 
 
+def load_prior_belief(prior_data,
+                      region_origin, search_space_resolution):
+    """
+    The prior data should be formatted as:
+    objid:
+        regions:
+            resolution_level: 1     // resolution level of this region
+            pose: [x, y, z]         // the center of the region, in world frame, (at the ground level)
+            belief: e.g. 10000      // unnormalized belief about this region.
+    """
+    prior = {}   # objid -> {(x,y,z,r) -> value}
+    for objid in prior_data:
+        prior[objid] = {}
+        for region in prior_data[objid]["regions"]:
+            world_pos = region["pose"]
+            reslevel = region["resolution_level"]
+            belief = region["belief"]
+
+            # Convert world pose to POMDP pose
+            pomdp_pos = list(convert(world_pos, Frame.WORLD, Frame.POMDP_SPACE,
+                                     region_origin=region_origin,
+                                     search_space_resolution=search_space_resolution))
+            # scale by resolution level
+            pomdp_pos[0] = pomdp_pos[0] // reslevel
+            pomdp_pos[1] = pomdp_pos[1] // reslevel
+            pomdp_pos[2] = pomdp_pos[2] // reslevel
+            octree_voxel = tuple(pomdp_pos[:3] + [reslevel])
+            prior[objid][octree_voxel] = belief
+    return prior
+
+
 class SpotOctreeBeliefPublisher:
     def __init__(self, args):
         point_cloud_topic = args.point_cloud_topic
@@ -32,8 +84,10 @@ class SpotOctreeBeliefPublisher:
         self._octree_belief = OctreeBelief(args.size, args.size, args.size,
                                            OBJID, "OBJ", octree)
         self._search_space_res = args.res
-
         self._octbelief_markers_pub = rospy.Publisher(args.viz_topic, MarkerArray, queue_size=10)
+
+
+
 
     def _cloud_cb(self, pcl2msg):
         print(pcl2msg.header.frame_id)
@@ -43,10 +97,56 @@ class SpotOctreeBeliefPublisher:
         points[:, 1] = pc['y']
         points[:, 2] = pc['z']
         origin = np.min(points, axis=0)
+
+        # # get prior
+        # # TODO: Hard coded for test. Assign zero probability to positions
+        # # that are too high.
+        # prior = load_prior_belief({
+        #     OBJID: {
+        #         "regions": [
+        #             {
+        #                 "pose": [0.0, 0.0, 2.0],
+        #                 "belief": 0,
+        #                 "resolution_level": 16
+        #             },
+        #             {
+        #                 "pose": [-1.0, 0.0, 2.0],
+        #                 "belief": 0,
+        #                 "resolution_level": 16
+        #             },
+        #             {
+        #                 "pose": [1.0, 0.0, 2.0],
+        #                 "belief": 0,
+        #                 "resolution_level": 16
+        #             },
+        #             {
+        #                 "pose": [1.0, -1.0, 2.0],
+        #                 "belief": 0,
+        #                 "resolution_level": 16
+        #             },
+        #             {
+        #                 "pose": [1.0, 1.0, 2.0],
+        #                 "belief": 0,
+        #                 "resolution_level": 16
+        #             }
+        #         ]
+        #     },
+        # }, origin, self._search_space_res)
+        # for octree_voxel in prior[OBJID]:
+        #     state = ObjectState(OBJID, "OBJ", octree_voxel[:3], res=octree_voxel[3])
+        #     prob = prior[OBJID][octree_voxel]
+        #     self._octree_belief.assign(state, prob)
+
+        # Process points
         for p in points:
             pomdp_point = convert(p, Frame.WORLD, Frame.POMDP_SPACE,
                                   region_origin=origin,
                                   search_space_resolution=self._search_space_res)
+            # TODO: THIS PART IS ALSO NOT GREAT - WHY NEED THIS?
+            pomdp_point = (clip(pomdp_point[0], 0, self._octree_belief.octree.dimensions[0]-1),
+                           clip(pomdp_point[1], 0, self._octree_belief.octree.dimensions[0]-1),
+                           clip(pomdp_point[2], 0, self._octree_belief.octree.dimensions[0]-1))
+
             self._octree_belief[ObjectState(OBJID, "OBJ", pomdp_point, res=1)] = VAL
         print("points incorporated to octree belief")
 
@@ -61,6 +161,10 @@ class SpotOctreeBeliefPublisher:
         header = Header(stamp=rospy.Time.now(),
                         frame_id=pcl2msg.header.frame_id)
         for i in range(len(vp)):
+            if vr[i] < 8 or vr[i] > 16:
+                # only plot if this is a leaf. So skip if otherwise.
+                continue
+
             pos = convert(vp[i], Frame.POMDP_SPACE, Frame.WORLD,
                           region_origin=origin,
                           search_space_resolution=self._search_space_res)
@@ -89,8 +193,8 @@ class SpotOctreeBeliefPublisher:
         marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
         marker.scale = Vector3(x=res, y=res, z=res)
         marker.action = Marker.ADD
-        marker.lifetime = rospy.Duration(0.25)
-        marker.color = ColorRGBA(r=0.0, g=0.8, b=0.0, a=prob*100)
+        marker.lifetime = rospy.Duration(1.0)
+        marker.color = ColorRGBA(r=0.0, g=0.8, b=0.0, a=prob*500)
         return marker
 
     def run(self):

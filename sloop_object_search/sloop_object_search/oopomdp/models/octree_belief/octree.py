@@ -1,11 +1,11 @@
 # Copyright 2022 Kaiyu Zheng
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,21 +43,21 @@ class OctNode:
         else:
             self.children = None
             self.val = DEFAULT_VAL
-            
+
     def __str__(self):
         num_children = 0 if self.children is None else len(self.children)
         return "OctNode(%s, %d| %.3f)->%d" % (str(self.pos), self.res, self.value(), num_children)
-    
+
     def __repr__(self):
         return self.__str__()
-    
+
     def __hash__(self):
         return hash((*self.pos, self.res))
 
     @property
     def pose(self):
         return self.pos
-    
+
     def add_child(self, child):
         if self.children is None:
             raise ValueError("Ground node cannot have children")
@@ -108,7 +108,7 @@ class OctNode:
         if child_pos is not None:
             self.children[child_pos] = (val, child)
         else:
-            assert self.res == 1            
+            assert self.res == 1
             self.val = val
 
     def get_val(self, child_pos):
@@ -140,7 +140,7 @@ class OctNode:
             return poses
         else:
             return None
-        
+
 class Octree:
     def __init__(self, objid, dimensions):
         """
@@ -169,10 +169,10 @@ class Octree:
         # stores locations where occupancy was once recorded
         self._known_voxels = {}
         next_res = self.root.res
-        while next_res >= 1:        
+        while next_res >= 1:
             # for efficiency; weights are not in log space.
             self._known_voxels[next_res] = {}  # voxel pose -> weight (not log space)
-            next_res = next_res // 2            
+            next_res = next_res // 2
 
     def valid_resolution(self, res):
         return res in self._known_voxels
@@ -182,7 +182,7 @@ class Octree:
         if res not in self._known_voxels:
             raise ValueError("resolution invalid %d" % res)
         return self._known_voxels[res] #['voxels']
-    
+
     def update_node_weight(self, x, y, z, res, value):
         if LOG:
             # value is in log space
@@ -196,7 +196,7 @@ class Octree:
             return self._known_voxels[res][(x,y,z)]
         else:
             return None
-            
+
     def update_normalizer(self, old_value, value):
         if LOG:
             self._normalizer += (math.exp(value) - math.exp(old_value))
@@ -246,7 +246,7 @@ class Octree:
            or y*res >= self.dimensions[1]\
            or z*res >= self.dimensions[2]:
             raise ValueError("Invalid voxel position %s" % str((x,y,z,res)))
-        
+
         node = self.root
         next_res = self.root.res // 2  # resolution
         while next_res >= res:
@@ -306,7 +306,7 @@ class Octree:
         collector = []
         self._collect_plotting_voxels_helper(self.root, collector)
         return collector
-    
+
     def _collect_plotting_voxels_helper(self, node, collector):
         if node.leaf:
             collector.append((node.pos[0]*node.res,
@@ -323,5 +323,4 @@ class Octree:
                                           pos[2]*res, res))  # child pos and resolution
                 else:
                     child = node.children[pos][1]
-                    self._collect_plotting_voxels_helper(child, collector)            
-                
+                    self._collect_plotting_voxels_helper(child, collector)
