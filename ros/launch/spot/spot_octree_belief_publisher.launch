@@ -8,12 +8,13 @@
     <param name="region_size_x" value="4.0"/>
     <param name="region_size_y" value="4.0"/>
     <param name="region_size_z" value="2.5"/>
-    <param name="retain_ratio" value="0.3"/>
+    <param name="retain_ratio" value="0.1"/>
   </node>
 
   <!-- publish octree belief -->
   <node name="spot_octree_belief_publisher"
         pkg="sloop_object_search_ros" type="spot_octree_belief_publisher.py" output="screen"
-        args="/spot_local_cloud_publisher/region_points">
+        args="/spot_local_cloud_publisher/region_points --size 32 --res 0.125">
+    <!-- res 0.125 = 4.0 / 32 -->
   </node>
 </launch>
