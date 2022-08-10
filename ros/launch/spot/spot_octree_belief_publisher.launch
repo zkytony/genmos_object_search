@@ -1,4 +1,5 @@
 <launch>
+  <!-- publish local cloud -->
   <node name="spot_local_cloud_publisher"
         pkg="sloop_object_search_ros" type="local_cloud_publisher" output="screen">
     <param name="global_cloud_topic" value="/graphnav_map_publisher/graphnav_points"/>
@@ -8,5 +9,11 @@
     <param name="region_size_y" value="4.0"/>
     <param name="region_size_z" value="2.5"/>
     <param name="retain_ratio" value="0.3"/>
+  </node>
+
+  <!-- publish octree belief -->
+  <node name="spot_octree_belief_publisher"
+        pkg="sloop_object_search_ros" type="spot_octree_belief_publisher.py" output="screen"
+        args="/spot_local_cloud_publisher/region_points">
   </node>
 </launch>
