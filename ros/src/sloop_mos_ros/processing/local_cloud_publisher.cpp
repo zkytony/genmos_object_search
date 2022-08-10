@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <random>
 
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
@@ -30,12 +31,15 @@ void LocalCloudPublisher::cloudPoseCallback(const PointCloud2 &cloud, const Pose
     pcl::fromROSMsg(cloud, pcl_cloud);
     pcl::PointCloud<pcl::PointXYZ> points_in_region;
 
-    for (pcl::PointXYZ p : pcl_cloud.points) {
+    Uniform uniform(0.0, 1.0);
 
-        if ((abs(p.x - robot_x) <= this->region_size_x_/2)
-            && (abs(p.y - robot_y) <= this->region_size_y_/2)
-            && (abs(p.z - robot_z) <= this->region_size_z_/2)) {
-            points_in_region.push_back(p);
+    for (pcl::PointXYZ p : pcl_cloud.points) {
+        if (uniform.sample() < retain_ratio_) {
+            if ((abs(p.x - robot_x) <= this->region_size_x_/2)
+                && (abs(p.y - robot_y) <= this->region_size_y_/2)
+                && (abs(p.z - robot_z) <= this->region_size_z_/2)) {
+                points_in_region.push_back(p);
+            }
         }
     }
 
@@ -52,6 +56,8 @@ LocalCloudPublisher::LocalCloudPublisher()
     region_size_x_ = nh_.param<double>("region_size_x", 2.0);  // meters
     region_size_y_ = nh_.param<double>("region_size_y", 2.0);  // meters
     region_size_z_ = nh_.param<double>("region_size_z", 1.5);  // meters
+
+    retain_ratio_ = nh_.param<double>("retain_ratio", 0.7);  // percentage of points to keep
 
     string global_cloud_topic = nh_.param<string>("global_cloud_topic", "global_points");
     string robot_pose_topic = nh_.param<string>("robot_pose_topic", "robot_pose");

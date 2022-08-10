@@ -88,10 +88,17 @@ include_directories(${sensor_msgs_INCLUDE_DIRS})
 
 
 ################ Building our libraries and executables ###################
+add_library(math_utils
+  include/sloop_mos_ros/utils/math_utils.cpp)
+target_include_directories(math_utils
+  PUBLIC
+  include/sloop_mos_ros/)
+
 add_executable(local_cloud_publisher
   src/sloop_mos_ros/processing/local_cloud_publisher.cpp)
 target_include_directories(local_cloud_publisher
   PUBLIC
-  include/sloop_mos_ros/processing)
+  include/sloop_mos_ros/processing
+  include/sloop_mos_ros/)
 target_link_libraries(local_cloud_publisher
   ${catkin_LIBRARIES})

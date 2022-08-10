@@ -11,6 +11,8 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
 
+#include "utils/math_utils.h"
+
 using std::string;
 using sensor_msgs::PointCloud2;
 using geometry_msgs::PoseStamped;
@@ -41,6 +43,11 @@ private:
     double region_size_x_;
     double region_size_y_;
     double region_size_z_;
+    double retain_ratio_;
+
+
+
 };
+
 
 #endif
