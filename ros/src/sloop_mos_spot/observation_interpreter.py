@@ -4,20 +4,21 @@ import sloop.observation
 from pomdp_py.utils import typ
 from geometry_msgs.msg import PoseStamped
 from actionlib_msgs.msg import GoalStatus
-from sloop_object_search.msg import GridMap2d
-from sloop_object_search.ros.framework import ObservationInterpreter
-from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
-from sloop_object_search.ros.mapinfo_utils import FILEPATHS, register_map
-from sloop_object_search.ros.sloop_mos import (grid_map_msg_callback,
-                                               robot_pose_msg_callback,
-                                               interpret_grid_map_msg,
-                                               interpret_robot_pose_msg)
-from sloop_object_search.ros.ros_utils import tf2_transform
+from sloop_object_search_ros.msg import GridMap2d
+
 from sloop_object_search.utils.colors import lighter, inverse_color_rgb
 from sloop_object_search.oopomdp.domain.observation import (
     ObjectDetection, ObjectDetection2D, GMOSObservation, RobotObservationTopo)
 from sloop_object_search.oopomdp.domain.action import FindAction
 from sloop_object_search.oopomdp.models.detection_models import FanModelSimpleFPLabelOnly
+from sloop_object_search_ros.framework import ObservationInterpreter
+from sloop_object_search_ros.grid_map_utils import ros_msg_to_grid_map
+from sloop_object_search_ros.mapinfo_utils import FILEPATHS, register_map
+from sloop_object_search_ros.sloop_mos import (grid_map_msg_callback,
+                                               robot_pose_msg_callback,
+                                               interpret_grid_map_msg,
+                                               interpret_robot_pose_msg)
+from sloop_object_search_ros.ros_utils import tf2_transform
 
 import tf2_ros
 

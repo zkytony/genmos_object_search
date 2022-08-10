@@ -12,4 +12,4 @@ float32 metric_gy_min
 float32 metric_gy_max
 float32 grid_size
 
-sloop_object_search/GridMapLoc[] locations
+sloop_object_search_ros/GridMapLoc[] locations

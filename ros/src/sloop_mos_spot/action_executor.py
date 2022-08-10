@@ -3,14 +3,14 @@
 import rospy
 import diagnostic_msgs
 from pomdp_py.utils import typ
-from sloop_object_search.msg import KeyValAction
-from sloop_object_search.ros.framework import ActionExecutor
+from sloop_object_search_ros.msg import KeyValAction
 from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
                                                        StayAction,
                                                        FindAction,
                                                        MotionAction2D)
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic2D
 from sloop_object_search.utils.math import to_rad
+from sloop_object_search_ros.framework import ActionExecutor
 from actionlib_msgs.msg import GoalStatus
 
 from bosdyn.client.math_helpers import Quat

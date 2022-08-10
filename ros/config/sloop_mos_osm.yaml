@@ -3,15 +3,15 @@ task_config:
   max_steps: 100
 ros_config:
   init_pose_topic: ~init_pose
-  belief_msg_type: sloop_object_search.msg.SloopMosBelief
-  action_msg_type: sloop_object_search.msg.SloopMosAction
+  belief_msg_type: sloop_object_search_ros.msg.SloopMosBelief
+  action_msg_type: sloop_object_search_ros.msg.SloopMosAction
   observation:
     detection:
-      msg_type: sloop_object_search.msg.SloopMosJointObjectDetections
+      msg_type: sloop_object_search_ros.msg.SloopMosJointObjectDetections
     grid_map:
-      msg_type: sloop_object_search.msg.GridMap2d
+      msg_type: sloop_object_search_ros.msg.GridMap2d
     spatial_lang:
-      msg_type: sloop_object_search.msg.SloopMosSpatialLanguage
+      msg_type: sloop_object_search_ros.msg.SloopMosSpatialLanguage
 
 agent_config:
   action:

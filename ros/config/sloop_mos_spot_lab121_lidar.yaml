@@ -17,7 +17,7 @@ ros_config:
     detection_3d:
       msg_type: rbd_spot_perception.msg.SimpleDetection3DArray
     grid_map:
-      msg_type: sloop_object_search.msg.GridMap2d
+      msg_type: sloop_object_search_ros.msg.GridMap2d
     spatial_lang:
       msg_type: std_msgs.msg.String
 

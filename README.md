@@ -33,9 +33,9 @@ has a corresponding folder.
 2. Create a symbolic link to the `sloop_object_search/ros` folder, and name that
    symbolic link "sloop_object_search." That is,
    ```
-   ln -s /path/to/sloop_object_search/ros sloop_object-search
+   ln -s /path/to/sloop_object_search/ros sloop_object_search_ros
    ```
 3. Compile the package
    ```
-   catkin_make -DCATKLIN_WHITELIST_PACKAGES="sloop_object_search"
+   catkin_make -DCATKLIN_WHITELIST_PACKAGES="sloop_object_search_ros"
    ```

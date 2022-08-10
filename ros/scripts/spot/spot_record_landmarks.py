@@ -28,7 +28,7 @@ import json
 from geometry_msgs.msg import PoseStamped
 from sloop_object_search.ros.ros_utils import tf2_transform
 from rbd_spot_perception.msg import SimpleDetection3DArray
-from sloop_object_search.msg import GridMap2d
+from sloop_object_search_ros.msg import GridMap2d
 from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
 from sloop_object_search.ros.mapinfo_utils import (FILEPATHS,
                                                    MapInfoDataset,

@@ -15,14 +15,14 @@ from collections import deque
 
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
-import sloop_object_search.msg
+import sloop_object_search_ros.msg
 import message_filters
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_object_search.oopomdp.models.grid_map import GridMap
-from sloop_object_search.ros.grid_map_utils import grid_map_to_ros_msg
 from sloop_object_search.utils.math import remap, in_region
 from sloop_object_search.utils.visual import GridMapVisualizer
+from sloop_object_search_ros.grid_map_utils import grid_map_to_ros_msg
 
 GRID_MAP_PUBLISHED = False
 
@@ -221,7 +221,7 @@ class GraphNavPointCloudToGridMapPublisher:
         self.latch = not args.updating
         self.map_name = args.name
         self.published = False
-        self.grid_map_pub = rospy.Publisher(args.grid_map_topic, sloop_object_search.msg.GridMap2d,
+        self.grid_map_pub = rospy.Publisher(args.grid_map_topic, sloop_object_search_ros.msg.GridMap2d,
                                             queue_size=10, latch=self.latch)
 
         self.pcl_sub = message_filters.Subscriber(args.point_cloud_topic, PointCloud2)
