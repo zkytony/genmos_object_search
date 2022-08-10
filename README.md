@@ -26,6 +26,8 @@ The repository is structured such that the core middleware-independent code
 is under "sloop_object_search", and each middleware that we have considered
 has a corresponding folder.
 
+**TODO: None of the above is implemented yet.**
+
 
 ## Set up sloop_object_search for ROS
 
