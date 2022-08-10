@@ -9,7 +9,7 @@ from sloop.osm.datasets import FILEPATHS, MapInfoDataset
 
 # Path to the 'for_robots' folder that contains maps for robot tests.
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         "../../../data/robot_tests")
+                         "../../data/robot_tests")
 
 def _create_fp_dict_new(map_names, grid_size):
     """WARNING: for NEW FORMAT (not original OSM)"""

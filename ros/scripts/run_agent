@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from sloop_object_search_ros.sloop_mos import SloopMosAgentROSBridge
+from sloop_mos_ros.sloop_mos import SloopMosAgentROSBridge
 
 def main():
     rospy.init_node("run_agent")

@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name='sloop_object_search',
-      packages=find_packages(),
+      packages=['sloop_object_search', 'sloop'],
       version='0.2',
       description="SLOOP object search package",
       install_requires=[

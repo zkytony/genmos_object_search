@@ -22,7 +22,7 @@ from rbd_spot_perception.msg import GraphNavWaypointArray
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.utils.math import remap, in_region
 from sloop_object_search.utils.visual import GridMapVisualizer
-from sloop_object_search_ros.grid_map_utils import grid_map_to_ros_msg
+from sloop_mos_ros.grid_map_utils import grid_map_to_ros_msg
 
 GRID_MAP_PUBLISHED = False
 

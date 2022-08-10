@@ -1,10 +1,9 @@
 middleware-independent SLOOP package.
 
 
-Note that if this package is used with ROS,
-please follow the instructions [../ros/README.md](in this README.md).
+If you are using ROS, you should just build the ROS package.
 
-Otherwise, you can install this package by
+If not using ROS, you can install this package by
 ```
 pip install -e .
 ```

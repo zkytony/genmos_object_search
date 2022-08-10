@@ -44,6 +44,11 @@ agent_config:
         - - 0.7    # I noticed that detection of book has plenty of misses, depending on the direction
           - 0.05   # but when the detection is positive, it is often correct
     id: robot0
+    primitive_moves:
+      func: sloop_object_search.oopomdp.domain.action.basic_discrete_moves2d
+      params:
+        step_size: 1
+        h_rotation: 45.0
 
   objects:
     book:
@@ -60,7 +65,7 @@ agent_config:
 
   # Language Related
   spacy_model: en_core_web_lg
-  foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/tests/sloop_object_search/../../models
+  foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/models
   foref_model_map_name: honolulu  # we force usage of this model
   object_symbol_map:
     NovelBook: book  # must be an object id
@@ -75,6 +80,9 @@ agent_config:
     resample_prob_thres: 0.25
     seed: 1509
     sep: 4.0
+
+  topo_trans_args:
+    h_angle_res: 45.0
 
   no_look: true
 

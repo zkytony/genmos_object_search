@@ -8,17 +8,17 @@ from sloop_object_search_ros.msg import GridMap2d
 
 from sloop_object_search.utils.colors import lighter, inverse_color_rgb
 from sloop_object_search.oopomdp.domain.observation import (
-    ObjectDetection, ObjectDetection2D, GMOSObservation, RobotObservationTopo)
+    ObjectDetection, GMOSObservation, RobotObservationTopo)
 from sloop_object_search.oopomdp.domain.action import FindAction
 from sloop_object_search.oopomdp.models.detection_models import FanModelSimpleFPLabelOnly
-from sloop_object_search_ros.framework import ObservationInterpreter
-from sloop_object_search_ros.grid_map_utils import ros_msg_to_grid_map
-from sloop_object_search_ros.mapinfo_utils import FILEPATHS, register_map
-from sloop_object_search_ros.sloop_mos import (grid_map_msg_callback,
-                                               robot_pose_msg_callback,
-                                               interpret_grid_map_msg,
-                                               interpret_robot_pose_msg)
-from sloop_object_search_ros.ros_utils import tf2_transform
+from sloop_mos_ros.framework import ObservationInterpreter
+from sloop_mos_ros.grid_map_utils import ros_msg_to_grid_map
+from sloop_mos_ros.mapinfo_utils import FILEPATHS, register_map
+from sloop_mos_ros.sloop_mos import (grid_map_msg_callback,
+                                     robot_pose_msg_callback,
+                                     interpret_grid_map_msg,
+                                     interpret_robot_pose_msg)
+from sloop_mos_ros.ros_utils import tf2_transform
 
 import tf2_ros
 
@@ -31,7 +31,7 @@ def interpret_detection_3d_msg(detection_msg, bridge):
     # then obtain the center of the 3D pose, project it down
     # to the grid map. And use this observation to update agent belief.
     detectable_objects = bridge.agent.agent_config["detectable_objects"]
-    z_joint_dict = {label: ObjectDetection2D(label, ObjectDetection2D.NULL)
+    z_joint_dict = {label: ObjectDetection(label, ObjectDetection.NULL)
                     for label in detectable_objects}
 
     rospy.loginfo("detected objects (3D):")
@@ -49,7 +49,7 @@ def interpret_detection_3d_msg(detection_msg, bridge):
             obj_metric_position = det_pose_stamped_map_frame.pose.position
             obj_grid_x, obj_grid_y = bridge.agent.grid_map.to_grid_pos(
                 obj_metric_position.x, obj_metric_position.y)
-            zobj = ObjectDetection2D(det3d.label, (obj_grid_x, obj_grid_y))
+            zobj = ObjectDetection(det3d.label, (obj_grid_x, obj_grid_y))
             z_joint_dict[det3d.label] = zobj
             rospy.loginfo("- {} ({:.3f}) grid loc: {}".format(det3d.label, det3d.score, zobj.loc))
             # # highlight the object detection location on the map
@@ -116,7 +116,7 @@ class SpotObservationInterpreter(ObservationInterpreter):
             if isinstance(detection_model, FanModelSimpleFPLabelOnly):
                 z_obj = z_joint_dict[objid]
                 if z_obj.loc is not None:
-                    z_joint_dict[objid] = ObjectDetection2D(objid, ObjectDetection.NO_POSE)
+                    z_joint_dict[objid] = ObjectDetection(objid, ObjectDetection.NO_POSE)
 
         # Now, we need to figure out the robot observation, which
         # involves figuring out whether an object is found, and what
