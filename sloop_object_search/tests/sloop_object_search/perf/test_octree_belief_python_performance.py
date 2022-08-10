@@ -62,7 +62,7 @@ def _test_octree_belief_performance(dim,
         si = ObjectState(1, "cube", p, res=1)
         octree_belief[si] = random.uniform(0,1)*10
     _total_time = time.time() - _start_time
-    print(f"Inserting {num_samples} leaves to octree belief took {_total_time:.4f}s)")
+    print(f"Inserting {num_samples} leaves to octree belief took {_total_time:.4f}s ({_total_time/len(positions)}:.9f)s per leaf")
 
     _start_time = time.time()
     for i in range(sample_count):
@@ -86,7 +86,7 @@ def _test_octree_belief_performance(dim,
         si = ObjectState(1, "cube", p, res=1)
         octree_belief[si] = random.uniform(0,1)*10
     _total_time = time.time() - _start_time
-    print(f"Inserting {num_samples} leaves to octree belief took {_total_time:.4f}s)")
+    print(f"Inserting {num_samples} leaves to octree belief took {_total_time:.4f}s ({_total_time/len(positions)}:.9f)s per leaf")
 
     _start_time = time.time()
     for i in range(sample_count):
