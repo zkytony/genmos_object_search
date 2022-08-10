@@ -83,23 +83,33 @@ def _world2region(world_point, region_origin):
     points will have the same resolution as the gmapping map.
     """
     # simply subtract world point x,y by region origin. Keep z unchanged.
-    return (world_point[0] - region_origin[0],
-            world_point[1] - region_origin[1],
-            world_point[2])
+    if len(region_origin) == 3:
+        return (world_point[0] - region_origin[0],
+                world_point[1] - region_origin[1],
+                world_point[2] - region_origin[2])
+    else:
+        return (world_point[0] - region_origin[0],
+                world_point[1] - region_origin[1],
+                world_point[2])
 
 def _region2world(region_point, region_origin):
     """region_point(x,y,z) -> world_point(x,y,z)"""
-    return (region_point[0] + region_origin[0],
-            region_point[1] + region_origin[1],
-            region_point[2])
+    if len(region_origin) == 3:
+        return (region_point[0] + region_origin[0],
+                region_point[1] + region_origin[1],
+                region_point[2] + region_origin[2])
+    else:
+        return (region_point[0] + region_origin[0],
+                region_point[1] + region_origin[1],
+                region_point[2])
 
 def _region2searchspace(region_point, search_space_resolution):
     """Convert region point to a cube's coordinate in the search space.
     Assume that the search space's origin is at the region coordinate frame's
     origin. The `search_space_resolution` has unit m/cell."""
-    return (int(round(region_point[0] / search_space_resolution)),
-            int(round(region_point[1] / search_space_resolution)),
-            int(round(region_point[2] / search_space_resolution)))
+    return (int(math.floor(region_point[0] / search_space_resolution)),
+            int(math.floor(region_point[1] / search_space_resolution)),
+            int(math.floor(region_point[2] / search_space_resolution)))
 
 def _searchspace2region(search_space_point, search_space_resolution):
     return (search_space_point[0] * search_space_resolution,

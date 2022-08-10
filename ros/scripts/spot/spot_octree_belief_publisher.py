@@ -17,9 +17,6 @@
 #    information (Basically, how to make the visualization
 #    clearer and better)
 # - Also, it looks shifted and buggy
-# - Handling of conversion from world coords to POMDP coords
-#   right now it is clipping - but that is problematic for
-#   out of boudn world coords. Deal with that
 
 import argparse
 import numpy as np
@@ -86,9 +83,6 @@ class SpotOctreeBeliefPublisher:
         self._search_space_res = args.res
         self._octbelief_markers_pub = rospy.Publisher(args.viz_topic, MarkerArray, queue_size=10)
 
-
-
-
     def _cloud_cb(self, pcl2msg):
         print(pcl2msg.header.frame_id)
         pc = ros_numpy.numpify(pcl2msg)
@@ -142,10 +136,7 @@ class SpotOctreeBeliefPublisher:
             pomdp_point = convert(p, Frame.WORLD, Frame.POMDP_SPACE,
                                   region_origin=origin,
                                   search_space_resolution=self._search_space_res)
-            # TODO: THIS PART IS ALSO NOT GREAT - WHY NEED THIS?
-            pomdp_point = (clip(pomdp_point[0], 0, self._octree_belief.octree.dimensions[0]-1),
-                           clip(pomdp_point[1], 0, self._octree_belief.octree.dimensions[0]-1),
-                           clip(pomdp_point[2], 0, self._octree_belief.octree.dimensions[0]-1))
+
 
             self._octree_belief[ObjectState(OBJID, "OBJ", pomdp_point, res=1)] = VAL
         print("points incorporated to octree belief")
@@ -161,9 +152,9 @@ class SpotOctreeBeliefPublisher:
         header = Header(stamp=rospy.Time.now(),
                         frame_id=pcl2msg.header.frame_id)
         for i in range(len(vp)):
-            if vr[i] < 8 or vr[i] > 16:
-                # only plot if this is a leaf. So skip if otherwise.
-                continue
+            # if vr[i] > 1:
+            #     # only plot if this is a leaf. So skip if otherwise.
+            #     continue
 
             pos = convert(vp[i], Frame.POMDP_SPACE, Frame.WORLD,
                           region_origin=origin,
@@ -189,7 +180,9 @@ class SpotOctreeBeliefPublisher:
         marker.header = header
         marker.id = hash16((*pos, res))
         marker.type = Marker.CUBE
-        marker.pose.position = Point(*pos)
+        marker.pose.position = Point(x=pos[0] + res/2,
+                                     y=pos[1] + res/2,
+                                     z=pos[2] + res/2)
         marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
         marker.scale = Vector3(x=res, y=res, z=res)
         marker.action = Marker.ADD
