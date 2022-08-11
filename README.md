@@ -29,6 +29,12 @@ has a corresponding folder.
 **TODO: None of the above is implemented yet.**
 
 
+## Set up the sloop\_object\_search package
+
+
+
+
+
 ## Set up sloop_object_search for ROS
 
 1. Go to the 'src' folder of your ROS workspace.
