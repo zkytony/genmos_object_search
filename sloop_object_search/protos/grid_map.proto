@@ -11,6 +11,10 @@ message SearchRegionPointCloud {
 
 }
 
+message PointCloudObservation {
+  string agent_name = 1;
+}
+
 
 
 
