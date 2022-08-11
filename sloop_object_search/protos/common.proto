@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package sloop_object_search;
+
+enum Status {
+  SUCCESS = 0;
+  FAILED = 1;
+}
+
+message Pose2D {
+  double x = 1;
+  double y = 2;
+  double th = 3;
+}
+
+message Pose3D {
+  Vec3 position = 1;
+  Quaternion rotation = 2;
+}
+
+message Vec3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Quaternion {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double w = 4;
+}

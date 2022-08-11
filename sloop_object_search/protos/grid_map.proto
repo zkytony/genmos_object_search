@@ -1,0 +1,45 @@
+// grid map - informs the agent about the search region
+
+syntax = "proto3";
+
+import "common.proto";
+
+package sloop_object_search;
+
+
+message SearchRegionPointCloud {
+
+}
+
+
+
+
+message GridMap2D {
+  int32 width = 1;   // number of grid cells in width
+  int32 length = 2;  // number of grid cells in length
+  string name = 3;
+
+  // parameters used to map grid map back to metric space
+  // essentially specifies the metric-space corner points of
+  // the grid map. TODO: it is sufficient to only have the
+  // mins plus the grid size for conversion. But this involves
+  // refactoring a bunch of code -- too much for right now.
+  float32 metric_gx_min = 4;
+  float32 metric_gx_max = 5;
+  float32 metric_gy_min = 6;
+  float32 metric_gy_max = 7;
+  float32 grid_size = 8;
+
+  repeated GridMapLoc2D locations = 9;
+}
+
+message GridMapLoc2D {
+  Loc2D loc = 1;
+  string type = 2;   // free, obstacle or unknown
+  string label = 3;  // label; If multiple labels, separate by comma.
+}
+
+message Loc2D {
+  int32 x = 1;
+  int32 y = 2;
+}

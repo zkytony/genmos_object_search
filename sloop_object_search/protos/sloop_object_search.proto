@@ -1,0 +1,51 @@
+// Top-level services. For example, start the sloop object search server
+
+syntax = "proto3";
+
+import "common.proto";
+
+package sloop_object_search;
+
+
+service StartSloopObjectSearch {
+
+  rpc StartServer(StartServerRequest) returns (StartServerReply) {}
+
+
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentReply) {}
+
+}
+
+message StartServerRequest {
+
+}
+
+message StartServerReply {
+  sloop_object_search.Status status = 1;
+  string message = 2;
+}
+
+message CreateAgentRequest {
+  // agent name
+  string agent_name = 1;
+
+  // serialized configuration dictionary
+  bytes config = 2;
+
+  // initial pose
+  oneof init_pose {
+    Pose2D init_pose_2d = 3;
+    Pose3D init_pose_3d = 4;
+  }
+
+  // initial grid map
+  oneof grid_map {
+    GridMap2D grid_map_2d = 5;
+  }
+
+}
+
+message CreateAgentReply {
+  sloop_object_search.Status status = 1;
+  string message = 2;
+}
