@@ -1,0 +1,58 @@
+// Observations that sloop_object_search can consider.
+// Note that all of the observations are assumed to be with respect to a fixed
+// world frame.
+//
+// Note that the definition of these protos may not be the most efficient
+// for transmission, but they are convenient to work with. Optmization is
+// future work.
+
+syntax = "proto3";
+
+import "common.proto";
+
+package sloop_object_search;
+
+
+// Occupancy grid: a 2D representation of the whole or a region of the search
+// environment as a set of grid locations, each could be either free, occupied
+// or unknown, and can have a string label.
+message OccupancyGrid {
+  message Grid {
+    Vec2 pos = 1;
+    string type = 2;
+    string label = 3;
+  }
+
+  sloop_object_search.Header header = 1;
+  string robot_id = 2;  // the receiver of this observation
+  repeated Grid grids = 3;
+}
+
+
+// Point cloud: a 3D representation of the whole or a region of the search
+// environment as a set of points. Each point has a x, y, z location and
+// a string label.
+message PointCloud {
+  message Point {
+    Vec3 pos = 1;
+    string label = 2;
+  }
+
+  sloop_object_search.Header header = 1;
+  string robot_id = 2;  // the receiver of this observation
+  repeated Point points = 3;
+}
+
+
+// Object detection in 3D: each detection is a box with a label.
+message ObjectDetection {
+  message Detection3D {
+    string label = 1;
+    float confidence = 2;
+    Box3D box = 3;
+  }
+
+  sloop_object_search.Header header = 1;
+  string robot_id = 2;  // the receiver of this observation
+  repeated Detection3D detections = 3;
+}

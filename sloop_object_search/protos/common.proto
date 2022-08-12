@@ -1,10 +1,18 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package sloop_object_search;
 
 enum Status {
   SUCCESS = 0;
   FAILED = 1;
+}
+
+message Header {
+  google.protobuf.Timestamp stamp = 2;
+  string frame_id = 3;
+  string message = 4;  // information to be attached.
 }
 
 message Pose2D {
@@ -24,9 +32,21 @@ message Vec3 {
   double z = 3;
 }
 
+message Vec2 {
+  double x = 1;
+  double y = 2;
+}
+
 message Quaternion {
   double x = 1;
   double y = 2;
   double z = 3;
   double w = 4;
+}
+
+
+// a box in 3D that may be rotated in space.
+message Box3D {
+  Pose3D center = 1;
+  Vec3 size = 2;
 }

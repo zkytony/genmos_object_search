@@ -1,0 +1,37 @@
+// Actions that an agent in sloop_object_search may perform.
+// Note that all poses that parameterize an action are assumed to be
+// with respect to a fixed world frame.
+
+syntax = "proto3";
+
+import "common.proto";
+
+package sloop_object_search;
+
+
+message MoveViewpoint {
+  sloop_object_search.Header header = 1;
+  string robot_id = 2;   // the robot that performs this action
+  oneof dest {
+    Pose3D dest_3d = 3;
+    Pose2D dest_2d = 4;
+  }
+  float expected_cost = 5;
+}
+
+// declares some objects to be found. The objects that are declared
+// found can be determined based on the robot's current field of view,
+// or its updated belief.
+message Find {
+  sloop_object_search.Header header = 1;
+  string robot_id = 2;   // the robot that performs this action
+}
+
+// This is a generic action type, used to support other actions such
+// as environment interaction.
+message KeyValueAction {
+  sloop_object_search.Header header = 1;
+  string type = 2;  // identifies the action type
+  repeated string keys = 3;    // parameter names for this action
+  repeated string values = 4;  // parameter values for this action
+}
