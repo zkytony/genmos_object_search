@@ -56,3 +56,11 @@ message ObjectDetection {
   string robot_id = 2;  // the receiver of this observation
   repeated Detection3D detections = 3;
 }
+
+
+// Language input as observation
+message Language {
+  sloop_object_search.Header header = 1;
+  string robot_id = 2;  // the receiver of this observation
+  string langugae = 3;
+}
