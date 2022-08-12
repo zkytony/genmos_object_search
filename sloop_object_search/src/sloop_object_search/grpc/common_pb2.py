@@ -13,9 +13,10 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63ommon.proto\x12\x13sloop_object_search*!\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\n\n\x06\x46\x41ILED\x10\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63ommon.proto\x12\x13sloop_object_search\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n\x06Header\x12)\n\x05stamp\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x10\n\x08\x66rame_id\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\"*\n\x06Pose2D\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\n\n\x02th\x18\x03 \x01(\x01\"h\n\x06Pose3D\x12+\n\x08position\x18\x01 \x01(\x0b\x32\x19.sloop_object_search.Vec3\x12\x31\n\x08rotation\x18\x02 \x01(\x0b\x32\x1f.sloop_object_search.Quaternion\"\'\n\x04Vec3\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\t\n\x01z\x18\x03 \x01(\x01\"\x1c\n\x04Vec2\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\"8\n\nQuaternion\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\t\n\x01z\x18\x03 \x01(\x01\x12\t\n\x01w\x18\x04 \x01(\x01\"]\n\x05\x42ox3D\x12+\n\x06\x63\x65nter\x18\x01 \x01(\x0b\x32\x1b.sloop_object_search.Pose3D\x12\'\n\x04size\x18\x02 \x01(\x0b\x32\x19.sloop_object_search.Vec3*!\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\n\n\x06\x46\x41ILED\x10\x01\x62\x06proto3')
 
 _STATUS = DESCRIPTOR.enum_types_by_name['Status']
 Status = enum_type_wrapper.EnumTypeWrapper(_STATUS)
@@ -23,9 +24,79 @@ SUCCESS = 0
 FAILED = 1
 
 
+_HEADER = DESCRIPTOR.message_types_by_name['Header']
+_POSE2D = DESCRIPTOR.message_types_by_name['Pose2D']
+_POSE3D = DESCRIPTOR.message_types_by_name['Pose3D']
+_VEC3 = DESCRIPTOR.message_types_by_name['Vec3']
+_VEC2 = DESCRIPTOR.message_types_by_name['Vec2']
+_QUATERNION = DESCRIPTOR.message_types_by_name['Quaternion']
+_BOX3D = DESCRIPTOR.message_types_by_name['Box3D']
+Header = _reflection.GeneratedProtocolMessageType('Header', (_message.Message,), {
+  'DESCRIPTOR' : _HEADER,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Header)
+  })
+_sym_db.RegisterMessage(Header)
+
+Pose2D = _reflection.GeneratedProtocolMessageType('Pose2D', (_message.Message,), {
+  'DESCRIPTOR' : _POSE2D,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Pose2D)
+  })
+_sym_db.RegisterMessage(Pose2D)
+
+Pose3D = _reflection.GeneratedProtocolMessageType('Pose3D', (_message.Message,), {
+  'DESCRIPTOR' : _POSE3D,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Pose3D)
+  })
+_sym_db.RegisterMessage(Pose3D)
+
+Vec3 = _reflection.GeneratedProtocolMessageType('Vec3', (_message.Message,), {
+  'DESCRIPTOR' : _VEC3,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Vec3)
+  })
+_sym_db.RegisterMessage(Vec3)
+
+Vec2 = _reflection.GeneratedProtocolMessageType('Vec2', (_message.Message,), {
+  'DESCRIPTOR' : _VEC2,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Vec2)
+  })
+_sym_db.RegisterMessage(Vec2)
+
+Quaternion = _reflection.GeneratedProtocolMessageType('Quaternion', (_message.Message,), {
+  'DESCRIPTOR' : _QUATERNION,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Quaternion)
+  })
+_sym_db.RegisterMessage(Quaternion)
+
+Box3D = _reflection.GeneratedProtocolMessageType('Box3D', (_message.Message,), {
+  'DESCRIPTOR' : _BOX3D,
+  '__module__' : 'common_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.Box3D)
+  })
+_sym_db.RegisterMessage(Box3D)
+
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _STATUS._serialized_start=37
-  _STATUS._serialized_end=70
+  _STATUS._serialized_start=532
+  _STATUS._serialized_end=565
+  _HEADER._serialized_start=70
+  _HEADER._serialized_end=156
+  _POSE2D._serialized_start=158
+  _POSE2D._serialized_end=200
+  _POSE3D._serialized_start=202
+  _POSE3D._serialized_end=306
+  _VEC3._serialized_start=308
+  _VEC3._serialized_end=347
+  _VEC2._serialized_start=349
+  _VEC2._serialized_end=377
+  _QUATERNION._serialized_start=379
+  _QUATERNION._serialized_end=435
+  _BOX3D._serialized_start=437
+  _BOX3D._serialized_end=530
 # @@protoc_insertion_point(module_scope)

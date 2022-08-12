@@ -3,6 +3,7 @@
 syntax = "proto3";
 
 import "common.proto";
+import "observation.proto";
 
 package sloop_object_search;
 
@@ -38,9 +39,10 @@ message CreateAgentRequest {
     Pose3D init_pose_3d = 4;
   }
 
-  // initial grid map
-  oneof grid_map {
-    GridMap2D grid_map_2d = 5;
+  // initial model of the search environment
+  oneof search_region {
+    OccupancyGrid occupancy_grid = 5;
+    PointCloud point_cloud = 6;
   }
 
 }

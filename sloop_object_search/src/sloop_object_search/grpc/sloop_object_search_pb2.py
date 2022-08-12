@@ -13,9 +13,10 @@ _sym_db = _symbol_database.Default()
 
 
 import common_pb2 as common__pb2
+import observation_pb2 as observation__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19sloop_object_search.proto\x12\x13sloop_object_search\x1a\x0c\x63ommon.proto\"\x14\n\x12StartServerRequest\"P\n\x10StartServerReply\x12+\n\x06status\x18\x01 \x01(\x0e\x32\x1b.sloop_object_search.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"8\n\x12\x43reateAgentRequest\x12\x12\n\nagent_name\x18\x01 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x02 \x01(\x0c\"P\n\x10\x43reateAgentReply\x12+\n\x06status\x18\x01 \x01(\x0e\x32\x1b.sloop_object_search.Status\x12\x0f\n\x07message\x18\x02 \x01(\t2\xda\x01\n\x16StartSloopObjectSearch\x12_\n\x0bStartServer\x12\'.sloop_object_search.StartServerRequest\x1a%.sloop_object_search.StartServerReply\"\x00\x12_\n\x0b\x43reateAgent\x12\'.sloop_object_search.CreateAgentRequest\x1a%.sloop_object_search.CreateAgentReply\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19sloop_object_search.proto\x12\x13sloop_object_search\x1a\x0c\x63ommon.proto\x1a\x11observation.proto\"\x14\n\x12StartServerRequest\"P\n\x10StartServerReply\x12+\n\x06status\x18\x01 \x01(\x0e\x32\x1b.sloop_object_search.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"\xb6\x02\n\x12\x43reateAgentRequest\x12\x12\n\nagent_name\x18\x01 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x02 \x01(\x0c\x12\x33\n\x0cinit_pose_2d\x18\x03 \x01(\x0b\x32\x1b.sloop_object_search.Pose2DH\x00\x12\x33\n\x0cinit_pose_3d\x18\x04 \x01(\x0b\x32\x1b.sloop_object_search.Pose3DH\x00\x12<\n\x0eoccupancy_grid\x18\x05 \x01(\x0b\x32\".sloop_object_search.OccupancyGridH\x01\x12\x36\n\x0bpoint_cloud\x18\x06 \x01(\x0b\x32\x1f.sloop_object_search.PointCloudH\x01\x42\x0b\n\tinit_poseB\x0f\n\rsearch_region\"P\n\x10\x43reateAgentReply\x12+\n\x06status\x18\x01 \x01(\x0e\x32\x1b.sloop_object_search.Status\x12\x0f\n\x07message\x18\x02 \x01(\t2\xda\x01\n\x16StartSloopObjectSearch\x12_\n\x0bStartServer\x12\'.sloop_object_search.StartServerRequest\x1a%.sloop_object_search.StartServerReply\"\x00\x12_\n\x0b\x43reateAgent\x12\'.sloop_object_search.CreateAgentRequest\x1a%.sloop_object_search.CreateAgentReply\"\x00\x62\x06proto3')
 
 
 
@@ -55,14 +56,14 @@ _STARTSLOOPOBJECTSEARCH = DESCRIPTOR.services_by_name['StartSloopObjectSearch']
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _STARTSERVERREQUEST._serialized_start=64
-  _STARTSERVERREQUEST._serialized_end=84
-  _STARTSERVERREPLY._serialized_start=86
-  _STARTSERVERREPLY._serialized_end=166
-  _CREATEAGENTREQUEST._serialized_start=168
-  _CREATEAGENTREQUEST._serialized_end=224
-  _CREATEAGENTREPLY._serialized_start=226
-  _CREATEAGENTREPLY._serialized_end=306
-  _STARTSLOOPOBJECTSEARCH._serialized_start=309
-  _STARTSLOOPOBJECTSEARCH._serialized_end=527
+  _STARTSERVERREQUEST._serialized_start=83
+  _STARTSERVERREQUEST._serialized_end=103
+  _STARTSERVERREPLY._serialized_start=105
+  _STARTSERVERREPLY._serialized_end=185
+  _CREATEAGENTREQUEST._serialized_start=188
+  _CREATEAGENTREQUEST._serialized_end=498
+  _CREATEAGENTREPLY._serialized_start=500
+  _CREATEAGENTREPLY._serialized_end=580
+  _STARTSLOOPOBJECTSEARCH._serialized_start=583
+  _STARTSLOOPOBJECTSEARCH._serialized_end=801
 # @@protoc_insertion_point(module_scope)
