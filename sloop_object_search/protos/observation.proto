@@ -62,5 +62,5 @@ message ObjectDetection {
 message Language {
   sloop_object_search.Header header = 1;
   string robot_id = 2;  // the receiver of this observation
-  string langugae = 3;
+  string language = 3;
 }
