@@ -1,27 +1,28 @@
-import numpy as np
-import ros_numpy
 
-from google.protobuf.timestamp_pb2 import Timestamp
 
-from sloop_object_search.grpc.observation_pb2 import PointCloud
-from sloop_object_search.grpc.common_pb2 import Vec3, Header
+def search_region_from_occupancy_grid():
+    pass
 
-def pointcloud2_to_pointcloudproto(cloud_msg):
+
+def search_region_from_point_cloud(point_cloud, world_origin=None, is_3d=False, **kwargs):
     """
-    Converts a PointCloud2 message to a PointCloud proto message.
+    The points in the given point cloud should correspond to static
+    obstacles in the environment. The extent of this point cloud forms
+    the extent of the search region.
+
+    If the point_cloud is to be projected down to 2D, then we assume
+    there is a "floor" (or flat plane) in the environment. "floor_cut"
+    in kwargs specifies the height below which the points are considered
+    to be part of the floor.
+
+    'world_origin' is a point in the world frame that corresponds to (0,0) or
+    (0,0,0) in the POMDP model of the world. If it is None, then the world_origin
+    will be set to the point with minimum coordinates in the point cloud.
 
     Args:
-       cloud_msg (sensor_msgs.PointCloud2)
+        point_cloud (common_pb2.PointCloud): The input point cloud
+        is_3d (bool): whether the search region will be 3D
     """
-    pcl_raw_array = ros_numpy.point_cloud2.pointcloud2_to_array(cloud_msg)
-    points_xyz_array = ros_numpy.point_cloud2.get_xyz_points(pcl_raw_array)
-
-    points_pb = []
-    for p in points_xyz_array:
-        point_pb = PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]), label="")
-        points_pb.append(point_pb)
-
-    cloud_pb = PointCloud(header=Header(stamp=Timestamp().GetCurrentTime(),
-                                        frame_id=cloud_msg.header.frame_id),
-                          points=points_pb)
-    return cloud_pb
+    if is_3d:
+        pass
+    else:
