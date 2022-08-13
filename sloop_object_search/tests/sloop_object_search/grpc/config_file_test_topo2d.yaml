@@ -1,0 +1,110 @@
+################## task config ##################
+task_config:
+  map_name: lab121_lidar
+  max_steps: 100
+
+################## ros config ##################
+ros_config:
+  init_pose_topic: ~init_pose
+  belief_msg_type: sensor_msgs.msg.Image
+  action_executor: sloop_mos_spot.SpotSloopActionExecutor
+  observation_interpreter: sloop_mos_spot.SpotObservationInterpreter
+  observation:
+    robot_pose:
+      msg_type: geometry_msgs.msg.PoseStamped
+    detection_img:
+      msg_type: rbd_spot_perception.msg.SimpleDetection2DArray
+    detection_3d:
+      msg_type: rbd_spot_perception.msg.SimpleDetection3DArray
+    grid_map:
+      msg_type: sloop_object_search_ros.msg.GridMap2d
+    spatial_lang:
+      msg_type: std_msgs.msg.String
+
+################## agent config ##################
+agent_config:
+  action:
+    h_rotation: 45.0
+  agent_class: SloopMosTopo2DAgent
+  belief:
+    prior:
+      book: uniform
+
+  detectable_objects:
+    - book
+
+  robot:
+    detectors:
+      book:
+        class: sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly
+        params:
+        - fov: 61  # I measured this (roughly)
+          max_range: 5
+          min_range: 1
+        - - 0.7    # I noticed that detection of book has plenty of misses, depending on the direction
+          - 0.05   # but when the detection is positive, it is often correct
+    id: robot0
+    primitive_moves:
+      func: sloop_object_search.oopomdp.domain.action.basic_discrete_moves2d
+      params:
+        step_size: 1
+        h_rotation: 45.0
+
+  objects:
+    book:
+      class: book
+      color:
+      - 200
+      - 100
+      - 80
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+
+  targets:
+  - book
+
+  # Language Related
+  spacy_model: en_core_web_lg
+  foref_models_dir: /home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/models
+  foref_model_map_name: honolulu  # we force usage of this model
+  object_symbol_map:
+    NovelBook: book  # must be an object id
+
+  # Topo map generation
+  topo_map_args:
+    degree:
+    - 3
+    - 5
+    node_coverage_radius: 3.0
+    num_place_samples: 10
+    resample_prob_thres: 0.25
+    seed: 1509
+    sep: 4.0
+
+  topo_trans_args:
+    h_angle_res: 45.0
+
+  no_look: true
+
+  # visualization
+  visualizer: sloop_object_search.oopomdp.agent.VizSloopMosTopo
+  viz_params:
+    init:
+      res: 20
+    render:
+      show_img_flip_horizontally: True
+
+################## planner_config ##################
+planner_config:
+  planner: sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
+  plan_nav_actions: False
+  high_level_planner_args:
+    exploration_const: 1000
+    max_depth: 20
+    num_sims: 600
+  local_search:
+    planner: pomdp_py.POUCT
+    planner_args:
+      exploration_const: 1000
+      max_depth: 10
+      num_sims: 600

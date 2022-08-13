@@ -4,6 +4,7 @@ import logging
 import grpc
 import sloop_object_search.grpc.sloop_object_search_pb2 as slpb2
 import sloop_object_search.grpc.sloop_object_search_pb2_grpc as slbp2_grpc
+from sloop_object_search.grpc.common_pb2 import Status
 
 import yaml
 from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
@@ -14,15 +15,19 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         self._agents = {}
 
     def CreateAgent(self, request, context):
-        if request.agent_name in self._agent:
-            return slpb2.CreateAgentReply(status=slpb2.Status.FAILED,
-                                          message=f"Agent with name {request.agent_name} already exists!")
+        if request.agent_name in self._agents:
+            return slpb2.CreateAgentReply(
+                status=slpb2.Status.FAILED,
+                message=f"Agent with name {request.agent_name} already exists!")
 
         config_str = request.config.decode("utf-8")
         agent_config = yaml.safe_load(config_str)
+        print(agent_config)
 
-        agent = make_sloop_mos_agent(agent_config)
-
+        # agent = make_sloop_mos_agent(agent_config)
+        return slpb2.CreateAgentReply(
+            status=Status.SUCCESS,
+            message=f"Creation of agent {request.agent_name} succeeded")
 
 
 def serve():
