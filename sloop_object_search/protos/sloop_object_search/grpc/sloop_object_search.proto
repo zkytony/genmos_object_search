@@ -6,6 +6,7 @@ package sloop_object_search.grpc;
 
 import "sloop_object_search/grpc/common.proto";
 import "sloop_object_search/grpc/observation.proto";
+import "google/protobuf/any.proto";
 
 
 service SloopObjectSearch {
@@ -44,6 +45,8 @@ message CreateAgentRequest {
     OccupancyGrid occupancy_grid = 5;
     PointCloud point_cloud = 6;
   }
+
+  map<string, google.protobuf.Any> search_region_params = 7;
 
 }
 
