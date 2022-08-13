@@ -8,10 +8,9 @@
 
 syntax = "proto3";
 
-import "common.proto";
+package sloop_object_search.grpc;
 
-package sloop_object_search;
-
+import "sloop_object_search/grpc/common.proto";
 
 // Occupancy grid: a 2D representation of the whole or a region of the search
 // environment as a set of grid locations, each could be either free, occupied
@@ -23,7 +22,7 @@ message OccupancyGrid {
     string label = 3;
   }
 
-  sloop_object_search.Header header = 1;
+  Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   repeated Grid grids = 3;
 }
@@ -38,7 +37,7 @@ message PointCloud {
     string label = 2;
   }
 
-  sloop_object_search.Header header = 1;
+  Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   repeated Point points = 3;
 }
@@ -52,7 +51,7 @@ message ObjectDetection {
     Box3D box = 3;
   }
 
-  sloop_object_search.Header header = 1;
+  Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   repeated Detection3D detections = 3;
 }
@@ -60,7 +59,7 @@ message ObjectDetection {
 
 // Language input as observation
 message Language {
-  sloop_object_search.Header header = 1;
+  Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   string text = 3;
 }

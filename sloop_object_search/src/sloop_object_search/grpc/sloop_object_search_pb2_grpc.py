@@ -2,10 +2,10 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import sloop_object_search_pb2 as sloop__object__search__pb2
+from sloop_object_search.grpc import sloop_object_search_pb2 as sloop__object__search_dot_grpc_dot_sloop__object__search__pb2
 
 
-class StartSloopObjectSearchStub(object):
+class SloopObjectSearchStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -15,18 +15,18 @@ class StartSloopObjectSearchStub(object):
             channel: A grpc.Channel.
         """
         self.StartServer = channel.unary_unary(
-                '/sloop_object_search.StartSloopObjectSearch/StartServer',
-                request_serializer=sloop__object__search__pb2.StartServerRequest.SerializeToString,
-                response_deserializer=sloop__object__search__pb2.StartServerReply.FromString,
+                '/sloop_object_search.grpc.SloopObjectSearch/StartServer',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerReply.FromString,
                 )
         self.CreateAgent = channel.unary_unary(
-                '/sloop_object_search.StartSloopObjectSearch/CreateAgent',
-                request_serializer=sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
-                response_deserializer=sloop__object__search__pb2.CreateAgentReply.FromString,
+                '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
                 )
 
 
-class StartSloopObjectSearchServicer(object):
+class SloopObjectSearchServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def StartServer(self, request, context):
@@ -42,26 +42,26 @@ class StartSloopObjectSearchServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_StartSloopObjectSearchServicer_to_server(servicer, server):
+def add_SloopObjectSearchServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'StartServer': grpc.unary_unary_rpc_method_handler(
                     servicer.StartServer,
-                    request_deserializer=sloop__object__search__pb2.StartServerRequest.FromString,
-                    response_serializer=sloop__object__search__pb2.StartServerReply.SerializeToString,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerReply.SerializeToString,
             ),
             'CreateAgent': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateAgent,
-                    request_deserializer=sloop__object__search__pb2.CreateAgentRequest.FromString,
-                    response_serializer=sloop__object__search__pb2.CreateAgentReply.SerializeToString,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'sloop_object_search.StartSloopObjectSearch', rpc_method_handlers)
+            'sloop_object_search.grpc.SloopObjectSearch', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class StartSloopObjectSearch(object):
+class SloopObjectSearch(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -75,9 +75,9 @@ class StartSloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.StartSloopObjectSearch/StartServer',
-            sloop__object__search__pb2.StartServerRequest.SerializeToString,
-            sloop__object__search__pb2.StartServerReply.FromString,
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/StartServer',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -92,8 +92,8 @@ class StartSloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.StartSloopObjectSearch/CreateAgent',
-            sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
-            sloop__object__search__pb2.CreateAgentReply.FromString,
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -2,13 +2,13 @@
 
 syntax = "proto3";
 
-import "common.proto";
-import "observation.proto";
+package sloop_object_search.grpc;
 
-package sloop_object_search;
+import "sloop_object_search/grpc/common.proto";
+import "sloop_object_search/grpc/observation.proto";
 
 
-service StartSloopObjectSearch {
+service SloopObjectSearch {
 
   rpc StartServer(StartServerRequest) returns (StartServerReply) {}
 
@@ -22,7 +22,7 @@ message StartServerRequest {
 }
 
 message StartServerReply {
-  sloop_object_search.Status status = 1;
+  Status status = 1;
   string message = 2;
 }
 
@@ -48,6 +48,6 @@ message CreateAgentRequest {
 }
 
 message CreateAgentReply {
-  sloop_object_search.Status status = 1;
+  sloop_object_search.grpc.Status status = 1;
   string message = 2;
 }
