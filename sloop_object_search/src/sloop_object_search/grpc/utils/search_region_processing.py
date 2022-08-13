@@ -1,3 +1,6 @@
+import numpy as np
+import open3d as o3d
+
 
 
 def search_region_from_occupancy_grid():
@@ -26,3 +29,10 @@ def search_region_from_point_cloud(point_cloud, world_origin=None, is_3d=False, 
     if is_3d:
         pass
     else:
+        pass
+
+
+def search_region_2d_from_point_cloud(point_cloud, world_origin=None, **kwargs):
+    points_array = pointcloudproto_to_array(point_cloud)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(np.asarray(points_array))

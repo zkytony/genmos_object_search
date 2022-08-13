@@ -1,5 +1,9 @@
 import numpy as np
-import ros_numpy
+
+# we don't want to crash if a ros-related package is not installed.
+import importlib
+if importlib.util.find_spec("ros_numpy") is not None:
+    import ros_numpy
 
 from google.protobuf.timestamp_pb2 import Timestamp
 
@@ -21,7 +25,13 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
         point_pb = PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]), label="")
         points_pb.append(point_pb)
 
-    cloud_pb = PointCloud(header=Header(stamp=Timestamp().GetCurrentTime(),
-                                        frame_id=cloud_msg.header.frame_id),
+    header = Header(stamp=Timestamp().GetCurrentTime(),
+                    frame_id=cloud_msg.header.frame_id)
+    cloud_pb = PointCloud(header=header,
                           points=points_pb)
     return cloud_pb
+
+
+def pointcloudproto_to_array(point_cloud):
+    return np.array([p.pos.x, p.pos.y, p.pos.z]
+                    for p in point_cloud.points)
