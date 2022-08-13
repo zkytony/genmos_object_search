@@ -10,8 +10,8 @@ import message_filters
 from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
-from sloop_object_search.grpc.utils import pointcloud2_to_pointcloudproto
-from sloop_object_search.grpc.common_pb2 import Pose2D
+from sloop_object_search.grpc.utils.proto_utils import pointcloud2_to_pointcloudproto
+from sloop_object_search.grpc.common_pb2 import Pose2D, BasicParam
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 
 
@@ -50,7 +50,8 @@ class TestCase:
         self._sloop_client.CreateAgent(
             config_file_path="../../../config/sloop_mos_grpc_test.yaml",
             init_pose_2d=init_pose_pb,
-            point_cloud=cloud_pb)
+            point_cloud=cloud_pb,
+            search_region_params_2d={"layout_cut": 0.5})
 
 if __name__ == "__main__":
     TestCase()

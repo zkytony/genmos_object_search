@@ -8,6 +8,7 @@ from .agent import make_agent
 # agent whose model of the world is 2D
 AGENT_CLASS_2D = {
     "SloopMosBasic2DAgent",
+    "SloopMosTopo2DAgent",
     "MosBasic2DAgent",
 }
 

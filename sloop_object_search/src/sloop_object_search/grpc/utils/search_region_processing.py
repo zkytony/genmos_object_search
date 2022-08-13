@@ -1,6 +1,7 @@
 import numpy as np
 import open3d as o3d
 from collections import deque
+from tqdm import tqdm
 
 from .proto_utils import pointcloudproto_to_array
 from sloop_object_search.utils.math import remap, in_region
@@ -34,14 +35,16 @@ def search_region_from_point_cloud(point_cloud, world_origin=None, is_3d=False, 
     if is_3d:
         pass
     else:
-        pass
+        search_region_2d_from_point_cloud(point_cloud, world_origin=None, **kwargs)
 
 ########### 2D search region ##############
 def search_region_2d_from_point_cloud(point_cloud, world_origin=None, **kwargs):
     points_array = pointcloudproto_to_array(point_cloud)
     pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(np.asarray(points_array))
-    grid_map = pcd_to_grid_map(pcd, [])
+    import pdb; pdb.set_trace()
+    pcd.points = o3d.utility.Vector3dVector(points_array)
+    grid_map = pcd_to_grid_map(pcd, [], debug=True, **kwargs)
+    print("grid map created!")
 
 def proj_to_grid_coords(points, grid_size=0.25):
     """
@@ -110,6 +113,7 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     # The height above which the points indicate nicely the layout of the room
     # while preserving big obstacles like tables.
     layout_cut = kwargs.get("layout_cut", 0.65)
+    print("LAYOUT CUT!!!", layout_cut)
 
     # We will regard points with z within layout_cut +/- floor_cut
     # to be the points that represent the floor.
@@ -139,16 +143,17 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
     floor_grid_coords = proj_to_grid_coords(floor_points, grid_size=grid_size)
 
     # also, convert waypoints into an integer-coordinated grid map
-    waypoints_grid_coords = proj_to_grid_coords(waypoints, grid_size=grid_size)
+    if len(waypoints) > 0:
+        waypoints_grid_coords = proj_to_grid_coords(waypoints, grid_size=grid_size)
 
-    # Now, flood fill the floor_grid_coords with waypoints; we will select
-    # way points that are of some distance away from each other.
-    num_waypoint_seeds = int(len(waypoints_grid_coords) * pct_waypoint_seeds)
-    np.random.seed(1010)
-    selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
-    selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
-    for wp in tqdm(selected_waypoints):
-        floor_grid_coords = flood_fill(floor_grid_coords, wp)
+        # Now, flood fill the floor_grid_coords with waypoints; we will select
+        # way points that are of some distance away from each other.
+        num_waypoint_seeds = int(len(waypoints_grid_coords) * pct_waypoint_seeds)
+        np.random.seed(1010)
+        selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
+        selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
+        for wp in tqdm(selected_waypoints):
+            floor_grid_coords = flood_fill(floor_grid_coords, wp)
 
     # The floor points will be reachable points
     metric_reachable_grid_points = floor_grid_coords
@@ -190,12 +195,15 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
         pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_grid_points))
         pcd2.colors = o3d.utility.Vector3dVector(np.full((len(metric_obstacle_grid_points), 3), (0.2, 0.2, 0.2)))
 
-        pcd3 = o3d.geometry.PointCloud()
-        pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
-        waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
-        waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
-        pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
-        o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
+        if len(waypoints) > 0:
+            pcd3 = o3d.geometry.PointCloud()
+            pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
+            waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
+            waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
+            pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
+            o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
+        else:
+            o3d.visualization.draw_geometries([pcd, pcd2])
 
     grid_map = GridMap(width, length,
                        grid_map_obstacle_positions,
@@ -206,9 +214,10 @@ def pcd_to_grid_map(pcd, waypoints, **kwargs):
 
     if debug:
         # Do a test: plot waypoints on the grid map
-        waypoints_gx = remap(waypoints_grid_coords[:, 0], metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-        waypoints_gy = remap(waypoints_grid_coords[:, 1], metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-        wyps = set(zip(waypoints_gx, waypoints_gy))
+        if len(waypoints) > 0:
+            waypoints_gx = remap(waypoints_grid_coords[:, 0], metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+            waypoints_gy = remap(waypoints_grid_coords[:, 1], metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+            wyps = set(zip(waypoints_gx, waypoints_gy))
 
         viz = GridMapVisualizer(grid_map=grid_map, res=10)
         img = viz.render()

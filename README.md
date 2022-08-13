@@ -47,3 +47,11 @@ has a corresponding folder.
    ```
    catkin_make -DCATKLIN_WHITELIST_PACKAGES="sloop_object_search_ros"
    ```
+
+
+## Usage
+
+### Launch the sloop_object_search gRPC server
+```
+python -m sloop_object_search.grpc.server
+```

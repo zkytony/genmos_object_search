@@ -10,6 +10,12 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from sloop_object_search.grpc.observation_pb2 import PointCloud
 from sloop_object_search.grpc.common_pb2 import Vec3, Header
 
+def process_search_region_params_2d(search_region_params_2d_pb):
+    params = {}
+    if search_region_params_2d_pb.layout_cut:
+        params["layout_cut"] = search_region_params_2d_pb.layout_cut
+    return params
+
 def pointcloud2_to_pointcloudproto(cloud_msg):
     """
     Converts a PointCloud2 message to a PointCloud proto message.
@@ -33,5 +39,5 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 
 
 def pointcloudproto_to_array(point_cloud):
-    return np.array([p.pos.x, p.pos.y, p.pos.z]
-                    for p in point_cloud.points)
+    return np.array([[p.pos.x, p.pos.y, p.pos.z]
+                     for p in point_cloud.points])
