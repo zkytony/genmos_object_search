@@ -10,6 +10,9 @@ import yaml
 from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
 
 
+MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
+
+
 class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
     def __init__(self):
         self._agents = {}
@@ -30,8 +33,11 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             message=f"Creation of agent {request.agent_name} succeeded")
 
 
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+def serve(max_message_length=MAX_MESSAGE_LENGTH):
+    options = [('grpc.max_receive_message_length', max_message_length),
+               ('grpc.max_send_message_length', max_message_length)]
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
+                                                    options=options)
     slbp2_grpc.add_SloopObjectSearchServicer_to_server(
         SloopObjectSearchServer(), server)
     server.add_insecure_port('[::]:50051')

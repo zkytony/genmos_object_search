@@ -7,12 +7,17 @@ import sloop_object_search.grpc.sloop_object_search_pb2 as slpb2
 import sloop_object_search.grpc.sloop_object_search_pb2_grpc as slpb2_grpc
 from sloop_object_search.grpc.common_pb2 import Pose2D
 
+from .server import MAX_MESSAGE_LENGTH
+
 
 class SloopObjectSearchClient:
 
-    def __init__(self, server_address='localhost:50051'):
+    def __init__(self, server_address='localhost:50051',
+                 max_message_length=MAX_MESSAGE_LENGTH):
         self.server_address = server_address
-        self.channel = grpc.insecure_channel(self.server_address)
+        options = [('grpc.max_receive_message_length', max_message_length),
+                   ('grpc.max_send_message_length', max_message_length)]
+        self.channel = grpc.insecure_channel(self.server_address, options=options)
         self.stub = slpb2_grpc.SloopObjectSearchStub(self.channel)
 
     def __del__(self):
