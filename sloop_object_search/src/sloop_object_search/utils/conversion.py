@@ -34,6 +34,11 @@ def convert(point, from_frame, to_frame,
     """
     `from_frame` (str) one of {"world", "region", or "search_space"}
     `to_frame` (str) one of {"world", "region", or "search_space"}
+    `region_origin` (tuple): coordinates of a point in the world frame
+         that corresponds to (0,0) in the region, thus POMDP space
+    `search_space_resolution` (float): the metric resolution of one
+         coordinate length in the POMDP space (e.g. 0.15 means one
+         POMDP grid equals to 0.15m in the real world)
     """
     all_frames = {Frame.WORLD, Frame.REGION, Frame.POMDP_SPACE}
     if not (from_frame.lower() in all_frames and to_frame.lower() in all_frames):
