@@ -1,4 +1,3 @@
-# TODO: SHOULD REMOVE; Duplicate with sloop_object_search.utils.conversion
 # Copyright 2022 Kaiyu Zheng
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
 # Coordinate conversion
-#   gmapping coordinate is at lower-left. According to https://www.ros.org/reps/rep-0103.html,
+#   gmapping origin is at lower-left. According to https://www.ros.org/reps/rep-0103.html,
 # the X axis is East, Y axis is North.
 #   Note that a point in the gmapping coordinate frame has unit in meter.
 import math
@@ -84,25 +83,21 @@ def _world2region(world_point, region_origin):
     points will have the same resolution as the gmapping map.
     """
     # simply subtract world point x,y by region origin. Keep z unchanged.
-    if len(region_origin) == 3:
-        return (world_point[0] - region_origin[0],
-                world_point[1] - region_origin[1],
-                world_point[2] - region_origin[2])
-    else:
-        return (world_point[0] - region_origin[0],
-                world_point[1] - region_origin[1],
-                world_point[2])
+    region_point = (world_point[i] - region_origin[i]
+                    for i in range(len(region_origin)))
+    if len(world_point) > len(region_origin):
+        # we'd like to maintain the dimensionality
+        region_point = (*region_point, *world_point[len(region_origin):])
+    return region_point
 
 def _region2world(region_point, region_origin):
     """region_point(x,y,z) -> world_point(x,y,z)"""
-    if len(region_origin) == 3:
-        return (region_point[0] + region_origin[0],
-                region_point[1] + region_origin[1],
-                region_point[2] + region_origin[2])
-    else:
-        return (region_point[0] + region_origin[0],
-                region_point[1] + region_origin[1],
-                region_point[2])
+    world_point = (region_point[i] + region_origin[i]
+                   for i in range(len(region_origin)))
+    if len(region_point) > len(region_origin):
+        # we'd like to maintain the dimensionality
+        world_point = (*world_point, *region_point[len(region_origin):])
+    return world_point
 
 def _region2searchspace(region_point, search_space_resolution):
     """Convert region point to a cube's coordinate in the search space.
