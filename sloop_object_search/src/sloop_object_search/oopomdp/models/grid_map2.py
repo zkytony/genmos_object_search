@@ -26,6 +26,11 @@
 from sloop_object_search.utils.conversion import Frame, convert
 from .grid_map import GridMap
 
+class GridType:
+    FREE = "free_location"
+    OBSTACLE = "obstacle"
+    UNKNOWN = "unknown"
+
 
 class GridMap2:
     def __init__(self, name="grid_map2",
@@ -70,13 +75,58 @@ class GridMap2:
             self.obstacles |= obstacles
         if free_locations is not None:
             self.free_locations |= free_locations
+        self.check_integrity()
+        self._clear_cache()
 
+
+    def update_region(self, obstacles=None, free_locations=None):
+        """Update the rectangular region covered by 'obstacles' and free_locations: the
+        obstacles and free_locations in that region are replaced by the given
+        'obstacles' and 'free_locations'.
+        """
+        # First, we create a temporary GridMap2 with the given
+        region_grid_map = GridMap2(name="tmp", obstacles=obstacles,
+                                   free_locations=free_locations)
+        # Enumerate over the locations in this region and update
+        for x in region_grid_map.wrange:
+            for y in region_grid_map.lrange:
+                # make the type of (x,y) in 'self' match with region_grid_map
+                current_grid_type = self.grid_type((x,y))
+                new_grid_type = region_grid_map.grid_type((x,y))
+                if current_grid_type == new_grid_type:
+                    continue
+                else:
+                    if new_grid_type == GridType.FREE:
+                        self.free_locations.add((x,y))
+                        if current_grid_type == GridType.OBSTACLE:
+                            self.obstacles.remove((x,y))
+                        else:
+                            assert current_grid_type == GridType.UNKNOWN
+                            # nothing to do.
+                    elif new_grid_type == GridType.OBSTACLE:
+                        self.obstacles.add((x,y))
+                        if current_grid_type == GridType.FREE:
+                            self.free_locations.remove((x,y))
+                        else:
+                            assert current_grid_type == GridType.UNKNOWN
+                            # nothing to do.
+                    else:
+                        assert new_grid_type == GridType.UNKNOWN
+                        if current_grid_type == GridType.FREE:
+                            self.free_locations.remove((x,y))
+                        else:
+                            assert current_grid_type == GridType.OBSTACLE
+                            self.obstacles.remove((x,y))
+        self.check_integrity()
+        self._clear_cache()
+
+
+    def check_integrity(self):
         # check that obstacles and free locations are disjoint
         overlap = self.obstacles.intersection(self.free_locations)
         if len(overlap) > 0:
             raise ValueError("Error in argument: obstacles and free_locations are not disjoint. "\
                              f"Overlap: {overlap}")
-        self._clear_cache()
 
     @property
     def all_grids(self):
@@ -84,10 +134,10 @@ class GridMap2:
 
     def grid_type(self, loc):
         if loc in self.free_locations:
-            return "free_location"
+            return GridType.FREE
         elif loc in self.obstacles:
-            return "obstacles"
-        return "unknown"
+            return GridType.OBSTACLE
+        return GridType.UNKNOWN
 
     def _clear_cache(self):
         self._width_cache = None
@@ -115,6 +165,16 @@ class GridMap2:
         l = max_y - min_y
         self._length_cache = l
         return l
+
+    @property
+    def lrange(self):
+        """a 'range' object over y coordinates in this grid map"""
+        return range(self.min_corner[1], self.min_corner[1] + self.length)
+
+    @property
+    def wrange(self):
+        """a 'range' object over x coordinates in this grid map"""
+        return range(self.min_corner[0], self.min_corner[0] + self.width)
 
     @property
     def min_corner(self):

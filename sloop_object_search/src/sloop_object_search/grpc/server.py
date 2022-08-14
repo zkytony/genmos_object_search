@@ -109,7 +109,7 @@ def serve(port=50051, max_message_length=MAX_MESSAGE_LENGTH):
 
 def main():
     parser = argparse.ArgumentParser(description="sloop object search gRPC server")
-    parser.add_argument("--port", type=int, help="port, default 50051", defaul=50051)
+    parser.add_argument("--port", type=int, help="port, default 50051", default=50051)
     args = parser.parse_args()
 
     logging.basicConfig()

@@ -50,3 +50,31 @@ def make_header(frame_id=None, stamp=None):
         return Header(stamp=stamp)
     else:
         return Header(stamp=stamp, frame_id=frame_id)
+
+def interpret_robot_pose(request):
+    """Given a request proto object whose definition contains
+
+        oneof robot_pose {
+            Pose2D robot_pose_2d = 4;
+            Pose3D robot_pose_3d = 5;
+          }
+
+    return a tuple representation of the pose. If it is 2D,
+    then return (x, y, th). If it is 3D, then return (x, y, z,
+    qx, qy, qz, qw).
+    """
+    if request.HasField('robot_pose_2d'):
+        robot_pose = (request.robot_pose_2d.x,
+                      request.robot_pose_2d.y,
+                      request.robot_pose_2d.th)
+    elif request.HasField('robot_pose_3d'):
+        robot_pose = (request.robot_pose_3d.position.x,
+                      request.robot_pose_3d.position.y,
+                      request.robot_pose_3d.position.z,
+                      request.robot_pose_3d.rotation.x,
+                      request.robot_pose_3d.rotation.y,
+                      request.robot_pose_3d.rotation.z,
+                      request.robot_pose_3d.rotation.w,)
+    else:
+        raise ValueError("request does not contain valid robot pose field.")
+    return robot_pose

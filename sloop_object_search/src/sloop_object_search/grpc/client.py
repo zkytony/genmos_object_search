@@ -45,3 +45,8 @@ class SloopObjectSearchClient:
             **kwargs)
         response = self.stub.CreateAgent(create_agent_request)
         return response
+
+    def UpdateSearchRegion(self, **kwargs):
+        request = slpb2.UpdateSearchRegionRequest(**kwargs)
+        response = self.stub.UpdateSearchRegion(request)
+        return response

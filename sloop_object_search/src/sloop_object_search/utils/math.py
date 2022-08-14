@@ -62,7 +62,11 @@ def in_range_inclusive(x, rang):
     return x >= rang[0] and x <= rang[1]
 
 def in_region(p, ranges):
-    return in_range(p[0], ranges[0]) and in_range(p[1], ranges[1]) and in_range(p[2], ranges[2])
+    """check if every element in p is within given ranges;
+    Note that the size of 'ranges' could be larger or equal
+    than the size of 'p'"""
+    return all(in_range(p[i], ranges[i])
+               for i in range(len(p)))
 
 def approx_equal(v1, v2, epsilon=1e-6):
     if len(v1) != len(v2):

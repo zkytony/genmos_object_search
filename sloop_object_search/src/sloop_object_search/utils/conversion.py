@@ -88,8 +88,8 @@ def _world2region(world_point, region_origin):
     points will have the same resolution as the gmapping map.
     """
     # simply subtract world point x,y by region origin. Keep z unchanged.
-    region_point = (world_point[i] - region_origin[i]
-                    for i in range(len(region_origin)))
+    region_point = tuple(world_point[i] - region_origin[i]
+                         for i in range(len(region_origin)))
     if len(world_point) > len(region_origin):
         # we'd like to maintain the dimensionality
         region_point = (*region_point, *world_point[len(region_origin):])
@@ -97,8 +97,8 @@ def _world2region(world_point, region_origin):
 
 def _region2world(region_point, region_origin):
     """region_point(x,y,z) -> world_point(x,y,z)"""
-    world_point = (region_point[i] + region_origin[i]
-                   for i in range(len(region_origin)))
+    world_point = tuple(region_point[i] + region_origin[i]
+                        for i in range(len(region_origin)))
     if len(region_point) > len(region_origin):
         # we'd like to maintain the dimensionality
         world_point = (*world_point, *region_point[len(region_origin):])
@@ -108,11 +108,9 @@ def _region2searchspace(region_point, search_space_resolution):
     """Convert region point to a cube's coordinate in the search space.
     Assume that the search space's origin is at the region coordinate frame's
     origin. The `search_space_resolution` has unit m/cell."""
-    return (int(math.floor(region_point[0] / search_space_resolution)),
-            int(math.floor(region_point[1] / search_space_resolution)),
-            int(math.floor(region_point[2] / search_space_resolution)))
+    return tuple(int(math.floor(region_point[i] / search_space_resolution))
+                 for i in range(len(region_point)))
 
 def _searchspace2region(search_space_point, search_space_resolution):
-    return (search_space_point[0] * search_space_resolution,
-            search_space_point[1] * search_space_resolution,
-            search_space_point[2] * search_space_resolution)
+    return tuple(search_space_point[i] * search_space_resolution
+                 for i in range(len(search_space_point)))

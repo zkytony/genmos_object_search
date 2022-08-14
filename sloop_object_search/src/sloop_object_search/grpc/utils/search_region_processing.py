@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import open3d as o3d
 from collections import deque
@@ -8,81 +9,60 @@ from sloop_object_search.utils.math import remap, in_region, euclidean_dist
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.oopomdp.models.grid_map import GridMap
+from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 
 
 def search_region_from_occupancy_grid():
     pass
 
 
-def search_region_from_point_cloud(point_cloud, world_origin=None, is_3d=False, **kwargs):
+########### 2D search region ##############
+def search_region_2d_from_point_cloud(point_cloud, robot_position, **kwargs):
     """
     The points in the given point cloud should correspond to static
     obstacles in the environment. The extent of this point cloud forms
     the extent of the search region.
 
-    If the point_cloud is to be projected down to 2D, then we assume
+    The point_cloud is to be projected down to 2D; We assume
     there is a "floor" (or flat plane) in the environment. "floor_cut"
     in kwargs specifies the height below which the points are considered
     to be part of the floor.
-
-    'world_origin' is a point in the world frame that corresponds to (0,0) or
-    (0,0,0) in the POMDP model of the world. If it is None, then the world_origin
-    will be set to the point with minimum coordinates in the point cloud.
-
-    Args:
-        point_cloud (common_pb2.PointCloud): The input point cloud
-        is_3d (bool): whether the search region will be 3D
     """
-    if is_3d:
-        pass
-    else:
-        search_region_2d_from_point_cloud(point_cloud, world_origin=None, **kwargs)
-
-########### 2D search region ##############
-def search_region_2d_from_point_cloud(point_cloud, world_origin=None, **kwargs):
     points_array = pointcloudproto_to_array(point_cloud)
     pcd = o3d.geometry.PointCloud()
-    import pdb; pdb.set_trace()
     pcd.points = o3d.utility.Vector3dVector(points_array)
-    grid_map = pcd_to_grid_map(pcd, [], debug=True, **kwargs)
+    grid_map = pcd_to_grid_map_2d(pcd, robot_position, debug=True, **kwargs)
     print("grid map created!")
 
-def proj_to_grid_coords(points, grid_size=0.25):
-    """
-    Given points (numpy array of shape Nx3), return a numpy
-    array of shape Nx3 where each number is an integer, which
-    represents the coordinate over a grid map where each grid
-    has length 'grid_size'. The integer could be negative.
-    The z axis of all resulting points will be set to 0.
-    """
-    metric_grid_points = (points / grid_size).astype(int)
-    metric_grid_points[:,2] = 0
-    return metric_grid_points
-
-def flood_fill(grid_points, seed_point, grid_brush_size=2, flood_radius=None):
+def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_radius=None):
     """
     Given a numpy array of points that are supposed to be on a grid map,
     and a "seed point", flood fill by adding more grid points that are
     in empty locations to the set of grid points, starting from the seed
     point. Will not modify 'grid_points' but returns a new array.
 
-    grid_brush_size (int): The length (number of grids) of a square brush
-        which will be used to fill out the empty spaces.
-
-    flood_radius (float): the maximum euclidean distance between a
-        point in the flood and the seed point.
+    Args:
+        grid_points (np.ndarray): a (n,2) or (n,3) array
+        seed_point (np.ndarray or tuple): dimension should match that of a grid point
+        grid_brush_size (int): The length (number of grids) of a square brush
+            which will be used to fill out the empty spaces.
+        flood_radius (float): the maximum euclidean distance between a
+            point in the flood and the seed point (in grid units)
     """
     def _neighbors(p, d=1):
-        # note that p is 3D, but we only care about x and y
-        return set((p[0] + dx, p[1] + dy, p[2])
+        # this works with both 2D or 3D points
+        return set((p[0] + dx, p[1] + dy, *p[2:])
                    for dx in range(-d, d+1)
                    for dy in range(-d, d+1)
                    if not (dx == 0 and dy == 0))
 
     seed_point = tuple(seed_point)
-    xmax, ymax, zmax = np.max(grid_points, axis=0)
-    xmin, ymin, zmin = np.min(grid_points, axis=0)
-    _ranges = ([xmin, xmax], [ymin, ymax], [zmin, zmax+1])
+    if grid_points.shape[1] != len(seed_point):
+        raise ValueError("grid points and seed point have different dimensions.")
+
+    xmax, ymax = np.max(grid_points, axis=0)[:2]
+    xmin, ymin = np.min(grid_points, axis=0)[:2]
+    _ranges = ([xmin, xmax], [ymin, ymax])
     grid_points_set = set(map(tuple, grid_points))
     # BFS
     worklist = deque([seed_point])
@@ -102,13 +82,13 @@ def flood_fill(grid_points, seed_point, grid_brush_size=2, flood_radius=None):
                     if flood_radius is not None:
                         if euclidean_dist(neighbor_point, seed_point) > flood_radius:
                             continue  # skip this point: too far.
-                    if in_region(neighbor_point, _ranges):
+                    if in_region(neighbor_point[:2], _ranges):
                         worklist.append(neighbor_point)
                         visited.add(neighbor_point)
-    return np.array(list(map(np.array, grid_points_set | new_points)))
+    return np.array(list(grid_points_set | new_points))
 
 
-def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
+def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     """
     Given an Open3D point cloud object, the robot current pose, and
     optionally an existing grid map, output a GridMap2 object
@@ -125,7 +105,7 @@ def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
 
     Args:
         pcd (Open3D point cloud object)
-        robot_position (tuple): x, y, z position of the robot
+        robot_position (tuple): x, y, z position of the robot (or could be 2D x, y)
         existing_map (GridMap2): existing grid map we want to update
         kwargs: paramters of the algorithm, including
             'layout_cut', 'floor_cut', 'grid_size' etc.
@@ -152,7 +132,7 @@ def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
     # Because the map represented by the point cloud could be very large,
     # or even border-less, we want to constrain the grid-map we are building
     # or updating to be of a certain size. This is the radius of the region
-    # we will build/update, in meters
+    # we will build/update, in meters.
     region_size = kwargs.get("region_size", 10.0)
 
     # grid map name
@@ -191,109 +171,142 @@ def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
                                       region_origin=origin,
                                       search_space_resolution=grid_size)
 
+    grid_points = np.asarray(grid_points)
+    grid_points[:, 2] = 0  # suppress z
+
     # Fourth: build the reachable positions on the floor.
     # Start with the floors filter, which should still apply.
-    grid_floor_points = np.asarray(grid_points)[floor_points_filter]
+    grid_floor_points = grid_points[floor_points_filter]
     # Now flood from the robot position, with radius
-    grid_floor_points = flood_fill(grid_floor_points, grid_robot_position)
+    grid_floor_points = flood_fill_2d(grid_floor_points, (*grid_robot_position, 0),
+                                      grid_brush_size=int(round(brush_size/grid_size)),
+                                      flood_radius=int(round(region_size/grid_size/2)))
 
-
-    ###############################################################################
-
-    # First, filter points by cutting those points below the layout.
-    points = np.asarray(pcd.points)
-    bad_points_filter = np.less(points[:, 2], layout_cut)
-    points = points[np.logical_not(bad_points_filter)]
-    xmin, ymin, zmin = np.min(points, axis=0)
-    floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
-    floor_points = points[floor_points_filter]
-
-    # We will first convert floor_points into an integer-coordinated grid map.
-    floor_grid_coords = proj_to_grid_coords(floor_points, grid_size=grid_size)
-
-    # also, convert robot position into
-
-    # also, convert waypoints into an integer-coordinated grid map
-    if len(waypoints) > 0:
-        waypoints_grid_coords = proj_to_grid_coords(waypoints, grid_size=grid_size)
-
-        # Now, flood fill the floor_grid_coords with waypoints; we will select
-        # way points that are of some distance away from each other.
-        num_waypoint_seeds = int(len(waypoints_grid_coords) * pct_waypoint_seeds)
-        np.random.seed(1010)
-        selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
-        selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
-        for wp in tqdm(selected_waypoints):
-            floor_grid_coords = flood_fill(floor_grid_coords, wp)
-
-    # The floor points will be reachable points
-    metric_reachable_grid_points = floor_grid_coords
-    metric_reachable_gx = metric_reachable_grid_points[:,0]
-    metric_reachable_gy = metric_reachable_grid_points[:,1]
-
-    # For the obstacles, we get points above the floor - we already have them in points
-    metric_obstacle_points = points
-    metric_obstacle_points[:,2] = 0
-    metric_obstacle_grid_points = (metric_obstacle_points / grid_size).astype(int)
-    metric_obstacle_gx = metric_obstacle_grid_points[:,0]
-    metric_obstacle_gy = metric_obstacle_grid_points[:,1]
-
-    # obtain ranges
-    metric_gx = metric_obstacle_grid_points[:,0]
-    metric_gy = metric_obstacle_grid_points[:,1]
-    width = max(metric_gx) - min(metric_gx) + 1
-    length = max(metric_gy) - min(metric_gy) + 1
-    metric_gx_range = (min(metric_gx), max(metric_gx) + 1)
-    metric_gy_range = (min(metric_gy), max(metric_gy) + 1)
-
-    # Now, we get points with 0-based coordinates, which are actual grid map points
-    gx_reachable = remap(metric_reachable_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-    gy_reachable = remap(metric_reachable_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-    gx_obstacles = remap(metric_obstacle_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-    gy_obstacles = remap(metric_obstacle_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-
-    all_positions = set((x,y) for x in range(width) for y in range(length))
-    grid_map_reachable_positions = set(zip(gx_reachable, gy_reachable))
-    grid_map_obstacle_positions = set(zip(gx_obstacles, gy_obstacles))
+    # Fifth: build the obstacles and free locations: grid points are just obstacles
+    # grid points on the floor that are not obstacles are free locations
+    obstacles = set((gp[0], gp[1]) for gp in grid_points)
+    free_locations = set((gp[0], gp[1]) for gp in grid_floor_points
+                         if (gp[0], gp[1]) not in obstacles)
 
     ## Debugging
     if debug:
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(np.asarray(metric_reachable_grid_points))
-        pcd.colors = o3d.utility.Vector3dVector(np.full((len(metric_reachable_grid_points), 3), (0.8, 0.8, 0.8)))
+        pcd.points = o3d.utility.Vector3dVector(np.asarray(grid_floor_points))
+        pcd.colors = o3d.utility.Vector3dVector(np.full((len(grid_floor_points), 3), (0.8, 0.8, 0.8)))
 
         pcd2 = o3d.geometry.PointCloud()
-        pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_grid_points))
-        pcd2.colors = o3d.utility.Vector3dVector(np.full((len(metric_obstacle_grid_points), 3), (0.2, 0.2, 0.2)))
+        pcd2.points = o3d.utility.Vector3dVector(np.asarray(grid_points))
+        pcd2.colors = o3d.utility.Vector3dVector(np.full((len(grid_points), 3), (0.2, 0.2, 0.2)))
+        pcd2.points.append(np.asarray([*grid_robot_position, 0]))
+        pcd2.colors.append([0.0, 0.8, 0.0])
+        o3d.visualization.draw_geometries([pcd, pcd2])
 
-        if len(waypoints) > 0:
-            pcd3 = o3d.geometry.PointCloud()
-            pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
-            waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
-            waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
-            pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
-            o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
-        else:
-            o3d.visualization.draw_geometries([pcd, pcd2])
+    # Sixth: update existing map, or build new map
+    if existing_map is not None:
+        existing_map.update_region(obstacles, free_locations)
+        return existing_map
+    else:
+        grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations,
+                            world_origin=origin, grid_size=grid_size, labels=None)
+        return grid_map
 
-    grid_map = GridMap(width, length,
-                       grid_map_obstacle_positions,
-                       free_locations=grid_map_reachable_positions,
-                       name=name,
-                       ranges_in_metric=(metric_gx_range, metric_gy_range),
-                       grid_size=grid_size)
 
-    if debug:
-        # Do a test: plot waypoints on the grid map
-        if len(waypoints) > 0:
-            waypoints_gx = remap(waypoints_grid_coords[:, 0], metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
-            waypoints_gy = remap(waypoints_grid_coords[:, 1], metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
-            wyps = set(zip(waypoints_gx, waypoints_gy))
+    # ###############################################################################
 
-        viz = GridMapVisualizer(grid_map=grid_map, res=10)
-        img = viz.render()
-        img = viz.highlight(img, wyps, color=(120, 30, 30))
-        img = viz.highlight(img, [(0, 2)], color=(80, 100, 230))
-        viz.show_img(img, flip_horizontally=True)
+    # # First, filter points by cutting those points below the layout.
+    # points = np.asarray(pcd.points)
+    # bad_points_filter = np.less(points[:, 2], layout_cut)
+    # points = points[np.logical_not(bad_points_filter)]
+    # xmin, ymin, zmin = np.min(points, axis=0)
+    # floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
+    # floor_points = points[floor_points_filter]
 
-    return grid_map
+    # # We will first convert floor_points into an integer-coordinated grid map.
+    # floor_grid_coords = proj_to_grid_coords(floor_points, grid_size=grid_size)
+
+    # # also, convert robot position into
+
+    # # also, convert waypoints into an integer-coordinated grid map
+    # if len(waypoints) > 0:
+    #     waypoints_grid_coords = proj_to_grid_coords(waypoints, grid_size=grid_size)
+
+    #     # Now, flood fill the floor_grid_coords with waypoints; we will select
+    #     # way points that are of some distance away from each other.
+    #     num_waypoint_seeds = int(len(waypoints_grid_coords) * pct_waypoint_seeds)
+    #     np.random.seed(1010)
+    #     selected_waypoints_indices = np.random.choice(len(waypoints_grid_coords), num_waypoint_seeds)
+    #     selected_waypoints = waypoints_grid_coords[selected_waypoints_indices]
+    #     for wp in tqdm(selected_waypoints):
+    #         floor_grid_coords = flood_fill(floor_grid_coords, wp)
+
+    # # The floor points will be reachable points
+    # metric_reachable_grid_points = floor_grid_coords
+    # metric_reachable_gx = metric_reachable_grid_points[:,0]
+    # metric_reachable_gy = metric_reachable_grid_points[:,1]
+
+    # # For the obstacles, we get points above the floor - we already have them in points
+    # metric_obstacle_points = points
+    # metric_obstacle_points[:,2] = 0
+    # metric_obstacle_grid_points = (metric_obstacle_points / grid_size).astype(int)
+    # metric_obstacle_gx = metric_obstacle_grid_points[:,0]
+    # metric_obstacle_gy = metric_obstacle_grid_points[:,1]
+
+    # # obtain ranges
+    # metric_gx = metric_obstacle_grid_points[:,0]
+    # metric_gy = metric_obstacle_grid_points[:,1]
+    # width = max(metric_gx) - min(metric_gx) + 1
+    # length = max(metric_gy) - min(metric_gy) + 1
+    # metric_gx_range = (min(metric_gx), max(metric_gx) + 1)
+    # metric_gy_range = (min(metric_gy), max(metric_gy) + 1)
+
+    # # Now, we get points with 0-based coordinates, which are actual grid map points
+    # gx_reachable = remap(metric_reachable_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+    # gy_reachable = remap(metric_reachable_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+    # gx_obstacles = remap(metric_obstacle_gx, metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+    # gy_obstacles = remap(metric_obstacle_gy, metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+
+    # all_positions = set((x,y) for x in range(width) for y in range(length))
+    # grid_map_reachable_positions = set(zip(gx_reachable, gy_reachable))
+    # grid_map_obstacle_positions = set(zip(gx_obstacles, gy_obstacles))
+
+    # ## Debugging
+    # if debug:
+    #     pcd = o3d.geometry.PointCloud()
+    #     pcd.points = o3d.utility.Vector3dVector(np.asarray(metric_reachable_grid_points))
+    #     pcd.colors = o3d.utility.Vector3dVector(np.full((len(metric_reachable_grid_points), 3), (0.8, 0.8, 0.8)))
+
+    #     pcd2 = o3d.geometry.PointCloud()
+    #     pcd2.points = o3d.utility.Vector3dVector(np.asarray(metric_obstacle_grid_points))
+    #     pcd2.colors = o3d.utility.Vector3dVector(np.full((len(metric_obstacle_grid_points), 3), (0.2, 0.2, 0.2)))
+
+    #     if len(waypoints) > 0:
+    #         pcd3 = o3d.geometry.PointCloud()
+    #         pcd3.points = o3d.utility.Vector3dVector(np.asarray(waypoints_grid_coords))
+    #         waypoint_colors = np.full((waypoints_grid_coords.shape[0], 3), (0.0, 0.8, 0.0))
+    #         waypoint_colors[selected_waypoints_indices] = np.array([0.8, 0.0, 0.0])
+    #         pcd3.colors = o3d.utility.Vector3dVector(np.asarray(waypoint_colors))
+    #         o3d.visualization.draw_geometries([pcd, pcd2, pcd3])
+    #     else:
+    #         o3d.visualization.draw_geometries([pcd, pcd2])
+
+    # grid_map = GridMap(width, length,
+    #                    grid_map_obstacle_positions,
+    #                    free_locations=grid_map_reachable_positions,
+    #                    name=name,
+    #                    ranges_in_metric=(metric_gx_range, metric_gy_range),
+    #                    grid_size=grid_size)
+
+    # if debug:
+    #     # Do a test: plot waypoints on the grid map
+    #     if len(waypoints) > 0:
+    #         waypoints_gx = remap(waypoints_grid_coords[:, 0], metric_gx_range[0], metric_gx_range[1], 0, width).astype(int)
+    #         waypoints_gy = remap(waypoints_grid_coords[:, 1], metric_gy_range[0], metric_gy_range[1], 0, length).astype(int)
+    #         wyps = set(zip(waypoints_gx, waypoints_gy))
+
+    #     viz = GridMapVisualizer(grid_map=grid_map, res=10)
+    #     img = viz.render()
+    #     img = viz.highlight(img, wyps, color=(120, 30, 30))
+    #     img = viz.highlight(img, [(0, 2)], color=(80, 100, 230))
+    #     viz.show_img(img, flip_horizontally=True)
+
+    # return grid_map
