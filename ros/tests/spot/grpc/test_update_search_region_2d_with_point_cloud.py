@@ -38,25 +38,42 @@ class TestCase:
         self.ts = message_filters.ApproximateTimeSynchronizer([self.pcl_sub, self.wyp_sub], 10, 0.2)  # allow 0.2s difference
         self.ts.registerCallback(self._cloud_waypoints_callback)
 
+        self._callback_count = 0
+
         self._sloop_client = SloopObjectSearchClient()
         rospy.spin()
 
     def _cloud_waypoints_callback(self, cloud_msg, waypoints_msg):
+        """The first time a new search region should be created;
+        Subsequent calls should update the search region"""
         # convert PointCloud2 to point cloud protobuf
-        print("Received messages!")
+        self._callback_count += 1
+        print(f"Received messages! Call count: {self._callback_count}")
+
         cloud_pb = pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
-        # Use a waypoint as the robot pose
-        robot_pose_pb = Pose2D(x=waypoints_array[-1][0],
-                               y=waypoints_array[-1][1],
-                               th=0.0)
-        self._sloop_client.UpdateSearchRegion(
-            robot_pose_2d=robot_pose_pb,
-            point_cloud=cloud_pb,
-            # recommended setttings:
-            #   for cit_first_floor, layout_cut = 1.5
-            search_region_params_2d={"layout_cut": 1.5,
-                                     "region_size": 12.0})
+
+        if self._callback_count > len(waypoints_array):
+            print("We have exhausted waypoints. Test complete. Please quit with Ctrl-C.")
+
+        else:
+            # Use a waypoint as the robot pose
+            robot_pose_pb = Pose2D(x=waypoints_array[self._callback_count][0],
+                                   y=waypoints_array[self._callback_count][1],
+                                   th=0.0)
+            if rospy.get_param('map_name') == "cit_first_floor":
+                layout_cut = 1.5
+                region_size = 12.0
+            else:
+                layout_cut = 0.6
+                region_size = 10.0
+
+            self._sloop_client.UpdateSearchRegion(
+                agent_name="test_robot",
+                robot_pose_2d=robot_pose_pb,
+                point_cloud=cloud_pb,
+                search_region_params_2d={"layout_cut": layout_cut,
+                                         "region_size": region_size})
 
 if __name__ == "__main__":
     TestCase()
