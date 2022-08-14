@@ -10,7 +10,7 @@ from sloop_object_search.oopomdp.agent import AGENT_CLASS_2D, AGENT_CLASS_3D
 from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
-from .utils.proto_utils import process_search_region_params_2d
+from .utils.proto_utils import process_search_region_params_2d, make_header
 from .utils.search_region_processing import (search_region_from_occupancy_grid,
                                              search_region_from_point_cloud)
 
@@ -20,67 +20,77 @@ MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
 
 class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
     def __init__(self):
+        # maps from agent name to a pomdp_py.Agent.
         self._agents = {}
+
+        # maps from agent name to a configuration dictionary; These
+        # agents are waiting for initial pose and search region in
+        # order to be created.
+        self._pending_agents = {}
+
         self._world_origin = None
 
     def CreateAgent(self, request, context):
         """
-        creates a SLOOP object search POMDP agent
+        creates a SLOOP object search POMDP agent. Note that this agent
+        is not yet be ready after this call. The server needs to wait
+        for an "UpdateSearchRegionRequest".
         """
         if request.agent_name in self._agents:
             return slpb2.CreateAgentReply(
+                header=make_header(),
                 status=slpb2.Status.FAILED,
                 message=f"Agent with name {request.agent_name} already exists!")
 
-        agent, response = self._create_agent(request)
+        config_str = request.config.decode("utf-8")
+        config = yaml.safe_load(config_str)
+        self._agnets[request.agent_name] = config
 
         # agent = make_sloop_mos_agent(agent_config)
         return slpb2.CreateAgentReply(
-            status=Status.SUCCESS,
-            message=f"Creation of agent {request.agent_name} succeeded")
+            status=Status.PENDING,
+            message="Agent configuration received. Waiting for additional inputs...")
 
-    def _create_agent(self, request):
-        """
-        Notes:
-         - regarding 'init_pose':
-            If the agent is 3D, the initial pose must be 3D. If the
-            agent is 2D, the initial pose can be 2D or 3D
-
-        Args:
-            request (CreateAgentRequest)
-        Returns:
-            Agent, response
-        """
-        config_str = request.config.decode("utf-8")
-        config = yaml.safe_load(config_str)
-        agent_config = config["agent_config"]
-
-        # Check if we are creating a 2D or a 3D agent
-        agent_class = agent_config["agent_class"]
-        if agent_class in AGENT_CLASS_2D:
-            is_3d = False
-        elif agent_class in AGENT_CLASS_3D:
-            is_3d = True
+    def GetAgentCreationStatus(self, request, context):
+        if request.agent_name not in self._agents:
+            return slpb2.GetAgentCreationReply(
+                header=make_header(),
+                status=slpb2.Status.FAILED,
+                status_message="Agent does not exist.")
+        elif request.agent_name in self._agents:
+            return slpb2.GetAgentCreationReply(
+                header=make_header(),
+                status=slpb2.Status.SUCCESS,
+                status_message="Agent created.")
+        elif request.agent_name in self._pending_agents:
+            return slpb2.GetAgentCreationReply(
+                header=make_header(),
+                status=slpb2.Status.PENDING,
+                status_message="Agent configuration received. Waiting for additional inputs...")
         else:
-            raise ValueError(f"{agent_class} is invalid.")
+            raise RuntimeError("Internal error on GetAgentCreationStatus.")
 
+    def UpdateSearchRegion(self, request, context):
+        """If the agent in request is pending, then after this,
+        the corresponding POMDP agent should be created and
+        the agent is no longer pending. Otherwise, update the
+        corresponding agent's search region."""
         # We will first process the map
         if request.HasField('occupancy_grid'):
             search_region = search_region_from_occupancy_grid(
-                request.occupancy_grid, agent_config)
+                request.occupancy_grid)
         elif request.HasField('point_cloud'):
             params = {}
-            if not is_3d:  # 2D
+            if not request.is_3d:  # 2D
                 params = process_search_region_params_2d(
                     request.search_region_params_2d)
 
             search_region = search_region_from_point_cloud(
-                request.point_cloud, is_3d=is_3d, **params)
+                request.point_cloud, is_3d=request.is_3d, **params)
         else:
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
-
-        print(agent_config)
+        return search_region
 
 
 

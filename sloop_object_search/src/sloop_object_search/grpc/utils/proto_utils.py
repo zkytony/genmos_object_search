@@ -41,3 +41,12 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 def pointcloudproto_to_array(point_cloud):
     return np.array([[p.pos.x, p.pos.y, p.pos.z]
                      for p in point_cloud.points])
+
+
+def make_header(frame_id=None, stamp=None):
+    if stamp is None:
+        stamp = Timestamp().GetCurrentTime()
+    if frame_id is None:
+        return Header(stamp=stamp)
+    else:
+        return Header(stamp=stamp, frame_id=frame_id)

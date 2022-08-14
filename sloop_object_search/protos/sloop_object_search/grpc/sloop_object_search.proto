@@ -12,67 +12,76 @@ service SloopObjectSearch {
 
   rpc CreateAgent(CreateAgentRequest) returns (CreateAgentReply) {}
 
+  // Get agent status
+  rpc GetAgentCreationStatus(GetAgentCreationStatusRequest) returns (GetAgentCreationStatusReply) {}
+
   // More fine-grained rpcs for specific functionality
   rpc UpdateSearchRegion(UpdateSearchRegionRequest) returns (UpdateSearchRegionReply) {}
 
+
 }
 
-
-////////////// Create agent
+/////////////////////////////////////
+// top-level rpc messages
+/////////////////////////////////////
 message CreateAgentRequest {
-  // agent name
-  string agent_name = 1;
+  Header header = 1;
+  string agent_name = 2;
 
   // serialized configuration dictionary
-  bytes config = 2;
-
-  // initial pose
-  oneof init_pose {
-    Pose2D init_pose_2d = 3;
-    Pose3D init_pose_3d = 4;
-  }
-
-  // initial model of the search environment
-  oneof search_region {
-    OccupancyGrid occupancy_grid = 5;
-    PointCloud point_cloud = 6;
-  }
-
-  // Parameters for search region
-  oneof search_region_params {
-    SearchRegionParams2D search_region_params_2d = 7;
-  }
+  bytes config = 3;
 }
 
 message CreateAgentReply {
-  sloop_object_search.grpc.Status status = 1;
-  string message = 2;
+  Header header = 1;
+  Status status = 2;
+  string message = 3;
 }
 
-///////////// Search region related
-message SearchRegionParams2D {
-  double layout_cut = 1;
+message GetAgentCreationStatusRequest {
+  Header header = 1;
+  string agent_name = 2;
+}
+
+message GetAgentCreationStatusReply {
+  Header header = 1;
+  Status status = 2;
+  string status_message = 3;
 }
 
 
 message UpdateSearchRegionRequest {
-  // robot pose
+  Header header = 1;
+  string agent_name = 2;
+
+  // Whether the search region is 3D.
+  bool is_3d = 3;
+
+  // robot pose in the world frame
   oneof robot_pose {
-    Pose2D robot_pose_2d = 3;
-    Pose3D robot_pose_3d = 4;
+    Pose2D robot_pose_2d = 4;
+    Pose3D robot_pose_3d = 5;
   }
 
   oneof search_region {
-    OccupancyGrid occupancy_grid = 5;
-    PointCloud point_cloud = 6;
+    OccupancyGrid occupancy_grid = 6;
+    PointCloud point_cloud = 7;
   }
 
   oneof search_region_params {
-    SearchRegionParams2D search_region_params_2d = 7;
+    SearchRegionParams2D search_region_params_2d = 8;
   }
 }
 
 message UpdateSearchRegionReply {
-  sloop_object_search.grpc.Status status = 1;
-  string message = 2;
+  Header header = 1;
+  Status status = 2;
+  string message = 3;
+}
+
+/////////////////////////////////////
+// Auxiliary messages
+/////////////////////////////////////
+message SearchRegionParams2D {
+  double layout_cut = 1;
 }

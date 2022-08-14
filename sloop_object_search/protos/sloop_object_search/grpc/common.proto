@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 enum Status {
   SUCCESS = 0;
   FAILED = 1;
+  PENDING = 2;
 }
 
 message Header {

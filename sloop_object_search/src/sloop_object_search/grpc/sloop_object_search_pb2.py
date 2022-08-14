@@ -16,15 +16,17 @@ from sloop_object_search.grpc import common_pb2 as sloop__object__search_dot_grp
 from sloop_object_search.grpc import observation_pb2 as sloop__object__search_dot_grpc_dot_observation__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2sloop_object_search/grpc/sloop_object_search.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\x1a*sloop_object_search/grpc/observation.proto\"\xb5\x03\n\x12\x43reateAgentRequest\x12\x12\n\nagent_name\x18\x01 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x02 \x01(\x0c\x12\x38\n\x0cinit_pose_2d\x18\x03 \x01(\x0b\x32 .sloop_object_search.grpc.Pose2DH\x00\x12\x38\n\x0cinit_pose_3d\x18\x04 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3DH\x00\x12\x41\n\x0eoccupancy_grid\x18\x05 \x01(\x0b\x32\'.sloop_object_search.grpc.OccupancyGridH\x01\x12;\n\x0bpoint_cloud\x18\x06 \x01(\x0b\x32$.sloop_object_search.grpc.PointCloudH\x01\x12Q\n\x17search_region_params_2d\x18\x07 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams2DH\x02\x42\x0b\n\tinit_poseB\x0f\n\rsearch_regionB\x16\n\x14search_region_params\"U\n\x10\x43reateAgentReply\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"*\n\x14SearchRegionParams2D\x12\x12\n\nlayout_cut\x18\x01 \x01(\x01\"\x9b\x03\n\x19UpdateSearchRegionRequest\x12\x39\n\rrobot_pose_2d\x18\x03 \x01(\x0b\x32 .sloop_object_search.grpc.Pose2DH\x00\x12\x39\n\rrobot_pose_3d\x18\x04 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3DH\x00\x12\x41\n\x0eoccupancy_grid\x18\x05 \x01(\x0b\x32\'.sloop_object_search.grpc.OccupancyGridH\x01\x12;\n\x0bpoint_cloud\x18\x06 \x01(\x0b\x32$.sloop_object_search.grpc.PointCloudH\x01\x12Q\n\x17search_region_params_2d\x18\x07 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams2DH\x02\x42\x0c\n\nrobot_poseB\x0f\n\rsearch_regionB\x16\n\x14search_region_params\"\\\n\x17UpdateSearchRegionReply\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x02 \x01(\t2\xfe\x01\n\x11SloopObjectSearch\x12i\n\x0b\x43reateAgent\x12,.sloop_object_search.grpc.CreateAgentRequest\x1a*.sloop_object_search.grpc.CreateAgentReply\"\x00\x12~\n\x12UpdateSearchRegion\x12\x33.sloop_object_search.grpc.UpdateSearchRegionRequest\x1a\x31.sloop_object_search.grpc.UpdateSearchRegionReply\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2sloop_object_search/grpc/sloop_object_search.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\x1a*sloop_object_search/grpc/observation.proto\"j\n\x12\x43reateAgentRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x12\n\nagent_name\x18\x02 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x03 \x01(\x0c\"\x87\x01\n\x10\x43reateAgentReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"e\n\x1dGetAgentCreationStatusRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x12\n\nagent_name\x18\x02 \x01(\t\"\x99\x01\n\x1bGetAgentCreationStatusReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x16\n\x0estatus_message\x18\x03 \x01(\t\"\xf0\x03\n\x19UpdateSearchRegionRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x12\n\nagent_name\x18\x02 \x01(\t\x12\r\n\x05is_3d\x18\x03 \x01(\x08\x12\x39\n\rrobot_pose_2d\x18\x04 \x01(\x0b\x32 .sloop_object_search.grpc.Pose2DH\x00\x12\x39\n\rrobot_pose_3d\x18\x05 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3DH\x00\x12\x41\n\x0eoccupancy_grid\x18\x06 \x01(\x0b\x32\'.sloop_object_search.grpc.OccupancyGridH\x01\x12;\n\x0bpoint_cloud\x18\x07 \x01(\x0b\x32$.sloop_object_search.grpc.PointCloudH\x01\x12Q\n\x17search_region_params_2d\x18\x08 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams2DH\x02\x42\x0c\n\nrobot_poseB\x0f\n\rsearch_regionB\x16\n\x14search_region_params\"\x8e\x01\n\x17UpdateSearchRegionReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"*\n\x14SearchRegionParams2D\x12\x12\n\nlayout_cut\x18\x01 \x01(\x01\x32\x8b\x03\n\x11SloopObjectSearch\x12i\n\x0b\x43reateAgent\x12,.sloop_object_search.grpc.CreateAgentRequest\x1a*.sloop_object_search.grpc.CreateAgentReply\"\x00\x12\x8a\x01\n\x16GetAgentCreationStatus\x12\x37.sloop_object_search.grpc.GetAgentCreationStatusRequest\x1a\x35.sloop_object_search.grpc.GetAgentCreationStatusReply\"\x00\x12~\n\x12UpdateSearchRegion\x12\x33.sloop_object_search.grpc.UpdateSearchRegionRequest\x1a\x31.sloop_object_search.grpc.UpdateSearchRegionReply\"\x00\x62\x06proto3')
 
 
 
 _CREATEAGENTREQUEST = DESCRIPTOR.message_types_by_name['CreateAgentRequest']
 _CREATEAGENTREPLY = DESCRIPTOR.message_types_by_name['CreateAgentReply']
-_SEARCHREGIONPARAMS2D = DESCRIPTOR.message_types_by_name['SearchRegionParams2D']
+_GETAGENTCREATIONSTATUSREQUEST = DESCRIPTOR.message_types_by_name['GetAgentCreationStatusRequest']
+_GETAGENTCREATIONSTATUSREPLY = DESCRIPTOR.message_types_by_name['GetAgentCreationStatusReply']
 _UPDATESEARCHREGIONREQUEST = DESCRIPTOR.message_types_by_name['UpdateSearchRegionRequest']
 _UPDATESEARCHREGIONREPLY = DESCRIPTOR.message_types_by_name['UpdateSearchRegionReply']
+_SEARCHREGIONPARAMS2D = DESCRIPTOR.message_types_by_name['SearchRegionParams2D']
 CreateAgentRequest = _reflection.GeneratedProtocolMessageType('CreateAgentRequest', (_message.Message,), {
   'DESCRIPTOR' : _CREATEAGENTREQUEST,
   '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
@@ -39,12 +41,19 @@ CreateAgentReply = _reflection.GeneratedProtocolMessageType('CreateAgentReply', 
   })
 _sym_db.RegisterMessage(CreateAgentReply)
 
-SearchRegionParams2D = _reflection.GeneratedProtocolMessageType('SearchRegionParams2D', (_message.Message,), {
-  'DESCRIPTOR' : _SEARCHREGIONPARAMS2D,
+GetAgentCreationStatusRequest = _reflection.GeneratedProtocolMessageType('GetAgentCreationStatusRequest', (_message.Message,), {
+  'DESCRIPTOR' : _GETAGENTCREATIONSTATUSREQUEST,
   '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.SearchRegionParams2D)
+  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.GetAgentCreationStatusRequest)
   })
-_sym_db.RegisterMessage(SearchRegionParams2D)
+_sym_db.RegisterMessage(GetAgentCreationStatusRequest)
+
+GetAgentCreationStatusReply = _reflection.GeneratedProtocolMessageType('GetAgentCreationStatusReply', (_message.Message,), {
+  'DESCRIPTOR' : _GETAGENTCREATIONSTATUSREPLY,
+  '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.GetAgentCreationStatusReply)
+  })
+_sym_db.RegisterMessage(GetAgentCreationStatusReply)
 
 UpdateSearchRegionRequest = _reflection.GeneratedProtocolMessageType('UpdateSearchRegionRequest', (_message.Message,), {
   'DESCRIPTOR' : _UPDATESEARCHREGIONREQUEST,
@@ -60,20 +69,31 @@ UpdateSearchRegionReply = _reflection.GeneratedProtocolMessageType('UpdateSearch
   })
 _sym_db.RegisterMessage(UpdateSearchRegionReply)
 
+SearchRegionParams2D = _reflection.GeneratedProtocolMessageType('SearchRegionParams2D', (_message.Message,), {
+  'DESCRIPTOR' : _SEARCHREGIONPARAMS2D,
+  '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
+  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.SearchRegionParams2D)
+  })
+_sym_db.RegisterMessage(SearchRegionParams2D)
+
 _SLOOPOBJECTSEARCH = DESCRIPTOR.services_by_name['SloopObjectSearch']
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _CREATEAGENTREQUEST._serialized_start=164
-  _CREATEAGENTREQUEST._serialized_end=601
-  _CREATEAGENTREPLY._serialized_start=603
-  _CREATEAGENTREPLY._serialized_end=688
-  _SEARCHREGIONPARAMS2D._serialized_start=690
-  _SEARCHREGIONPARAMS2D._serialized_end=732
-  _UPDATESEARCHREGIONREQUEST._serialized_start=735
-  _UPDATESEARCHREGIONREQUEST._serialized_end=1146
-  _UPDATESEARCHREGIONREPLY._serialized_start=1148
-  _UPDATESEARCHREGIONREPLY._serialized_end=1240
-  _SLOOPOBJECTSEARCH._serialized_start=1243
-  _SLOOPOBJECTSEARCH._serialized_end=1497
+  _CREATEAGENTREQUEST._serialized_start=163
+  _CREATEAGENTREQUEST._serialized_end=269
+  _CREATEAGENTREPLY._serialized_start=272
+  _CREATEAGENTREPLY._serialized_end=407
+  _GETAGENTCREATIONSTATUSREQUEST._serialized_start=409
+  _GETAGENTCREATIONSTATUSREQUEST._serialized_end=510
+  _GETAGENTCREATIONSTATUSREPLY._serialized_start=513
+  _GETAGENTCREATIONSTATUSREPLY._serialized_end=666
+  _UPDATESEARCHREGIONREQUEST._serialized_start=669
+  _UPDATESEARCHREGIONREQUEST._serialized_end=1165
+  _UPDATESEARCHREGIONREPLY._serialized_start=1168
+  _UPDATESEARCHREGIONREPLY._serialized_end=1310
+  _SEARCHREGIONPARAMS2D._serialized_start=1312
+  _SEARCHREGIONPARAMS2D._serialized_end=1354
+  _SLOOPOBJECTSEARCH._serialized_start=1357
+  _SLOOPOBJECTSEARCH._serialized_end=1752
 # @@protoc_insertion_point(module_scope)

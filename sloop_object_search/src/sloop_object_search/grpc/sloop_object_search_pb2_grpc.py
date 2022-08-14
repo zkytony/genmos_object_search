@@ -19,6 +19,11 @@ class SloopObjectSearchStub(object):
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
                 )
+        self.GetAgentCreationStatus = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/GetAgentCreationStatus',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusReply.FromString,
+                )
         self.UpdateSearchRegion = channel.unary_unary(
                 '/sloop_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
@@ -31,6 +36,13 @@ class SloopObjectSearchServicer(object):
 
     def CreateAgent(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetAgentCreationStatus(self, request, context):
+        """Get agent status
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -49,6 +61,11 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
                     servicer.CreateAgent,
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.SerializeToString,
+            ),
+            'GetAgentCreationStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAgentCreationStatus,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusReply.SerializeToString,
             ),
             'UpdateSearchRegion': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateSearchRegion,
@@ -79,6 +96,23 @@ class SloopObjectSearch(object):
         return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetAgentCreationStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/GetAgentCreationStatus',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
