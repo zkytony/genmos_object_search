@@ -24,6 +24,8 @@
 # of known grid cells unchanged.
 
 from sloop_object_search.utils.conversion import Frame, convert
+from .grid_map import GridMap
+
 
 class GridMap2:
     def __init__(self, name="grid_map2",
@@ -55,7 +57,15 @@ class GridMap2:
         if labels is None:
             self.labels = {}  # maps from position (x,y) to a set of labels
 
+        # caches
+        self._width_cache = None
+        self._length_cache = None
+        self._min_corner_cache = None
+
+
     def add_grids(self, obstacles=None, free_locations=None):
+        """note: user should not modify the content of self.obstacles
+        and self.free_locations, without calling add_grids"""
         if obstacles is not None:
             self.obstacles |= obstacles
         if free_locations is not None:
@@ -66,26 +76,45 @@ class GridMap2:
         if len(overlap) > 0:
             raise ValueError("Error in argument: obstacles and free_locations are not disjoint. "\
                              f"Overlap: {overlap}")
+        self._clear_cache()
 
+    @property
     def all_grids(self):
         return self.free_locations | self.obstacles
 
-    def is_unknown(self, loc):
-        return not (loc in self.free_location or loc in self.obstacles)
+    def grid_type(self, loc):
+        if loc in self.free_locations:
+            return "free_location"
+        elif loc in self.obstacles:
+            return "obstacles"
+        return "unknown"
+
+    def _clear_cache(self):
+        self._width_cache = None
+        self._length_cache = None
+        self._min_corner_cache = None
 
     @property
     def width(self):
+        if self._width_cache is not None:
+            return self._width_cache
         all_grids = self.all_grids
         min_x = min(all_grids, key=lambda g: g[0])[0]
         max_x = max(all_grids, key=lambda g: g[0])[0]
-        return max_x - min_x
+        w = max_x - min_x
+        self._width_cache = w
+        return w
 
     @property
     def length(self):
+        if self._length_cache is not None:
+            return self._length_cache
         all_grids = self.all_grids
         min_y = min(all_grids, key=lambda g: g[1])[1]
         max_y = max(all_grids, key=lambda g: g[1])[1]
-        return max_y - min_y
+        l = max_y - min_y
+        self._length_cache = l
+        return l
 
     @property
     def min_corner(self):
@@ -94,10 +123,14 @@ class GridMap2:
         'length', could be used for iterating over the lattice
         covered by this grid map.
         """
+        if self._min_corner_cache is not None:
+            return self._min_corner_cache
         all_grids = self.all_grids
         min_x = min(all_grids, key=lambda g: g[0])[0]
         min_y = min(all_grids, key=lambda g: g[1])[1]
-        return (min_x, min_y)
+        c = (min_x, min_y)
+        self._min_corner_cache = c
+        return c
 
     def to_world_pos(self, x, y):
         """converts a grid position to a world frame position"""
@@ -110,3 +143,44 @@ class GridMap2:
         return convert((world_x, world_y), Frame.WORLD, Frame.POMDP_SPACE,
                        region_origin=self.world_origin,
                        search_space_resolution=self.grid_size)
+
+    def to_grid_map(self):
+        """Converts a GridMap2 to a GridMap. This is convenient
+        for visualization purpose, because our visualization
+        code is based on GridMap."""
+        # need to shift all the free locations and obstacles
+        shifted_obstacles = set(self.shift_pos(*loc) for loc in self.obstacles)
+        shifted_free_locations = set(self.shift_pos(*loc) for loc in self.free_locations)
+        ranges_in_metric = None
+        if self.world_origin is not None\
+           and self.grid_size is not None:
+            ranges_in_metric = [
+                (self.world_origin[0], self.world_origin[0] + self.width*self.grid_size),
+                (self.world_origin[1], self.world_origin[1] + self.length*self.grid_size)
+            ]
+        shifted_labels = {}
+        for loc in self.labels:
+            shifted_labels[self.shift_pos(*loc)] = self.labels[loc]
+        return GridMap(self.width, self.length,
+                       shifted_obstacles,
+                       free_locations=shifted_free_locations,
+                       ranges_in_metric=ranges_in_metric,
+                       grid_size=self.grid_size,
+                       labels=self.labels)
+
+    def shift_pos(self, x, y):
+        """Given a position (x,y) on GridMap2, return
+        a shifted position relative to 'min_corner'; The
+        resulting position has guaranteed non-negative
+        coordinates. """
+        min_corner = self.min_corner
+        return (x - min_corner[0], y - min_corner[1])
+
+    def shift_back_pos(self, x, y):
+        """
+        Given (x,y) that is nonnegative, i.e. with respect
+        to a (0,0)-corner, return a corresponding position
+        on GridMap2
+        """
+        min_corner = self.min_corner
+        return (x + min_corner[0], y + min_corner[1])

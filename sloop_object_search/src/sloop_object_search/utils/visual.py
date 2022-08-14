@@ -8,6 +8,7 @@ from tqdm import tqdm
 from .images import overlay, cv2shape
 from .colors import lighter, lighter_with_alpha, inverse_color_rgb, random_unique_color
 from .math import to_rad
+from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 
 __all__ = ['Visualizer2D']
 
@@ -215,7 +216,7 @@ class Visualizer2D:
                 stop = np.mean(np.array(color[:3]) / np.array([255, 255, 255])) < 0.999
 
             if not stop:
-                tx, ty = state.loc
+                tx, ty = self._get_viz_pos(state.loc)
                 if (tx,ty) not in circle_drawn:
                     circle_drawn[(tx,ty)] = 0
                 circle_drawn[(tx,ty)] += 1
@@ -238,17 +239,12 @@ class Visualizer2D:
                     break
         return img
 
-    def draw_fov(self, img, sensor, robot_pose, color=[233, 233, 8]):
-        size = self._res // 2
-        radius = int(round(size / 2))
-        shift = int(round(self._res / 2))
-        for x in range(self._region.width):
-            for y in range(self._region.length):
-                if sensor.in_range((x,y), robot_pose):
-                    img = cv2shape(img, cv2.circle,
-                                   (y*self._res+shift, x*self._res+shift),
-                                   radius, color, thickness=-1, alpha=0.7)
-        return img
+    def _get_viz_pos(self, pos):
+        """Given a position, return the position
+        on the canvas that should be used for visualization
+        at that position. Used to minimize code duplication
+        in child classes"""
+        return pos
 
 
 class GridMapVisualizer(Visualizer2D):
@@ -268,3 +264,62 @@ class GridMapVisualizer(Visualizer2D):
 
     def render(self):
         return self._make_gridworld_image(self._res)
+
+    def draw_fov(self, img, sensor, robot_pose, color=[233, 233, 8]):
+        size = self._res // 2
+        radius = int(round(size / 2))
+        shift = int(round(self._res / 2))
+        for x in range(self._region.width):
+            for y in range(self._region.length):
+                if sensor.in_range((x,y), robot_pose):
+                    img = cv2shape(img, cv2.circle,
+                                   (y*self._res+shift, x*self._res+shift),
+                                   radius, color, thickness=-1, alpha=0.7)
+        return img
+
+
+class GridMap2Visualizer(Visualizer2D):
+    def __init__(self, **config):
+        self._grid_map2 = config.get("grid_map", None)
+        assert isinstance(self._grid_map2, GridMap2),\
+            "GridMap2Visualizer expects grid_map2 to be GridMap2."
+        # This is what will be used for plotting by Visualizer2D
+        self._grid_map = self._grid_map2.to_grid_map()
+        super().__init__(**config)
+        self._region = self._grid_map
+
+    def render(self):
+        return self._make_gridworld_image(self._res)
+
+    def highlight(self, img, locations, color=(128,128,128),
+                  shape="rectangle", alpha=1.0, show_progress=False, scale=1.0):
+        """
+        'locations' here should be locations on GridMap2. Thus
+        when visualizing, we need to shift them to nonnegative coordinates."""
+        shifted_locations = [self._grid_map2.shift_pos(*loc)
+                             for loc in locations]
+        super().highlight(img, shifted_locations, color=color,
+                          shape=shape, alpha=alpha, show_progress=show_progress,
+                          scale=scale)
+
+    def draw_robot(self, img, x, y, th, color=(255, 150, 0), thickness=2):
+        shifted_x, shifted_y = self._grid_map2.shift_pos(x, y)
+        super().draw_robot(img, shifted_x, shifted_y, th, color=(255, 150, 0), thickness=2)
+
+    def _get_viz_pos(self, pos):
+        return self._grid_map2.shift_pos(*pos)
+
+    def draw_fov(self, img, sensor, robot_pose, color=[233, 233, 8]):
+        size = self._res // 2
+        radius = int(round(size / 2))
+        shift = int(round(self._res / 2))
+        for x in range(self._region.width):
+            for y in range(self._region.length):
+                # (x,y) here is not a GridMap2 location; (it's shifted to
+                # be nonnegative); We need to shift it back.
+                if sensor.in_range(
+                        self._grid_map2.shift_back_pos(x,y), robot_pose):
+                    img = cv2shape(img, cv2.circle,
+                                   (y*self._res+shift, x*self._res+shift),
+                                   radius, color, thickness=-1, alpha=0.7)
+        return img
