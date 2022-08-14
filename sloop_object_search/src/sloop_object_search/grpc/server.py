@@ -1,5 +1,6 @@
 from concurrent import futures
 import logging
+import sys
 
 import grpc
 
@@ -39,7 +40,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if request.agent_name in self._agents:
             return slpb2.CreateAgentReply(
                 header=pbutil.make_header(),
-                status=slpb2.Status.FAILED,
+                status=Status.FAILED,
                 message=f"Agent with name {request.agent_name} already exists!")
 
         config_str = request.config.decode("utf-8")
@@ -55,17 +56,17 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if request.agent_name not in self._agents:
             return slpb2.GetAgentCreationReply(
                 header=pbutil.make_header(),
-                status=slpb2.Status.FAILED,
+                status=Status.FAILED,
                 status_message="Agent does not exist.")
         elif request.agent_name in self._agents:
             return slpb2.GetAgentCreationReply(
                 header=pbutil.make_header(),
-                status=slpb2.Status.SUCCESS,
+                status=Status.SUCCESS,
                 status_message="Agent created.")
         elif request.agent_name in self._pending_agents:
             return slpb2.GetAgentCreationReply(
                 header=pbutil.make_header(),
-                status=slpb2.Status.PENDING,
+                status=Status.PENDING,
                 status_message="Agent configuration received. Waiting for additional inputs...")
         else:
             raise RuntimeError("Internal error on GetAgentCreationStatus.")
@@ -84,12 +85,16 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 params = pbutil.process_search_region_params_2d(
                     request.search_region_params_2d)
                 robot_position = pbutil.interpret_robot_pose(request)[:2]
+                logging.info("converting point cloud to 2d search region...")
                 search_region = search_region_2d_from_point_cloud(
                     request.point_cloud, robot_position, **params)
         else:
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
-        return search_region
+        return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
+                                             status=Status.SUCCESS,
+                                             message="search region updated")
+
 
 
 
@@ -112,7 +117,7 @@ def main():
     parser.add_argument("--port", type=int, help="port, default 50051", default=50051)
     args = parser.parse_args()
 
-    logging.basicConfig()
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     serve(args.port)
 
 if __name__ == '__main__':
