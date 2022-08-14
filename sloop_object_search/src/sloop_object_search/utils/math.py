@@ -338,6 +338,18 @@ def eucdist_multi(points, p):
     """returns euclidean distance between an array of points and a point p"""
     return np.linalg.norm(points - p, axis=1)
 
+def in_square(point, center, size):
+    """Returns true if point is in a square
+    with length 'size' centered at 'center'"""
+    return all(point[i] - center[i] <= size/2
+               for i in range(len(point)))
+
+def in_square_multi(points, center, size):
+    """Given numpy array of 'points' (N,2), center (1,2) and size, return
+    a mask where True means the corresponding point is within
+    a square centered at 'center' with size 'size'"""
+    return np.all(points - np.asarray(center) <= size/2, axis=1)
+
 def intersect(seg1, seg2):
     """seg1 and seg2 are two line segments each represented by
     the end points (x,y). The algorithm comes from

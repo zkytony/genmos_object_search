@@ -5,7 +5,8 @@ from collections import deque
 from tqdm import tqdm
 
 from .proto_utils import pointcloudproto_to_array
-from sloop_object_search.utils.math import remap, in_region, euclidean_dist, eucdist_multi
+from sloop_object_search.utils.math import (remap, euclidean_dist,
+                                            eucdist_multi, in_square, in_square_multi)
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.oopomdp.models.grid_map import GridMap
@@ -43,7 +44,7 @@ def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_sear
 
     return SearchRegion2D(grid_map)
 
-def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_radius=None):
+def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_region_size=None):
     """
     Given a numpy array of points that are supposed to be on a grid map,
     and a "seed point", flood fill by adding more grid points that are
@@ -55,8 +56,8 @@ def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_radius=None)
         seed_point (np.ndarray or tuple): dimension should match that of a grid point
         grid_brush_size (int): The length (number of grids) of a square brush
             which will be used to fill out the empty spaces.
-        flood_radius (float): the maximum euclidean distance between a
-            point in the flood and the seed point (in grid units)
+        flood_region_size (float): the maximum size (number of grids) of
+            the flooding region which is a square.
     """
     def _neighbors(p, d=1):
         # this works with both 2D or 3D points
@@ -69,9 +70,6 @@ def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_radius=None)
     if grid_points.shape[1] != len(seed_point):
         raise ValueError("grid points and seed point have different dimensions.")
 
-    xmax, ymax = np.max(grid_points, axis=0)[:2]
-    xmin, ymin = np.min(grid_points, axis=0)[:2]
-    _ranges = ([xmin, xmax], [ymin, ymax])
     grid_points_set = set(map(tuple, grid_points))
     # BFS
     worklist = deque([seed_point])
@@ -88,12 +86,11 @@ def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_radius=None)
             # as potential free cells - i.e. neighbors
             for neighbor_point in brush_points:
                 if neighbor_point not in visited:
-                    if flood_radius is not None:
-                        if euclidean_dist(neighbor_point, seed_point) > flood_radius:
+                    if flood_region_size is not None:
+                        if not in_square(neighbor_point, seed_point, flood_region_size):
                             continue  # skip this point: too far.
-                    if in_region(neighbor_point[:2], _ranges):
-                        worklist.append(neighbor_point)
-                        visited.add(neighbor_point)
+                    worklist.append(neighbor_point)
+                    visited.add(neighbor_point)
     return np.array(list(grid_points_set | new_points))
 
 
@@ -111,7 +108,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     Only points within the region will be considered to build the grid map;
     In other words, the region we flood will be the region we will build
     the grid map.  Essentially, we are building a grid map for a portion
-    of the given point cloud within a region centered at the robot position.
+    of the given point cloud within a square region centered at the robot position.
 
     If new obstacles are detected that are not present in a given
     grid map, the flooded area will replace the same area in the given grid
@@ -145,7 +142,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
 
     # Because the map represented by the point cloud could be very large,
     # or even border-less, we want to constrain the grid-map we are building
-    # or updating to be of a certain size. This is the radius of the region
+    # or updating to be of a certain size. This is the size of the square region
     # we will build/update, in meters.
     region_size = kwargs.get("region_size", 10.0)
 
@@ -161,7 +158,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     points = points[np.logical_not(low_points_filter)]  # points at or above layout cut
 
     # Filter out points beyond region_size
-    region_points_filter = eucdist_multi(points[:, :2], robot_position[:2]) <= region_size/2
+    region_points_filter = in_square_multi(points[:, :2], robot_position[:2], region_size)
     points = points[region_points_filter]
 
     # Identify points for the floor
@@ -198,7 +195,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     # Now flood from the robot position, with radius
     grid_floor_points = flood_fill_2d(grid_floor_points, (*grid_robot_position, 0),
                                       grid_brush_size=int(round(brush_size/grid_size)),
-                                      flood_radius=int(round(region_size/grid_size/2)))
+                                      flood_region_size=int(round(region_size/grid_size)))
 
     # Build the obstacles and free locations: grid points are just obstacles
     # grid points on the floor that are not obstacles are free locations

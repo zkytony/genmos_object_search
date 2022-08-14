@@ -64,16 +64,19 @@ class TestCase:
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5
                 region_size = 12.0
+                brush_size = 0.5
             else:
                 layout_cut = 0.6
-                region_size = 10.0
+                region_size = 3.0
+                brush_size = 0.25
 
             self._sloop_client.UpdateSearchRegion(
                 agent_name="test_robot",
                 robot_pose_2d=robot_pose_pb,
                 point_cloud=cloud_pb,
                 search_region_params_2d={"layout_cut": layout_cut,
-                                         "region_size": region_size})
+                                         "region_size": region_size,
+                                         "brush_size": brush_size})
 
 if __name__ == "__main__":
     TestCase()
