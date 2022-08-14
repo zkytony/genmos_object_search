@@ -83,5 +83,9 @@ message UpdateSearchRegionReply {
 // Auxiliary messages
 /////////////////////////////////////
 message SearchRegionParams2D {
-  double layout_cut = 1;
+  optional double layout_cut = 1;
+  optional double floor_cut = 2;
+  optional double grid_size = 3;
+  optional double brush_size = 4;
+  optional double region_size = 5;
 }

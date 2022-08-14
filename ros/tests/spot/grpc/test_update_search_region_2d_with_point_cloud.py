@@ -46,14 +46,17 @@ class TestCase:
         print("Received messages!")
         cloud_pb = pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
-        # Use the first waypoint as the robot pose
-        robot_pose_pb = Pose2D(x=waypoints_array[0][0],
-                               y=waypoints_array[0][1],
+        # Use a waypoint as the robot pose
+        robot_pose_pb = Pose2D(x=waypoints_array[-1][0],
+                               y=waypoints_array[-1][1],
                                th=0.0)
         self._sloop_client.UpdateSearchRegion(
             robot_pose_2d=robot_pose_pb,
             point_cloud=cloud_pb,
-            search_region_params_2d={"layout_cut": 0.5})
+            # recommended setttings:
+            #   for cit_first_floor, layout_cut = 1.5
+            search_region_params_2d={"layout_cut": 1.5,
+                                     "region_size": 12.0})
 
 if __name__ == "__main__":
     TestCase()

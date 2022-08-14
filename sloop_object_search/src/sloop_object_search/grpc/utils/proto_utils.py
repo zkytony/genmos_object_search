@@ -12,8 +12,16 @@ from sloop_object_search.grpc.common_pb2 import Vec3, Header
 
 def process_search_region_params_2d(search_region_params_2d_pb):
     params = {}
-    if search_region_params_2d_pb.layout_cut:
+    if search_region_params_2d_pb.HasField('layout_cut'):
         params["layout_cut"] = search_region_params_2d_pb.layout_cut
+    if search_region_params_2d_pb.HasField('floor_cut'):
+        params["floor_cut"] = search_region_params_2d_pb.floor_cut
+    if search_region_params_2d_pb.HasField('grid_size'):
+        params["grid_size"] = search_region_params_2d_pb.grid_size
+    if search_region_params_2d_pb.HasField('brush_size'):
+        params["brush_size"] = search_region_params_2d_pb.brush_size
+    if search_region_params_2d_pb.HasField('region_size'):
+        params["region_size"] = search_region_params_2d_pb.region_size
     return params
 
 def pointcloud2_to_pointcloudproto(cloud_msg):

@@ -197,7 +197,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
         pcd2 = o3d.geometry.PointCloud()
         pcd2.points = o3d.utility.Vector3dVector(np.asarray(grid_points))
         pcd2.colors = o3d.utility.Vector3dVector(np.full((len(grid_points), 3), (0.2, 0.2, 0.2)))
-        pcd2.points.append(np.asarray([*grid_robot_position, 0]))
+        pcd2.points.append([*grid_robot_position, 1])
         pcd2.colors.append([0.0, 0.8, 0.0])
         o3d.visualization.draw_geometries([pcd, pcd2])
 
