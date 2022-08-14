@@ -101,14 +101,29 @@ def flood_fill(grid_points, seed_point, brush_size=2):
     return np.array(list(map(np.array, grid_points_set | new_points)))
 
 
-def pcd_to_grid_map(pcd, waypoints, **kwargs):
+def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
     """
-    Given an Open3D point cloud object, output a GridMap object
+    Given an Open3D point cloud object, the robot current pose, and
+    optionally an existing grid map, output a GridMap2 object
     as the 2D projection of the point cloud.
 
-    pcd (Open3D point cloud object)
-    waypoints (numpy.array): L x 3 array where L is the number of waypoints;
-        each row is a waypoint's position.
+    The algorithm works by first treating points above a certain
+    height threshold (layout_cut) as points that form obstacles that
+    identify the layout of the map. Then, flood from the robot pose
+    a region to be regarded as reachable by the robot.
+
+    If new obstacles are detected that are not present in a given
+    grid map, the flooded area will replace the same area in the given grid
+    map. This updates the grid map with new point cloud observation.
+
+    Args:
+        pcd (Open3D point cloud object)
+        robot_position (tuple): x, y, z position of the robot
+        existing_map (GridMap2): existing grid map we want to update
+        kwargs: paramters of the algorithm, including
+            'layout_cut', 'floor_cut', 'grid_size' etc.
+    Returns:
+        GridMap2
     """
     # The height above which the points indicate nicely the layout of the room
     # while preserving big obstacles like tables.
