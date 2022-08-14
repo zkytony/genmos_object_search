@@ -10,6 +10,7 @@ from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
+from sloop_object_search.oopomdp.models.search_region import SearchRegion2D
 
 
 def search_region_from_occupancy_grid():
@@ -17,7 +18,7 @@ def search_region_from_occupancy_grid():
 
 
 ########### 2D search region ##############
-def search_region_2d_from_point_cloud(point_cloud, robot_position, **kwargs):
+def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_search_region=None, **kwargs):
     """
     The points in the given point cloud should correspond to static
     obstacles in the environment. The extent of this point cloud forms
@@ -31,8 +32,16 @@ def search_region_2d_from_point_cloud(point_cloud, robot_position, **kwargs):
     points_array = pointcloudproto_to_array(point_cloud)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points_array)
-    grid_map = pcd_to_grid_map_2d(pcd, robot_position, debug=True, **kwargs)
+
+    # build grid map
+    existing_map = None
+    if existing_search_region is not None:
+        existing_map = existing_search_region.grid_map
+    grid_map = pcd_to_grid_map_2d(pcd, robot_position, existing_map=existing_map,
+                                  debug=True, **kwargs)
     print("grid map created!")
+
+    return SearchRegion2D(grid_map)
 
 def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_radius=None):
     """
@@ -157,7 +166,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     if existing_map is not None:
         for p in points:
             gp = existing_map.to_grid_pos(p[0], p[1])
-            grid_points.append(gp)
+            grid_points.append((*gp, p[2]))
         # also computer robot position on the grid map for later use
         grid_robot_position = existing_map.to_grid_pos(robot_position[0], robot_position[1])
     else:
@@ -188,24 +197,30 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     free_locations = set((gp[0], gp[1]) for gp in grid_floor_points
                          if (gp[0], gp[1]) not in obstacles)
 
+    # Sixth: update existing map, or build new map
+    if existing_map is not None:
+        existing_map.update_region(obstacles, free_locations)
+        return_map = existing_map
+    else:
+        grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations,
+                            world_origin=origin, grid_size=grid_size, labels=None)
+        return_map = grid_map
+
     ## Debugging
     if debug:
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(np.asarray(grid_floor_points))
-        pcd.colors = o3d.utility.Vector3dVector(np.full((len(grid_floor_points), 3), (0.8, 0.8, 0.8)))
+        freeloc_points = np.asarray(list(return_map.free_locations))
+        freeloc_points = np.append(freeloc_points, np.zeros((len(freeloc_points), 1)), axis=1)
+        pcd.points = o3d.utility.Vector3dVector(freeloc_points)
+        pcd.colors = o3d.utility.Vector3dVector(np.full((len(return_map.free_locations), 3), (0.8, 0.8, 0.8)))
 
         pcd2 = o3d.geometry.PointCloud()
-        pcd2.points = o3d.utility.Vector3dVector(np.asarray(grid_points))
-        pcd2.colors = o3d.utility.Vector3dVector(np.full((len(grid_points), 3), (0.2, 0.2, 0.2)))
+        obloc_points = np.asarray(list(return_map.obstacles))
+        obloc_points = np.append(obloc_points, np.zeros((len(obloc_points), 1)), axis=1)
+        pcd2.points = o3d.utility.Vector3dVector(obloc_points)
+        pcd2.colors = o3d.utility.Vector3dVector(np.full((len(return_map.obstacles), 3), (0.2, 0.2, 0.2)))
         pcd2.points.append([*grid_robot_position, 1])
         pcd2.colors.append([0.0, 0.8, 0.0])
         o3d.visualization.draw_geometries([pcd, pcd2])
 
-    # Sixth: update existing map, or build new map
-    if existing_map is not None:
-        existing_map.update_region(obstacles, free_locations)
-        return existing_map
-    else:
-        grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations,
-                            world_origin=origin, grid_size=grid_size, labels=None)
-        return grid_map
+    return return_map
