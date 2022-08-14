@@ -29,6 +29,9 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         # order to be created.
         self._pending_agents = {}
 
+        # maps from agent name to its current search region.
+        self._search_regions = {}
+
         self._world_origin = None
 
     def CreateAgent(self, request, context):
@@ -87,10 +90,16 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 robot_position = pbutil.interpret_robot_pose(request)[:2]
                 logging.info("converting point cloud to 2d search region...")
                 search_region = search_region_2d_from_point_cloud(
-                    request.point_cloud, robot_position, **params)
+                    request.point_cloud, robot_position,
+                    existing_search_region=self._search_regions.get(request.agent_name, None),
+                    **params)
         else:
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
+
+        if request.agent_name not in self._search_regions:
+            self._search_regions[request.agent_name] = search_region
+
         return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
                                              status=Status.SUCCESS,
                                              message="search region updated")
