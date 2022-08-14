@@ -5,7 +5,7 @@ from collections import deque
 from tqdm import tqdm
 
 from .proto_utils import pointcloudproto_to_array
-from sloop_object_search.utils.math import remap, in_region, euclidean_dist
+from sloop_object_search.utils.math import remap, in_region, euclidean_dist, eucdist_multi
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.oopomdp.models.grid_map import GridMap
@@ -108,6 +108,11 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     identify the layout of the map. Then, flood from the robot pose
     a region to be regarded as reachable by the robot.
 
+    Only points within the region will be considered to build the grid map;
+    In other words, the region we flood will be the region we will build
+    the grid map.  Essentially, we are building a grid map for a portion
+    of the given point cloud within a region centered at the robot position.
+
     If new obstacles are detected that are not present in a given
     grid map, the flooded area will replace the same area in the given grid
     map. This updates the grid map with new point cloud observation.
@@ -150,23 +155,27 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     # whether to debug (show a visualiation)
     debug = kwargs.get("debug", False)
 
-    # First: remove points below layout cut
+    # Remove points below layout cut
     points = np.asarray(pcd.points)
     low_points_filter = np.less(points[:, 2], layout_cut)  # points below layout cut: will discard
     points = points[np.logical_not(low_points_filter)]  # points at or above layout cut
 
-    # Second: identify points for the floor
+    # Filter out points beyond region_size
+    region_points_filter = eucdist_multi(points[:, :2], robot_position[:2]) <= region_size/2
+    points = points[region_points_filter]
+
+    # Identify points for the floor
     xmin, ymin, zmin = np.min(points, axis=0)
     floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
 
-    # Third, map points to POMDP space. If 'existing_map' is given, use it to do this.
+    # Map points to POMDP space. If 'existing_map' is given, use it to do this.
     # Otherwise, the origin will be the minimum of points in the point cloud. This should
     # result in 2D points with integer coordinates.
     grid_points = []
     if existing_map is not None:
         for p in points:
             gp = existing_map.to_grid_pos(p[0], p[1])
-            grid_points.append((*gp, p[2]))
+            grid_points.append((*gp, 0))
         # also computer robot position on the grid map for later use
         grid_robot_position = existing_map.to_grid_pos(robot_position[0], robot_position[1])
     else:
@@ -183,7 +192,7 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
     grid_points = np.asarray(grid_points)
     grid_points[:, 2] = 0  # suppress z
 
-    # Fourth: build the reachable positions on the floor.
+    # Build the reachable positions on the floor.
     # Start with the floors filter, which should still apply.
     grid_floor_points = grid_points[floor_points_filter]
     # Now flood from the robot position, with radius
@@ -191,16 +200,17 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
                                       grid_brush_size=int(round(brush_size/grid_size)),
                                       flood_radius=int(round(region_size/grid_size/2)))
 
-    # Fifth: build the obstacles and free locations: grid points are just obstacles
+    # Build the obstacles and free locations: grid points are just obstacles
     # grid points on the floor that are not obstacles are free locations
     obstacles = set((gp[0], gp[1]) for gp in grid_points)
     free_locations = set((gp[0], gp[1]) for gp in grid_floor_points
                          if (gp[0], gp[1]) not in obstacles)
 
-    # Sixth: update existing map, or build new map
+    # Update existing map, or build new map
     if existing_map is not None:
         existing_map.update_region(obstacles, free_locations)
         return_map = existing_map
+        print("FREE LOCS COUNT:", len(return_map.free_locations))
     else:
         grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations,
                             world_origin=origin, grid_size=grid_size, labels=None)
