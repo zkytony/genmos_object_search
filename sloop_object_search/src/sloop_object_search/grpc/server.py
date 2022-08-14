@@ -3,6 +3,7 @@ import logging
 
 import grpc
 
+import argparse
 import yaml
 from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
 from sloop_object_search.oopomdp.agent import AGENT_CLASS_2D, AGENT_CLASS_3D
@@ -10,9 +11,8 @@ from sloop_object_search.oopomdp.agent import AGENT_CLASS_2D, AGENT_CLASS_3D
 from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
-from .utils.proto_utils import process_search_region_params_2d, make_header
-from .utils.search_region_processing import (search_region_from_occupancy_grid,
-                                             search_region_from_point_cloud)
+from .utils import proto_utils as pbutil
+from .utils.search_region_processing import search_region_2d_from_point_cloud
 
 
 MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
@@ -38,7 +38,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         """
         if request.agent_name in self._agents:
             return slpb2.CreateAgentReply(
-                header=make_header(),
+                header=pbutil.make_header(),
                 status=slpb2.Status.FAILED,
                 message=f"Agent with name {request.agent_name} already exists!")
 
@@ -54,17 +54,17 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
     def GetAgentCreationStatus(self, request, context):
         if request.agent_name not in self._agents:
             return slpb2.GetAgentCreationReply(
-                header=make_header(),
+                header=pbutil.make_header(),
                 status=slpb2.Status.FAILED,
                 status_message="Agent does not exist.")
         elif request.agent_name in self._agents:
             return slpb2.GetAgentCreationReply(
-                header=make_header(),
+                header=pbutil.make_header(),
                 status=slpb2.Status.SUCCESS,
                 status_message="Agent created.")
         elif request.agent_name in self._pending_agents:
             return slpb2.GetAgentCreationReply(
-                header=make_header(),
+                header=pbutil.make_header(),
                 status=slpb2.Status.PENDING,
                 status_message="Agent configuration received. Waiting for additional inputs...")
         else:
@@ -77,16 +77,15 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         corresponding agent's search region."""
         # We will first process the map
         if request.HasField('occupancy_grid'):
-            search_region = search_region_from_occupancy_grid(
-                request.occupancy_grid)
+            raise NotImplementedError()
         elif request.HasField('point_cloud'):
             params = {}
             if not request.is_3d:  # 2D
-                params = process_search_region_params_2d(
+                params = pbutil.process_search_region_params_2d(
                     request.search_region_params_2d)
-
-            search_region = search_region_from_point_cloud(
-                request.point_cloud, is_3d=request.is_3d, **params)
+                robot_position = pbutil.interpret_robot_pose(request)[:2]
+                search_region = search_region_2d_from_point_cloud(
+                    request.point_cloud, robot_position, **params)
         else:
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
@@ -96,18 +95,25 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
 
 ###########################################################################
-def serve(max_message_length=MAX_MESSAGE_LENGTH):
+def serve(port=50051, max_message_length=MAX_MESSAGE_LENGTH):
     options = [('grpc.max_receive_message_length', max_message_length),
                ('grpc.max_send_message_length', max_message_length)]
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                                                     options=options)
     slbp2_grpc.add_SloopObjectSearchServicer_to_server(
         SloopObjectSearchServer(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port(f'[::]:{port}')
     server.start()
     print("sloop_object_search started")
     server.wait_for_termination()
 
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser(description="sloop object search gRPC server")
+    parser.add_argument("--port", type=int, help="port, default 50051", defaul=50051)
+    args = parser.parse_args()
+
     logging.basicConfig()
-    serve()
+    serve(args.port)
+
+if __name__ == '__main__':
+    main()
