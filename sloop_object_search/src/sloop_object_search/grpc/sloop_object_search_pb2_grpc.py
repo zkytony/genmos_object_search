@@ -14,26 +14,20 @@ class SloopObjectSearchStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.StartServer = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/StartServer',
-                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerRequest.SerializeToString,
-                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerReply.FromString,
-                )
         self.CreateAgent = channel.unary_unary(
                 '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
                 )
+        self.UpdateSearchRegion = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.FromString,
+                )
 
 
 class SloopObjectSearchServicer(object):
     """Missing associated documentation comment in .proto file."""
-
-    def StartServer(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
     def CreateAgent(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -41,18 +35,25 @@ class SloopObjectSearchServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateSearchRegion(self, request, context):
+        """More fine-grained rpcs for specific functionality
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SloopObjectSearchServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'StartServer': grpc.unary_unary_rpc_method_handler(
-                    servicer.StartServer,
-                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerRequest.FromString,
-                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerReply.SerializeToString,
-            ),
             'CreateAgent': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateAgent,
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.SerializeToString,
+            ),
+            'UpdateSearchRegion': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateSearchRegion,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -63,23 +64,6 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class SloopObjectSearch(object):
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def StartServer(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/StartServer',
-            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerRequest.SerializeToString,
-            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.StartServerReply.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def CreateAgent(request,
@@ -95,5 +79,22 @@ class SloopObjectSearch(object):
         return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateSearchRegion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
