@@ -4,8 +4,9 @@ from collections import deque
 from tqdm import tqdm
 
 from .proto_utils import pointcloudproto_to_array
-from sloop_object_search.utils.math import remap, in_region
+from sloop_object_search.utils.math import remap, in_region, euclidean_dist
 from sloop_object_search.utils.visual import GridMapVisualizer
+from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 
 
@@ -58,15 +59,18 @@ def proj_to_grid_coords(points, grid_size=0.25):
     metric_grid_points[:,2] = 0
     return metric_grid_points
 
-def flood_fill(grid_points, seed_point, brush_size=2):
+def flood_fill(grid_points, seed_point, grid_brush_size=2, flood_radius=None):
     """
     Given a numpy array of points that are supposed to be on a grid map,
     and a "seed point", flood fill by adding more grid points that are
     in empty locations to the set of grid points, starting from the seed
     point. Will not modify 'grid_points' but returns a new array.
 
-    brush_size (int): The length of a square brush which will
-        be used to fill out the empty spaces.
+    grid_brush_size (int): The length (number of grids) of a square brush
+        which will be used to fill out the empty spaces.
+
+    flood_radius (float): the maximum euclidean distance between a
+        point in the flood and the seed point.
     """
     def _neighbors(p, d=1):
         # note that p is 3D, but we only care about x and y
@@ -88,13 +92,16 @@ def flood_fill(grid_points, seed_point, brush_size=2):
         point = worklist.popleft()
         # Imagine placing a square brush centered at the point.
         # We assume that the point always represents a valid free cell
-        brush_points = _neighbors(point, d=max(1, brush_size//2))
+        brush_points = _neighbors(point, d=max(1, grid_brush_size//2))
         new_points.update(brush_points)
         if not any(bp in grid_points_set for bp in brush_points):
             # This brush stroke fits; we will consider all brush points
             # as potential free cells - i.e. neighbors
             for neighbor_point in brush_points:
                 if neighbor_point not in visited:
+                    if flood_radius is not None:
+                        if euclidean_dist(neighbor_point, seed_point) > flood_radius:
+                            continue  # skip this point: too far.
                     if in_region(neighbor_point, _ranges):
                         worklist.append(neighbor_point)
                         visited.add(neighbor_point)
@@ -128,7 +135,6 @@ def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
     # The height above which the points indicate nicely the layout of the room
     # while preserving big obstacles like tables.
     layout_cut = kwargs.get("layout_cut", 0.65)
-    print("LAYOUT CUT!!!", layout_cut)
 
     # We will regard points with z within layout_cut +/- floor_cut
     # to be the points that represent the floor.
@@ -137,14 +143,62 @@ def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
     # length (in meters) of a grid in the grid map.
     grid_size = kwargs.get("grid_size", 0.25)
 
-    # percentage of waypoints to be sampled and used as seeds for flooding
-    pct_waypoint_seeds = kwargs.get("pct_waypoint_seeds", 0.25)
+    # flood brush size: When flooding, we use a brush. If the brush
+    # doesn't fit (it hits an obstacle), then the flood won't continue there.
+    # 'brush_size' is the length of the square brush in meters. Intuitively,
+    # this defines the width of the minimum pathway the robot can go through.
+    brush_size = kwargs.get("brush_size", 0.5)
+
+    # Because the map represented by the point cloud could be very large,
+    # or even border-less, we want to constrain the grid-map we are building
+    # or updating to be of a certain size. This is the radius of the region
+    # we will build/update, in meters
+    region_size = kwargs.get("region_size", 10.0)
 
     # grid map name
-    name = kwargs.get("name", "grid_map")
+    name = kwargs.get("name", "grid_map2")
 
     # whether to debug (show a visualiation)
     debug = kwargs.get("debug", False)
+
+    # First: remove points below layout cut
+    points = np.asarray(pcd.points)
+    low_points_filter = np.less(points[:, 2], layout_cut)  # points below layout cut: will discard
+    points = points[np.logical_not(low_points_filter)]  # points at or above layout cut
+
+    # Second: identify points for the floor
+    xmin, ymin, zmin = np.min(points, axis=0)
+    floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
+
+    # Third, map points to POMDP space. If 'existing_map' is given, use it to do this.
+    # Otherwise, the origin will be the minimum of points in the point cloud. This should
+    # result in 2D points with integer coordinates.
+    grid_points = []
+    if existing_map is not None:
+        for p in points:
+            gp = existing_map.to_grid_pos(p[0], p[1])
+            grid_points.append(gp)
+        # also computer robot position on the grid map for later use
+        grid_robot_position = existing_map.to_grid_pos(robot_position[0], robot_position[1])
+    else:
+        origin = (xmin, ymin)
+        for p in points:
+            gp = convert(p, Frame.WORLD, Frame.POMDP_SPACE,
+                         region_origin=origin,
+                         search_space_resolution=grid_size)
+            grid_points.append(gp)
+        grid_robot_position = convert(robot_position[:2], Frame.WORLD, Frame.POMDP_SPACE,
+                                      region_origin=origin,
+                                      search_space_resolution=grid_size)
+
+    # Fourth: build the reachable positions on the floor.
+    # Start with the floors filter, which should still apply.
+    grid_floor_points = np.asarray(grid_points)[floor_points_filter]
+    # Now flood from the robot position, with radius
+    grid_floor_points = flood_fill(grid_floor_points, grid_robot_position)
+
+
+    ###############################################################################
 
     # First, filter points by cutting those points below the layout.
     points = np.asarray(pcd.points)
@@ -156,6 +210,8 @@ def pcd_to_grid_map(pcd, robot_position, existing_map=None, **kwargs):
 
     # We will first convert floor_points into an integer-coordinated grid map.
     floor_grid_coords = proj_to_grid_coords(floor_points, grid_size=grid_size)
+
+    # also, convert robot position into
 
     # also, convert waypoints into an integer-coordinated grid map
     if len(waypoints) > 0:
