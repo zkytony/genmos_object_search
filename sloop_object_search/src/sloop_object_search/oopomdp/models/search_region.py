@@ -29,21 +29,21 @@ class SearchRegion:
     def search_space_resolution(self):
         return self._search_space_resolution
 
-    def to_world_pos(self, x, y):
+    def to_world_pos(self, p):
         """converts a grid position to a world frame position"""
-        return convert((x, y), Frame.POMDP_SPACE, Frame.WORLD,
+        return convert(p, Frame.POMDP_SPACE, Frame.WORLD,
                        region_origin=self.region_origin,
                        search_space_resolution=self.search_space_resolution)
 
-    def to_grid_pos(self, world_x, world_y):
+    def to_pomdp_pos(self, world_point):
         """converts a grid position to a world frame position"""
-        return convert((world_x, world_y), Frame.WORLD, Frame.POMDP_SPACE,
+        return convert(world_point, Frame.WORLD, Frame.POMDP_SPACE,
                        region_origin=self.region_origin,
                        search_space_resolution=self.search_space_resolution)
 
-    def to_region_pos(self, x, y):
+    def to_region_pos(self, p):
         """converts a grid position to a world frame position"""
-        return convert((x, y), Frame.POMDP_SPACE, Frame.REGION,
+        return convert(p, Frame.POMDP_SPACE, Frame.REGION,
                        search_space_resolution=self.search_space_resolution)
 
 
@@ -66,6 +66,9 @@ class SearchRegion2D(SearchRegion):
     def grid_size(self):
         return self.search_space_resolution
 
+    def to_grid_pos(self, world_point):
+        return self.to_pomdp_pos(world_point)
+
 
 class SearchRegion3D(SearchRegion):
     """The 3D search region is represented as an octree.
@@ -74,6 +77,9 @@ class SearchRegion3D(SearchRegion):
 
     Note that the default value of a node in this octree
     should be zero (it is not a belief, it is occupancy)."""
-    def __init__(self, octree, region_origin=None):
-        self.octree = octree
-        self.region_origin = region_origin
+    @property
+    def octree(self):
+        return self._region_repr
+
+    def to_octree_pos(self, world_point):
+        return self.to_pomdp_pos(world_point)
