@@ -13,7 +13,8 @@ from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
 from .utils import proto_utils as pbutil
-from .utils.search_region_processing import search_region_2d_from_point_cloud
+from .utils.search_region_processing import (search_region_2d_from_point_cloud,
+                                             search_region_3d_from_point_cloud)
 
 
 MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
@@ -90,6 +91,15 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 robot_position = pbutil.interpret_robot_pose(request)[:2]
                 logging.info("converting point cloud to 2d search region...")
                 search_region = search_region_2d_from_point_cloud(
+                    request.point_cloud, robot_position,
+                    existing_search_region=self._search_regions.get(request.agent_name, None),
+                    **params)
+            else: # 3D
+                params = pbutil.process_search_region_params_3d(
+                    request.search_region_params_3d)
+                robot_position = pbutil.interpret_robot_pose(request)[:2]
+                logging.info("converting point cloud to 3d search region...")
+                search_region = search_region_3d_from_point_cloud(
                     request.point_cloud, robot_position,
                     existing_search_region=self._search_regions.get(request.agent_name, None),
                     **params)

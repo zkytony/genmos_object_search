@@ -24,6 +24,15 @@ def process_search_region_params_2d(search_region_params_2d_pb):
         params["region_size"] = search_region_params_2d_pb.region_size
     return params
 
+def process_search_region_params_3d(search_region_params_3d_pb):
+    params = {}
+    if search_region_params_3d_pb.HasField('octree_size'):
+        params["octree_size"] = search_region_params_3d_pb.octree_size
+    if search_region_params_3d_pb.HasField('search_space_resolution'):
+        params["search_space_resolution"] = search_region_params_3d_pb.search_space_resolution
+    return params
+
+
 def pointcloud2_to_pointcloudproto(cloud_msg):
     """
     Converts a PointCloud2 message to a PointCloud proto message.

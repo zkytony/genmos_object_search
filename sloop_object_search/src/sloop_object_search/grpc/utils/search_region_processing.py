@@ -17,7 +17,7 @@ from sloop_object_search.oopomdp.models.octree_belief import Octree
 
 ########### 2D search region ##############
 def search_region_2d_from_occupancy_grid(occupancy_grid, robot_position, existing_search_region=None, **kwargs):
-    pass
+    raise NotImplementedError()
 
 
 def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_search_region=None, **kwargs):
@@ -56,6 +56,9 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     a given resolution. Note that having an octree of bigger
     than 64x64x64 may be slow. Optimization of octree implementation
     (e.g. in C++ with python binding) is pending.
+
+    For now, if there is an existing search region, the octree
+    of the search region will be discarded, but its origin is kept.
     """
     points_array = pointcloudproto_to_array(point_cloud)
     origin = np.min(points_array, axis=0)
@@ -68,15 +71,52 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     # the resolution of the octree when placed in the real world.
     search_space_resolution = kwargs.get("search_space_resolution", 0.15)
 
-    octree = Octree(None, (octree_size, octree_size, octree_size))
-    search_region = SearchRegion3D(octree, region_origin=origin,
-                                   search_space_resolution=search_space_resolution)
+    # whether to debug (show a visualiation)
+    debug = kwargs.get("debug", False)
 
-    # build grid map
-    for p in points_array:
-        octree_point = search_region.to_octree_pos(*p)
+    dimensions = (octree_size, octree_size, octree_size)
+    octree = Octree(None, dimensions, default_val=0)
 
+    # Either update existing search region, or create a brand new one.
+    if existing_search_region is not None:
+        # the octree of the search region will be discarded, but its origin is kept.
+        search_region = existing_search_region
+        search_region.octree = octree
+    else:
+        search_region = SearchRegion3D(
+            octree, region_origin=origin,
+            search_space_resolution=search_space_resolution)
+        for p in points_array:
+            g = search_region.to_octree_pos(p)
+            search_region.octree.add_node(*g, 1, val=1)
 
+    # debugging
+    if debug:
+        # Will visualize both the point cloud and the octree
+        # visualize point cloud
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points_array)
+        pcd.colors = o3d.utility.Vector3dVector(np.full((len(points_array), 3), (0.8, 0.8, 0.8)))
+
+        # visualize octree
+        voxels = octree.collect_plotting_voxels()
+        vp = [v[:3] for v in voxels]
+        vr = [v[3] for v in voxels]  # resolutions
+        vv = [v[4] for v in voxels]  # values
+        geometries = []
+        for i in range(len(vp)):
+            if vv[i] > 0:
+                pos = search_region.to_world_pos(vp[i])
+                size = vr[i] * search_region.search_space_resolution  # cube size in meters
+                mesh_box = o3d.geometry.TriangleMesh.create_box(width=size,
+                                                                height=size,
+                                                                depth=size)
+                mesh_box.compute_vertex_normals()
+                mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
+                geometries.append(mesh_box)
+        o3d.visualization.draw_geometries(geometries)
+
+    return search_region
 
 
 
