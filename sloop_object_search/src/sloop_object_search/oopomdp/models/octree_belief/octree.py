@@ -219,7 +219,7 @@ class Octree:
     def __hash__(self):
         return hash((*self.dimensions, self.depth, self.root, self.objid))
 
-    def __eq__(self):
+    def __eq__(self, other):
         if not isinstance(other, Octree):
             return False
         else:
