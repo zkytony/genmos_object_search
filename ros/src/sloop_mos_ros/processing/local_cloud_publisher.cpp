@@ -46,6 +46,7 @@ void LocalCloudPublisher::cloudPoseCallback(const PointCloud2 &cloud, const Pose
     sensor_msgs::PointCloud2 pcl_msg;
     pcl::toROSMsg(points_in_region, pcl_msg);
     pcl_msg.header.frame_id = cloud.header.frame_id;
+    pcl_msg.header.stamp = ros::Time::now();
     this->pcl_local_pub_.publish(pcl_msg);
     std::cout << "Published points!" << std::endl;
 }
