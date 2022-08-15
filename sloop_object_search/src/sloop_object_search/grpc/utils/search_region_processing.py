@@ -11,7 +11,8 @@ from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
-from sloop_object_search.oopomdp.models.search_region import SearchRegion2D
+from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
+from sloop_object_search.oopomdp.models.octree_belief import Octree
 
 
 ########### 2D search region ##############
@@ -57,7 +58,25 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     (e.g. in C++ with python binding) is pending.
     """
     points_array = pointcloudproto_to_array(point_cloud)
-    pass
+    origin = np.min(points_array, axis=0)
+
+    # Size of one dimension of the space that the octree covers
+    # Must be a power of two.
+    octree_size = kwargs.get("octree_size", 64)
+
+    # Meter of a side of a ground-level cube in the octree. This represents
+    # the resolution of the octree when placed in the real world.
+    search_space_resolution = kwargs.get("search_space_resolution", 0.15)
+
+    octree = Octree(None, (octree_size, octree_size, octree_size))
+    search_region = SearchRegion3D(octree, region_origin=origin,
+                                   search_space_resolution=search_space_resolution)
+
+    # build grid map
+    for p in points_array:
+        octree_point = search_region.to_octree_pos(*p)
+
+
 
 
 
@@ -188,10 +207,10 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     grid_points = []
     if existing_search_region is not None:
         for p in points:
-            gp = existing_search_region.to_grid_pos(p[0], p[1])
+            gp = existing_search_region.to_grid_pos(p[:2])
             grid_points.append((*gp, 0))
         # also computer robot position on the grid map for later use
-        grid_robot_position = existing_search_region.to_grid_pos(robot_position[0], robot_position[1])
+        grid_robot_position = existing_search_region.to_grid_pos(robot_position[:2])
     else:
         origin = (xmin, ymin)
         for p in points:
