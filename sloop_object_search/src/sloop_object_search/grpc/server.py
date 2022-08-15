@@ -7,7 +7,6 @@ import grpc
 import argparse
 import yaml
 from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
-from sloop_object_search.oopomdp.agent import AGENT_CLASS_2D, AGENT_CLASS_3D
 
 from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc

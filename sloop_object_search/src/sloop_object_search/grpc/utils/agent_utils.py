@@ -1,3 +1,5 @@
+from sloop_object_search.oopomdp.agent import AGENT_CLASS_2D, AGENT_CLASS_3D
+
 def create_agent(agent_name, agent_config_world, robot_pose, search_region):
     """
     Creates a SLOOP POMDP agent named 'agent_name', with the given
@@ -28,6 +30,32 @@ def create_agent(agent_name, agent_config_world, robot_pose, search_region):
     Note that by default, size units in agent_config that are metric.
     """
     agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(agent_config_world)
+    _verify_agent_config(agent_config_pomdp)
+
+
+def _verify_agent_config(agent_config):
+    if "robot" not in agent_config:
+        raise KeyError("'robot' must exist agent_config")
+    if "objects" not in agent_config:
+        raise KeyError("'objects' must exist agent_config")
+    if "targets" not in agent_config:
+        raise KeyError("'targets' must exist agent_config")
+    agent_config['no_look'] = agent_config.get('no_look', False)
+    if agent_config['agent_class'] not in AGENT_CLASS_2D\
+       and agent_config['agent_class'] not in AGENT_CLASS_3D:
+        raise ValueError(f"Agent class {agent_config['agent_class']} not recognized.")
+
+    # Check if targets are valid objects
+    for target_id in agent_config["targets"]:
+        if target_id not in agent_config["objects"]:
+            raise ValueError(f"target {target_id} is not a defined object.")
+
+    # Check if detectors are for valid objects
+    if "detectors" not in agent_config["robot"]:
+        raise ValueError(f"No detector specified.")
+    for objid in agent_config["robot"]["detectors"]:
+        if objid not in agent_config["objects"]:
+            raise ValueError(f"detectable object {objid} is not a defined object.")
 
 
 def _convert_metric_fields_to_pomdp_fields(agent_config_world):
