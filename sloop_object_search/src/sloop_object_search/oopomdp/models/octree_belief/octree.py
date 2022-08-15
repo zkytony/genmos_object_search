@@ -243,7 +243,7 @@ class Octree:
     def print_tree(self, max_depth=None):
         self.print_tree_helper(self.root.value, self.root, 0, max_depth=max_depth)
 
-    def add_node(self, x, y, z, res):
+    def add_node(self, x, y, z, res, val=None):
         if x*res >= self.dimensions[0]\
            or y*res >= self.dimensions[1]\
            or z*res >= self.dimensions[2]:
@@ -257,7 +257,10 @@ class Octree:
             yr = y // (next_res // res)
             zr = z // (next_res // res)
             if not node.has_child((xr, yr, zr)):
-                child = OctNode(xr, yr, zr, next_res, parent=node)
+                if val is None:
+                    val = self.default_val
+                child = OctNode(xr, yr, zr, next_res,
+                                parent=node, default_val=val)
                 node.add_child(child)
                 if LOG:
                     # child.value will be log space probability; But we want to store
