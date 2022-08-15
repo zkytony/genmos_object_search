@@ -30,6 +30,9 @@ class OctNode:
 
         The resolution means how many ground-level cubes (along any dimension) is
         covered by the coordinate (x,y,z).
+
+        default_val: the default value of a node at the ground level. Use 'value()'
+            to get the value of this node.
         """
         # value of the node is stored in the parent. If parent
         # is None, then the value is the default, scaled by resolution.
@@ -148,6 +151,8 @@ class Octree:
         Creates an octree for the given object id, covering volume of
         given dimensions (w,l,h). The depth of the tree is inferred
         from the dimensions, which must satisfy w==l==h and w is power of 2.
+
+        default_val: the default value in a ground octnode
         """
         self.objid = objid
         w,l,h = dimensions
@@ -306,8 +311,8 @@ class Octree:
         """Returns voxel positions and resolutions that should
         be plotted, given an octree. Note that not all
         of these actually exist in the tree as a node.
-        The return format: [(x*r,y*r,z*r,r)...] (note the coordinates
-        are at the ground level.)"""
+        The return format: [(x*r,y*r,z*r,r,v)...] (note the coordinates
+        are at the ground level.). Note 'v' is the node value."""
         collector = []
         self._collect_plotting_voxels_helper(self.root, collector)
         return collector
@@ -317,7 +322,8 @@ class Octree:
             collector.append((node.pos[0]*node.res,
                               node.pos[1]*node.res,
                               node.pos[2]*node.res,
-                              node.res))
+                              node.res,
+                              node.value()))
         else:
             for pos in OctNode.child_poses(*node.pos, node.res):
                 if pos not in node.children\
@@ -325,7 +331,9 @@ class Octree:
                         res = node.res // 2
                         collector.append((pos[0]*res,
                                           pos[1]*res,
-                                          pos[2]*res, res))  # child pos and resolution
+                                          pos[2]*res,
+                                          res,
+                                          node.get_val(pos)))  # child pos and resolution
                 else:
                     child = node.children[pos][1]
                     self._collect_plotting_voxels_helper(child, collector)
