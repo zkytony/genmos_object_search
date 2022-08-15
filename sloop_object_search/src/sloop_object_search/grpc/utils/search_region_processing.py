@@ -215,6 +215,12 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
 
     ## Debugging
     if debug:
+        # import pdb; pdb.set_trace()
+        # pcd = o3d.geometry.PointCloud()
+        # pcd.points = o3d.utility.Vector3dVector(np.asarray(list(points)))
+        # pcd.colors = o3d.utility.Vector3dVector(np.full((len(points), 3), (0.8, 0.8, 0.8)))
+        # o3d.visualization.draw_geometries([pcd])
+
         pcd = o3d.geometry.PointCloud()
         freeloc_points = np.asarray(list(return_map.free_locations))
         freeloc_points = np.append(freeloc_points, np.zeros((len(freeloc_points), 1)), axis=1)

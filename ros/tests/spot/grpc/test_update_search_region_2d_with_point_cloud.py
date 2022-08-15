@@ -67,8 +67,8 @@ class TestCase:
                 brush_size = 0.5
             else:
                 layout_cut = 0.6
-                region_size = 3.0
-                brush_size = 0.25
+                region_size = 5.0
+                brush_size = 0.5
 
             self._sloop_client.UpdateSearchRegion(
                 agent_name="test_robot",
