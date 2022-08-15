@@ -22,6 +22,8 @@ def process_search_region_params_2d(search_region_params_2d_pb):
         params["brush_size"] = search_region_params_2d_pb.brush_size
     if search_region_params_2d_pb.HasField('region_size'):
         params["region_size"] = search_region_params_2d_pb.region_size
+    if search_region_params_2d_pb.HasField('debug'):
+        params["debug"] = search_region_params_2d_pb.debug
     return params
 
 def process_search_region_params_3d(search_region_params_3d_pb):
@@ -30,6 +32,8 @@ def process_search_region_params_3d(search_region_params_3d_pb):
         params["octree_size"] = search_region_params_3d_pb.octree_size
     if search_region_params_3d_pb.HasField('search_space_resolution'):
         params["search_space_resolution"] = search_region_params_3d_pb.search_space_resolution
+    if search_region_params_3d_pb.HasField('debug'):
+        params["debug"] = search_region_params_3d_pb.debug
     return params
 
 

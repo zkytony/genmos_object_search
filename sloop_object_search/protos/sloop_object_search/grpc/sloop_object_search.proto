@@ -70,6 +70,7 @@ message UpdateSearchRegionRequest {
 
   oneof search_region_params {
     SearchRegionParams2D search_region_params_2d = 8;
+    SearchRegionParams3D search_region_params_3d = 9;
   }
 }
 
@@ -88,10 +89,12 @@ message SearchRegionParams2D {
   optional double grid_size = 3;
   optional double brush_size = 4;
   optional double region_size = 5;
+  optional bool debug = 6;
 }
 
 
 message SearchRegionParams3D {
   optional int32 octree_size = 1;
   optional double search_space_resolution = 2;
+  optional bool debug = 3;
 }

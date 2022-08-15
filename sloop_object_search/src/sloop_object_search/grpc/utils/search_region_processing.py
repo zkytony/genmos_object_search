@@ -36,7 +36,7 @@ def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_sear
     search_region = points_to_search_region_2d(
         points_array, robot_position,
         existing_search_region=existing_search_region,
-        debug=True, **kwargs)
+        **kwargs)
     if existing_search_region is not None:
         # search_region should be the same as existing
         assert existing_search_region.grid_map == search_region.grid_map

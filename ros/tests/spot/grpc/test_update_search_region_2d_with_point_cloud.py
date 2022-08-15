@@ -77,7 +77,8 @@ class TestCase:
                 point_cloud=cloud_pb,
                 search_region_params_2d={"layout_cut": layout_cut,
                                          "region_size": region_size,
-                                         "brush_size": brush_size})
+                                         "brush_size": brush_size,
+                                         "debug": True})
 
 if __name__ == "__main__":
     TestCase()

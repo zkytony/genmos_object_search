@@ -81,5 +81,9 @@ class SearchRegion3D(SearchRegion):
     def octree(self):
         return self._region_repr
 
+    @octree.setter
+    def octree(self, octree):
+        self._region_repr = octree
+
     def to_octree_pos(self, world_point):
         return self.to_pomdp_pos(world_point)

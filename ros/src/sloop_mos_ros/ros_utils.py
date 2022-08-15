@@ -143,6 +143,19 @@ def transform_to_pose_stamped(transform, frame_id, stamp=None):
     pose_msg.pose.orientation = transform.rotation
     return pose_msg
 
+def pose_tuple_to_pose_stamped(pose_tuple, frame_id, stamp=None):
+    x, y, z, qx, qy, qz, qw = pose_tuple
+    if stamp is None:
+        stamp = rospy.Time.now()
+
+    pose_msg = geometry_msgs.msg.PoseStamped()
+    pose_msg.header = std_msgs.msg.Header(stamp=stamp, frame_id=frame_id)
+    pose_msg.pose.position = geometry_msgs.msg.Point(x=x,
+                                                     y=y,
+                                                     z=z)
+    pose_msg.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    return pose_msg
+
 def topic_exists(topic):
     all_topics = [t[0] for t in rospy.get_published_topics()]
     return topic in all_topics
