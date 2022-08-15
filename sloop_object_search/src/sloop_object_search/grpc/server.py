@@ -48,7 +48,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         config_str = request.config.decode("utf-8")
         config = yaml.safe_load(config_str)
-        self._agnets[request.agent_name] = config
+        self._agents[request.agent_name] = config
 
         # agent = make_sloop_mos_agent(agent_config)
         return slpb2.CreateAgentReply(
