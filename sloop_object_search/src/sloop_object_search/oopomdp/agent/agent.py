@@ -1,7 +1,10 @@
 from .basic2d import SloopMosBasic2DAgent
 from .topo2d import SloopMosTopo2DAgent
 
+# deprecated
 def make_agent(_config, init_pose=None, grid_map=None):
+    print("Deprecation warning: 'make_agent' is no longer the supported"\
+          "method for creating an agent")
     map_name = _config['task_config']["map_name"]
 
     if init_pose is None:

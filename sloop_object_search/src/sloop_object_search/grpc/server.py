@@ -49,9 +49,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         config_str = request.config.decode("utf-8")
         config = yaml.safe_load(config_str)
-        self._agents[request.agent_name] = config
+        self._pending_agents[request.agent_name] = config["agent_config"]
 
-        # agent = make_sloop_mos_agent(agent_config)
         return slpb2.CreateAgentReply(
             status=Status.PENDING,
             message="Agent configuration received. Waiting for additional inputs...")
@@ -107,12 +106,21 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
 
-        if request.agent_name not in self._search_regions:
-            self._search_regions[request.agent_name] = search_region
+        # create or update search region for the given agent
+        self._search_regions[request.agent_name] = search_region
+
+        # if the agent has been pending, we can now create it.
+        if request.agent_name in self._pending_agents:
+            self._create_agent(self.request.agent_name)
 
         return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
                                              status=Status.SUCCESS,
                                              message="search region updated")
+
+    def _create_agent(self, agent_name):
+        assert agent_name not in self._agents,\
+            f"Internal error: agent {agent_name} already exists."
+
 
 
 
