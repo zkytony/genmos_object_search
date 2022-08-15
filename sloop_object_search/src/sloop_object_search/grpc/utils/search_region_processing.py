@@ -21,9 +21,8 @@ def search_region_2d_from_occupancy_grid(occupancy_grid, robot_position, existin
 
 def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_search_region=None, **kwargs):
     """
-    The points in the given point cloud should correspond to static
-    obstacles in the environment. The extent of this point cloud forms
-    the extent of the search region.
+    The points in the given point cloud should correspond to
+    obstacles in the environment.
 
     The point_cloud is to be projected down to 2D; We assume
     there is a "floor" (or flat plane) in the environment. "floor_cut"
@@ -31,12 +30,10 @@ def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_sear
     to be part of the floor.
     """
     points_array = pointcloudproto_to_array(point_cloud)
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points_array)
 
     # build grid map
-    search_region = pcd_to_search_region_2d(
-        pcd, robot_position,
+    search_region = points_to_search_region_2d(
+        points_array, robot_position,
         existing_search_region=existing_search_region,
         debug=True, **kwargs)
     if existing_search_region is not None:
@@ -47,6 +44,24 @@ def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_sear
         print("grid map created!")
         return search_region
 
+
+########### 3D search region ##############
+def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_search_region=None, **kwargs):
+    """
+    The points in the given point cloud should correspond to
+    obstacles in the environment.
+
+    The point cloud will be converted into an octree with
+    a given resolution. Note that having an octree of bigger
+    than 64x64x64 may be slow. Optimization of octree implementation
+    (e.g. in C++ with python binding) is pending.
+    """
+    points_array = pointcloudproto_to_array(point_cloud)
+    pass
+
+
+
+########### Auxiliary functions for 2D Search Regeion ##############
 def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_region_size=None):
     """
     Given a numpy array of points that are supposed to be on a grid map,
@@ -97,9 +112,9 @@ def flood_fill_2d(grid_points, seed_point, grid_brush_size=2, flood_region_size=
     return np.array(list(grid_points_set | new_points))
 
 
-def pcd_to_search_region_2d(pcd, robot_position, existing_search_region=None, **kwargs):
+def points_to_search_region_2d(points, robot_position, existing_search_region=None, **kwargs):
     """
-    Given an Open3D point cloud object, the robot current pose, and
+    Given a Numpy array of points (N,3), the robot current pose, and
     optionally an existing grid map, output a SearchRegion2D object
     which contains a grid map (GridMap2) as the 2D projection of the point cloud.
 
@@ -156,7 +171,6 @@ def pcd_to_search_region_2d(pcd, robot_position, existing_search_region=None, **
     debug = kwargs.get("debug", False)
 
     # Remove points below layout cut
-    points = np.asarray(pcd.points)
     low_points_filter = np.less(points[:, 2], layout_cut)  # points below layout cut: will discard
     points = points[np.logical_not(low_points_filter)]  # points at or above layout cut
 
@@ -243,8 +257,3 @@ def pcd_to_search_region_2d(pcd, robot_position, existing_search_region=None, **
         o3d.visualization.draw_geometries([pcd, pcd2])
 
     return return_search_region
-
-
-########### 3D search region ##############
-def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_search_region=None, **kwargs):
-    pass
