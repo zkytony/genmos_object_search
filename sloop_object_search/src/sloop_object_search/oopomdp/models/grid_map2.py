@@ -45,6 +45,7 @@ class GridMap2:
         if obstacles is None and free_locations is None:
             raise ValueError("Need to supply obstacles or free_locations (or both)")
 
+        self.name = name
         self.obstacles = set()
         self.free_locations = set()
         self.add_grids(obstacles=obstacles, free_locations=free_locations)
@@ -118,6 +119,12 @@ class GridMap2:
         if len(overlap) > 0:
             raise ValueError("Error in argument: obstacles and free_locations are not disjoint. "\
                              f"Overlap: {overlap}")
+
+    def __eq__(self, other):
+        if isinstance(other, GridMap2):
+            return self.all_grids == other.all_grids\
+                and self.labels == other.labels\
+                and self.name == other.name
 
     @property
     def all_grids(self):
