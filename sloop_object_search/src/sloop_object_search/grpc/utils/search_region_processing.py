@@ -9,6 +9,7 @@ from sloop_object_search.utils.math import (remap, euclidean_dist,
                                             eucdist_multi, in_square, in_square_multi)
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
+from sloop_object_search.utils.open3d_utils import cube_unfilled
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
@@ -86,9 +87,9 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
         search_region = SearchRegion3D(
             octree, region_origin=origin,
             search_space_resolution=search_space_resolution)
-        for p in points_array:
-            g = search_region.to_octree_pos(p)
-            search_region.octree.add_node(*g, 1, val=1)
+    for p in points_array:
+        g = search_region.to_octree_pos(p)
+        search_region.octree.add_node(*g, 1, val=1)
 
     # debugging
     if debug:
@@ -99,19 +100,18 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
         pcd.colors = o3d.utility.Vector3dVector(np.full((len(points_array), 3), (0.8, 0.8, 0.8)))
 
         # visualize octree
-        voxels = octree.collect_plotting_voxels()
+        voxels = search_region.octree.collect_plotting_voxels()
         vp = [v[:3] for v in voxels]
         vr = [v[3] for v in voxels]  # resolutions
         vv = [v[4] for v in voxels]  # values
-        geometries = []
+        geometries = [pcd]
+        print(len(voxels))
         for i in range(len(vp)):
             if vv[i] > 0:
                 pos = search_region.to_world_pos(vp[i])
                 size = vr[i] * search_region.search_space_resolution  # cube size in meters
-                mesh_box = o3d.geometry.TriangleMesh.create_box(width=size,
-                                                                height=size,
-                                                                depth=size)
-                mesh_box.compute_vertex_normals()
+                mesh_box = cube_unfilled(scale=size)
+                mesh_box.translate(np.asarray(pos))
                 mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
                 geometries.append(mesh_box)
         o3d.visualization.draw_geometries(geometries)
