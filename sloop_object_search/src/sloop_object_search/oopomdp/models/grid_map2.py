@@ -7,8 +7,9 @@
 # - Grid coordinates don't have to be non-negative.
 # - There is no width and length as an input parameter to build a GridMap2;
 #   they are inferred based on the given grids.
-# - The conversion between grid coordinates and metric coordinates
-#   are done differently; simpler and more cleanly.
+# - GridMap2 does not handle conversion between world coordinates and
+#   grid map coordinates. That is handled by SearchRegion, which does
+#   the conversion differently from GridMap, in a simpler and cleaner way.
 #
 # GridMap2 will emphasize the idea that a grid map is a collection
 # of grids. Indeed, these grids live on a lattice, but the construction
@@ -23,7 +24,6 @@
 # grid map can be extended in any direction, while keeping the coordinates
 # of known grid cells unchanged.
 
-from sloop_object_search.utils.conversion import Frame, convert
 from .grid_map import GridMap
 
 class GridType:
@@ -34,18 +34,12 @@ class GridType:
 
 class GridMap2:
     def __init__(self, name="grid_map2",
-                 obstacles=None, free_locations=None,
-                 world_origin=None, grid_size=None, labels=None):
+                 obstacles=None, free_locations=None, labels=None):
         """
         Args:
             name (str): name of the grid map
             obstacles (set): a set of (x,y) locations for the obstacles
             free_locations (set): a set of (x,y) locations for the free locations
-            world_origin (tuple): The world frame coordinates (metric) of
-                the (0,0) grid cell. Used for conversion between grid and world
-                coordinates.
-            grid_size (float): The metric size of a grid. For example, 0.25 means
-                each grid cell has length equal to 0.25m in the world frame.
             labels (dict): maps from location to a set of string labels
         """
         if obstacles is None and free_locations is None:
@@ -54,9 +48,6 @@ class GridMap2:
         self.obstacles = set()
         self.free_locations = set()
         self.add_grids(obstacles=obstacles, free_locations=free_locations)
-
-        self.world_origin = world_origin
-        self.grid_size = grid_size
 
         self.labels = labels
         if labels is None:
@@ -192,19 +183,7 @@ class GridMap2:
         self._min_corner_cache = c
         return c
 
-    def to_world_pos(self, x, y):
-        """converts a grid position to a world frame position"""
-        return convert((x, y), Frame.POMDP_SPACE, Frame.WORLD,
-                       region_origin=self.world_origin,
-                       search_space_resolution=self.grid_size)
-
-    def to_grid_pos(self, world_x, world_y):
-        """converts a grid position to a world frame position"""
-        return convert((world_x, world_y), Frame.WORLD, Frame.POMDP_SPACE,
-                       region_origin=self.world_origin,
-                       search_space_resolution=self.grid_size)
-
-    def to_grid_map(self):
+    def to_grid_map(self, region_origin=None, grid_size=None):
         """Converts a GridMap2 to a GridMap. This is convenient
         for visualization purpose, because our visualization
         code is based on GridMap."""
@@ -212,11 +191,11 @@ class GridMap2:
         shifted_obstacles = set(self.shift_pos(*loc) for loc in self.obstacles)
         shifted_free_locations = set(self.shift_pos(*loc) for loc in self.free_locations)
         ranges_in_metric = None
-        if self.world_origin is not None\
-           and self.grid_size is not None:
+        if region_origin is not None\
+           and grid_size is not None:
             ranges_in_metric = [
-                (self.world_origin[0], self.world_origin[0] + self.width*self.grid_size),
-                (self.world_origin[1], self.world_origin[1] + self.length*self.grid_size)
+                (region_origin[0], region_origin[0] + self.width*grid_size),
+                (region_origin[1], region_origin[1] + self.length*grid_size)
             ]
         shifted_labels = {}
         for loc in self.labels:
@@ -225,7 +204,7 @@ class GridMap2:
                        shifted_obstacles,
                        free_locations=shifted_free_locations,
                        ranges_in_metric=ranges_in_metric,
-                       grid_size=self.grid_size,
+                       grid_size=grid_size,
                        labels=self.labels)
 
     def shift_pos(self, x, y):
