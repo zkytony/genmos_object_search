@@ -56,28 +56,28 @@ class TestCase:
         if self._callback_count > len(waypoints_array):
             print("We have exhausted waypoints. Test complete. Please quit with Ctrl-C.")
 
-        else:
-            # Use a waypoint as the robot pose
-            robot_pose_pb = Pose2D(x=waypoints_array[self._callback_count][0],
-                                   y=waypoints_array[self._callback_count][1],
-                                   th=0.0)
-            if rospy.get_param('map_name') == "cit_first_floor":
-                layout_cut = 1.5
-                region_size = 12.0
-                brush_size = 0.5
-            else:
-                layout_cut = 0.6
-                region_size = 5.0
-                brush_size = 0.5
+        # else:
+        #     # Use a waypoint as the robot pose
+        #     robot_pose_pb = Pose2D(x=waypoints_array[self._callback_count][0],
+        #                            y=waypoints_array[self._callback_count][1],
+        #                            th=0.0)
+        #     if rospy.get_param('map_name') == "cit_first_floor":
+        #         layout_cut = 1.5
+        #         region_size = 12.0
+        #         brush_size = 0.5
+        #     else:
+        #         layout_cut = 0.6
+        #         region_size = 5.0
+        #         brush_size = 0.5
 
-            self._sloop_client.UpdateSearchRegion(
-                agent_name="test_robot",
-                is_3d=False,
-                robot_pose_2d=robot_pose_pb,
-                point_cloud=cloud_pb,
-                search_region_params_2d={"layout_cut": layout_cut,
-                                         "region_size": region_size,
-                                         "brush_size": brush_size})
+        #     self._sloop_client.UpdateSearchRegion(
+        #         agent_name="test_robot",
+        #         is_3d=True,
+        #         robot_pose_2d=robot_pose_pb,
+        #         point_cloud=cloud_pb,
+        #         search_region_params_2d={"layout_cut": layout_cut,
+        #                                  "region_size": region_size,
+        #                                  "brush_size": brush_size})
 
 if __name__ == "__main__":
     TestCase()

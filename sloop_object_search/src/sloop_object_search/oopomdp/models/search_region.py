@@ -15,8 +15,11 @@ class SearchRegion2D(SearchRegion):
 
 
 class SearchRegion3D(SearchRegion):
-    """The 3D search region is represented as a collection
-    of surfaces, using Open3D's datastructure; This is to
-    support reasoning about occlusion while being efficient."""
-    def __init__(self):
-        pass
+    """The 3D search region is represented as an octree.
+    We anticipate a 3D search region is necessary only for
+    local search.
+
+    Note that the default value of a node in this octree
+    should be zero (it is not a belief, it is occupancy)."""
+    def __init__(self, octree):
+        self.octree = octree

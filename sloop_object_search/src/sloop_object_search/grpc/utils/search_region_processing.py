@@ -237,3 +237,8 @@ def pcd_to_grid_map_2d(pcd, robot_position, existing_map=None, **kwargs):
         o3d.visualization.draw_geometries([pcd, pcd2])
 
     return return_map
+
+
+########### 3D search region ##############
+def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_search_region=None, **kwargs):
+    pass
