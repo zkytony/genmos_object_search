@@ -21,7 +21,7 @@ else:
     DEFAULT_VAL=1.
 
 class OctNode:
-    def __init__(self, x, y, z, res, parent=None, leaf=True):
+    def __init__(self, x, y, z, res, parent=None, leaf=True, default_val=DEFAULT_VAL):
         """
         DEF: node v represents a voxel centered at the position (x, y, z)
         at resolution r d , where d is the depth for node v. The voxel covers a volume
@@ -37,12 +37,13 @@ class OctNode:
         self.res = res
         self.parent = parent
         self.leaf = leaf
+        self.default_val = default_val
         if res > 1:
             self.children = {}# pos: (DEFAULT_VAL, None)
                              # for pos in OctNode.child_poses(x,y,z,res)}  # map from pos to (val, child)
         else:
             self.children = None
-            self.val = DEFAULT_VAL
+            self.val = self.default_val
 
     def __str__(self):
         num_children = 0 if self.children is None else len(self.children)
@@ -92,9 +93,9 @@ class OctNode:
                 child_coverage = (self.res // 2)**3
                 if LOG:
                     # DEFAULT_VAL is in log space.
-                    sum_children_vals += math.exp(DEFAULT_VAL)*((8-len(self.children))*child_coverage)
+                    sum_children_vals += math.exp(self.default_val)*((8-len(self.children))*child_coverage)
                 else:
-                    sum_children_vals += DEFAULT_VAL*((8-len(self.children))*child_coverage)
+                    sum_children_vals += self.default_val*((8-len(self.children))*child_coverage)
             if LOG:
                 return math.log(sum_children_vals)
             else:
@@ -116,9 +117,9 @@ class OctNode:
             if child_pos not in self.children:
                 # return default value
                 if LOG:
-                    return DEFAULT_VAL + math.log((self.res//2)**3)
+                    return self.default_val + math.log((self.res//2)**3)
                 else:
-                    return DEFAULT_VAL*((self.res//2)**3)
+                    return self.default_val*((self.res//2)**3)
             else:
                 return self.children[child_pos][0]
         else:
@@ -142,7 +143,7 @@ class OctNode:
             return None
 
 class Octree:
-    def __init__(self, objid, dimensions):
+    def __init__(self, objid, dimensions, default_val=DEFAULT_VAL):
         """
         Creates an octree for the given object id, covering volume of
         given dimensions (w,l,h). The depth of the tree is inferred
@@ -157,14 +158,15 @@ class Octree:
         self.depth = dmax
         self.root = OctNode(0, 0, 0, w)
         self.dimensions = dimensions
+        self.default_val = default_val
 
         # normalizer; we only need one normalizer at the ground level.
         # NOTE that the normalizer is not in log space.
         if LOG:
             # the default value is in log space; So we have to convert it.
-            self._normalizer = (w*l*h)*math.exp(DEFAULT_VAL)
+            self._normalizer = (w*l*h)*math.exp(self.default_val)
         else:
-            self._normalizer = (w*l*h)*DEFAULT_VAL
+            self._normalizer = (w*l*h)*self.default_val
 
         # stores locations where occupancy was once recorded
         self._known_voxels = {}

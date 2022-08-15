@@ -31,12 +31,12 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
 
     Each object is associated with an octree belief, separate from others.
     """
-    def __init__(self, width, length, height, objid, objclass, octree):
+    def __init__(self, width, length, height, objid, objclass, octree, default_val=DEFAULT_VAL):
         """For alpha, beta, gamma, refer to ObjectObservationModel."""
         self._objid = objid
         self._objclass = objclass
         self._octree = octree
-        self._gamma = DEFAULT_VAL
+        self._gamma = default_val
 
         # world dimensions
         self._width = width
