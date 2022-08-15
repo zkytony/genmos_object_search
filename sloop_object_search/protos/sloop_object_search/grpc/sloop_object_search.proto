@@ -89,3 +89,9 @@ message SearchRegionParams2D {
   optional double brush_size = 4;
   optional double region_size = 5;
 }
+
+
+message SearchRegionParams3D {
+  optional int32 octree_size = 1;
+  optional double search_space_resolution = 2;
+}
