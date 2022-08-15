@@ -29,7 +29,7 @@ class OctNode:
         equal-sized cubes at resolution r d /2. The finest resolution is 1.
 
         The resolution means how many ground-level cubes (along any dimension) is
-        covered by the coordinate (x,y,z).
+        covered by the coordinate (x,y,z). So it should be 1, 2, 4, 8, etc.
 
         default_val: the default value of a node at the ground level. Use 'value()'
             to get the value of this node.
@@ -183,6 +183,15 @@ class Octree:
 
     def valid_resolution(self, res):
         return res in self._known_voxels
+
+    def valid_voxel(self, x, y, z, res):
+        if res > self.dimensions[0]:
+            # Invalid resolution level, too big
+            return False
+        else:
+            return 0 <= x*res < self.dimensions[0]\
+                and 0 <= y*res < self.dimensions[0]\
+                and 0 <= z*res < self.dimensions[0]
 
     def known_voxels(self, res):
         """return set of voxel poses at resolution level"""
