@@ -142,7 +142,7 @@ class SpotOctreeBeliefPublisher:
         print("points incorporated to octree belief")
 
         voxels = self._octree_belief.octree.collect_plotting_voxels()
-        vp = [v[:3] for v in voxels]  # position in the world frame
+        vp = [v[:3] for v in voxels]
         vr = [v[3] for v in voxels]
         probs = [self._octree_belief._probability(*change_res(v[:3], 1, v[3]),
                                                   v[3])
