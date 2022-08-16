@@ -287,8 +287,7 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
         existing_search_region.grid_map.update_region(obstacles, free_locations)
         return_search_region = existing_search_region
     else:
-        grid_map = GridMap2(name=name, obstacles=obstacles,
-                            free_locations=free_locations, labels=None)
+        grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)
         return_search_region = SearchRegion2D(grid_map,
                                               region_origin=origin,
                                               grid_size=grid_size)

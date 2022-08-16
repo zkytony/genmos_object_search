@@ -35,8 +35,8 @@ for Multi-Object Search.
 
     Instead, one could specify /unreachable/ viewpoints through:
 
-    - When building the search region, give labels for grids in the occupancy grid
-      or points in point cloud that are unreachable.
+    - Inference from the search region. all obstacles (2D) and occupied nodes (3D)
+       are unreachable points.  <<reachable_viewpoints_design_1>>
 
     - Provide certain parameters in the configuration dict, such as "unreachable
       position inflation radius", and "planning region" (which limits the search
@@ -50,6 +50,14 @@ for Multi-Object Search.
     When the action is a viewpoint, it will respect the reachable viewpoints
     specification (see above)
 
+
+*** Labels in GridMap2 (last updated 08/15/2022)
+     Don't use labels there for the purpose of plain reachability. The
+     obstacles set is sufficient for that - see design decision on reachable points
+     ([[reachable_viewpoints_design_1]]).
+
+     The inflation radius of obstacles can be a function in GridMap2 - it is
+     simply a matter of adding more obstacles close to existing ones.
 
 
 ** Usage
