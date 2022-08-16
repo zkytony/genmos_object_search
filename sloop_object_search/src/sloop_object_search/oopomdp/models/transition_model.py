@@ -130,6 +130,47 @@ class RobotTransitionModel(ObjectTransitionModel):
             return self.sample_by_pose(pose, action)
 
 
+class RobotTransBasic2D(RobotTransitionModel):
+    def __init__(self, robot_id, detection_models,
+                 reachability_func, no_look=False, **transform_kwargs):
+        """Whether a position is reachable is determined by 'reachability_func'.
+        This function could be implemented by the agent that uses this model,
+        which has access to all the models and parameters that may determine
+        reachability."""
+        super().__init__(robot_id, detection_models, no_look=no_look)
+        self.reachability_func = reachability_func
+
+    def sample_by_pose(self, pose, action):
+        return RobotTransBasic2D.transform_pose(
+            pose, action, self.reachability_func,
+            **self.transform_kwargs)
+
+    @classmethod
+    def transform_pose(cls, pose, action,
+                       reachability_func=None,
+                       pos_precision="int",
+                       rot_precision=0.001):
+        original_pose = pose
+        rx, ry, rth = pose
+        # odometry motion model
+        if type(action) == tuple:
+            forward, angle = action
+        else:
+            forward, angle = action.motion
+        rth = (rth + angle) % 360
+        rx = rx + forward*math.cos(to_rad(rth))
+        ry = ry + forward*math.sin(to_rad(rth))
+        rx, ry, rth = (*fround(pos_precision, (rx, ry)),
+                       fround(rot_precision, rth))
+        if reachability_func is not None:
+            if reachability_func(rx, ry):
+                return (rx, ry, rth)
+            else:
+                return original_pose
+        else:
+            return (rx, ry, rth)
+
+
 ##################### Robot Transition (Topo) ##############################
 class RobotTransTopo(RobotTransitionModel):
     def __init__(self, robot_id, target_ids, topo_map,
@@ -201,3 +242,143 @@ class RobotTransTopo(RobotTransitionModel):
 
     def update(self, topo_map):
         self.topo_map = topo_map
+
+
+##################### Robot Transition (3D) ##############################
+class RobotTransBasic3D(RobotTransitionModel):
+    """robot movements over 3D grid"""
+    def __init__(self, robot_id, reachability_func,
+                 detection_models, no_look=False,
+                 **transform_kwargs):
+        """
+        Note that the detection models are expected to contain 3D frustum
+        camera models.
+
+        transform_kwargs:
+            pos_precision (default: 'int'): precision setting for transformed position
+            rot_precision (default: '0.001'): precision setting for transformed rotation
+            default_camera_direction (tuple): DEFAULT_3DCAMERA_LOOK_DIRECTION
+                [used by forward motion scheme]. Note that this corresponds to
+                the default robot's forward direction. If the robot has multiple
+                cameras, this should be set to the robot's default forward direction.
+                Note that the default camera direction is (0,0,-1) as the camera
+                model (FrustumCamera) by default looks at -z.
+        """
+        super().__init__(robot_id, detection_models, no_look=no_look)
+        self.reachability_func = reachability_func
+        self.transform_kwargs = transform_kwargs
+
+    def sample_by_pose(self, pose, action):
+        return RobotTransBasic3D.transform_pose(
+            pose, action, self.reachability_func,
+            **self.transform_kwargs)
+
+    @classmethod
+    def transform_pose(cls, pose, action,
+                       reachability_func=None,
+                       **kwargs):
+        """
+        Args:
+            pose (tuple): 7-element tuple that specify position and rotation.
+            action (MotionAction3D or tuple): The underlying motion is a tuple.
+                We can deal with two schemes of actions: 'axis' or 'forward',
+                which are identified by whether the first element of this action tuple
+                is a single number 'dforward' of a tuple (dx, dy, dz).
+            reachable_positions (set): set of positions (x, y, z) that are
+                reachable. If the transformed pose is not reachable, then
+                the original pose will be returned, indicating no transition happened.
+        """
+        if type(action) == tuple:
+            motion = action
+        elif isinstance(action, MotionAction3D):
+            motion = action.motion
+        else:
+            raise TypeError(f"action {action} is of invalid type")
+
+        if type(motion[0]) == tuple:
+            return cls._transform_pose_axis(pose, motion,
+                                            reachability_func=reachability_func,
+                                            **kwargs)
+        else:
+            return cls._transform_pose_forward(pose, motion,
+                                               reachability_func=reachability_func,
+                                               **kwargs)
+
+    @classmethod
+    def _transform_pose_axis(cls, pose, motion,
+                             reachability_func=None,
+                             pos_precision="int",
+                             rot_precision=0.001):
+        """pose transform where the action is specified by change
+
+        By default, motion specifies relative position and
+        rotation change.
+
+        Args:
+            pos_precision ('int' or float): precision of position
+            rot_precision ('int' or float): precision of rotation
+
+        """
+        x, y, z, qx, qy, qz, qw = pose
+        R = R_quat(qx, qy, qz, qw)
+        dpos, dth = motion
+
+        # if len(dth) == 3:
+        #     raise ValueError("Rotation motion should be specified by quaternion.")
+
+        new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
+        if reachability_func is not None:
+            if not reachable_positions(new_pos):
+                return pose
+
+        if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
+            R_prev = R
+            R_change = R_quat(*euler_to_quat(*dth))
+            R = R_change * R_prev
+        new_qrot = R.as_quat()
+        return (*new_pos, *fround(rot_precision, new_qrot))
+
+    @classmethod
+    def _transform_pose_forward(cls, pose, motion,
+                                reachability_func=None,
+                                pos_precision="int",
+                                rot_precision=0.001,
+                                default_camera_direction=DEFAULT_3DCAMERA_LOOK_DIRECTION):
+        """
+        pose transform where the action is specified by change
+
+        Note that motion in action is specified by
+           ((dx, dy, dz), (dthx, dthy, dthz))
+
+        camera_default_look_direction (tuple): Used to calculate
+            the current camera facing direction, which is given
+            by pose, relative to this default look direction.
+        """
+        # We transform this direction vector to the given pose, which gives
+        # us the current camera direction
+        robot_facing = get_camera_direction3d(
+            pose, default_camera_direction=default_camera_direction) # camere by default looks at (0,0,-1)
+        forward, dth = motion
+
+        # project this vector to xy plane, then obtain the "shadow" on xy plane
+        forward_vec = robot_facing*forward
+        xy_shadow = forward_vec - proj(forward_vec, np.array([0,0,1]))
+        dy = proj(xy_shadow[:2], np.array([0,1]), scalar=True)
+        dx = proj(xy_shadow[:2], np.array([1,0]), scalar=True)
+        yz_shadow = forward_vec - proj(forward_vec, np.array([1,0,0]))
+        dz = proj(yz_shadow[1:], np.array([0,1]), scalar=True)
+
+        dpos = (dx, dy, dz)
+        x, y, z, qx, qy, qz, qw = pose
+        new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
+        if reachability_func is not None:
+            if not reachable_positions(new_pos):
+                return pose
+
+        R = R_quat(qx, qy, qz, qw)
+        if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
+            R_prev = R
+            R_change = R_quat(*euler_to_quat(dth[0], dth[1], dth[2]))
+            R = R_change * R_prev
+        new_qrot = R.as_quat()
+        return (*new_pos, *fround(rot_precision, new_qrot))
