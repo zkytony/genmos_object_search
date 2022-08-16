@@ -5,7 +5,7 @@ ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
 config = {
     "planner_config": {
-        "planner": "sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner",
+        "planner": "sloop_object_search.oopomdp.deprecated.planner.hier2d.HierarchicalPlanner",
         "high_level_planner_args": {
             "max_depth": 20,
             "exploration_const": 1000,
@@ -24,7 +24,7 @@ config = {
     "task_config": {
         "max_steps": 100,
         "map_name": "austin",
-        "visualizer": "sloop_object_search.oopomdp.agent.VizSloopMosTopo",
+        "visualizer": "sloop_object_search.oopomdp.deprecated.agent.VizSloopMosTopo",
         "viz_params": {
             "res": 20
         },

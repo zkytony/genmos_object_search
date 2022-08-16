@@ -8,16 +8,16 @@ from tqdm import tqdm
 from sloop.agent import SloopAgent
 from sloop_object_search.utils.osm import osm_map_to_grid_map
 from sloop_object_search.utils.math import euclidean_dist, normalize
-from ..models.belief import Belief2D, BeliefTopo2D
+from sloop_object_search.oopomdp.deprecated.models.belief import Belief2D, BeliefTopo2D
 from .basic2d import (init_detection_models,
                       init_object_transition_models)
-from ..models.observation_model import (GMOSObservationModel,
-                                        RobotObservationModelTopo)
-from ..models.topo_map import TopoNode, TopoMap, TopoEdge
-from ..models.transition_model import RobotTransTopo
-from ..models.policy_model import PolicyModelTopo
-from ..models.reward_model import GoalBasedRewardModel
-from ..domain.state import RobotStateTopo
+from sloop_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
+                                                                  RobotObservationModelTopo)
+from sloop_object_search.oopomdp.models.topo_map import TopoNode, TopoMap, TopoEdge
+from sloop_object_search.oopomdp.models.transition_model import RobotTransTopo
+from sloop_object_search.oopomdp.models.policy_model import PolicyModelTopo
+from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from sloop_object_search.oopomdp.domain.state import RobotStateTopo
 
 
 class SloopMosTopo2DAgent(SloopAgent):

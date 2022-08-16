@@ -1,3 +1,4 @@
+# This is a sanity-check test designed for now depcrecated code.
 import copy
 import random
 import pomdp_py
@@ -6,13 +7,14 @@ import sloop.observation
 from sloop.osm.datasets import MapInfoDataset, FILEPATHS
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.utils.math import normalize
-from sloop_object_search.oopomdp.agent import (SloopMosBasic2DAgent,
-                                               VizSloopMosBasic2D,
-                                               SloopMosTopo2DAgent)
+
 from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState, RobotStateTopo
 from sloop_object_search.oopomdp.domain.action import LookAction
-from sloop_object_search.oopomdp.planner import make_planner
-from sloop_object_search.oopomdp.planner.hier2d import HierarchicalPlanner
+from sloop_object_search.oopomdp.deprecated.planner import make_planner
+from sloop_object_search.oopomdp.deprecated.planner.hier2d import HierarchicalPlanner
+from sloop_object_search.oopomdp.deprecated.agent import (SloopMosBasic2DAgent,
+                                                         VizSloopMosBasic2D,
+                                                         SloopMosTopo2DAgent)
 
 
 def ask_for_splang(sloop_agent, objspec=None):

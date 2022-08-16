@@ -3,15 +3,15 @@ from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
 from sloop_object_search.utils.osm import osm_map_to_grid_map
 from sloop_object_search.utils.misc import import_class, import_func
-from ..domain.state import RobotState
-from ..domain import action
-from ..models.transition_model import (StaticObjectTransitionModel,
-                                       RobotTransBasic2D)
-from ..models.observation_model import (GMOSObservationModel,
-                                        RobotObservationModel)
-from ..models.policy_model import PolicyModelBasic2D
-from ..models.reward_model import GoalBasedRewardModel
-from ..models.belief import BeliefBasic2D
+from sloop_object_search.oopomdp.domain.state import RobotState
+from sloop_object_search.oopomdp.domain import action
+from sloop_object_search.oopomdp.models.transition_model import (StaticObjectTransitionModel,
+                                                                 RobotTransBasic2D)
+from sloop_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
+                                                                  RobotObservationModel)
+from sloop_object_search.oopomdp.models.policy_model import PolicyModelBasic2D
+from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from sloop_object_search.oopomdp.deprecated.models.belief import BeliefBasic2D
 
 
 def init_detection_models(agent_config):
@@ -134,7 +134,6 @@ class MosBasic2DAgent(pomdp_py.Agent):
                 self.belief.update_object_belief(
                     self, objid, observation,
                     next_robot_state, action)
-
 
 
 class SloopMosBasic2DAgent(SloopAgent):

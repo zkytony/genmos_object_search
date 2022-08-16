@@ -1,12 +1,16 @@
+# ALL DEPRECATED. None of these is used in agent2.
+print("ALL DEPRECATED. None of these is used in agent2")
 import pomdp_py
+from deprecated import deprecated
 from tqdm import tqdm
-from .transition_model import StaticObjectTransitionModel
-from ..domain.state import (ObjectState,
-                            RobotState,
-                            RobotStateTopo)
-from .octree_belief import OctreeBelief, Octree
+
 from sloop_object_search.utils.math import normalize
 from sloop_object_search.oopomdp.domain.observation import GMOSObservation
+from sloop_object_search.oopomdp.models.transition_model import StaticObjectTransitionModel
+from sloop_object_search.oopomdp.domain.state import (ObjectState,
+                                                      RobotState,
+                                                      RobotStateTopo)
+from sloop_object_search.oopomdp.models.octree_belief import OctreeBelief, Octree
 from sloop.observation import SpatialLanguageObservation
 
 ##################### Belief 2D ##########################
@@ -72,7 +76,7 @@ class Belief2D(pomdp_py.OOBelief):
             object_beliefs[robot_id] = robot_belief
         super().__init__(object_beliefs)
 
-
+    @deprecated(reason="Not used in agent2. Belief update is handled by the agent.")
     def update_object_belief(self, agent, objid, observation,
                              next_robot_state, action,
                              observation_model=None):
@@ -107,8 +111,10 @@ class Belief2D(pomdp_py.OOBelief):
         belief_dist = pomdp_py.Histogram(normalize(belief_dist))
         self.set_object_belief(objid, belief_dist)
 
-
+# Deprecated; not used in agent2
 class BeliefBasic2D(Belief2D):
+
+    @deprecated(reason="Not used in agent2. Belief update is handled by the agent.")
     def update_robot_belief(self, observation, action):
         # Note: assumes robot state observable
         if isinstance(observation, SpatialLanguageObservation):
@@ -119,9 +125,10 @@ class BeliefBasic2D(Belief2D):
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
 
-
+# Deprecated; not used in agent2
 class BeliefTopo2D(Belief2D):
 
+    @deprecated(reason="Not used in agent2. Belief update is handled by the agent.")
     def update_robot_belief(self, observation, action):
         # Note: assumes robot state observable
         if isinstance(observation, SpatialLanguageObservation):

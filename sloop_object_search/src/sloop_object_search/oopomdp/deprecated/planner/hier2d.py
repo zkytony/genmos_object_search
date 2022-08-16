@@ -4,8 +4,8 @@ from sloop.agent import SloopAgent
 from ..agent.topo2d import SloopMosTopo2DAgent
 from ..agent.basic2d import MosBasic2DAgent
 from ..models.belief import BeliefBasic2D
-from ..domain.state import RobotState
-from ..domain.action import MotionActionTopo, StayAction, FindAction
+from ...domain.state import RobotState
+from ...domain.action import MotionActionTopo, StayAction, FindAction
 from .handlers import (LocalSearchHandler,
                        NavTopoHandler,
                        FindHandler,

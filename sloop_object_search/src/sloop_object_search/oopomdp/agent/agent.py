@@ -1,16 +1,35 @@
-from .basic2d import SloopMosBasic2DAgent
-from .topo2d import SloopMosTopo2DAgent
+import pomdp_py
+from sloop_object_search.oopomdp.models.search_region import SearchRegion2D
+from sloop_object_search.oopomdp.models.belief import Belief2D
 
-# deprecated
-def make_agent(_config, init_pose=None, grid_map=None):
-    print("Deprecation warning: 'make_agent' is no longer the supported"\
-          "method for creating an agent")
-    map_name = _config['task_config']["map_name"]
+class Mos2DAgent(pomdp_py.Agent):
+    """The top-level class for 2D agent. A 2D agent is
+    one who believes objects lie on a 2D plane, and it
+    carries a 2D sensor (e.g. fan-shaped sensor).
 
-    if init_pose is None:
-        raise ValueError("You must provide initial pose")
-    _robot = _config["agent_config"]["robot"]
-    _robot["init_pose"] = init_pose
-    agent = eval(_config["agent_config"]["agent_class"])(
-        _config["agent_config"], map_name, grid_map=grid_map)
-    return agent
+    The action space and transition model are not specified here."""
+    def __init__(self, agent_config, search_region,
+                 init_robot_belief,
+                 init_object_beliefs=None):
+        """
+        Args:
+            agent_config (dict): configuration for the agent
+            search_region (SearchRegion2D): 2d search region
+            init_robot_belief (pomdp_py.GenerativeDistribution): belief over robot state
+            init_object_beliefs (dict): maps from object id to pomdp_py.GenerativeDistribution
+        """
+        assert isinstance(search_region, SearchRegion2D),\
+            "search region of a 2D agent should of type SearchRegion2D."
+        self.agent_config = agent_config
+        self.search_region = search_region
+        robot = agent_config["robot"]
+        objects = agent_config["objects"]
+        self.target_objects = {target_id: objects[target_id]
+                               for target_id in self.agent_config["targets"]}
+
+        # Belief
+        if init_object_beliefs is None:
+            init_object_beliefs = Belief2D.init_object_beliefs(
+                self.target_objects, self.search_region,
+                prior=self.agent_config["belief"].get("prior", {}))
+        init_belief =
