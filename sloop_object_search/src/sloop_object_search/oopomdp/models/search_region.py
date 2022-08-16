@@ -1,7 +1,10 @@
 from sloop_object_search.utils.conversion import Frame, convert
 
 class SearchRegion:
-    """model of the search region"""
+    """model of the search region. The idea of search region is
+    it represents the set of possible object locations and it
+    also defines unreachable positions by the robot (because of
+    obstacles)."""
     def __init__(self, region_repr,
                  region_origin=None, search_space_resolution=None):
         """
@@ -68,6 +71,9 @@ class SearchRegion2D(SearchRegion):
 
     def to_grid_pos(self, world_point):
         return self.to_pomdp_pos(world_point)
+
+    def __iter__(self):
+        return iter(self.grid_map.free_locations)
 
 
 class SearchRegion3D(SearchRegion):

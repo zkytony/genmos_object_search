@@ -1,6 +1,6 @@
 import pomdp_py
-from sloop_object_search.oopomdp.models.search_region import SearchRegion2D
-from sloop_object_search.oopomdp.models.belief import Belief2D
+from ..models.search_region import SearchRegion2D
+from . import belief
 
 class Mos2DAgent(pomdp_py.Agent):
     """The top-level class for 2D agent. A 2D agent is
@@ -24,12 +24,14 @@ class Mos2DAgent(pomdp_py.Agent):
         self.search_region = search_region
         robot = agent_config["robot"]
         objects = agent_config["objects"]
+        self.robot_id = robot['id']
         self.target_objects = {target_id: objects[target_id]
                                for target_id in self.agent_config["targets"]}
 
         # Belief
         if init_object_beliefs is None:
-            init_object_beliefs = Belief2D.init_object_beliefs(
+            init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
                 prior=self.agent_config["belief"].get("prior", {}))
-        init_belief =
+        init_belief = pomdp_py.OOBelief({robot_id: init_robot_belief,
+                                         **init_object_beliefs})
