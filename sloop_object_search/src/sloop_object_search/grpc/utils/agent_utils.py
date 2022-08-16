@@ -18,7 +18,8 @@ def create_agent(agent_name, agent_config_world, robot_pose, search_region):
         "agent_class": (str)
         "robot": {"detectors": {<objid>: detectors_config},
                   "id": "robot_id",
-                  "primitive_moves": primitive_moves_config}
+                  "primitive_moves": primitive_moves_config,
+                  "localization_model": (str; default 'identity')}
         "objects": {<objid>: object_config}
         "targets": [<objid>]
         "no_look": (bool)
@@ -37,6 +38,8 @@ def create_agent(agent_name, agent_config_world, robot_pose, search_region):
     """
     _validate_agent_config(agent_config_pomdp)
     agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(agent_config_world)
+    agent_class = eval(agent_config_pomdp["agent_class"])
+
 
 
 
@@ -51,7 +54,7 @@ def _validate_agent_config(agent_config):
         raise KeyError("'objects' must exist agent_config")
     if "targets" not in agent_config:
         raise KeyError("'targets' must exist agent_config")
-    agent_config['no_look'] = agent_config.get('no_look', False)
+    agent_config['no_look'] = agent_config.get('no_look', True)
     if agent_config['agent_class'] not in AGENT_CLASS_2D\
        and agent_config['agent_class'] not in AGENT_CLASS_3D:
         raise ValueError(f"Agent class {agent_config['agent_class']} not recognized.")
