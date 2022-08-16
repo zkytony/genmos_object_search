@@ -70,9 +70,10 @@ class RobotObservation(pomdp_py.SimpleObservation):
             return self.pose[:3]
 
     @staticmethod
-    def from_state(srobot):
+    def from_state(srobot, pose=None):
+        """If 'pose' is set, it overrides the pose in srobot"""
         return RobotObservation(srobot['id'],
-                                srobot['pose'],
+                                pose if pose is None else srobot['pose'],
                                 srobot['objects_found'],
                                 srobot['camera_direction'])
 
@@ -89,9 +90,9 @@ class RobotObservationTopo(RobotObservation):
         return self.data[-1]
 
     @staticmethod
-    def from_state(srobot):
+    def from_state(srobot, pose=None):
         return RobotObservationTopo(srobot['id'],
-                                    srobot['pose'],
+                                    pose if pose is None else srobot['pose'],
                                     srobot['objects_found'],
                                     srobot['camera_direction'],
                                     srobot['topo_nid'])

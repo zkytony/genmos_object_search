@@ -76,6 +76,11 @@ def approx_equal(v1, v2, epsilon=1e-6):
             return False
     return True
 
+def identity(a, b, epsilon=1e-9):
+    if a == b:
+        return 1 - epsilon
+    else:
+        return epsilon
 
 ######## Conversions
 def to_radians(th):

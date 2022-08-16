@@ -30,7 +30,7 @@ from ..domain.observation import (ObjectDetection,
                                   RobotObservation,
                                   RobotObservationTopo,
                                   GMOSObservation)
-
+from sloop_object_search.utils.math import identity
 
 ### Observation models
 class ObjectDetectionModel:
@@ -67,10 +67,32 @@ class ObjectDetectionModel:
         raise NotImplementedError
 
 
+class LocalizationModel:
+    """Pr(z_pose | s_pose)"""
+    def sample(self, robot_pose):
+        raise NotImplementedError()
+    def probability(self, z_pose, robot_pose):
+        raise NotImplementedError()
+
+
+class IdentityLocalizationModel(LocalizationModel):
+    def sample(self, robot_pose):
+        return robot_pose
+    def probability(self, z_pose, robot_pose):
+        return identity(z_pose, robot_pose)
+
+
 class RobotObservationModel(pomdp_py.ObservationModel):
-    """Pr(zrobot | srobot); default is identity"""
-    def __init__(self, robot_id):
+    def __init__(self, robot_id, localization_model=None, epsilon=1e-9):
+        """Pr(zrobot | srobot); there could be noise in
+        robot localization, i.e. pose, but other fields
+        of RobotObservation are perfectly observed. If
+        localization_model is None, then it's set to identity."""
         self.robot_id = robot_id
+        if localization_model is None:
+            localization_model = IdentityLocalizationModel()
+        self.localization_model = localization_model
+        self.epsilon = epsilon
 
     @property
     def observation_class(self):
@@ -78,13 +100,21 @@ class RobotObservationModel(pomdp_py.ObservationModel):
 
     def sample(self, snext, action):
         srobot_next = snext.s(self.robot_id)
-        robotobz = self.observation_class.from_state(srobot_next)
-        return robotobz
+        pose_observed = self.localization_model.sample(srobot_next["pose"])
+        robot_obz = self.observation_class.from_state(srobot_next, pose=pose_observed)
+        return robot_obz
 
     def probability(self, zrobot, snext, action):
         srobot_next = snext.s(self.robot_id)
-        srobot_from_z = srobot_next.__class__.from_obz(zrobot)
-        return identity(srobot_from_z, srobot)
+        zrobot_from_state = self.observation_class.from_state(
+            srobot_next, pose=zrobot.pose)
+        if zrobot_from_state != zrobot:
+            return self.epsilon
+        else:
+            z_pose = zrobot.pose
+            s_pose = srobot_next.pose
+            pr_pose = self.localization_model.probability(z_pose, s_pose)
+            return pr_pose
 
 
 class RobotObservationModelTopo(RobotObservationModel):

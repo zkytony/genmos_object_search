@@ -121,7 +121,11 @@ class BeliefBasic2D(Belief2D):
             # spatial language doesn't involve robot
             return
 
-        next_robot_state = RobotState.from_obz(observation.z(self.robot_id))
+        zrobot = observation.z(self.robot_id)
+        next_robot_state = RobotState(zrobot.robot_id,
+                                      zrobot.pose,
+                                      zrobot.objects_found,
+                                      zrobot.camera_direction)
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
 
@@ -139,7 +143,12 @@ class BeliefTopo2D(Belief2D):
             # we don't have observation about the robot; so skip
             return
 
-        next_robot_state = RobotStateTopo.from_obz(observation.z(self.robot_id))
+        zrobot = observation.z(self.robot_id)
+        next_robot_state = RobotStateTopo(zrobot.robot_id,
+                                          zrobot.pose,
+                                          zrobot.objects_found,
+                                          zrobot.camera_direction,
+                                          zrobot.topo_nid)
         self.set_object_belief(
             self.robot_id, pomdp_py.Histogram({next_robot_state: 1.0}))
 
