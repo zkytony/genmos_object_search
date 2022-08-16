@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from sloop_object_search.grpc import common_pb2 as sloop__object__search_dot_grpc_dot_common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n*sloop_object_search/grpc/observation.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\"\xe2\x01\n\rOccupancyGrid\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12;\n\x05grids\x18\x03 \x03(\x0b\x32,.sloop_object_search.grpc.OccupancyGrid.Grid\x1aP\n\x04Grid\x12+\n\x03pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec2\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\r\n\x05label\x18\x03 \x01(\t\"\xd1\x01\n\nPointCloud\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12:\n\x06points\x18\x03 \x03(\x0b\x32*.sloop_object_search.grpc.PointCloud.Point\x1a\x43\n\x05Point\x12+\n\x03pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\r\n\x05label\x18\x02 \x01(\t\"\x80\x02\n\x0fObjectDetection\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12I\n\ndetections\x18\x03 \x03(\x0b\x32\x35.sloop_object_search.grpc.ObjectDetection.Detection3D\x1a^\n\x0b\x44\x65tection3D\x12\r\n\x05label\x18\x01 \x01(\t\x12\x12\n\nconfidence\x18\x02 \x01(\x02\x12,\n\x03\x62ox\x18\x03 \x01(\x0b\x32\x1f.sloop_object_search.grpc.Box3D\"\\\n\x08Language\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0c\n\x04text\x18\x03 \x01(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n*sloop_object_search/grpc/observation.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\"\xd3\x01\n\rOccupancyGrid\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12;\n\x05grids\x18\x03 \x03(\x0b\x32,.sloop_object_search.grpc.OccupancyGrid.Grid\x1a\x41\n\x04Grid\x12+\n\x03pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec2\x12\x0c\n\x04type\x18\x02 \x01(\t\"\xc2\x01\n\nPointCloud\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12:\n\x06points\x18\x03 \x03(\x0b\x32*.sloop_object_search.grpc.PointCloud.Point\x1a\x34\n\x05Point\x12+\n\x03pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\"\x80\x02\n\x0fObjectDetection\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12I\n\ndetections\x18\x03 \x03(\x0b\x32\x35.sloop_object_search.grpc.ObjectDetection.Detection3D\x1a^\n\x0b\x44\x65tection3D\x12\r\n\x05label\x18\x01 \x01(\t\x12\x12\n\nconfidence\x18\x02 \x01(\x02\x12,\n\x03\x62ox\x18\x03 \x01(\x0b\x32\x1f.sloop_object_search.grpc.Box3D\"\\\n\x08Language\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0c\n\x04text\x18\x03 \x01(\tb\x06proto3')
 
 
 
@@ -82,17 +82,17 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   _OCCUPANCYGRID._serialized_start=112
-  _OCCUPANCYGRID._serialized_end=338
+  _OCCUPANCYGRID._serialized_end=323
   _OCCUPANCYGRID_GRID._serialized_start=258
-  _OCCUPANCYGRID_GRID._serialized_end=338
-  _POINTCLOUD._serialized_start=341
-  _POINTCLOUD._serialized_end=550
-  _POINTCLOUD_POINT._serialized_start=483
-  _POINTCLOUD_POINT._serialized_end=550
-  _OBJECTDETECTION._serialized_start=553
-  _OBJECTDETECTION._serialized_end=809
-  _OBJECTDETECTION_DETECTION3D._serialized_start=715
-  _OBJECTDETECTION_DETECTION3D._serialized_end=809
-  _LANGUAGE._serialized_start=811
-  _LANGUAGE._serialized_end=903
+  _OCCUPANCYGRID_GRID._serialized_end=323
+  _POINTCLOUD._serialized_start=326
+  _POINTCLOUD._serialized_end=520
+  _POINTCLOUD_POINT._serialized_start=468
+  _POINTCLOUD_POINT._serialized_end=520
+  _OBJECTDETECTION._serialized_start=523
+  _OBJECTDETECTION._serialized_end=779
+  _OBJECTDETECTION_DETECTION3D._serialized_start=685
+  _OBJECTDETECTION_DETECTION3D._serialized_end=779
+  _LANGUAGE._serialized_start=781
+  _LANGUAGE._serialized_end=873
 # @@protoc_insertion_point(module_scope)

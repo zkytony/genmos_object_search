@@ -49,7 +49,7 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 
     points_pb = []
     for p in points_xyz_array:
-        point_pb = PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]), label="")
+        point_pb = PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]))
         points_pb.append(point_pb)
 
     header = Header(stamp=Timestamp().GetCurrentTime(),
@@ -60,8 +60,9 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 
 
 def pointcloudproto_to_array(point_cloud):
-    return np.array([[p.pos.x, p.pos.y, p.pos.z]
-                     for p in point_cloud.points])
+    points_array = np.array([[p.pos.x, p.pos.y, p.pos.z]
+                             for p in point_cloud.points])
+    return points_array
 
 
 def make_header(frame_id=None, stamp=None):

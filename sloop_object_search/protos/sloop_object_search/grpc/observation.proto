@@ -14,12 +14,11 @@ import "sloop_object_search/grpc/common.proto";
 
 // Occupancy grid: a 2D representation of the whole or a region of the search
 // environment as a set of grid locations, each could be either free, occupied
-// or unknown, and can have a string label.
+// or unknown
 message OccupancyGrid {
   message Grid {
     Vec2 pos = 1;
-    string type = 2;
-    string label = 3;
+    string type = 2;  // free, occupied, or unknown
   }
 
   Header header = 1;
@@ -29,12 +28,10 @@ message OccupancyGrid {
 
 
 // Point cloud: a 3D representation of the whole or a region of the search
-// environment as a set of points. Each point has a x, y, z location and
-// a string label.
+// environment as a set of points. Each point has a x, y, z location.
 message PointCloud {
   message Point {
     Vec3 pos = 1;
-    string label = 2;
   }
 
   Header header = 1;
