@@ -64,6 +64,6 @@ config = {
             }
         },
         "spacy_model": "en_core_web_lg",
-        "foref_models_dir": os.path.join(ABS_PATH, "../../models")
+        "foref_models_dir": os.path.join(ABS_PATH, "../../../models")
     },
 }
