@@ -1,0 +1,75 @@
+* sloop_object_search
+
+SLOOP (Spatial Language Understanding Object-Oriented POMDP)
+for Multi-Object Search.
+
+** sloop object search package design decisions
+*** Objective (last updated 08/15/2022)
+    sloop object search package is an object search package that:
+
+     - [ ] Performs hierarchical object search with 3D local search and 2D global search
+     - [ ] Allows specification of correlation between objects
+     - [ ] Allows incremental update of the underlying search region
+     - [ ] Permits the use of spatial language over the 2D global search region.
+
+
+*** gRPC calls as the core interface (last updated 08/15/2022)
+    sloop_object_search is **robot-middleware-independent**. This implementation allows:
+
+    1. Direct creation of SLOOP object search agents in Python through imports
+    2. Running the object search POMDP agent as a server that accepts gRPC calls.
+
+    The first option allows developers to build upon the source code of the POMDP agent.
+    The second option allows the agent to be run as a "backend" of a robotic system,
+    regardless of the middleware, as long as proper gRPC calls are made.
+
+
+*** Specification of Search Region (last updated 08/15/2022)
+    2D search region, designed for global search, is fundamentally a occupancy grid map.
+        this can be built from a point cloud or an occupancy grid map
+    3D search region, designed for local search, is fundamentally an occupancy octree
+        this can be built from a point cloud
+
+*** Specification of Reachable Viewpoints (last updated 08/15/2022)
+    There is no direct specification of reachable viewpoints.
+
+    Instead, one could specify /unreachable/ viewpoints through:
+
+    - When building the search region, give labels for grids in the occupancy grid
+      or points in point cloud that are unreachable.
+
+    - Provide certain parameters in the configuration dict, such as "unreachable
+      position inflation radius", and "planning region" (which limits the search
+      space considered during planning)
+
+*** Specification of (Primitive) Actions (last updated 08/15/2022)
+    The global search agent's action space is based on topological graph nodes.
+    The local search agent's action space is based on either relative moves,
+       or a set of sampled viewpoints within the local region (like a topograph but fully connected)
+
+    When the action is a viewpoint, it will respect the reachable viewpoints
+    specification (see above)
+
+
+
+** Usage
+
+*** Launch the sloop_object_search gRPC server
+#+begin_src
+python -m sloop_object_search.grpc.server
+#+end_src
+
+
+** Set up sloop_object_search for ROS
+
+1. Go to the 'src' folder of your ROS workspace.
+2. Create a symbolic link to the `sloop_object_search/ros` folder, and name that
+   symbolic link "sloop_object_search." That is,
+   #+begin_src
+   ln -s /path/to/sloop_object_search/ros sloop_object_search_ros
+   #+end_src
+
+3. Compile the package
+   #+begin_src
+   catkin_make -DCATKLIN_WHITELIST_PACKAGES="sloop_object_search_ros"
+   #+end_src
