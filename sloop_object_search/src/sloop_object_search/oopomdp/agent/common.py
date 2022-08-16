@@ -30,6 +30,44 @@ def interpret_localization_model(robot_config):
         return import_class(localization_model)(
             **robot_config.get("localization_model_args", {}))
 
+def init_object_transition_models(agent_config):
+    objects = agent_config["objects"]
+    transition_models = {}
+    for objid in objects:
+        object_trans_model =\
+            import_class(objects[objid]["transition"]["class"])(
+                objid, **objects[objid]["transition"].get("params", {})
+            )
+        transition_models[objid] = object_trans_model
+    return transition_models
+
+def init_primitive_movements(action_config):
+    """
+    actions could be configured by:
+    - either a list of dicts, {'class': "<action_class>",
+                               'params': ... [params to build an action object]}
+    - or a single dict {'function': "<function>",
+                        'params': ...[params to the function]],
+         where the function returns a list of actions.
+
+    The result of parsing action_config should be
+    a list of action objects, used as part of the action space during planning.
+    """
+    if type(action_config) != list\
+       and "func" not in action_config:
+        raise ValueError("Invalid action config; needs 'func',"
+                         "or a list of action specs")
+    if type(action_config) == list:
+        actions = []
+        for action_spec in action_config:
+            action = import_class(action_spec["class"])(
+                **action_spec["params"])
+            actions.append(action)
+    else:
+        actions = import_func(action_config["func"])(
+            **action_config["params"])
+    return actions
+
 
 class MosAgent(pomdp_py.Agent):
     """The top-level class for a mult-object search agent.
@@ -49,7 +87,7 @@ class MosAgent(pomdp_py.Agent):
         self.search_region = search_region
         robot = agent_config["robot"]
         objects = agent_config["objects"]
-        no_look = agent_config.get("no_look", True)
+        self.no_look = agent_config.get("no_look", True)
         self.robot_id = robot['id']
         self.target_objects = {target_id: objects[target_id]
                                for target_id in self.agent_config["targets"]}
@@ -70,14 +108,14 @@ class MosAgent(pomdp_py.Agent):
         observation_model = GMOSObservationModel(
             robot["id"], detection_models,
             robot_observation_model=robot_observation_model,
-            no_look=no_look)
+            no_look=self.no_look)
 
         # Reward model
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
         # Transition and policy models
-        transition_model = self.initialize_transition_model()
-        policy_model = self.initialize_policy_model()
+        transition_model = self.init_transition_model()
+        policy_model = self.init_policy_model()
 
         super().__init__(init_belief,
                          policy_model,
@@ -85,11 +123,20 @@ class MosAgent(pomdp_py.Agent):
                          observation_model,
                          reward_model)
 
-    def initialize_transition_model(self):
+    def init_transition_model(self):
         raise NotImplementedError()
 
-    def initialize_policy_model(self):
+    def init_policy_model(self):
         raise NotImplementedError()
+
+    def reachable(self, pos):
+        """Returns True if the given position (as in a viewpoint)
+        is reachable by this agent."""
+        raise NotImplementedError
+
+    @property
+    def detection_models(self):
+        return self.observation_model.detection_models
 
 
 class SloopMosAgent(SloopAgent):

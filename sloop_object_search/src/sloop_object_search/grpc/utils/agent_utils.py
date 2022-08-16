@@ -18,8 +18,9 @@ def create_agent(agent_name, agent_config_world, robot_pose, search_region):
         "agent_class": (str)
         "robot": {"detectors": {<objid>: detectors_config},
                   "id": "robot_id",
-                  "primitive_moves": primitive_moves_config,
-                  "localization_model": (str; default 'identity')}
+                  "action": action_config (e.g. primitive moves),
+                  "localization_model": (str; default 'identity'),
+                  "transition":  args for robot transition model}
         "objects": {<objid>: object_config}
         "targets": [<objid>]
         "no_look": (bool)
@@ -63,6 +64,12 @@ def _validate_agent_config(agent_config):
     for target_id in agent_config["targets"]:
         if target_id not in agent_config["objects"]:
             raise ValueError(f"target {target_id} is not a defined object.")
+
+    # check if certain robot configs are present
+    if "action" not in agent_config["robot"]:
+        raise ValueError("Requires 'action' to be set in agent_config['robot'].")
+    if "id" not in agent_config["robot"]:
+        raise ValueError("Requires 'id' to be set in agent_config['robot'].")
 
     # Check if detectors are for valid objects
     if "detectors" not in agent_config["robot"]:

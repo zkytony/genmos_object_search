@@ -83,5 +83,4 @@ class SpatialLanguageObservationModel(pomdp_py.ObservationModel):
             dict {loc -> prob} where 'loc' is a location on the map and 'prob'
             is a float between 0.0 and 1.0
         """
-
         raise NotImplementedError
