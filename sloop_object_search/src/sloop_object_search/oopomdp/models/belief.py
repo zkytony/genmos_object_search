@@ -29,9 +29,22 @@ class Belief2D(pomdp_py.OOBelief):
                 belief_dist[state] = 1.0 / len(search_region)
         return pomdp_py.Histogram(belief_dist)
 
+    @staticmethod
+    def init_object_beliefs(target_objects, search_region, prior=None):
+        """prior: dictionary objid->{loc->prob}"""
+        object_beliefs = {}
+        if prior is None:
+            prior = {}
+        for objid in target_objects:
+            target = target_objects[objid]
+            object_beliefs[objid] = Belief2D.init_object_belief(
+                objid, target['class'], search_region, prior=prior)
+        return object_beliefs
+
     def __init__(self,
-                 robot_state,
                  target_objects,
+                 robot_state=None,
+                 robot_belief=None,
                  belief_config=None,
                  search_region=None,
                  object_beliefs=None):
@@ -39,19 +52,24 @@ class Belief2D(pomdp_py.OOBelief):
         self.robot_id = robot_state["id"]
         self.search_region = search_region
         self.target_objects = target_objects
-        robot_belief = pomdp_py.Histogram({robot_state:1.0})
+        if robot_belief is None:
+            assert robot_state is not None,\
+                "either 'robot_belief' or 'robot_state' is needed"
+            robot_belief = pomdp_py.Histogram({robot_state:1.0})
+        robot_id = robot_belief.random()["id"]
         if object_beliefs is not None:
-            object_beliefs[robot_state["id"]] = robot_belief
+            object_beliefs[robot_id] = robot_belief
+
         else:
+            assert search_region is not None,\
+                "search region is required to initialize belief"
             prior = belief_config.get("prior", {})
             if type(prior) != dict:
                 prior = {}
 
-            object_beliefs = {robot_state["id"]: robot_belief}
-            for objid in target_objects:
-                target = target_objects[objid]
-                object_beliefs[objid] = Belief2D.init_object_belief(
-                    objid, target['class'], search_region, prior=prior)
+            object_beliefs = Belief2D.init_object_beliefs(
+                target_objects, search_region, prior=prior)
+            object_beliefs[robot_id] = robot_belief
         super().__init__(object_beliefs)
 
 

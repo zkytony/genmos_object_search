@@ -63,7 +63,7 @@ def main(_config):
     max_steps = _config["task_config"]["max_steps"]
 
     # Just grab a random state as initial state
-    random.seed(100)
+    random.seed(150)
     init_state = agent.belief.random()
     task_env = pomdp_py.Environment(init_state,
                                     agent.transition_model,

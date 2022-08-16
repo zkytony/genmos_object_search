@@ -76,9 +76,9 @@ class SloopMosTopo2DAgent(SloopAgent):
         # Reward Model
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
-        init_belief = BeliefTopo2D(init_robot_state,
-                                   self.target_objects,
-                                   agent_config["belief"],
+        init_belief = BeliefTopo2D(self.target_objects,
+                                   robot_state=init_robot_state,
+                                   belief_config=agent_config["belief"],
                                    object_beliefs=init_object_beliefs,
                                    search_region=search_region)
 

@@ -113,9 +113,9 @@ class MosBasic2DAgent(pomdp_py.Agent):
 
             target_objects = {objid: objects[objid]
                               for objid in target_ids}
-            init_belief = BeliefBasic2D(init_robot_state,
-                                        target_objects,
-                                        agent_config["belief"],
+            init_belief = BeliefBasic2D(target_objects,
+                                        belief_config=agent_config["belief"],
+                                        robot_state=init_robot_state,
                                         search_region=search_region,
                                         object_beliefs=agent_config.get("object_beliefs", None))
         super().__init__(init_belief,

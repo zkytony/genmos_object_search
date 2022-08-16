@@ -54,8 +54,8 @@ class HierarchicalPlanner(pomdp_py.Planner):
                                       srobot_topo.pose,
                                       srobot_topo.objects_found,
                                       srobot_topo.camera_direction)
-        init_belief = BeliefBasic2D(init_robot_state,
-                                    self._topo_agent.target_objects,
+        init_belief = BeliefBasic2D(self._topo_agent.target_objects,
+                                    robot_state=init_robot_state,
                                     object_beliefs=dict(self._topo_agent.belief.object_beliefs))
         agent = MosBasic2DAgent(agent_config,
                                 self._topo_agent.grid_map,

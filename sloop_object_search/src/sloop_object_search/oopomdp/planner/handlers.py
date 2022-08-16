@@ -24,8 +24,8 @@ class SubgoalHandler:
                             srobot_topo.pose,
                             srobot_topo.objects_found,
                             srobot_topo.camera_direction)
-        belief = BeliefBasic2D(srobot,
-                               self._topo_agent.target_objects,
+        belief = BeliefBasic2D(self._topo_agent.target_objects,
+                               robot_state=srobot,
                                object_beliefs=dict(self._topo_agent.belief.object_beliefs))
         self._mos2d_agent.set_belief(belief)
 
