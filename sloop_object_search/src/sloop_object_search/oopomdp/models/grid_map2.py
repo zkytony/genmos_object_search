@@ -230,3 +230,8 @@ class GridMap2:
         """
         min_corner = self.min_corner
         return (x + min_corner[0], y + min_corner[1])
+
+    def inflate_obstacles(self, inflation_radius):
+        """Add more obstacles close to existing ones, within
+        the given inflation_radius."""
+        raise NotImplementedError()
