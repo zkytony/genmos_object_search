@@ -71,7 +71,7 @@ class FanModelYoonseon(FanModel):
             gamma = epsilon
         return alpha, beta, gamma
 
-    def probability(self, zi, si, srobot, a=None):
+    def probability(self, zi, si, srobot):
         """
         zi (LocDetection)
         si (HLObjectstate)
@@ -103,7 +103,7 @@ class FanModelYoonseon(FanModel):
         prob += pr_c * gamma
         return prob
 
-    def sample(self, si, srobot, a=None, return_event=False):
+    def sample(self, si, srobot, return_event=False):
         sigma, epsilon = self.params
         alpha, beta, gamma = self._compute_params(
             srobot.in_range(self.sensor, si), epsilon)
@@ -158,7 +158,7 @@ class FanModelNoFP(FanModel):
     def sigma(self):
         return self.params[1]
 
-    def probability(self, zi, si, srobot, a=None):
+    def probability(self, zi, si, srobot):
         """
         zi (LocDetection)
         si (HLObjectstate)
@@ -183,7 +183,7 @@ class FanModelNoFP(FanModel):
                 return 1e-12
 
 
-    def sample(self, si, srobot, a=None, return_event=False):
+    def sample(self, si, srobot, return_event=False):
         in_range = srobot.in_range(self.sensor, si)
         if in_range:
             if random.uniform(0,1) <= self.detection_prob:
@@ -242,7 +242,7 @@ class FanModelSimpleFP(FanModel):
     def false_pos_rate(self):
         return self.params[1]
 
-    def probability(self, zi, si, srobot, a=None):
+    def probability(self, zi, si, srobot):
         """
         zi (LocDetection)
         si (HLObjectstate)
@@ -283,7 +283,7 @@ class FanModelSimpleFP(FanModel):
                 return self.false_pos_rate / self.sensor.sensor_region_size
 
 
-    def sample(self, si, srobot, a=None, return_event=False):
+    def sample(self, si, srobot, return_event=False):
         in_range = srobot.in_range(self.sensor, si)
         if in_range:
             if random.uniform(0,1) <= self.detection_prob:
@@ -356,7 +356,7 @@ class FanModelFarRange(FanModel):
     def false_pos_rate(self):
         return self.params[1]
 
-    def probability(self, zi, si, srobot, a=None):
+    def probability(self, zi, si, srobot):
         """
         zi (LocDetection)
         si (HLObjectstate)
@@ -405,7 +405,7 @@ class FanModelFarRange(FanModel):
                 return distance_weight * self.false_pos_rate / self.sensor.sensor_region_size
 
 
-    def sample(self, si, srobot, a=None, return_event=False):
+    def sample(self, si, srobot, return_event=False):
         in_range = srobot.in_range(self.sensor, si)
 
         # si is detectable if it is also within the average detection
@@ -472,7 +472,7 @@ class FanModelSimpleFPLabelOnly(FanModel):
     def false_pos_rate(self):
         return self.params[1]
 
-    def probability(self, zi, si, srobot, a=None):
+    def probability(self, zi, si, srobot):
         """
         zi (LocDetection)
         si (HLObjectstate)
@@ -493,7 +493,7 @@ class FanModelSimpleFPLabelOnly(FanModel):
             else:
                 return self.false_pos_rate
 
-    def sample(self, si, srobot, a=None, return_event=False):
+    def sample(self, si, srobot, return_event=False):
         in_range = srobot.in_range(self.sensor, si)
         if in_range:
             if random.uniform(0,1) <= self.detection_prob:
@@ -567,7 +567,7 @@ class FrustumVoxelAlphaBeta(FrustumModel):
         else:
             return octree.DEFAULT_VAL
 
-    def sample(self, si, srobot, a=None, return_event=False):
+    def sample(self, si, srobot, return_event=False):
         voxel = Voxel(si.loc, Voxel.UNKNOWN)
         if srobot.in_range(self.sensor, si):
             if FrustumCamera.sensor_functioning(
@@ -577,6 +577,6 @@ class FrustumVoxelAlphaBeta(FrustumModel):
                 voxel.label = Voxel.OTHER
         return voxel
 
-    def probability(self, zi, si, srobot, a=None):
+    def probability(self, zi, si, srobot):
         raise ValueError("per-voxel observation model is not"
                          "meant for belief update.")
