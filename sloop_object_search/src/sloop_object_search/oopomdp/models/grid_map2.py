@@ -123,13 +123,10 @@ class GridMap2:
 
     def __eq__(self, other):
         if isinstance(other, GridMap2):
-            return self.all_grids == other.all_grids\
+            return self.obstacles == other.obstacles\
+                and self.free_locations == other.free_locations\
                 and self.labels == other.labels\
                 and self.name == other.name
-
-    @property
-    def all_grids(self):
-        return self.free_locations | self.obstacles
 
     def grid_type(self, loc):
         if loc in self.free_locations:
@@ -147,9 +144,9 @@ class GridMap2:
     def width(self):
         if self._width_cache is not None:
             return self._width_cache
-        all_grids = self.all_grids
-        min_x = min(all_grids, key=lambda g: g[0])[0]
-        max_x = max(all_grids, key=lambda g: g[0])[0]
+        all_known_grids = self.free_locations | self.obstacles
+        min_x = min(all_known_grids, key=lambda g: g[0])[0]
+        max_x = max(all_known_grids, key=lambda g: g[0])[0]
         w = max_x - min_x
         self._width_cache = w
         return w
@@ -158,9 +155,9 @@ class GridMap2:
     def length(self):
         if self._length_cache is not None:
             return self._length_cache
-        all_grids = self.all_grids
-        min_y = min(all_grids, key=lambda g: g[1])[1]
-        max_y = max(all_grids, key=lambda g: g[1])[1]
+        all_known_grids = self.free_locations | self.obstacles
+        min_y = min(all_known_grids, key=lambda g: g[1])[1]
+        max_y = max(all_known_grids, key=lambda g: g[1])[1]
         l = max_y - min_y
         self._length_cache = l
         return l
@@ -184,9 +181,9 @@ class GridMap2:
         """
         if self._min_corner_cache is not None:
             return self._min_corner_cache
-        all_grids = self.all_grids
-        min_x = min(all_grids, key=lambda g: g[0])[0]
-        min_y = min(all_grids, key=lambda g: g[1])[1]
+        all_known_grids = self.free_locations | self.obstacles
+        min_x = min(all_known_grids, key=lambda g: g[0])[0]
+        min_y = min(all_known_grids, key=lambda g: g[1])[1]
         c = (min_x, min_y)
         self._min_corner_cache = c
         return c
@@ -237,6 +234,24 @@ class GridMap2:
         the given inflation_radius."""
         raise NotImplementedError()
 
+
+    def filter_by_label(self, label):
+        """Returns a set of locations with the given labe.
+        The result of this is purely based on what's in self.labels"""
+        return {loc for loc in self.labels
+                if label in self.labels.get(loc, set())}
+
+    def label(self, x, y, label):
+        """label location (x,y). """
+        if (x,y) not in self:
+            raise ValueError(f"Cell ({x}, {y}) not on grid map")
+        if (x,y) not in self.labels:
+            self.labels[(x,y)] = set()
+        self.labels[(x,y)].add(label)
+
+    def label_all(self, locs, label):
+        for loc in locs:
+            self.label(*loc, label)
 
     def save(self, savepath):
         """Saves this grid map as a json file to the save path.
