@@ -147,7 +147,7 @@ class GridMap2:
         all_known_grids = self.free_locations | self.obstacles
         min_x = min(all_known_grids, key=lambda g: g[0])[0]
         max_x = max(all_known_grids, key=lambda g: g[0])[0]
-        w = max_x - min_x
+        w = max_x - min_x + 1
         self._width_cache = w
         return w
 
@@ -158,7 +158,7 @@ class GridMap2:
         all_known_grids = self.free_locations | self.obstacles
         min_y = min(all_known_grids, key=lambda g: g[1])[1]
         max_y = max(all_known_grids, key=lambda g: g[1])[1]
-        l = max_y - min_y
+        l = max_y - min_y + 1
         self._length_cache = l
         return l
 
@@ -171,6 +171,10 @@ class GridMap2:
     def wrange(self):
         """a 'range' object over x coordinates in this grid map"""
         return range(self.min_corner[0], self.min_corner[0] + self.width)
+
+    def __contains__(self, loc):
+        return loc[0] in self.wrange\
+            and loc[1] in self.lrange
 
     @property
     def min_corner(self):

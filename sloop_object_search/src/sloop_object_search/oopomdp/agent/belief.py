@@ -1,5 +1,6 @@
 # utility functions for belief. The joint belief is modeled by
 # pomdp_py.OOBelief
+from tqdm import tqdm
 import pomdp_py
 from ..models.search_region import SearchRegion2D, SearchRegion3D
 from ..domain.state import ObjectState, RobotState

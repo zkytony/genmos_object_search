@@ -85,21 +85,23 @@ def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False):
 
 ################## Topological movement ###########################
 class MotionActionTopo(MotionAction):
-    def __init__(self, src_nid, dst_nid, gdist=None,
+    def __init__(self, src_nid, dst_nid, distance=None,
                  cost_scaling_factor=1.0, atype="move"):
+        """distance: distance between source and destination nodes.
+                     (ideally, geodesic distance)"""
         self.src_nid = src_nid
         self.dst_nid = dst_nid
-        self.gdist = gdist
+        self.distance = distance
         self._cost_scaling_factor = cost_scaling_factor
         super().__init__("{}({}->{})".format(atype, self.src_nid, self.dst_nid))
 
     @property
     def step_cost(self):
-        return min(-(self.gdist * self._cost_scaling_factor), -1)
+        return min(-(self.distance * self._cost_scaling_factor), -1)
 
 class StayAction(MotionActionTopo):
     def __init__(self, nid, cost_scaling_factor=1.0):
-        super().__init__(nid, nid, gdist=0.0, cost_scaling_factor=1.0, atype="stay")
+        super().__init__(nid, nid, distance=0.0, cost_scaling_factor=1.0, atype="stay")
 
 
 ##################### 3D Motion Action ##############################

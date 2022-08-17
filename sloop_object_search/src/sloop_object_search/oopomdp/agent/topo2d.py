@@ -1,6 +1,13 @@
 import pomdp_py
+import random
+from collections import deque
+from tqdm import tqdm
+from sloop_object_search.utils.math import euclidean_dist, normalize
 from ..domain.state import RobotStateTopo
-from .agent import MosAgent
+from ..models.policy_model import PolicyModelTopo
+from ..models.transition_model import RobotTransTopo
+from ..models.topo_map import TopoNode, TopoMap, TopoEdge
+from .common import MosAgent, init_object_transition_models
 from . import belief
 
 class MosAgentTopo2D(MosAgent):
@@ -15,12 +22,12 @@ class MosAgentTopo2D(MosAgent):
 
         # now, generate topological map
         combined_dist = belief.accumulate_object_beliefs(
-            self.search_region, self.init_object_beliefs)
+            self.search_region, init_object_beliefs)
         mpe_robot_pose = init_robot_pose_dist.mpe()
         self.topo_map = self.generate_topo_map(combined_dist, mpe_robot_pose)
 
         # now, generate initial robot belief
-        init_topo_nid = topo_map.closest_node(*mpe_robot_pose[:2])
+        init_topo_nid = self.topo_map.closest_node(mpe_robot_pose[:2])
         init_robot_belief = belief.init_robot_belief(
             self.agent_config["robot"], init_robot_pose_dist,
             robot_state_class=RobotStateTopo,
@@ -30,21 +37,22 @@ class MosAgentTopo2D(MosAgent):
         return init_belief
 
     def init_transition_and_policy_models(self):
-        # we need to first sample a topo map.
-        combined_dist = combine_object_beliefs(
-            self.search_region, self.init_object_beliefs)
-        self._update_topo_map(combined_dist, init=True)
-
+        target_ids = self.agent_config["targets"]
         trans_args = self.agent_config["robot"].get("transition", {})
         h_angle_res = trans_args.get("h_angle_res", 45.0)
-        robot_trans_model = RobotTransTopo(robot["id"], target_ids,
+        robot_trans_model = RobotTransTopo(self.robot_id, target_ids,
                                            self.topo_map, self.detection_models,
                                            h_angle_res=h_angle_res,
-                                           no_look=no_look)
+                                           no_look=self.no_look)
         object_transition_models = {
             self.robot_id: robot_trans_model,
             **init_object_transition_models(self.agent_config)}
         transition_model = pomdp_py.OOTransitionModel(object_transition_models)
+
+        policy_model = PolicyModelTopo(target_ids,
+                                       robot_trans_model,
+                                       no_look=self.no_look)
+        return transition_model, policy_model
 
     def generate_topo_map(self, combined_dist, robot_pose):
         """Given 'combined_dist', a distribution that maps
@@ -52,51 +60,19 @@ class MosAgentTopo2D(MosAgent):
         the current 'robot_pose', sample a topological graph
         based on this distribution.
         """
-        # TODO: We should avoid explicit list of reachable positions!
-        # (This involves improvement of the topo map sampling algorithm)
-        reachable_positions = self.search_region.grid_map.free_locations
-        if len(reachable_positions) == 0:
-            print("Warning: using search region as reachable positions.")
-            reachable_positions = self.grid_map.filter_by_label("search_region")
+        position_candidates = self.search_region.grid_map.filter_by_label("topo_position_candidate")
+        if len(position_candidates) == 0:
+            raise ValueError("No position candidates for topo map sampling.")
         topo_map_args = self.agent_config.get("topo_map_args", {})
         print("Sampling topological graph...")
         topo_map = _sample_topo_map(combined_dist,
-                                    reachable_positions,
+                                    position_candidates,
                                     topo_map_args.get("num_place_samples", 10),
                                     degree=topo_map_args.get("degree", (3,5)),
                                     sep=topo_map_args.get("sep", 4.0),
                                     rnd=random.Random(topo_map_args.get("seed", 1001)),
                                     robot_pos=robot_pose[:2])
         return topo_map
-
-
-    # def _update_topo_map(self, combined_dist, robot_pose):
-    #     """combined_dist (dict): mapping from location to probability"""
-    #     if init:
-    #         robot_pose = self.init_robot_belief.mpe().pose
-    #         objects_found = tuple()
-    #         camera_direction = None
-    #     else:
-    #         srobot_old = self.belief.b(self.robot_id).mpe()
-    #         robot_pose = srobot_old.pose
-    #         objects_found = srobot_old.objects_found
-    #         camera_direction = srobot_old.camera_direction
-    #     topo_map = self.generate_topo_map(combined_dist,
-    #     self.topo_map = topo_map
-    #     if not init:
-    #         self.policy_model.update(topo_map)
-    #     topo_nid = topo_map.closest_node(*robot_pose[:2])
-    #     robot_state = RobotStateTopo(self.robot_id,
-    #                                  robot_pose,
-    #                                  objects_found,
-    #                                  camera_direction,
-    #                                  topo_nid)
-    #     if init:
-    #         return robot_state
-    #     else:
-    #         self.belief.set_object_belief(
-    #             self.robot_id, pomdp_py.Histogram({robot_state: 1.0}))
-
 
 
 def _sample_topo_map(target_hist,
@@ -195,7 +171,7 @@ def _sample_topo_map(target_hist,
                 edges[eid] = TopoEdge(eid,
                                       nodes[nid],
                                       nodes[nbnid],
-                                      path)
+                                      {"path": path, "length": len(path)})
     if len(edges) == 0:
         edges[0] = TopoEdge(0, nodes[next(iter(nodes))], None, [])
 
@@ -205,3 +181,44 @@ def _sample_topo_map(target_hist,
         assert len(topo_map.edges_from(nid)) <= degree_range[1]
 
     return topo_map
+
+
+def _shortest_path(reachable_positions, gloc1, gloc2):
+    """
+    Note: originally from COSPOMDP codebase
+
+    Computes the shortest distance between two locations.
+    The two locations will be snapped to the closest free cell.
+
+    TODO: This is limited to 2D. The topo map sampling process
+    should be generalized to beyond 2D grid maps.
+    """
+    def neighbors(x,y):
+        return [(x+1, y), (x-1,y),
+                (x,y+1), (x,y-1)]
+
+    def get_path(s, t, prev):
+        v = t
+        path = [t]
+        while v != s:
+            v = prev[v]
+            path.append(v)
+        return path
+
+    # BFS; because no edge weight
+    reachable_positions = set(reachable_positions)
+    visited = set()
+    q = deque()
+    q.append(gloc1)
+    prev = {gloc1:None}
+    while len(q) > 0:
+        loc = q.popleft()
+        if loc == gloc2:
+            return get_path(gloc1, gloc2, prev)
+        for nb_loc in neighbors(*loc):
+            if nb_loc in reachable_positions:
+                if nb_loc not in visited:
+                    q.append(nb_loc)
+                    visited.add(nb_loc)
+                    prev[nb_loc] = loc
+    return None
