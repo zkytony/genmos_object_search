@@ -34,7 +34,7 @@ class MosAgentBasic2D(MosAgent):
 class SloopMosAgentBasic2D(SloopMosAgent):
     def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
         if init_robot_pose_dist is None:
-            raise ValueError("To instantiate MosAgent, initial robot pose belief is required.")
+            raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
 
         mos_agent = MosAgentBasic2D(self.agent_config,
                                     self.search_region,

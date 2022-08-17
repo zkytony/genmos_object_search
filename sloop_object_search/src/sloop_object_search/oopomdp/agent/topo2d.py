@@ -7,7 +7,7 @@ from ..domain.state import RobotStateTopo
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
-from .common import MosAgent, init_object_transition_models
+from .common import MosAgent, SloopMosAgent, init_object_transition_models
 from . import belief
 
 class MosAgentTopo2D(MosAgent):
@@ -73,6 +73,22 @@ class MosAgentTopo2D(MosAgent):
                                     rnd=random.Random(topo_map_args.get("seed", 1001)),
                                     robot_pos=robot_pose[:2])
         return topo_map
+
+
+class SloopMosAgentTopo2D(SloopMosAgent):
+    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
+        if init_robot_pose_dist is None:
+            raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
+
+        mos_agent = MosAgentTopo2D(self.agent_config,
+                                    self.search_region,
+                                    init_robot_pose_dist=init_robot_pose_dist,
+                                    init_object_beliefs=init_object_beliefs)
+        return (mos_agent.belief,
+                mos_agent.policy_model,
+                mos_agent.transition_model,
+                mos_agent.observation_model,
+                mos_agent.reward_model)
 
 
 def _sample_topo_map(target_hist,
