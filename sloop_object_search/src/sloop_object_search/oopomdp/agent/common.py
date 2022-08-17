@@ -73,14 +73,16 @@ class MosAgent(pomdp_py.Agent):
     """The top-level class for a mult-object search agent.
     The action space and transition model are not specified here."""
     def __init__(self, agent_config, search_region,
-                 init_robot_belief,
+                 init_robot_pose_dist,
                  init_object_beliefs=None):
         """
         Args:
             agent_config (dict): configuration for the agent
             search_region (SearchRegion2D): 2d search region
-            init_robot_belief (pomdp_py.GenerativeDistribution): belief over robot state
-            init_object_beliefs (dict): maps from object id to pomdp_py.GenerativeDistribution
+            init_robot_pose_dist (pomdp_py.GenerativeDistribution):
+                belief over initial robot pose
+            init_object_beliefs (dict): maps from object id
+                to pomdp_py.GenerativeDistribution
         """
 
         self.agent_config = agent_config
@@ -93,12 +95,8 @@ class MosAgent(pomdp_py.Agent):
                                for target_id in self.agent_config["targets"]}
 
         # Belief
-        if init_object_beliefs is None:
-            init_object_beliefs = belief.init_object_beliefs(
-                self.target_objects, self.search_region,
-                prior=self.agent_config["belief"].get("prior", {}))
-        init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
-                                         **init_object_beliefs})
+        init_belief = self.init_belief(
+            init_robot_pose_dist, init_object_beliefs)
 
         # Observation Model (Mos)
         self.detection_models = init_detection_models(agent_config)
@@ -123,6 +121,19 @@ class MosAgent(pomdp_py.Agent):
                          observation_model,
                          reward_model)
 
+    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None):
+        """Override this method if initial belief is constructed in
+        a specialized way."""
+        if init_object_beliefs is None:
+            init_object_beliefs = belief.init_object_beliefs(
+                self.target_objects, self.search_region,
+                prior=self.agent_config["belief"].get("prior", {}))
+        init_robot_belief = belief.init_robot_belief(self.agent_config["robot"],
+                                                     init_robot_pose_dist)
+        init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
+                                         **init_object_beliefs})
+        return init_belief
+
     def init_transition_and_policy_models(self):
         raise NotImplementedError()
 
@@ -133,7 +144,7 @@ class MosAgent(pomdp_py.Agent):
 
 
 class SloopMosAgent(SloopAgent):
-    def __init__(self, agent_config, search_region, init_robot_belief,
+    def __init__(self, agent_config, search_region, init_robot_pose_dist,
                  init_object_beliefs=None):
         if not isinstance(search_region, SearchRegion2D):
             raise TypeError("SloopMosAgent requires 2D search region"
@@ -141,8 +152,8 @@ class SloopMosAgent(SloopAgent):
         map_name = search_region.grid_map.name
         self.search_region = search_region
         super().__init__(agent_config, map_name,
-                         init_robot_belief=init_robot_belief,
+                         init_robot_pose_dist=init_robot_pose_dist,
                          init_object_beliefs=init_object_beliefs)
 
-    def _init_oopomdp(self, init_robot_belief=None, init_object_beliefs=None):
+    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
         raise NotImplementedError()

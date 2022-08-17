@@ -176,8 +176,6 @@ class BeliefTopo2D(Belief2D):
                 sobj = ObjectState(objid, random_sobj.objclass, loc)
                 dist[loc] += object_beliefs[objid][sobj]
         return dist
-
-
 ##################### Belief 3D ##########################
 class BeliefBasic3D(pomdp_py.OOBelief):
     def __init__(self, robot_state, target_objects, belief_config):

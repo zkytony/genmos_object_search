@@ -60,10 +60,8 @@ def search_region():
 
 
 def test_basic2d_agent_basics(config, search_region):
-    init_robot_belief =  pomdp_py.Histogram(
-        {RobotState("robot", (0,-1,4), (), None) : 1.0}
-    )
-    agent = MosAgentBasic2D(config["agent_config"], search_region, init_robot_belief)
+    init_robot_pose_dist =  pomdp_py.Histogram({(0,-1,4): 1.0})
+    agent = MosAgentBasic2D(config["agent_config"], search_region, init_robot_pose_dist)
     pouct = pomdp_py.POUCT(planning_time=0.5, rollout_policy=agent.policy_model)
     print(pouct.plan(agent))
 
@@ -77,9 +75,7 @@ def test_basic2d_sloop_agent_basics(config, search_region):
             "GreenToyota": "G"
         },
     })
-    init_robot_belief =  pomdp_py.Histogram(
-        {RobotState("robot", (0,-1,4), (), None) : 1.0}
-    )
+    init_robot_pose_dist =  pomdp_py.Histogram({(0,-1,4): 1.0})
     try:
         register_map(search_region.grid_map,
                      search_region.grid_size,
@@ -90,6 +86,6 @@ def test_basic2d_sloop_agent_basics(config, search_region):
                        search_region.grid_size,
                        "./data")
 
-    agent = SloopMosAgentBasic2D(config["agent_config"], search_region, init_robot_belief)
+    agent = SloopMosAgentBasic2D(config["agent_config"], search_region, init_robot_pose_dist)
     pouct = pomdp_py.POUCT(planning_time=0.5, rollout_policy=agent.policy_model)
     print(pouct.plan(agent))
