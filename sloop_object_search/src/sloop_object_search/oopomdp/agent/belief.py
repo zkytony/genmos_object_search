@@ -58,8 +58,8 @@ def init_object_beliefs(target_objects, search_region, prior=None):
             "search region is of invalid type ({}).".format(type(search_region))
         raise NotImplementedError()
 
-def combine_object_beliefs(search_region,
-                           object_beliefs):
+def accumulate_object_beliefs(search_region,
+                              object_beliefs):
     """
     Given object_beliefs (dict, mapping from objid to belief histogram),
     returns a mapping from location to probability where the probability
