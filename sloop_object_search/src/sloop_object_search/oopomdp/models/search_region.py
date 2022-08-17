@@ -49,6 +49,10 @@ class SearchRegion:
         return convert(p, Frame.POMDP_SPACE, Frame.REGION,
                        search_space_resolution=self.search_space_resolution)
 
+    def __len__(self):
+        # size of the search region
+        raise NotImplementedError()
+
 
 class SearchRegion2D(SearchRegion):
     """The 2D search region is represented as a GridMap"""
@@ -74,6 +78,9 @@ class SearchRegion2D(SearchRegion):
 
     def __iter__(self):
         return iter(self.grid_map.free_locations)
+
+    def __len__(self):
+        return len(self.grid_map.free_locations)
 
 
 class SearchRegion3D(SearchRegion):

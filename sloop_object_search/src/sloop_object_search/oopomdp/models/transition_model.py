@@ -139,6 +139,7 @@ class RobotTransBasic2D(RobotTransitionModel):
         reachability."""
         super().__init__(robot_id, detection_models, no_look=no_look)
         self.reachability_func = reachability_func
+        self.transform_kwargs = transform_kwargs
 
     def sample_by_pose(self, pose, action):
         return RobotTransBasic2D.transform_pose(
@@ -163,7 +164,7 @@ class RobotTransBasic2D(RobotTransitionModel):
         rx, ry, rth = (*fround(pos_precision, (rx, ry)),
                        fround(rot_precision, rth))
         if reachability_func is not None:
-            if reachability_func(rx, ry):
+            if reachability_func((rx, ry)):
                 return (rx, ry, rth)
             else:
                 return original_pose

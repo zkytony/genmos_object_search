@@ -29,7 +29,7 @@ def config():
                         "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1, 0.25))
                     },
                 },
-                "primitive_moves": {
+                "action": {
                     "func": "sloop_object_search.oopomdp.domain.action.basic_discrete_moves2d",
                     "params": {
                         "step_size": 3,
@@ -59,5 +59,5 @@ def test_basic2d_agent_basics(config, search_region):
         {RobotState("robot", (0,-1,4), (), None) : 1.0}
     )
     agent = MosAgentBasic2D(config["agent_config"], search_region, init_robot_belief)
-    pouct = pomdp_py.POUCT(planning_time=0.5)
+    pouct = pomdp_py.POUCT(planning_time=0.5, rollout_policy=agent.policy_model)
     print(pouct.plan(agent))

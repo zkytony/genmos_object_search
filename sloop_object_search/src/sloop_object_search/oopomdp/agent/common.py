@@ -1,6 +1,6 @@
 import pomdp_py
 from sloop.agent import SloopAgent
-from sloop_object_search.utils.misc import import_class
+from sloop_object_search.utils.misc import import_class, import_func
 from ..models.search_region import SearchRegion2D
 from ..models.observation_model import (GMOSObservationModel,
                                         RobotObservationModel,
@@ -97,25 +97,25 @@ class MosAgent(pomdp_py.Agent):
             init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
                 prior=self.agent_config["belief"].get("prior", {}))
-        init_belief = pomdp_py.OOBelief({robot_id: init_robot_belief,
+        init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
                                          **init_object_beliefs})
 
         # Observation Model (Mos)
-        detection_models = init_detection_models(agent_config)
-        localization_model = interpret_localization_model(robot)
-        robot_observation_model = RobotObservationModel(
-            robot['id'], localization_model=localization_model)
+        self.detection_models = init_detection_models(agent_config)
+        self.localization_model = interpret_localization_model(robot)
+        self.robot_observation_model = RobotObservationModel(
+            robot['id'], localization_model=self.localization_model)
         observation_model = GMOSObservationModel(
-            robot["id"], detection_models,
-            robot_observation_model=robot_observation_model,
+            robot["id"], self.detection_models,
+            robot_observation_model=self.robot_observation_model,
             no_look=self.no_look)
 
         # Reward model
+        target_ids = self.agent_config["targets"]
         reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
 
         # Transition and policy models
-        transition_model = self.init_transition_model()
-        policy_model = self.init_policy_model()
+        transition_model, policy_model = self.init_transition_and_policy_models()
 
         super().__init__(init_belief,
                          policy_model,
@@ -123,20 +123,13 @@ class MosAgent(pomdp_py.Agent):
                          observation_model,
                          reward_model)
 
-    def init_transition_model(self):
-        raise NotImplementedError()
-
-    def init_policy_model(self):
+    def init_transition_and_policy_models(self):
         raise NotImplementedError()
 
     def reachable(self, pos):
         """Returns True if the given position (as in a viewpoint)
         is reachable by this agent."""
         raise NotImplementedError
-
-    @property
-    def detection_models(self):
-        return self.observation_model.detection_models
 
 
 class SloopMosAgent(SloopAgent):
