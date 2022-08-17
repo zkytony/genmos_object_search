@@ -285,9 +285,10 @@ class RobotTransBasic3D(RobotTransitionModel):
                 We can deal with two schemes of actions: 'axis' or 'forward',
                 which are identified by whether the first element of this action tuple
                 is a single number 'dforward' of a tuple (dx, dy, dz).
-            reachable_positions (set): set of positions (x, y, z) that are
-                reachable. If the transformed pose is not reachable, then
-                the original pose will be returned, indicating no transition happened.
+            reachability_func (function): takes in a position (x,y,z) and returns
+                True if it is reachable as a position for the robot's viewpoint.
+                If the transformed pose is not reachable, then the original pose will
+                be returned, indicating no transition happened.
         """
         if type(action) == tuple:
             motion = action
@@ -329,7 +330,7 @@ class RobotTransBasic3D(RobotTransitionModel):
 
         new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
         if reachability_func is not None:
-            if not reachable_positions(new_pos):
+            if not reachability_func(new_pos):
                 return pose
 
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
@@ -373,7 +374,7 @@ class RobotTransBasic3D(RobotTransitionModel):
         x, y, z, qx, qy, qz, qw = pose
         new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
         if reachability_func is not None:
-            if not reachable_positions(new_pos):
+            if not reachability_func(new_pos):
                 return pose
 
         R = R_quat(qx, qy, qz, qw)

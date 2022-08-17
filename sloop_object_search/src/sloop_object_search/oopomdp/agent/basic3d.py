@@ -1,5 +1,10 @@
+import pomdp_py
 from . import belief
-from .common import MosAgent, SloopMosAgent, init_object_transition_models
+from ..models.transition_model import RobotTransBasic3D
+from ..models.policy_model import PolicyModelBasic3D
+from .common import MosAgent, SloopMosAgent,\
+    init_object_transition_models, init_primitive_movements
+
 
 class MosAgentBasic3D(MosAgent):
 
