@@ -5,16 +5,16 @@ from sloop_object_search.utils.math import euclidean_dist
 from sloop_object_search.utils.graph import Node, Graph, Edge
 
 class TopoNode(Node):
-    """TopoNode is a node on the grid map."""
+    """TopoNode is a node on the topological graph."""
 
-    def __init__(self, node_id, grid_pos):
+    def __init__(self, node_id, pos):
         """
-        grid_pos (x,y): The grid position this node is located
-        search_region_locs (list or set): locations where the
-            target object can be for which this node is the closest.
+        pos (tuple): The position on the underlying
+                     (metric or grid) space where this topo node
+                     can be grounded.
         """
-        super().__init__(node_id, grid_pos)
-        self._coords = grid_pos
+        super().__init__(node_id, pos)
+        self._coords = pos
 
     @property
     def pos(self):
@@ -59,15 +59,15 @@ class TopoMap(Graph):
         self._cache_closest = {}
         self._cache_shortest_path = {}
 
-    def closest_node(self, x, y):
-        """Given a point at (x,y) find the node that is closest to this point.
+    def closest_node(self, point):
+        """Given a point find the node that is closest to this point.
         """
-        if (x,y) in self._cache_closest:
-            return self._cache_closest[(x,y)]
+        if point in self._cache_closest:
+            return self._cache_closest[point]
         else:
             nid = min(self.nodes,
-                       key=lambda nid: euclidean_dist(self.nodes[nid].pos, (x,y)))
-            self._cache_closest[(x,y)] = nid
+                       key=lambda nid: euclidean_dist(self.nodes[nid].pos, point))
+            self._cache_closest[point] = nid
             return nid
 
     def edge_between(self, nid1, nid2):
