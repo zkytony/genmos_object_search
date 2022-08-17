@@ -24,6 +24,7 @@
 # grid map can be extended in any direction, while keeping the coordinates
 # of known grid cells unchanged.
 
+import json
 from .grid_map import GridMap
 
 class GridType:
@@ -235,3 +236,42 @@ class GridMap2:
         """Add more obstacles close to existing ones, within
         the given inflation_radius."""
         raise NotImplementedError()
+
+
+    def save(self, savepath):
+        """Saves this grid map as a json file to the save path.
+        Args:
+            savepath (Ste): Path to the output .json file"""
+
+        obstacles_arr = [list(map(int, pos)) for pos in self.obstacles]
+        free_locs_arr = [list(map(int, pos)) for pos in self.free_locations]
+
+        output = {
+            'obstacles': obstacles_arr,
+            'free_locations': free_locs_arr,
+            'name': self.name
+        }
+
+        output['labels'] = {}
+        for loc in self.labels:
+            output['labels'][f"loc-{loc}"] = list(self.labels[loc])
+
+        with open(savepath, 'w') as f:
+            json.dump(output, f)
+
+    @staticmethod
+    def load(loadpath):
+        with open(loadpath) as f:
+            data = json.load(f)
+
+        obstacles = set(map(tuple, data["obstacles"]))
+        free_locations = set(map(tuple, data["free_locations"]))
+
+        labels = {}
+        for loc_str in data['labels']:
+            loc = eval(loc_str.split('-')[1])
+            labels[loc] = set(data['labels'][loc_str])
+        return GridMap2(obstacles=obstacles,
+                        free_locations=free_locations,
+                        name=data["name"],
+                        labels=labels)

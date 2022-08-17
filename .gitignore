@@ -101,3 +101,6 @@ venv/
 ros/data/SL_OSM_Dataset*
 ros/data/robot_tests*
 ros/models/*foref*
+
+# test data
+*sloop_object_search/tests/**/*data*

@@ -146,6 +146,3 @@ class SloopMosAgent(SloopAgent):
 
     def _init_oopomdp(self, init_robot_belief=None, init_object_beliefs=None):
         raise NotImplementedError()
-
-        # if init_robot_belief is None:
-        #     raise ValueError("To instantiate MosAgent, initial robot belief is required.")

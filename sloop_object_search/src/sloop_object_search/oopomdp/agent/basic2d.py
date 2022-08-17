@@ -29,3 +29,19 @@ class MosAgentBasic2D(MosAgent):
 
     def reachable(self, pos):
         return pos not in self.search_region.grid_map.obstacles
+
+
+class SloopMosAgentBasic2D(SloopMosAgent):
+    def _init_oopomdp(self, init_robot_belief=None, init_object_beliefs=None):
+        if init_robot_belief is None:
+            raise ValueError("To instantiate MosAgent, initial robot belief is required.")
+
+        mos_agent = MosAgentBasic2D(self.agent_config,
+                                    self.search_region,
+                                    init_robot_belief=init_robot_belief,
+                                    init_object_beliefs=init_object_beliefs)
+        return (mos_agent.belief,
+                mos_agent.policy_model,
+                mos_agent.transition_model,
+                mos_agent.observation_model,
+                mos_agent.reward_model)
