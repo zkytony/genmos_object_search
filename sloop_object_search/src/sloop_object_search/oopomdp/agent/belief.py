@@ -3,6 +3,7 @@
 from tqdm import tqdm
 import pomdp_py
 from ..models.search_region import SearchRegion2D, SearchRegion3D
+from ..models.octree_belief import Octree, OctreeBelief
 from ..domain.state import ObjectState, RobotState
 
 def init_robot_belief(robot_config, robot_pose_dist, robot_state_class=RobotState, **state_kwargs):
@@ -30,6 +31,8 @@ def init_robot_belief(robot_config, robot_pose_dist, robot_state_class=RobotStat
 
 def init_object_beliefs_2d(target_objects, search_region, prior=None):
     """prior: dictionary objid->{loc->prob}"""
+    assert isinstance(search_region, SearchRegion2D),\
+        f"search_region should be a SearchRegion2D but its {type(search_region)}"
     object_beliefs = {}
     if prior is None:
         prior = {}
@@ -51,13 +54,36 @@ def init_object_beliefs_2d(target_objects, search_region, prior=None):
         object_beliefs[objid] = pomdp_py.Histogram(object_belief_dist)
     return object_beliefs
 
+def init_object_beliefs_3d(target_objects, search_region, prior=None):
+    """we'll use Octree belief. Here, 'search_region' should be a
+    SearchRegion3D. As such, it has an octree used for modeling
+    occupancy. The agent's octree belief will be based on an octree
+    of the same dimension.
+    TODO: how does occupancy inform prior?  How to specify that?
+    """
+    assert isinstance(search_region, SearchRegion3D),\
+        f"search_region should be a SearchRegion3D but its {type(search_region)}"
+    object_beliefs = {}
+    dimension = search_region.octree.dimensions[0]
+    for objid in target_objects:
+        target = target_objects[objid]
+        octree = Octree(objid, (dimension, dimension, dimension))
+        octree_belief = OctreeBelief(dimension, dimension, dimension,
+                                     objid, target['class'], octree)
+        if prior is not None and objid in prior:
+            for x,y,z,r in prior[objid]:
+                state = ObjectState(objid, target["class"], (x,y,z), res=r)
+                octree_belief.assign(state, prior[objid][(x,y,z,r)])
+        object_beliefs[objid] = octree_belief
+    return object_beliefs
+
 def init_object_beliefs(target_objects, search_region, prior=None):
     if isinstance(search_region, SearchRegion2D):
         return init_object_beliefs_2d(target_objects, search_region, prior=prior)
     else:
         assert isinstance(search_region, SearchRegion3D),\
             "search region is of invalid type ({}).".format(type(search_region))
-        raise NotImplementedError()
+        return init_object_beliefs_3d(target_objects, search_region, prior=prior)
 
 def accumulate_object_beliefs(search_region,
                               object_beliefs):
