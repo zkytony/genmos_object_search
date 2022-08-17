@@ -89,7 +89,8 @@ class SearchRegion3D(SearchRegion):
     local search.
 
     Note that the default value of a node in this octree
-    should be zero (it is not a belief, it is occupancy)."""
+    should be zero, indicating free space (it is not a belief,
+    it is occupancy)."""
     @property
     def octree(self):
         return self._region_repr
@@ -100,3 +101,12 @@ class SearchRegion3D(SearchRegion):
 
     def to_octree_pos(self, world_point):
         return self.to_pomdp_pos(world_point)
+
+    def occupied_at(self, pos, res=1):
+        if not self.octree.valid_voxel(*pos, res):
+            raise ValueError(f"position {pos} at resolution {res} is not a valid voxel.")
+        node = self.octree.get_node(*pos, res)
+        if node is None:
+            return False
+        else:
+            return node.value() > 0
