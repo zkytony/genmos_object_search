@@ -28,24 +28,26 @@ class TopoNode(Node):
 
 
 class TopoEdge(Edge):
-    def __init__(self, id, node1, node2, grid_path):
-        super().__init__(id, node1, node2, data=grid_path)
+    def __init__(self, id, node1, node2, nav_info):
+        super().__init__(id, node1, node2, data=nav_info)
 
     @property
-    def grid_path(self):
+    def nav_info(self):
         return self.data
 
     @property
-    def grid_dist(self):
-        if self.grid_path is None:
-            return float('inf')
-        else:
-            return len(self.grid_path)
+    def nav_path(self):
+        return self.nav_info.get('path', None)
+
+    @property
+    def nav_length(self):
+        """length of naviagtion path"""
+        return self.nav_info.get('length', float('inf'))
 
     @property
     def attrs(self):
-        return {"grid_path": self.grid_path,
-                "grid_path_length": len(self.grid_path)}
+        return {"nav_path": self.nav_path,
+                "nav_length": len(self.nav_length)}
 
 
 class TopoMap(Graph):
