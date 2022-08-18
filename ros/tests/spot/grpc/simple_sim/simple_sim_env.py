@@ -9,7 +9,8 @@ import pomdp_py
 import math
 
 import actionlib
-from std_msgs.msg import ColorRGBA, Header
+from actionlib_msgs.msg import GoalStatus
+from std_msgs.msg import ColorRGBA, Header, String
 from geometry_msgs.msg import Point, Quaternion, Vector3, PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
 from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
@@ -115,6 +116,7 @@ class SimpleSimEnvROSNode:
         assert self.translation_step_size > 0, "translation_step_size must be > 0"
         assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
         self._navigating = False
+        self._nav_done_pub = rospy.Publisher("~nav_done", String, queue_size=10, latch=True)  # publishes when nav is done
 
     def run(self):
         rospy.loginfo("publishing state markers")
@@ -123,11 +125,16 @@ class SimpleSimEnvROSNode:
             self.state_markers_pub.publish(state_markers_msg)
             self.state_pub_rate.sleep()
 
+    @property
+    def navigating(self):
+        return self._navigating
+
     def _action_cb(self, action_msg):
         rospy.loginfo("received action to execute")
         if action_msg.type == "nav":
             if not self._navigating:
                 kv = {action_msg.keys[i]: action_msg.values[i] for i in range(len(action_msg.keys))}
+                goal_id = kv["goal_id"]
                 goal_x = float(kv["goal_x"])
                 goal_y = float(kv["goal_y"])
                 goal_z = float(kv["goal_z"])
@@ -137,7 +144,10 @@ class SimpleSimEnvROSNode:
                 goal_qw = float(kv["goal_qw"])
                 goal = (goal_x, goal_y, goal_z, goal_qx, goal_qy, goal_qz, goal_qw)
                 rospy.loginfo(f"navigation to {goal}")
+                self._navigating = True
                 self.navigate_to(goal)
+                self._nav_done_pub.publish(String(data=f"nav to {goal_id} done."))
+                self._navigating = False
             else:
                 rospy.loginfo(f"navigation is in progress. Goal ignored.")
 
@@ -229,7 +239,7 @@ class SimpleSimEnvROSNode:
             actions.append(dstep_action_last)
         return actions
 
-    def _xyplan_forward_actions_towards(current_xy_pos, goal_xy_pos, goal_yaw):
+    def _xyplan_forward_actions_towards(self, current_xy_pos, goal_xy_pos, goal_yaw):
         """Assume that the agent has finished rotating; Just need to move in the
         goal_yaw direction. 'goal_yaw' should be in degrees"""
         actions = []
@@ -250,7 +260,6 @@ class SimpleSimEnvROSNode:
             dstep_action_last = MotionAction3D(dmotion_last, motion_name=f"move-{forward}")
             actions.append(dstep_action_last)
         return actions
-
 
 
 
