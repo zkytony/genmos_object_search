@@ -106,7 +106,7 @@ class StayAction(MotionActionTopo):
 
 ##################### 3D Motion Action ##############################
 class MotionAction3D(MotionAction):
-    """The motion tuple for 3D is (dx, dy, dz, dthx, dthy, dthz)
+    """The motion tuple for 3D is (dx, dy, dz), (dthx, dthy, dthz)
     where dthx, dthy, dthz are rotations with respect to x, y, z
     axes"""
     def __init__(self, motion, step_cost=-1,
