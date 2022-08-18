@@ -22,6 +22,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   KeyValAction.msg
+  KeyValObservation.msg
   DefaultObservation.msg
   DefaultBelief.msg
   Loc.msg
