@@ -2,7 +2,8 @@
 # To run this, use the 'simple_sim_env.launch' file:
 #    roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=<map_name>
 # Also run:
-#    roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=<map_name>
+#    To get map point cloud, roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=<map_name>
+#    For rviz, roslaunch sloop_object_search_ros view_simple_sim.launch
 
 import rospy
 import pomdp_py
@@ -11,9 +12,10 @@ import math
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 from std_msgs.msg import ColorRGBA, Header, String
-from geometry_msgs.msg import Point, Quaternion, Vector3, PoseStamped
+from geometry_msgs.msg import Point, Quaternion, Vector3, PoseStamped, TransformStamped
 from visualization_msgs.msg import Marker, MarkerArray
 from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
+from tf2_ros import TransformBroadcaster
 
 from sloop_mos_ros import ros_utils
 from sloop_mos_ros.framework import ActionExecutor
@@ -59,7 +61,7 @@ class SimpleSimEnv(pomdp_py.Environment):
         robot_trans_model = RobotTransBasic3D(
             self.robot_id, self.reachable,
             self.detection_models,
-            no_look=self.no_look)
+            no_look=self.no_look, pos_precision=0.0001, rot_precision=0.0001)
         object_transition_models = {
             self.robot_id: robot_trans_model,
             **init_object_transition_models(self.env_config)}
@@ -84,7 +86,7 @@ class SimpleSimEnv(pomdp_py.Environment):
 
 class SimpleSimEnvROSNode:
     """
-    note that all messages that this node receives or publishes
+    note that all messages that this node receives
     should be in the world frame.
 
     Subscribes:
@@ -99,6 +101,7 @@ class SimpleSimEnvROSNode:
         config = rospy.get_param("~config")  # access parameters together as a dictionary
         state_pub_rate = rospy.get_param("~state_pub_rate", 10)
         self.world_frame = rospy.get_param("~world_frame")  # fixed frame of the world
+        self.br = TransformBroadcaster()
 
         action_topic = f"~pomdp_action"
         state_markers_topic = f"~state_markers"
@@ -110,7 +113,7 @@ class SimpleSimEnvROSNode:
         self.state_pub_rate = rospy.Rate(state_pub_rate)
 
         # navigation related
-        self.nav_step_duration = rospy.get_param("~step_duration", 0.5)  # amount of time to execute one step
+        self.nav_step_duration = rospy.get_param("~step_duration", 0.1)  # amount of time to execute one step
         self.translation_step_size = rospy.get_param("~translation_step_size", 0.1)  # in meters
         self.rotation_step_size = rospy.get_param("~rotation_step_size", 5)  # in degreesw
         assert self.translation_step_size > 0, "translation_step_size must be > 0"
@@ -121,8 +124,10 @@ class SimpleSimEnvROSNode:
     def run(self):
         rospy.loginfo("publishing state markers")
         while not rospy.is_shutdown():
-            state_markers_msg = self._make_state_markers(self.env.state)
+            state_markers_msg, tf2_msgs = self._make_state_markers_and_tf2msgs(self.env.state)
             self.state_markers_pub.publish(state_markers_msg)
+            for t in tf2_msgs:
+                self.br.sendTransform(t)
             self.state_pub_rate.sleep()
 
     @property
@@ -151,54 +156,65 @@ class SimpleSimEnvROSNode:
             else:
                 rospy.loginfo(f"navigation is in progress. Goal ignored.")
 
-    def _make_state_markers(self, state):
+    def _make_state_markers_and_tf2msgs(self, state):
         markers = []
+        tf2msgs = []
         header = Header(stamp=rospy.Time.now(),
                         frame_id=self.world_frame)
         for objid in state.object_states:
             if objid == self.env.robot_id:
                 continue  # we draw the robot separately
+            sobj = state.s(objid)
             viz_type_name = self.env.object_spec(objid).get("viz_type", "cube")
             viz_type = eval(f"Marker.{viz_type_name.upper()}")
             color = self.env.object_spec(objid).get("color", [0.0, 0.8, 0.0, 0.8])
             obj_marker = ros_utils.make_viz_marker_from_object_state(
-                state.s(objid), header, viz_type=viz_type,
+                sobj, header, viz_type=viz_type,
                 color=color, scale=0.5, lifetime=1.0)
             markers.append(obj_marker)
+            # get a tf transform from world to object
+            tobj = ros_utils.tf2msg_from_object_state(
+                sobj, self.world_frame, f"{sobj.objclass}_{objid}")
+            tf2msgs.append(tobj)
 
-        # TODO: consider use arrow
+        srobot = state.s(self.env.robot_id)
         robot_marker = ros_utils.make_viz_marker_from_robot_state(
-                state.s(self.env.robot_id), header, viz_type=Marker.CUBE,
-                color=[0.9, 0.1, 0.1, 0.8], scale=0.75, lifetime=1.0)
+            srobot, header,
+            color=[0.9, 0.1, 0.1, 0.9], lifetime=1.0,
+            scale=Vector3(x=0.8, y=0.1, z=0.1))
         markers.append(robot_marker)
-        return MarkerArray(markers)
+        # get a tf transform from world to robot
+        trobot = ros_utils.tf2msg_from_robot_state(
+            srobot, self.world_frame, f"robot_{srobot['id']}")
+        tf2msgs.append(trobot)
+        return MarkerArray(markers), tf2msgs
 
     def navigate_to(self, goal_pose):
         """Super simple navigation. Will first level the camera,
         then rotate the camera in yaw towards the goal, and then
         go in a straightline, and finally rotate it to the goal rotation."""
         current_pose = self.env.state.s(self.env.robot_id).pose
-        current_orientation = quat_to_euler(current_pose[3:])
-        goal_orientation = quat_to_euler(goal_pose[3:])
+        current_orientation = quat_to_euler(*current_pose[3:])
+        goal_orientation = quat_to_euler(*goal_pose[3:])
 
         # rotate thx
         dthx_actions = self._axis_actions_towards(current_orientation[0], goal_orientation[0], "dthx", 0)
         # rotate thy
-        dthy_actions = self._axis_actions_towards(current_orientation[1], goal_orientation[1], "dthy", 0)
+        dthy_actions = self._axis_actions_towards(current_orientation[1], goal_orientation[1], "dthy", 1)
         # rotate thz
-        dthz_actions = self._axis_actions_towards(current_orientation[2], goal_orientation[2], "dthz", 0)
+        dthz_actions = self._axis_actions_towards(current_orientation[2], goal_orientation[2], "dthz", 2)
 
         # move forward in a straight line over x-y plane.
         dxy_actions = self._xyplane_forward_actions_towards(current_pose[:2], goal_pose[:2], goal_orientation[2])
 
         # adjust height
-        dz_actions = self._axis_actions_towards(current_pose[2], goal_pose[2], "dz", 0)
+        dz_actions = self._axis_actions_towards(current_pose[2], goal_pose[2], "dz", 2)
         all_actions = dthx_actions + dthy_actions + dthz_actions + dxy_actions + dz_actions
 
         rate = rospy.Rate(1./self.nav_step_duration)
         for action in all_actions:
             self.env.state_transition(action, execute=True)
-            rospy.log(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
+            rospy.loginfo(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
             rate.sleep()
 
     def _axis_actions_towards(self, curval, desval, dtype, coord_index):
@@ -213,7 +229,7 @@ class SimpleSimEnvROSNode:
         else:
             step_size = self.rotation_step_size
             dapply_index = 1
-        num_dsteps = abs(diffval // step_size)
+        num_dsteps = int(abs(diffval // step_size))
         dstep = [0, 0, 0]
         if diffval > 0:
             dstep[coord_index] = step_size
@@ -239,7 +255,7 @@ class SimpleSimEnvROSNode:
             actions.append(dstep_action_last)
         return actions
 
-    def _xyplan_forward_actions_towards(self, current_xy_pos, goal_xy_pos, goal_yaw):
+    def _xyplane_forward_actions_towards(self, current_xy_pos, goal_xy_pos, goal_yaw):
         """Assume that the agent has finished rotating; Just need to move in the
         goal_yaw direction. 'goal_yaw' should be in degrees"""
         actions = []
@@ -247,9 +263,9 @@ class SimpleSimEnvROSNode:
         dx = self.translation_step_size*math.cos(to_rad(goal_yaw))
         dy = self.translation_step_size*math.sin(to_rad(goal_yaw))
         distance = euclidean_dist(current_xy_pos, goal_xy_pos)
-        num_dsteps = distance // self.translation_step_size
+        num_dsteps = int(distance // self.translation_step_size)
         dmotion = ((dx, dy, 0), (0, 0, 0))
-        dstep_action = MotionAction3D(dmotion, motion_name=f"move-{forward}")
+        dstep_action = MotionAction3D(dmotion, motion_name=f"move-forward")
         actions.extend([dstep_action]*num_dsteps)
 
         remaining = distance - self.translation_step_size*num_dsteps
@@ -257,7 +273,7 @@ class SimpleSimEnvROSNode:
             dx_last = remaining*math.cos(to_rad(goal_yaw))
             dy_last = remaining*math.sin(to_rad(goal_yaw))
             dmotion_last = ((dx_last, dy_last, 0), (0, 0, 0))
-            dstep_action_last = MotionAction3D(dmotion_last, motion_name=f"move-{forward}")
+            dstep_action_last = MotionAction3D(dmotion_last, motion_name=f"move-forward")
             actions.append(dstep_action_last)
         return actions
 

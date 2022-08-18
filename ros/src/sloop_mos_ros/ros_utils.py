@@ -296,21 +296,38 @@ def make_viz_marker_from_object_state(sobj, header, **kwargs):
     _fill_viz_marker(marker, **kwargs)
     return marker
 
+def tf2msg_from_object_state(sobj, world_frame, object_frame, **kwargs):
+    stamp = kwargs.get("stamp", rospy.Time.now())
+    t = geometry_msgs.msg.TransformStamped(
+        header=std_msgs.msg.Header(stamp=stamp,
+                                   frame_id=world_frame))
+    t.child_frame_id = object_frame
+    loc = sobj.loc
+    t.transform.translation = geometry_msgs.msg.Vector3(x=loc[0], y=loc[1], z=loc[2])
+    t.transform.rotation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
+    return t
+
 def make_viz_marker_from_robot_state(srobot, header, **kwargs):
-    """
-    Args:
-       sobj (RobotState)
-       viz_type (int): e.g. Marker.CUBE
-       color (std_msgs.ColorRGBA)
-       scale (float or geometry_msgs.Vector3)
-    """
     marker = Marker(header=header)
     marker.id = hash16(srobot["id"])
     x,y,z,qx,qy,qz,qw = srobot.pose
     marker.pose.position = geometry_msgs.msg.Point(x=x, y=y, z=z)
-    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=x, y=y, z=qz, w=qw)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    kwargs["viz_type"] = Marker.ARROW
     _fill_viz_marker(marker, **kwargs)
     return marker
+
+def tf2msg_from_robot_state(srobot, world_frame, robot_frame, **kwargs):
+    stamp = kwargs.get("stamp", rospy.Time.now())
+    t = geometry_msgs.msg.TransformStamped(
+        header=std_msgs.msg.Header(stamp=stamp,
+                                   frame_id=world_frame))
+    t.child_frame_id = robot_frame
+    x,y,z,qx,qy,qz,qw = srobot.pose
+    t.transform.translation = geometry_msgs.msg.Vector3(x=x, y=y, z=z)
+    t.transform.rotation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    return t
+
 
 def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
                      color=[0.0, 0.8, 0.0, 0.8], scale=1.0, lifetime=1.0):

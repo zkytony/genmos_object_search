@@ -8,6 +8,9 @@
               file="$(find sloop_object_search_ros)/tests/spot/grpc/simple_sim/config_simple_sim_$(arg map_name).yaml"/>
     <param name="state_pub_rate" value="10"/>
     <param name="world_frame" value="$(arg world_frame)"/>
+    <param name="step_duration" value="0.1"/>
+    <param name="translation_step_size" value="0.1"/>
+    <param name="rotation_step_size" value="5"/>
   </node>
 
   <node pkg="sloop_object_search_ros"
