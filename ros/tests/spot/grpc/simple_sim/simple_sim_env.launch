@@ -1,0 +1,26 @@
+<launch>
+  <arg name="map_name"/>
+  <arg name="world_frame" default="graphnav_map"/>
+
+  <node pkg="sloop_object_search_ros"
+        name="simple_sim_env" type="simple_sim_env.py" output="screen">
+    <rosparam param="config" command="load"
+              file="$(find sloop_object_search_ros)/tests/spot/grpc/simple_sim/config_simple_sim_$(arg map_name).yaml"/>
+    <param name="state_pub_rate" value="10"/>
+    <param name="world_frame" value="$(arg world_frame)"/>
+  </node>
+
+  <node pkg="sloop_object_search_ros"
+        name="simple_sim_init_robot_pose_publisher"
+        type="simple_sim_init_robot_pose_pub.py"
+        output="screen">
+    <param name="x" value="0.0"/>
+    <param name="y" value="0.0"/>
+    <param name="z" value="0.0"/>
+    <param name="qx" value="0.0"/>
+    <param name="qy" value="0.0"/>
+    <param name="qz" value="0.0"/>
+    <param name="qw" value="1.0"/>
+    <param name="world_frame" value="$(arg world_frame)"/>
+  </node>
+</launch>

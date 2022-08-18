@@ -6,7 +6,7 @@ import sys
 import rospy
 import geometry_msgs
 import std_msgs
-
+import visualization_msgs
 import message_filters
 
 import tf
@@ -15,6 +15,9 @@ import tf2_ros
 # https://answers.ros.org/question/95791/tf-transformpoint-equivalent-on-tf2/?answer=394789#post-id-394789
 # STUPID ROS PROBLEM.
 import tf2_geometry_msgs.tf2_geometry_msgs
+
+from sloop_object_search.utils.misc import hash16
+
 
 def IS_TAG(t):
     return len(t) == 2 or len(t[2]) == 0
@@ -107,6 +110,7 @@ class ROSLaunchWriter:
         else:
             return "".join(lines)
 
+### Pose and Transforms ###
 def pose_to_tuple(pose):
     """
     Given a geometry_msgs/Pose message,
@@ -155,6 +159,11 @@ def pose_tuple_to_pose_stamped(pose_tuple, frame_id, stamp=None):
                                                      z=z)
     pose_msg.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
     return pose_msg
+
+def pose_tuple_from_pose_stamped(pose_stamped_msg):
+    position = pose_stamped_msg.pose.position
+    orientation = pose_stamped_msg.pose.orientation
+    return (position.x, position.y, position.z, orientation.x, orientation.y, orientation.z, orientation.w)
 
 def topic_exists(topic):
     all_topics = [t[0] for t in rospy.get_published_topics()]
@@ -270,6 +279,50 @@ def _convert_img(img, encoding='passthrough'):
     msg = bridge.cv2_to_imgmsg(img, encoding=encoding)
     return msg
 
+### Visualization ###
+from visualization_msgs.msg import Marker, MarkerArray
+def make_viz_marker_from_object_state(sobj, header, **kwargs):
+    """
+    Args:
+       sobj (ObjectState)
+       viz_type (int): e.g. Marker.CUBE
+       color (std_msgs.ColorRGBA)
+       scale (float or geometry_msgs.Vector3)
+    """
+    marker = Marker(header=header)
+    marker.id = hash16(sobj["id"])
+    loc = sobj.loc
+    marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
+def make_viz_marker_from_robot_state(srobot, header, **kwargs):
+    """
+    Args:
+       sobj (RobotState)
+       viz_type (int): e.g. Marker.CUBE
+       color (std_msgs.ColorRGBA)
+       scale (float or geometry_msgs.Vector3)
+    """
+    marker = Marker(header=header)
+    marker.id = hash16(srobot["id"])
+    x,y,z,qx,qy,qz,qw = srobot.pose
+    marker.pose.position = geometry_msgs.msg.Point(x=x, y=y, z=z)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=x, y=y, z=qz, w=qw)
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
+def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
+                     color=[0.0, 0.8, 0.0, 0.8], scale=1.0, lifetime=1.0):
+    marker.type = viz_type
+    if type(scale) == float:
+        marker.scale = geometry_msgs.msg.Vector3(x=scale, y=scale, z=scale)  # we don't care about scale
+    else:
+        marker.scale = scale  # we don't care about scale
+    marker.action = action
+    marker.lifetime = rospy.Duration(lifetime)
+    color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
+    marker.color = color
 
 
 ### Communication ###
