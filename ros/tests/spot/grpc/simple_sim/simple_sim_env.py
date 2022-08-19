@@ -4,6 +4,7 @@
 # Also run:
 #    To get map point cloud, roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=<map_name>
 #    For rviz, roslaunch sloop_object_search_ros view_simple_sim.launch
+# Then, you can run one of the test_* files.
 
 import rospy
 import pomdp_py
@@ -276,7 +277,6 @@ class SimpleSimEnvROSNode:
             dstep_action_last = MotionAction3D(dmotion_last, motion_name=f"move-forward")
             actions.append(dstep_action_last)
         return actions
-
 
 
 def main():
