@@ -18,18 +18,29 @@ from .server import MAX_MESSAGE_LENGTH
 from .utils import proto_utils as pbutil
 
 
+DEFAULT_RPC_TIMEOUT = 30
+
+
 class SloopObjectSearchClient:
 
     def __init__(self, server_address='localhost:50051',
-                 max_message_length=MAX_MESSAGE_LENGTH):
+                 max_message_length=MAX_MESSAGE_LENGTH,
+                 default_rpc_timeout=DEFAULT_RPC_TIMEOUT):
         self.server_address = server_address
         options = [('grpc.max_receive_message_length', max_message_length),
                    ('grpc.max_send_message_length', max_message_length)]
+        # one client has one channel
         self.channel = grpc.insecure_channel(self.server_address, options=options)
         self.stub = slpb2_grpc.SloopObjectSearchStub(self.channel)
 
     def __del__(self):
         self.channel.close()
+
+    def call(self, rpc_method, request, timeout=DEFAULT_RPC_TIMEOUT):
+        return rpc_method(request, timeout=timeout)
+
+    def call_async(self, rpc_method, request, timeout=DEFAULT_RPC_TIMEOUT):
+        raise NotImplementedError()
 
     def createAgent(self, config=None, config_file_path=None, **kwargs):
         """
@@ -48,16 +59,16 @@ class SloopObjectSearchClient:
             with open(config_file_path) as f:
                 config_str = f.read()
 
-        create_agent_request = slpb2.CreateAgentRequest(
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        request = slpb2.CreateAgentRequest(
             config=config_str.encode(encoding='utf-8'),
             **kwargs)
-        response = self.stub.CreateAgent(create_agent_request)
-        return response
+        return self.call(self.stub.CreateAgent, request, timeout=timeout)
 
     def updateSearchRegion(self, **kwargs):
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.UpdateSearchRegionRequest(**kwargs)
-        response = self.stub.UpdateSearchRegion(request)
-        return response
+        return self.call(self.stub.UpdateSearchRegion, request, timeout=timeout)
 
     def checkIfAgentIsCreated(self, agent_name):
         slpb2.GetAgentCreationStatusRequest()
