@@ -10,6 +10,7 @@ from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
 from .utils import proto_utils as pbutil
+from .utils import agent_utils
 from .utils.search_region_processing import (search_region_2d_from_point_cloud,
                                              search_region_3d_from_point_cloud)
 
@@ -22,13 +23,9 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         # maps from agent name to a pomdp_py.Agent.
         self._agents = {}
 
-        # maps from agent name to a configuration dictionary; These
-        # agents are waiting for initial pose and search region in
-        # order to be created.
+        # maps from agent name to a dictionary that contains
+        # necessary arguments in order to construct the agent.
         self._pending_agents = {}
-
-        # maps from agent name to its current search region.
-        self._search_regions = {}
 
         self._world_origin = None
 
@@ -46,7 +43,15 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         config_str = request.config.decode("utf-8")
         config = yaml.safe_load(config_str)
-        self._pending_agents[request.agent_name] = config["agent_config"]
+        if "agent_config" in config:
+            agent_config = config["agent_config"]
+        else:
+            agent_config = config
+        self._pending_agents[request.agent_name] = {
+            "agent_config": agent_config,
+            "search_region": None,
+            "init_robot_pose": None
+        }
 
         return slpb2.CreateAgentReply(
             status=Status.PENDING,
@@ -76,7 +81,9 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the corresponding POMDP agent should be created and
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
-        # We will first process the map
+
+        robot_pose = pbutil.interpret_robot_pose(request)
+
         if request.HasField('occupancy_grid'):
             raise NotImplementedError()
         elif request.HasField('point_cloud'):
@@ -84,44 +91,65 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             if not request.is_3d:  # 2D
                 params = pbutil.process_search_region_params_2d(
                     request.search_region_params_2d)
-                robot_position = pbutil.interpret_robot_pose(request)[:2]
+                robot_position = robot_pose[:2]
                 logging.info("converting point cloud to 2d search region...")
                 search_region = search_region_2d_from_point_cloud(
                     request.point_cloud, robot_position,
-                    existing_search_region=self._search_regions.get(request.agent_name, None),
+                    existing_search_region=self.search_region_for(request.agent_name),
                     **params)
             else: # 3D
                 params = pbutil.process_search_region_params_3d(
                     request.search_region_params_3d)
-                robot_position = pbutil.interpret_robot_pose(request)[:2]
+                robot_position = robot_pose[:3]
                 logging.info("converting point cloud to 3d search region...")
                 search_region = search_region_3d_from_point_cloud(
                     request.point_cloud, robot_position,
-                    existing_search_region=self._search_regions.get(request.agent_name, None),
+                    existing_search_region=self.search_region_for(request.agent_name),
                     **params)
         else:
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
 
-        # create or update search region for the given agent
-        self._search_regions[request.agent_name] = search_region
-
-        # if the agent has been pending, we can now create it.
+        # set search region for the agent for creation
         if request.agent_name in self._pending_agents:
+            # prepare for creation
+            self._pending_agents[request.agent_name]["search_region"] = search_region
+            self._pending_agents[request.agent_name]["init_robot_pose"] = robot_pose
             self._create_agent(request.agent_name)
+
+        elif request.agent_name in self._agents:
+            # TODO: agent should be able to update its search region.
+            raise NotImplementedError()
+
+        else:
+            logging.warn(f"Agent {request.agent_name} is not recognized.")
 
         return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
                                              status=Status.SUCCESS,
                                              message="search region updated")
+
+    def search_region_for(self, agent_name):
+        if agent_name in self._pending_agents:
+            return self._pending_agents[agent_name].get("search_region", None)
+        elif agent_name in self._agents:
+            return self._agents[agent_name].search_region
+        else:
+            return None
+
     def _create_agent(self, agent_name):
+        """This function is called when an agent is first being created"""
         assert agent_name not in self._agents,\
             f"Internal error: agent {agent_name} already exists."
-        self._agents[agent_name] = "TODO!"
-        self._pending_agents.pop(agent_name)
+        info = self._pending_agents.pop(agent_name)
+        self._agents[agent_name] = agent_utils.create_agent(
+            agent_name, info["agent_config"], info["init_robot_pose"], info["search_region"])
+        self._check_invariant()
 
-
-
-
+    def _check_invariant(self):
+        for agent_name in self._agents:
+            assert agent_name not in self._pending_agents
+        for agent_name in self._pending_agents:
+            assert agent_name not in self._agents
 
 
 ###########################################################################

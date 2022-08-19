@@ -15,8 +15,12 @@ def init_detection_models(agent_config):
     detection_models = {}
     for objid in robot["detectors"]:
         detector_spec = robot["detectors"][objid]
+        if "sensor" in detector_spec["params"]:
+            detector_params = [detector_spec["params"]["sensor"], detector_spec["params"]["quality"]]
+        else:
+            detector_params = detector_spec["params"]
         detection_model = import_class(detector_spec["class"])(
-            objid, *detector_spec["params"]
+            objid, *detector_params
         )
         detection_models[objid] = detection_model
     return detection_models

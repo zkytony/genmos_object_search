@@ -1,10 +1,11 @@
-from sloop_object_search.oopomdp.agent import AGENT_CLASS_2D, AGENT_CLASS_3D,\
-    SloopMosBasic2DAgent, MosBasic2DAgent, SloopMosTopo2DAgent, MosBasic3DAgent
+import pomdp_py
+from sloop_object_search.oopomdp.agent import\
+    SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D
 
-VALID_AGENTS = {"SloopMosBasic2DAgent",
-                "MosBasic2DAgent",
-                "SloopMosTopo2DAgent",
-                "MosBasic3DAgent"}
+VALID_AGENTS = {"SloopMosAgentBasic2D",
+                "MosAgentBasic2D",
+                "SloopMosAgentTopo2D",
+                "MosAgentBasic3D"}
 
 def create_agent(agent_name, agent_config_world, robot_pose, search_region):
     """
@@ -37,18 +38,19 @@ def create_agent(agent_name, agent_config_world, robot_pose, search_region):
 
     Note that by default, size units in agent_config that are metric.
     """
-    _validate_agent_config(agent_config_pomdp)
-    agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(agent_config_world)
+    _validate_agent_config(agent_config_world)
+    agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(
+        agent_config_world, search_region)
     agent_class = eval(agent_config_pomdp["agent_class"])
-
-
+    # For now, assume no significant noise in localization
+    init_robot_pose_dist =  pomdp_py.Histogram({robot_pose: 1.0})
+    agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist)
+    return agent
 
 
 def _validate_agent_config(agent_config):
     if "agent_class" not in agent_config:
         raise KeyError("'agent_class' must exist agent_config")
-    if "agent_class" not in VALID_AGENTS:
-        raise ValueError(f"agent class {agent_config['agent_config']} is invalid")
     if "robot" not in agent_config:
         raise KeyError("'robot' must exist agent_config")
     if "objects" not in agent_config:
@@ -56,8 +58,7 @@ def _validate_agent_config(agent_config):
     if "targets" not in agent_config:
         raise KeyError("'targets' must exist agent_config")
     agent_config['no_look'] = agent_config.get('no_look', True)
-    if agent_config['agent_class'] not in AGENT_CLASS_2D\
-       and agent_config['agent_class'] not in AGENT_CLASS_3D:
+    if agent_config['agent_class'] not in VALID_AGENTS:
         raise ValueError(f"Agent class {agent_config['agent_class']} not recognized.")
 
     # Check if targets are valid objects
@@ -92,12 +93,12 @@ def _validate_agent_config(agent_config):
                 assert "quality" in params,\
                     "'params' for detector model for {} doesn't have quality params".format(objid)
 
-def _convert_metric_fields_to_pomdp_fields(agent_config_world):
+def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
     """POMDP agent takes in config in POMDP space. We do this conversion for detector specs."""
     agent_config_pomdp = dict(agent_config_world)
     for objid in agent_config_world["robot"]["detectors"]:
-        sensor_params_world = agent_config_world["robot"]["detectors"][objid]["sensor"]
-        sensor_params_pomdp = agent_config_pomdp["robot"]["detectors"][objid]["sensor"]
+        sensor_params_world = agent_config_world["robot"]["detectors"][objid]["params"]["sensor"]
+        sensor_params_pomdp = agent_config_pomdp["robot"]["detectors"][objid]["params"]["sensor"]
         if "max_range" in sensor_params_world:
             sensor_params_pomdp["max_range"] =\
                 sensor_params_world["max_range"] / search_region.search_space_resolution
