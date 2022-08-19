@@ -59,6 +59,32 @@ for Multi-Object Search.
      The inflation radius of obstacles can be a function in GridMap2 - it is
      simply a matter of adding more obstacles close to existing ones.
 
+*** POMDP Agent Implementation (last updated 08/16/2022)
+    - belief is handled by pomdp_py.OOBelief. There is no
+      need for additional belief class.
+
+    - ~MosAgent~ is the high-level class for a multi-object search agent.
+      It does not assume if the world is 2D or 3D. The code is general.
+
+      ~SloopMosAgent~ is a sloop agent whose underlying OOPOMDP is
+      a MosAgent. Because MosAgent is not grounded to any world
+      representation, I have left ~_init_oopomdp~ unimplemented.
+
+    - We will implement: ~MosAgentBasic2D~, which is just a 2D local
+      search agent (with primitive actions); There should be not
+      much work in putting this one together. Will implement ~SloopMosAgentBasic2D~
+      even though we will probably not use it for real robot experiments.
+
+      ~MosAgentTopo2D~, which is an agent with topo map action space.
+      This should also not be too much work. With that, I can implement
+      the ~SloopMosAgentTopo2D~, which is our global search agent.
+
+    - Parameters for sensors are in metric units when being specified
+      by the user (for a real robot scenario), but converted into POMDP
+      coordinate units when passed in for creating an agent. This conversion
+      is handled by us.
+
+
 
 ** Usage
 
