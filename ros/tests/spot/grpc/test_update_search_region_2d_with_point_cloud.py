@@ -70,7 +70,8 @@ class TestCase:
                 region_size = 5.0
                 brush_size = 0.5
 
-            self._sloop_client.UpdateSearchRegion(
+            self._sloop_client.updateSearchRegion(
+                header=cloud_pb.header,
                 agent_name="test_robot",
                 is_3d=False,
                 robot_pose_2d=robot_pose_pb,

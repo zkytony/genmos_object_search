@@ -1,4 +1,11 @@
 # functions that make it easier to work with the server
+#
+# Convention:
+#
+#   - If the function involves calling (direct or indirect) gRPC
+#     services, the function name is camelCase (first letter
+#     lower-case).
+
 
 import grpc
 import json
@@ -8,6 +15,7 @@ import sloop_object_search.grpc.sloop_object_search_pb2_grpc as slpb2_grpc
 from sloop_object_search.grpc.common_pb2 import Pose2D
 
 from .server import MAX_MESSAGE_LENGTH
+from .utils import proto_utils as pbutil
 
 
 class SloopObjectSearchClient:
@@ -23,7 +31,7 @@ class SloopObjectSearchClient:
     def __del__(self):
         self.channel.close()
 
-    def CreateAgent(self, config=None, config_file_path=None, **kwargs):
+    def createAgent(self, config=None, config_file_path=None, **kwargs):
         """
         Calls the CreateAgent rpc. Sends over agent configuration,
         along with other parameters in kwargs. Agent configuration is
@@ -46,7 +54,10 @@ class SloopObjectSearchClient:
         response = self.stub.CreateAgent(create_agent_request)
         return response
 
-    def UpdateSearchRegion(self, **kwargs):
+    def updateSearchRegion(self, **kwargs):
         request = slpb2.UpdateSearchRegionRequest(**kwargs)
         response = self.stub.UpdateSearchRegion(request)
         return response
+
+    def checkIfAgentIsCreated(self, agent_name):
+        slpb2.GetAgentCreationStatusRequest()
