@@ -9,11 +9,11 @@
 
 import grpc
 import json
+import time
 
-import sloop_object_search.grpc.sloop_object_search_pb2 as slpb2
-import sloop_object_search.grpc.sloop_object_search_pb2_grpc as slpb2_grpc
-from sloop_object_search.grpc.common_pb2 import Pose2D
-
+from . import sloop_object_search_pb2 as slpb2
+from . import sloop_object_search_pb2_grpc as slpb2_grpc
+from .common_pb2 import Pose2D, Status
 from .server import MAX_MESSAGE_LENGTH
 from .utils import proto_utils as pbutil
 
@@ -70,5 +70,17 @@ class SloopObjectSearchClient:
         request = slpb2.UpdateSearchRegionRequest(**kwargs)
         return self.call(self.stub.UpdateSearchRegion, request, timeout=timeout)
 
-    def checkIfAgentIsCreated(self, agent_name):
-        slpb2.GetAgentCreationStatusRequest()
+    def getAgentCreationStatus(self, agent_name, **kwargs):
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        request = slpb2.GetAgentCreationStatusRequest(
+            header=pbutil.make_header(),
+            agent_name=agent_name)
+        return self.call(self.stub.GetAgentCreationStatus, request, timeout=timeout)
+
+    def waitForAgentCreation(self, agent_name, **kwargs):
+        """blocks until an agent is created"""
+        wait_sleep = kwargs.pop("wait_sleep", 0.2)
+        response = self.getAgentCreationStatus(agent_name, **kwargs)
+        while response.status != Status.SUCCESS:
+            response = self.getAgentCreationStatus(agent_name, **kwargs)
+            time.sleep(wait_sleep)

@@ -16,9 +16,8 @@ from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped
 from sloop_object_search.grpc.utils.proto_utils import pointcloud2_to_pointcloudproto
-from sloop_object_search.grpc.common_pb2 import Pose3D, BasicParam, Vec3, Quaternion
+from sloop_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from sloop_object_search.grpc.client import SloopObjectSearchClient
-from config_test_SloopMosTopo2DAgent import TEST_CONFIG
 
 POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 WAYPOINT_TOPIC = "/graphnav_waypoints"
@@ -33,10 +32,10 @@ def waypoints_msg_to_arr(waypoints_msg):
                     for wp_msg in waypoints_msg.waypoints])
     return arr
 
-class TestCase:
-    def __init__(self):
-        rospy.init_node("test_update_search_region_3d_with_point_cloud")
-
+class UpdateSearchRegion3DTestCase:
+    def __init__(self, node_name="test_update_search_region_3d_with_point_cloud", debug=True):
+        rospy.init_node(node_name)
+        self.debug = debug
         self.wyp_sub = rospy.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray, self._waypoint_cb)
         self.robot_pose_pub = rospy.Publisher(
             FAKE_ROBOT_POSE_TOPIC, geometry_msgs.PoseStamped, queue_size=10)
@@ -45,10 +44,12 @@ class TestCase:
         self.wyp_mf_sub = message_filters.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray)
         self.ts = message_filters.ApproximateTimeSynchronizer(
             [self.pcl_mf_sub, self.wyp_mf_sub], 10, 100)  # allow 0.2s difference
-        self.ts.registerCallback(self._cloud_waypoints_callback)
+        self.ts.registerCallback(self._update_search_region_callback)
         self._callback_count = 0
 
         self._sloop_client = SloopObjectSearchClient()
+
+    def run():
         rospy.spin()
 
     def _waypoint_cb(self, waypoints_msg):
@@ -64,7 +65,7 @@ class TestCase:
         self.robot_pose_pub.publish(pose_stamped)
         rate.sleep()
 
-    def _cloud_waypoints_callback(self, cloud_msg, waypoints_msg):
+    def _update_search_region_callback(self, cloud_msg, waypoints_msg):
         """The first time a new search region should be created;
         Subsequent calls should update the search region"""
         # convert PointCloud2 to point cloud protobuf
@@ -101,7 +102,7 @@ class TestCase:
                 point_cloud=cloud_pb,
                 search_region_params_3d={"octree_size": 64,
                                          "search_space_resolution": 0.15,
-                                         "debug": True})
+                                         "debug": self.debug})
 
 if __name__ == "__main__":
-    TestCase()
+    UpdateSearchRegion3DTestCase().run()

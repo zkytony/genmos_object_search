@@ -53,21 +53,21 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             message="Agent configuration received. Waiting for additional inputs...")
 
     def GetAgentCreationStatus(self, request, context):
-        if request.agent_name not in self._agents:
-            return slpb2.GetAgentCreationReply(
+        if request.agent_name in self._pending_agents:
+            return slpb2.GetAgentCreationStatusReply(
+                header=pbutil.make_header(),
+                status=Status.PENDING,
+                status_message="Agent configuration received. Waiting for additional inputs...")
+        elif request.agent_name not in self._agents:
+            return slpb2.GetAgentCreationStatusReply(
                 header=pbutil.make_header(),
                 status=Status.FAILED,
                 status_message="Agent does not exist.")
         elif request.agent_name in self._agents:
-            return slpb2.GetAgentCreationReply(
+            return slpb2.GetAgentCreationStatusReply(
                 header=pbutil.make_header(),
                 status=Status.SUCCESS,
                 status_message="Agent created.")
-        elif request.agent_name in self._pending_agents:
-            return slpb2.GetAgentCreationReply(
-                header=pbutil.make_header(),
-                status=Status.PENDING,
-                status_message="Agent configuration received. Waiting for additional inputs...")
         else:
             raise RuntimeError("Internal error on GetAgentCreationStatus.")
 
