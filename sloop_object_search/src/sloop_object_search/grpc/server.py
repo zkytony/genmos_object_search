@@ -108,15 +108,16 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         # if the agent has been pending, we can now create it.
         if request.agent_name in self._pending_agents:
-            self._create_agent(self.request.agent_name)
+            self._create_agent(request.agent_name)
 
         return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
                                              status=Status.SUCCESS,
                                              message="search region updated")
-
     def _create_agent(self, agent_name):
         assert agent_name not in self._agents,\
             f"Internal error: agent {agent_name} already exists."
+        self._agents[agent_name] = "TODO!"
+        self._pending_agents.pop(agent_name)
 
 
 
