@@ -43,7 +43,7 @@ class UpdateSearchRegion2DTestCase:
 
         self._sloop_client = SloopObjectSearchClient()
 
-    def run():
+    def run(self):
         rospy.spin()
 
     def _update_search_region_callback(self, cloud_msg, waypoints_msg):
