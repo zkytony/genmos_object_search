@@ -25,18 +25,18 @@ from test_update_search_region_3d_with_point_cloud import UpdateSearchRegion3DTe
 
 class CreateAgentTestCase(BaseTestCase3D):
     def run(self):
-        response = self._sloop_client.getAgentCreationStatus(self.agent_name)
+        response = self._sloop_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.FAILED
 
         self._sloop_client.createAgent(config=TEST_CONFIG,
-                                       agent_name=self.agent_name,
+                                       robot_id=self.robot_id,
                                        header=pbutil.make_header())
-        response = self._sloop_client.getAgentCreationStatus(self.agent_name)
+        response = self._sloop_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.PENDING
 
         print("waiting for agent creation...")
-        self._sloop_client.waitForAgentCreation(self.agent_name)
-        response = self._sloop_client.getAgentCreationStatus(self.agent_name)
+        self._sloop_client.waitForAgentCreation(self.robot_id)
+        response = self._sloop_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.SUCCESS
 
         print("test passed.")

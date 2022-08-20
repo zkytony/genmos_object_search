@@ -43,7 +43,7 @@ service SloopObjectSearch {
 //// For CreateAgent rpc ////
 message CreateAgentRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 
   // serialized configuration dictionary (UTF-8 encoding
   // of a JSON string)
@@ -59,7 +59,7 @@ message CreateAgentReply {
 //// For GetAgentCreationStatus rpc ////
 message GetAgentCreationStatusRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 }
 
 message GetAgentCreationStatusReply {
@@ -71,7 +71,7 @@ message GetAgentCreationStatusReply {
 //// For UpdateSearchRegion rpc ////
 message UpdateSearchRegionRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 
   // Whether the search region is 3D.
   bool is_3d = 3;
@@ -102,7 +102,7 @@ message UpdateSearchRegionReply {
 //// For ProcessObservation rpc ////
 message ProcessObservationRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 
   oneof observation {
     RobotPose robot_pose = 3;
@@ -120,7 +120,7 @@ message ProcessObservationReply {
 //// For GetObjectBeliefs rpc ////
 message GetObjectBeliefsRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 }
 
 message GetObjectBeliefsReply {
@@ -129,10 +129,10 @@ message GetObjectBeliefsReply {
 }
 
 
-//// For GetRobotBelief  rpc ////
+//// For GetRobotBelief rpc ////
 message GetRobotBeliefRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 }
 
 message GetRobotBeliefReply {
@@ -153,7 +153,7 @@ message GetRobotBeliefReply {
 //// For InitPlanner rpc ////
 message InitPlannerRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 
   string planner = 3;
 
@@ -171,7 +171,7 @@ message InitPlannerReply {
 //// For PlanAction rpc ////
 message PlanActionRequest {
   Header header = 1;
-  string agent_name = 2;
+  string robot_id = 2;
 }
 
 message PlanActionReply {

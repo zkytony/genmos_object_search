@@ -35,11 +35,11 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         is not yet be ready after this call. The server needs to wait
         for an "UpdateSearchRegionRequest".
         """
-        if request.agent_name in self._agents:
+        if request.robot_id in self._agents:
             return slpb2.CreateAgentReply(
                 header=pbutil.make_header(),
                 status=Status.FAILED,
-                message=f"Agent with name {request.agent_name} already exists!")
+                message=f"Agent with name {request.robot_id} already exists!")
 
         config_str = request.config.decode("utf-8")
         config = yaml.safe_load(config_str)
@@ -47,7 +47,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             agent_config = config["agent_config"]
         else:
             agent_config = config
-        self._pending_agents[request.agent_name] = {
+        self._pending_agents[request.robot_id] = {
             "agent_config": agent_config,
             "search_region": None,
             "init_robot_pose": None
@@ -58,17 +58,17 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             message="Agent configuration received. Waiting for additional inputs...")
 
     def GetAgentCreationStatus(self, request, context):
-        if request.agent_name in self._pending_agents:
+        if request.robot_id in self._pending_agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=pbutil.make_header(),
                 status=Status.PENDING,
                 status_message="Agent configuration received. Waiting for additional inputs...")
-        elif request.agent_name not in self._agents:
+        elif request.robot_id not in self._agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=pbutil.make_header(),
                 status=Status.FAILED,
                 status_message="Agent does not exist.")
-        elif request.agent_name in self._agents:
+        elif request.robot_id in self._agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=pbutil.make_header(),
                 status=Status.SUCCESS,
@@ -95,7 +95,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 logging.info("converting point cloud to 2d search region...")
                 search_region = search_region_2d_from_point_cloud(
                     request.point_cloud, robot_position,
-                    existing_search_region=self.search_region_for(request.agent_name),
+                    existing_search_region=self.search_region_for(request.robot_id),
                     **params)
             else: # 3D
                 params = pbutil.process_search_region_params_3d(
@@ -104,52 +104,52 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 logging.info("converting point cloud to 3d search region...")
                 search_region = search_region_3d_from_point_cloud(
                     request.point_cloud, robot_position,
-                    existing_search_region=self.search_region_for(request.agent_name),
+                    existing_search_region=self.search_region_for(request.robot_id),
                     **params)
         else:
             raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
                              "must be specified in request.")
 
         # set search region for the agent for creation
-        if request.agent_name in self._pending_agents:
+        if request.robot_id in self._pending_agents:
             # prepare for creation
-            self._pending_agents[request.agent_name]["search_region"] = search_region
-            self._pending_agents[request.agent_name]["init_robot_pose"] = robot_pose
-            self._create_agent(request.agent_name)
+            self._pending_agents[request.robot_id]["search_region"] = search_region
+            self._pending_agents[request.robot_id]["init_robot_pose"] = robot_pose
+            self._create_agent(request.robot_id)
 
-        elif request.agent_name in self._agents:
+        elif request.robot_id in self._agents:
             # TODO: agent should be able to update its search region.
             raise NotImplementedError()
 
         else:
-            logging.warn(f"Agent {request.agent_name} is not recognized.")
+            logging.warn(f"Agent {request.robot_id} is not recognized.")
 
         return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
                                              status=Status.SUCCESS,
                                              message="search region updated")
 
-    def search_region_for(self, agent_name):
-        if agent_name in self._pending_agents:
-            return self._pending_agents[agent_name].get("search_region", None)
-        elif agent_name in self._agents:
-            return self._agents[agent_name].search_region
+    def search_region_for(self, robot_id):
+        if robot_id in self._pending_agents:
+            return self._pending_agents[robot_id].get("search_region", None)
+        elif robot_id in self._agents:
+            return self._agents[robot_id].search_region
         else:
             return None
 
-    def _create_agent(self, agent_name):
+    def _create_agent(self, robot_id):
         """This function is called when an agent is first being created"""
-        assert agent_name not in self._agents,\
-            f"Internal error: agent {agent_name} already exists."
-        info = self._pending_agents.pop(agent_name)
-        self._agents[agent_name] = agent_utils.create_agent(
-            agent_name, info["agent_config"], info["init_robot_pose"], info["search_region"])
+        assert robot_id not in self._agents,\
+            f"Internal error: agent {robot_id} already exists."
+        info = self._pending_agents.pop(robot_id)
+        self._agents[robot_id] = agent_utils.create_agent(
+            robot_id, info["agent_config"], info["init_robot_pose"], info["search_region"])
         self._check_invariant()
 
     def _check_invariant(self):
-        for agent_name in self._agents:
-            assert agent_name not in self._pending_agents
-        for agent_name in self._pending_agents:
-            assert agent_name not in self._agents
+        for robot_id in self._agents:
+            assert robot_id not in self._pending_agents
+        for robot_id in self._pending_agents:
+            assert robot_id not in self._agents
 
 
 ###########################################################################

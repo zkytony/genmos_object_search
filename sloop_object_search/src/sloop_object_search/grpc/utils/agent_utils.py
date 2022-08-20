@@ -7,9 +7,9 @@ VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "SloopMosAgentTopo2D",
                 "MosAgentBasic3D"}
 
-def create_agent(agent_name, agent_config_world, robot_pose, search_region):
+def create_agent(robot_id, agent_config_world, robot_pose, search_region):
     """
-    Creates a SLOOP POMDP agent named 'agent_name', with the given
+    Creates a SLOOP POMDP agent named 'robot_id', with the given
     config (dict). The initial pose, in world frame, is given by
     robot_pose. The search_region can be 2D or 3D.
 

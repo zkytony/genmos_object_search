@@ -45,11 +45,11 @@ class TestSimpleEnvLocalSearch:
         # sloop_object_search grpc-based package.
         rospy.init_node("test_simple_env_local_search")
         self._sloop_client = SloopObjectSearchClient()
-        self.agent_name = AGENT_CONFIG["robot"]["id"]
+        self.robot_id = AGENT_CONFIG["robot"]["id"]
 
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
-                                       agent_name=self.agent_name)
+                                       robot_id=self.robot_id)
 
         # need to get a region point cloud and a pose use that as search region
         region_cloud_msg, pose_msg = ros_utils.WaitForMessages(
@@ -59,7 +59,7 @@ class TestSimpleEnvLocalSearch:
         cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose_pb = proto_utils.pose_to_pose3dproto(pose_msg.pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              agent_name=self.agent_name,
+                                              robot_id=self.robot_id,
                                               is_3d=True,
                                               robot_pose_3d=robot_pose_pb,
                                               point_cloud=cloud_pb,
@@ -68,7 +68,7 @@ class TestSimpleEnvLocalSearch:
                                                                        "debug": False})
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
-        self._sloop_client.waitForAgentCreation(self.agent_name)
+        self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
         # ...

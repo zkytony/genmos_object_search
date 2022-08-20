@@ -70,17 +70,17 @@ class SloopObjectSearchClient:
         request = slpb2.UpdateSearchRegionRequest(**kwargs)
         return self.call(self.stub.UpdateSearchRegion, request, timeout=timeout)
 
-    def getAgentCreationStatus(self, agent_name, **kwargs):
+    def getAgentCreationStatus(self, robot_id, **kwargs):
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.GetAgentCreationStatusRequest(
             header=pbutil.make_header(),
-            agent_name=agent_name)
+            robot_id=robot_id)
         return self.call(self.stub.GetAgentCreationStatus, request, timeout=timeout)
 
-    def waitForAgentCreation(self, agent_name, **kwargs):
+    def waitForAgentCreation(self, robot_id, **kwargs):
         """blocks until an agent is created"""
         wait_sleep = kwargs.pop("wait_sleep", 0.2)
-        response = self.getAgentCreationStatus(agent_name, **kwargs)
+        response = self.getAgentCreationStatus(robot_id, **kwargs)
         while response.status != Status.SUCCESS:
-            response = self.getAgentCreationStatus(agent_name, **kwargs)
+            response = self.getAgentCreationStatus(robot_id, **kwargs)
             time.sleep(wait_sleep)

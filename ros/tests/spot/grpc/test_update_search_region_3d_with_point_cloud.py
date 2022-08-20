@@ -33,10 +33,10 @@ def waypoints_msg_to_arr(waypoints_msg):
     return arr
 
 class UpdateSearchRegion3DTestCase:
-    def __init__(self, agent_name="test_robot",
+    def __init__(self, robot_id="test_robot",
                  node_name="test_update_search_region_3d_with_point_cloud", debug=True):
         rospy.init_node(node_name)
-        self.agent_name = agent_name
+        self.robot_id = robot_id
         self.debug = debug
         self.wyp_sub = rospy.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray, self._waypoint_cb)
         self.robot_pose_pub = rospy.Publisher(
@@ -98,7 +98,7 @@ class UpdateSearchRegion3DTestCase:
 
             self._sloop_client.updateSearchRegion(
                 header=cloud_pb.header,
-                agent_name=self.agent_name,
+                robot_id=self.robot_id,
                 is_3d=True,
                 robot_pose_3d=robot_pose_pb,
                 point_cloud=cloud_pb,
