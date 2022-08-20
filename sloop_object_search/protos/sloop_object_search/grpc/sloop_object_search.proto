@@ -6,6 +6,7 @@ package sloop_object_search.grpc;
 
 import "sloop_object_search/grpc/common.proto";
 import "sloop_object_search/grpc/observation.proto";
+import "sloop_object_search/grpc/action.proto";
 
 
 service SloopObjectSearch {
@@ -44,7 +45,8 @@ message CreateAgentRequest {
   Header header = 1;
   string agent_name = 2;
 
-  // serialized configuration dictionary
+  // serialized configuration dictionary (UTF-8 encoding
+  // of a JSON string)
   bytes config = 3;
 }
 
@@ -148,17 +150,38 @@ message GetRobotBeliefReply {
   optional string topo_nid = 4;
 }
 
-
 //// For InitPlanner rpc ////
-message InitPlannerRequest {}
+message InitPlannerRequest {
+  Header header = 1;
+  string agent_name = 2;
 
-message InitPlannerReply {}
+  string planner = 3;
+
+  // serialized configuration dictionary (UTF-8 encoding
+  // of a JSON string)
+  bytes config = 4;
+}
+
+message InitPlannerReply {
+  Header header = 1;
+  Status status = 2;
+  string message = 3;
+}
 
 //// For PlanAction rpc ////
-message PlanActionRequest {}
+message PlanActionRequest {
+  Header header = 1;
+  string agent_name = 2;
+}
 
-message PlanActionReply {}
-
+message PlanActionReply {
+  Header header = 1;
+  oneof action {
+    MoveViewpoint move_action = 2;
+    Find find_action = 3;
+    KeyValueAction kv_action = 4;
+  }
+}
 
 
 /////////////////////////////////////
@@ -172,7 +195,6 @@ message SearchRegionParams2D {
   optional double region_size = 5;
   optional bool debug = 6;
 }
-
 
 message SearchRegionParams3D {
   optional int32 octree_size = 1;

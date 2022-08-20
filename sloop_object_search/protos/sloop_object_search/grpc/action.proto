@@ -9,7 +9,7 @@ package sloop_object_search.grpc;
 import "sloop_object_search/grpc/common.proto";
 
 message MoveViewpoint {
-  sloop_object_search.grpc.Header header = 1;
+  Header header = 1;
   string robot_id = 2;   // the robot that performs this action
   oneof dest {
     Pose3D dest_3d = 3;
@@ -22,14 +22,14 @@ message MoveViewpoint {
 // found can be determined based on the robot's current field of view,
 // or its updated belief.
 message Find {
-  sloop_object_search.grpc.Header header = 1;
+  Header header = 1;
   string robot_id = 2;   // the robot that performs this action
 }
 
 // This is a generic action type, used to support other actions such
 // as environment interaction.
 message KeyValueAction {
-  sloop_object_search.grpc.Header header = 1;
+  Header header = 1;
   string type = 2;  // identifies the action type
   int32 num_fields = 3;  // number of key-value pairs
   repeated string keys = 4;    // parameter names for this action

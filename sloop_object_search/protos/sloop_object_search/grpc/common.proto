@@ -79,6 +79,7 @@ message WeightedParticles {
 // histogram representation of of probability distribution
 // Assumes that 'values' and 'probs' have the same length.
 message Histogram {
-  repeated google.protobuf.Any values = 1;
-  repeated double probs = 2;
+  int64 length = 1;
+  repeated google.protobuf.Any values = 2;
+  repeated double probs = 3;
 }
