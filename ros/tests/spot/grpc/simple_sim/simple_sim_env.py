@@ -37,39 +37,41 @@ class SimpleSimEnv(pomdp_py.Environment):
     def __init__(self, env_config):
         # Get initial robot pose
         self.env_config = env_config
+
+        # agent config is the same format as what is given to a SLOOP MosAgent creation.
+        self.agent_config = env_config["agent_config"]
         self._robot_pose_topic = "~init_robot_pose"
         robot_pose_msg = ros_utils.WaitForMessages([self._robot_pose_topic], [PoseStamped], verbose=True)\
                                   .messages[0]
         init_robot_pose = ros_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
-        self.robot_id = self.env_config.get("robot_id", "robot")
+
+        self.robot_id = self.agent_config["robot"].get("id", "robot")
         init_robot_state = RobotState(self.robot_id,
                                       init_robot_pose, (), None)
 
-        assert "objects" in self.env_config, "env_config needs 'objects'"
-        objects = self.env_config["objects"]
+        objects = self.agent_config["objects"]
+        object_locations = self.env_config["object_locations"]
         object_states = {}
         for objid in objects:
-            sobj = ObjectState(objid, objects[objid]["class"], objects[objid]["pos"])
+            sobj = ObjectState(objid, objects[objid]["class"], tuple(object_locations[objid]))
             object_states[objid] = sobj
         init_state = pomdp_py.OOState({self.robot_id: init_robot_state,
                                        **object_states})
 
         # Transition model
-        assert "robot" in self.env_config and "detectors" in self.env_config["robot"],\
-            "env_config needs 'robot', which needs 'detectors'."
-        self.detection_models = init_detection_models(self.env_config)
-        self.no_look = env_config["robot"].get("no_look", True)
+        self.detection_models = init_detection_models(self.agent_config)
+        self.no_look = self.agent_config["robot"].get("no_look", True)
         robot_trans_model = RobotTransBasic3D(
             self.robot_id, self.reachable,
             self.detection_models,
             no_look=self.no_look, pos_precision=0.0001, rot_precision=0.0001)
         object_transition_models = {
             self.robot_id: robot_trans_model,
-            **init_object_transition_models(self.env_config)}
+            **init_object_transition_models(self.agent_config)}
         transition_model = pomdp_py.OOTransitionModel(object_transition_models)
 
         # Reward model
-        target_ids = self.env_config["targets"]
+        target_ids = self.agent_config["targets"]
         reward_model = GoalBasedRewardModel(target_ids, robot_id=self.robot_id)
         super().__init__(init_state,
                          transition_model,
@@ -82,7 +84,7 @@ class SimpleSimEnv(pomdp_py.Environment):
         pass
 
     def object_spec(self, objid):
-        return self.env_config["objects"][objid]
+        return self.agent_config["objects"][objid]
 
 
 class SimpleSimEnvROSNode:

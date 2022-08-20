@@ -1,21 +1,28 @@
-robot_id: robot0
-robot:
-  detectors:
+# For test case in SimpleSimEnv.
+
+# priviledged information only known by the environmen
+object_locations:
+  book: [5.0, 2.0, 0.1]
+
+# configuration for the agent.
+agent_config:
+  robot:
+    detectors:
+      book:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+            - fov: 61  # I measured this (roughly)
+              far: 2.5  # 2.5 meters
+              near: 0.25 # 0.25 meters
+            - [1e5, 0.1]
+    id: robot0
+    no_look: True
+  targets: [book]
+  objects:
     book:
-      class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
-      params:
-          - fov: 61  # I measured this (roughly)
-            far: 2.5  # 2.5 meters
-            near: 0.25 # 0.25 meters
-          - [1e5, 0.1]
-  id: robot0
-  no_look: True
-targets: [book]
-objects:
-  book:
-    class: book
-    transition:
-      class: sloop_object_search.oopomdp.StaticObjectTransitionModel
-    color: [0.4, 0.7, 0.3, 0.8]
-    viz_type: "cube"
-    pos: [5.0, 2.0, 0.1]
+      class: book
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      color: [0.4, 0.7, 0.3, 0.8]
+      viz_type: "cube"
+      pos: [5.0, 2.0, 0.1]

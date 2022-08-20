@@ -16,7 +16,7 @@ def make_nav_action(pos, orien, goal_id=100):
                               values=list(map(str, [goal_id] + goal_values)))
     return nav_action
 
-def main():
+def test():
     rospy.init_node("test_simple_sim_env_navigation")
     action_pub = rospy.Publisher("/simple_sim_env/pomdp_action", KeyValAction, queue_size=10, latch=True)
 
@@ -30,4 +30,4 @@ def main():
     rospy.spin()
 
 if __name__ == "__main__":
-    main()
+    test()
