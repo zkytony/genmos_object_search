@@ -49,8 +49,9 @@ message Find {
 // as environment interaction.
 message KeyValueAction {
   Header header = 1;
-  string type = 2;  // identifies the action type
-  int32 num_fields = 3;  // number of key-value pairs
-  repeated string keys = 4;    // parameter names for this action
-  repeated string values = 5;  // parameter values for this action
+  string robot_id = 2;  // the robot that performs this action
+  string type = 3;  // identifies the action type
+  int32 num_fields = 4;  // number of key-value pairs
+  repeated string keys = 5;    // parameter names for this action
+  repeated string values = 6;  // parameter values for this action
 }
