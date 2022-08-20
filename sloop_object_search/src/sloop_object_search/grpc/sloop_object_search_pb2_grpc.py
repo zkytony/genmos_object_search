@@ -29,6 +29,31 @@ class SloopObjectSearchStub(object):
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.FromString,
                 )
+        self.ProcessObservation = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/ProcessObservation',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationReply.FromString,
+                )
+        self.GetObjectBeliefs = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/GetObjectBeliefs',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsReply.FromString,
+                )
+        self.GetRobotBelief = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/GetRobotBelief',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.FromString,
+                )
+        self.InitPlanner = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/InitPlanner',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerReply.FromString,
+                )
+        self.PlanAction = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
+                )
 
 
 class SloopObjectSearchServicer(object):
@@ -49,6 +74,42 @@ class SloopObjectSearchServicer(object):
 
     def UpdateSearchRegion(self, request, context):
         """More fine-grained rpcs for specific functionality
+        Update search region by interpreting sensor data such as point cloud.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ProcessObservation(self, request, context):
+        """Process observation such as object detection or language
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetObjectBeliefs(self, request, context):
+        """Get current belief about where the object is over the search region
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetRobotBelief(self, request, context):
+        """Get current belief about the robot state
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def InitPlanner(self, request, context):
+        """Initialize a planner
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def PlanAction(self, request, context):
+        """Calls the planner to return an action for execution
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -71,6 +132,31 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
                     servicer.UpdateSearchRegion,
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.SerializeToString,
+            ),
+            'ProcessObservation': grpc.unary_unary_rpc_method_handler(
+                    servicer.ProcessObservation,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationReply.SerializeToString,
+            ),
+            'GetObjectBeliefs': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetObjectBeliefs,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsReply.SerializeToString,
+            ),
+            'GetRobotBelief': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRobotBelief,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.SerializeToString,
+            ),
+            'InitPlanner': grpc.unary_unary_rpc_method_handler(
+                    servicer.InitPlanner,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerReply.SerializeToString,
+            ),
+            'PlanAction': grpc.unary_unary_rpc_method_handler(
+                    servicer.PlanAction,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -130,5 +216,90 @@ class SloopObjectSearch(object):
         return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ProcessObservation(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/ProcessObservation',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetObjectBeliefs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/GetObjectBeliefs',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetRobotBelief(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/GetRobotBelief',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def InitPlanner(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/InitPlanner',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def PlanAction(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

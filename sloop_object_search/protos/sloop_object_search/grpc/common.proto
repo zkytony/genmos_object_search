@@ -3,7 +3,9 @@ syntax = "proto3";
 package sloop_object_search.grpc;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 
+///////// Generic communication ///////////////
 enum Status {
   SUCCESS = 0;
   FAILED = 1;
@@ -16,6 +18,7 @@ message Header {
   string message = 4;  // information to be attached.
 }
 
+///////// Geometry related ///////////////
 message Pose2D {
   double x = 1;
   double y = 2;
@@ -45,9 +48,37 @@ message Quaternion {
   double w = 4;
 }
 
-
 // a box in 3D that may be rotated in space.
 message Box3D {
   Pose3D center = 1;
   Vec3 size = 2;
+}
+
+// Voxel in 3D with optional resolution
+// useful for octree representation.
+message Voxel3D {
+  Vec3 pos = 1;
+  // res means the number of unit grid cells along one major axis. It is a power
+  // of 2, where the power indicates resolution level.  For example, res = 4
+  // refers to resolution level of 2 because 2^2 = 4.
+  optional int32 res = 3;
+}
+
+///////// Probability distribution ///////////////
+// particle representation of probability distribution
+// of random variable X. A possible value of X is x.
+message WeightedParticles {
+  message Particle {
+    google.protobuf.Any x = 1;
+    double weight = 2;
+  }
+
+  repeated Particle particles = 1;
+}
+
+// histogram representation of of probability distribution
+// Assumes that 'values' and 'probs' have the same length.
+message Histogram {
+  repeated google.protobuf.Any values = 1;
+  repeated double probs = 2;
 }

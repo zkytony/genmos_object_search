@@ -16,14 +16,30 @@ service SloopObjectSearch {
   rpc GetAgentCreationStatus(GetAgentCreationStatusRequest) returns (GetAgentCreationStatusReply) {}
 
   // More fine-grained rpcs for specific functionality
+  // Update search region by interpreting sensor data such as point cloud.
   rpc UpdateSearchRegion(UpdateSearchRegionRequest) returns (UpdateSearchRegionReply) {}
 
+  // Process observation such as object detection or language
+  rpc ProcessObservation(ProcessObservationRequest) returns (ProcessObservationReply) {}
+
+  // Get current belief about where the object is over the search region
+  rpc GetObjectBeliefs(GetObjectBeliefsRequest) returns (GetObjectBeliefsReply) {}
+
+  // Get current belief about the robot state
+  rpc GetRobotBelief(GetRobotBeliefRequest) returns (GetRobotBeliefReply) {}
+
+  // Initialize a planner
+  rpc InitPlanner(InitPlannerRequest) returns (InitPlannerReply) {}
+
+  // Calls the planner to return an action for execution
+  rpc PlanAction(PlanActionRequest) returns (PlanActionReply) {}
 }
 
 
 /////////////////////////////////////
 // top-level rpc messages
 /////////////////////////////////////
+//// For CreateAgent rpc ////
 message CreateAgentRequest {
   Header header = 1;
   string agent_name = 2;
@@ -38,6 +54,7 @@ message CreateAgentReply {
   string message = 3;
 }
 
+//// For GetAgentCreationStatus rpc ////
 message GetAgentCreationStatusRequest {
   Header header = 1;
   string agent_name = 2;
@@ -49,6 +66,7 @@ message GetAgentCreationStatusReply {
   string status_message = 3;
 }
 
+//// For UpdateSearchRegion rpc ////
 message UpdateSearchRegionRequest {
   Header header = 1;
   string agent_name = 2;
@@ -79,6 +97,70 @@ message UpdateSearchRegionReply {
   string message = 3;
 }
 
+//// For ProcessObservation rpc ////
+message ProcessObservationRequest {
+  Header header = 1;
+  string agent_name = 2;
+
+  oneof observation {
+    RobotPose robot_pose = 3;
+    ObjectDetection object_detections = 4;
+    Language language = 5;
+  }
+}
+
+message ProcessObservationReply {
+  Header header = 1;
+  Status status = 2;
+  string message = 3;
+}
+
+//// For GetObjectBeliefs rpc ////
+message GetObjectBeliefsRequest {
+  Header header = 1;
+  string agent_name = 2;
+}
+
+message GetObjectBeliefsReply {
+  Header header = 1;
+  repeated ObjectBelief object_beliefs = 2;
+}
+
+
+//// For GetRobotBelief  rpc ////
+message GetRobotBeliefRequest {
+  Header header = 1;
+  string agent_name = 2;
+}
+
+message GetRobotBeliefReply {
+  Header header = 1;
+
+  // List of object ids for objects that the robot believes are found
+  repeated string objects_found = 2;
+
+  // robot pose (exact or a distribution; see RobotPose message definition)
+  RobotPose pose = 3;
+
+  // If the robot plans over a topological graph, this returns
+  // the id of the topological graph node the robot associates itself
+  // with currently.
+  optional string topo_nid = 4;
+}
+
+
+//// For InitPlanner rpc ////
+message InitPlannerRequest {}
+
+message InitPlannerReply {}
+
+//// For PlanAction rpc ////
+message PlanActionRequest {}
+
+message PlanActionReply {}
+
+
+
 /////////////////////////////////////
 // Auxiliary messages
 /////////////////////////////////////
@@ -96,4 +178,10 @@ message SearchRegionParams3D {
   optional int32 octree_size = 1;
   optional double search_space_resolution = 2;
   optional bool debug = 3;
+}
+
+message ObjectBelief {
+  Header header = 1;
+  string object_id = 2;
+  Histogram dist = 3;
 }

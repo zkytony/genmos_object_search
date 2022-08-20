@@ -60,3 +60,25 @@ message Language {
   string robot_id = 2;  // the receiver of this observation
   string text = 3;
 }
+
+
+// The observation of robot pose is either a single pose,
+// or a representation of the belief in the robot pose.
+// If latter, the representation could be particles or
+// a histogram.
+//
+// The robot pose determines where the robot receives observation.
+// By default, it should be the pose of the camera or some
+// other sensor through which sensor data for object detection
+// is received.
+message RobotPose {
+  Header header = 1;
+  string robot_id = 2;
+
+  oneof pose {
+    Pose2D pose_2d = 3;
+    Pose3D pose_3d = 4;
+    WeightedParticles pose_particles = 5;
+    Histogram pose_hist = 6;
+  }
+}
