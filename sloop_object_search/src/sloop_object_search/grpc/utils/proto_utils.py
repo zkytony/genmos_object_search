@@ -8,7 +8,8 @@ if importlib.util.find_spec("ros_numpy") is not None:
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from sloop_object_search.grpc.observation_pb2 import PointCloud
-from sloop_object_search.grpc.common_pb2 import Vec3, Header
+from sloop_object_search.grpc.common_pb2\
+    import Vec3, Header, Pose3D, Quaternion
 
 def process_search_region_params_2d(search_region_params_2d_pb):
     params = {}
@@ -63,6 +64,15 @@ def pointcloudproto_to_array(point_cloud):
     points_array = np.array([[p.pos.x, p.pos.y, p.pos.z]
                              for p in point_cloud.points])
     return points_array
+
+def pose_to_pose3dproto(pose_msg):
+    return Pose3D(position=Vec3(x=pose_msg.position.x,
+                                y=pose_msg.position.y,
+                                z=pose_msg.position.z),
+                  rotation=Quaternion(x=pose_msg.orientation.x,
+                                      y=pose_msg.orientation.y,
+                                      z=pose_msg.orientation.z,
+                                      w=pose_msg.orientation.w))
 
 
 def make_header(frame_id=None, stamp=None):

@@ -6,6 +6,8 @@ object_locations:
 
 # configuration for the agent.
 agent_config:
+  agent_class: 'MosAgentBasic3D'
+  belief: {}
   robot:
     detectors:
       book:
@@ -17,6 +19,12 @@ agent_config:
             - [1e5, 0.1]
     id: robot0
     no_look: True
+    action:
+      func: sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d
+      params:
+        step_size: 1.0
+        rotation: 90.0
+        scheme: axis
   targets: [book]
   objects:
     book:
