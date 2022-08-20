@@ -34,9 +34,11 @@ def waypoints_msg_to_arr(waypoints_msg):
 
 class UpdateSearchRegion3DTestCase:
     def __init__(self, robot_id="test_robot",
-                 node_name="test_update_search_region_3d_with_point_cloud", debug=True):
+                 node_name="test_update_search_region_3d_with_point_cloud",
+                 world_frame="graphnav_map", debug=True):
         rospy.init_node(node_name)
         self.robot_id = robot_id
+        self.world_frame = world_frame  # fixed frame of the world
         self.debug = debug
         self.wyp_sub = rospy.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray, self._waypoint_cb)
         self.robot_pose_pub = rospy.Publisher(

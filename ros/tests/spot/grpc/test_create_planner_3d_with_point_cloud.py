@@ -12,7 +12,7 @@ from sloop_object_search.grpc.utils import proto_utils as pbutil
 from sloop_object_search.grpc.common_pb2 import Status
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
 
-class CreatePlannerTestcase(CreateAgentTestCase):
+class CreatePlannerTestCase(CreateAgentTestCase):
     def run(self):
         super().run()
 
@@ -33,5 +33,5 @@ class CreatePlannerTestcase(CreateAgentTestCase):
 
 
 if __name__ == "__main__":
-    CreatePlannerTestcase(node_name="test_create_planner_3d_with_point_cloud",
+    CreatePlannerTestCase(node_name="test_create_planner_3d_with_point_cloud",
                         debug=False).run()

@@ -177,11 +177,18 @@ message PlanActionRequest {
 
 message PlanActionReply {
   Header header = 1;
+  Status status = 2;
+  string message = 3;
+
   oneof action {
-    MoveViewpoint move_action = 2;
-    Find find_action = 3;
-    KeyValueAction kv_action = 4;
+    MoveViewpoint move_action = 4;
+    Find find_action = 5;
+    KeyValueAction kv_action = 6;
   }
+
+  // // A serialized yaml representation of the planning search
+  // // tree (UTF-8 encoding), useful for interpretation.
+  // optional bytes planning_tree = 5;
 }
 
 

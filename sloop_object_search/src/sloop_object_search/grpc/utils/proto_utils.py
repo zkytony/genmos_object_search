@@ -10,6 +10,13 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from sloop_object_search.grpc.observation_pb2 import PointCloud
 from sloop_object_search.grpc.common_pb2\
     import Vec3, Header, Pose3D, Quaternion
+from sloop_object_search.grpc.action_pb2\
+    import MoveViewpoint, Find, KeyValueAction, Motion2D, Motion3D
+from .. import sloop_object_search_pb2 as slpb2
+
+from sloop_object_search.oopomdp.domain import action as sloop_action
+from sloop_object_search.utils.math import to_rad
+
 
 def process_search_region_params_2d(search_region_params_2d_pb):
     params = {}
@@ -110,3 +117,51 @@ def interpret_robot_pose(request):
     else:
         raise ValueError("request does not contain valid robot pose field.")
     return robot_pose
+
+
+def pomdp_action_to_proto(action, agent, header=None):
+    if header is None:
+        header = make_header()
+    if isinstance(action, sloop_action.MotionAction):
+        action_type = "move_action"
+        if isinstance(action, sloop_action.MotionAction2D):
+            raise NotImplementedError()
+        elif isinstance(action, sloop_action.MotionActionTopo):
+            raise NotImplementedError()
+        elif isinstance(action, sloop_action.MotionAction3D):
+            dpos_pomdp, drot = action.motion
+            # we need to convert the position change from pomdp frame to
+            # the world frame.
+            dpos_world = agent.search_region.to_world_pos(dpos_pomdp)
+            motion_pb = Motion3D(
+                dpos=Vec3(x=dpos_world[0], y=dpos_world[1], z=dpos_world[2]),
+                drot_euler=Vec3(x=to_rad(drot[0]), y=to_rad(drot[1]), z=to_rad(drot[2])))
+            action_pb = MoveViewpoint(header=header,
+                                      robot_id=agent.robot_id,
+                                      motion_3d=motion_pb,
+                                      name=action.name,
+                                      expected_cost=action.step_cost)
+    elif isinstance(action, sloop_action.FindAction):
+        action_type = "find_action"
+        action_pb = Find(header=header,
+                         robot_id=agent.robot_id,
+                         name=action.name)
+    else:
+        raise RuntimeError(f"Unrecognized action {action}")
+    return action_type, action_pb
+
+
+def interpret_planned_action(plan_action_reply):
+    """Given the response from PlanActionReply,
+    return the protobuf object corresponding to
+    the action."""
+    assert isinstance(plan_action_reply, slpb2.PlanActionReply),\
+        "only interprets PlanActionReply"
+    if plan_action_reply.HasField("move_action"):
+        return plan_action_reply.move_action
+    elif plan_action_reply.HasField("find_action"):
+        return plan_action_reply.find_action
+    elif plan_action_reply.HasField("kv_action"):
+        return plan_action_reply.kv_action
+    else:
+        raise ValueError("unable to determine action.")

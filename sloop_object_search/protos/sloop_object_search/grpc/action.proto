@@ -8,14 +8,32 @@ package sloop_object_search.grpc;
 
 import "sloop_object_search/grpc/common.proto";
 
+message Motion3D {
+  Vec3 dpos = 1;
+  oneof drot {
+    Vec3 drot_euler = 2;  // in radians
+    Quaternion drot_quat = 3;
+  }
+}
+
+message Motion2D {
+  Vec2 dpos = 1;
+  double dth = 2;
+}
+
 message MoveViewpoint {
   Header header = 1;
   string robot_id = 2;   // the robot that performs this action
-  oneof dest {
+  oneof move {
+    // absolute
     Pose3D dest_3d = 3;
     Pose2D dest_2d = 4;
+    // relative
+    Motion2D motion_2d = 5;
+    Motion3D motion_3d = 6;
   }
-  float expected_cost = 5;
+  string name = 7;  // name of the action
+  float expected_cost = 8;
 }
 
 // declares some objects to be found. The objects that are declared
@@ -24,6 +42,7 @@ message MoveViewpoint {
 message Find {
   Header header = 1;
   string robot_id = 2;   // the robot that performs this action
+  string name = 5;
 }
 
 // This is a generic action type, used to support other actions such

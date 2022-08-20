@@ -8,7 +8,7 @@
 
 
 import grpc
-import json
+import yaml
 import time
 
 from . import sloop_object_search_pb2 as slpb2
@@ -54,7 +54,7 @@ class SloopObjectSearchClient:
                                  "Either specify a file path or a dictionary.")
             if not type(config) == dict:
                 raise ValueError("'config' should be a dict.")
-            config_str = json.dumps(config)
+            config_str = yaml.dump(config)
         else:
             with open(config_file_path) as f:
                 config_str = f.read()
@@ -86,10 +86,18 @@ class SloopObjectSearchClient:
             time.sleep(wait_sleep)
 
     def createPlanner(self, config=None, **kwargs):
-        config_str = json.dumps(config)
+        config_str = yaml.dump(config)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.CreatePlannerRequest(
             config=config_str.encode(encoding='utf-8'),
             **kwargs
         )
         return self.call(self.stub.CreatePlanner, request, timeout=timeout)
+
+    def planAction(self, robot_id, **kwargs):
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        request = slpb2.PlanActionRequest(
+            robot_id=robot_id,
+            **kwargs
+        )
+        return self.call(self.stub.PlanAction, request, timeout=timeout)
