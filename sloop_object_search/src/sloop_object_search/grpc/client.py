@@ -81,6 +81,15 @@ class SloopObjectSearchClient:
         """blocks until an agent is created"""
         wait_sleep = kwargs.pop("wait_sleep", 0.2)
         response = self.getAgentCreationStatus(robot_id, **kwargs)
-        while response.status != Status.SUCCESS:
+        while response.status != Status.SUCCESSFUL:
             response = self.getAgentCreationStatus(robot_id, **kwargs)
             time.sleep(wait_sleep)
+
+    def createPlanner(self, config=None, **kwargs):
+        config_str = json.dumps(config)
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        request = slpb2.CreatePlannerRequest(
+            config=config_str.encode(encoding='utf-8'),
+            **kwargs
+        )
+        return self.call(self.stub.CreatePlanner, request, timeout=timeout)

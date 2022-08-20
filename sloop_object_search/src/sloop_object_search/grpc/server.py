@@ -11,6 +11,7 @@ from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
 from .utils import proto_utils as pbutil
 from .utils import agent_utils
+from .utils import planner_utils
 from .utils.search_region_processing import (search_region_2d_from_point_cloud,
                                              search_region_3d_from_point_cloud)
 
@@ -20,12 +21,15 @@ MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
 
 class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
     def __init__(self):
-        # maps from agent name to a pomdp_py.Agent.
+        # maps from robot id to a pomdp_py.Agent.
         self._agents = {}
 
         # maps from agent name to a dictionary that contains
         # necessary arguments in order to construct the agent.
         self._pending_agents = {}
+
+        # planners. Maps from robot id to a planner (pomdp_py.Planner)
+        self._planners = {}
 
         self._world_origin = None
 
@@ -71,7 +75,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         elif request.robot_id in self._agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=pbutil.make_header(),
-                status=Status.SUCCESS,
+                status=Status.SUCCESSFUL,
                 status_message="Agent created.")
         else:
             raise RuntimeError("Internal error on GetAgentCreationStatus.")
@@ -107,8 +111,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                     existing_search_region=self.search_region_for(request.robot_id),
                     **params)
         else:
-            raise ValueError("Either 'occupancy_grid' or 'point_cloud'"\
-                             "must be specified in request.")
+            raise RuntimeError("Either 'occupancy_grid' or 'point_cloud'"\
+                               "must be specified in request.")
 
         # set search region for the agent for creation
         if request.robot_id in self._pending_agents:
@@ -116,17 +120,24 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             self._pending_agents[request.robot_id]["search_region"] = search_region
             self._pending_agents[request.robot_id]["init_robot_pose"] = robot_pose
             self._create_agent(request.robot_id)
+            return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
+                                                 status=Status.SUCCESSFUL,
+                                                 message="Search region updated")
 
         elif request.robot_id in self._agents:
             # TODO: agent should be able to update its search region.
-            raise NotImplementedError()
+            return slpb2.UpdateSearchRegionReply(
+                header=pbutil.make_header(),
+                status=Status.FAILED,
+                message="updating existing search region of an agent is not yet implemented")
 
         else:
             logging.warn(f"Agent {request.robot_id} is not recognized.")
+            return slpb2.UpdateSearchRegionReply(
+                header=pbutil.make_header(),
+                status=Status.FAILED,
+                message=f"Agent {request.robot_id} is not recognized.")
 
-        return slpb2.UpdateSearchRegionReply(header=pbutil.make_header(),
-                                             status=Status.SUCCESS,
-                                             message="search region updated")
 
     def search_region_for(self, robot_id):
         if robot_id in self._pending_agents:
@@ -150,6 +161,40 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             assert robot_id not in self._pending_agents
         for robot_id in self._pending_agents:
             assert robot_id not in self._agents
+
+    def CreatePlanner(self, request, context):
+        """initializes the planner. The planner's parameters
+        are contained in a encoded JSON string in the request.
+        """
+        if request.robot_id not in self._agents:
+            # agent not yet created
+            return slpb2.CreatePlannerReply(
+                header=pbutil.make_header(),
+                status=Status.FAILED,
+                message=f"agent {robot_id} does not exist. Did you create it?")
+
+        if request.robot_id in self._planners:
+            # a planner is already created. Change only if 'overwrite'
+            if not request.overwrite:
+                return slpb2.CreatePlannerReply(
+                    header=pbutil.make_header(),
+                    status=Status.FAILED,
+                    message=f"Planner already exists for {robot_id}. Not overwriting.")
+
+        config_str = request.config.decode("utf_8")
+        config = yaml.safe_load(config_str)
+        if "planner_config" in config:
+            planner_config = config["planner_config"]
+        else:
+            planner_config = config
+        agent = self._agents[request.robot_id]
+        planner = planner_utils.create_planner(planner_config, agent)
+        self._planners = planner
+
+        return slpb2.CreatePlannerReply(
+            header=pbutil.make_header(),
+            status=Status.SUCCESSFUL,
+            message="Planner created")
 
 
 ###########################################################################

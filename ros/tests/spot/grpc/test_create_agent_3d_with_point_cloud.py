@@ -37,10 +37,9 @@ class CreateAgentTestCase(BaseTestCase3D):
         print("waiting for agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
         response = self._sloop_client.getAgentCreationStatus(self.robot_id)
-        assert response.status == Status.SUCCESS
+        assert response.status == Status.SUCCESSFUL
 
-        print("test passed.")
-        self._sloop_client.channel.close()
+        print("create agent test passed.")
 
 
 

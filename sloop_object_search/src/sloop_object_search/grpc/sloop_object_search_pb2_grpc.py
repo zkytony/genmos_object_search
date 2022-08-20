@@ -44,10 +44,10 @@ class SloopObjectSearchStub(object):
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.FromString,
                 )
-        self.InitPlanner = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/InitPlanner',
-                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerRequest.SerializeToString,
-                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerReply.FromString,
+        self.CreatePlanner = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/CreatePlanner',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerReply.FromString,
                 )
         self.PlanAction = channel.unary_unary(
                 '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
@@ -101,7 +101,7 @@ class SloopObjectSearchServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def InitPlanner(self, request, context):
+    def CreatePlanner(self, request, context):
         """Initialize a planner
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -148,10 +148,10 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.SerializeToString,
             ),
-            'InitPlanner': grpc.unary_unary_rpc_method_handler(
-                    servicer.InitPlanner,
-                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerRequest.FromString,
-                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerReply.SerializeToString,
+            'CreatePlanner': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreatePlanner,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerReply.SerializeToString,
             ),
             'PlanAction': grpc.unary_unary_rpc_method_handler(
                     servicer.PlanAction,
@@ -271,7 +271,7 @@ class SloopObjectSearch(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def InitPlanner(request,
+    def CreatePlanner(request,
             target,
             options=(),
             channel_credentials=None,
@@ -281,9 +281,9 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/InitPlanner',
-            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerRequest.SerializeToString,
-            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.InitPlannerReply.FromString,
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/CreatePlanner',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

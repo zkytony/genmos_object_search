@@ -30,7 +30,7 @@ service SloopObjectSearch {
   rpc GetRobotBelief(GetRobotBeliefRequest) returns (GetRobotBeliefReply) {}
 
   // Initialize a planner
-  rpc InitPlanner(InitPlannerRequest) returns (InitPlannerReply) {}
+  rpc CreatePlanner(CreatePlannerRequest) returns (CreatePlannerReply) {}
 
   // Calls the planner to return an action for execution
   rpc PlanAction(PlanActionRequest) returns (PlanActionReply) {}
@@ -46,7 +46,7 @@ message CreateAgentRequest {
   string robot_id = 2;
 
   // serialized configuration dictionary (UTF-8 encoding
-  // of a JSON string)
+  // of a YAML string (yaml.safe_load permitted; JSON-compatible)
   bytes config = 3;
 }
 
@@ -150,19 +150,20 @@ message GetRobotBeliefReply {
   optional string topo_nid = 4;
 }
 
-//// For InitPlanner rpc ////
-message InitPlannerRequest {
+//// For CreatePlanner rpc ////
+message CreatePlannerRequest {
   Header header = 1;
   string robot_id = 2;
 
-  string planner = 3;
-
   // serialized configuration dictionary (UTF-8 encoding
-  // of a JSON string)
+  // of a YAML string (yaml.safe_load permitted; JSON-compatible)
   bytes config = 4;
+
+  // True if overwrite existing planner
+  bool overwrite = 5;
 }
 
-message InitPlannerReply {
+message CreatePlannerReply {
   Header header = 1;
   Status status = 2;
   string message = 3;

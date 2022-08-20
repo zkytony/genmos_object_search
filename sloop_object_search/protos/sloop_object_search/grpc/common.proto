@@ -7,7 +7,7 @@ import "google/protobuf/any.proto";
 
 ///////// Generic communication ///////////////
 enum Status {
-  SUCCESS = 0;
+  SUCCESSFUL = 0;
   FAILED = 1;
   PENDING = 2;
 }
