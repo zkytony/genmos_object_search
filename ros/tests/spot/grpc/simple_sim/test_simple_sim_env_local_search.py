@@ -65,7 +65,7 @@ class TestSimpleEnvLocalSearch:
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": 0.15,
-                                                                       "debug": True})
+                                                                       "debug": False})
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.agent_name)
