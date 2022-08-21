@@ -15,7 +15,7 @@ from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slpb2_grpc
 from .common_pb2 import Pose2D, Status
 from .server import MAX_MESSAGE_LENGTH
-from .utils import proto_utils as pbutil
+from .utils import proto_utils
 
 
 DEFAULT_RPC_TIMEOUT = 30
@@ -73,7 +73,7 @@ class SloopObjectSearchClient:
     def getAgentCreationStatus(self, robot_id, **kwargs):
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.GetAgentCreationStatusRequest(
-            header=pbutil.make_header(),
+            header=proto_utils.make_header(),
             robot_id=robot_id)
         return self.call(self.stub.GetAgentCreationStatus, request, timeout=timeout)
 
@@ -94,9 +94,21 @@ class SloopObjectSearchClient:
         )
         return self.call(self.stub.CreatePlanner, request, timeout=timeout)
 
+    def _require_header(self, kwargs):
+        if "header" not in kwargs:
+            if "frame_id" in kwargs:
+                header = proto_utils.make_header(kwargs.pop("frame_id"))
+            else:
+                raise ValueError("requires as input either header, or frame_id.")
+        else:
+            header = kwargs.pop("header")
+        return header
+
     def planAction(self, robot_id, **kwargs):
+        header = self._require_header(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.PlanActionRequest(
+            header=header,
             robot_id=robot_id,
             **kwargs
         )
