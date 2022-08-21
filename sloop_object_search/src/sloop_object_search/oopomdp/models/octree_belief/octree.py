@@ -40,13 +40,13 @@ class OctNode:
         self.res = res
         self.parent = parent
         self.leaf = leaf
-        self.default_val = default_val
+        self._default_val = default_val
         if res > 1:
             self.children = {}# pos: (DEFAULT_VAL, None)
                              # for pos in OctNode.child_poses(x,y,z,res)}  # map from pos to (val, child)
         else:
             self.children = None
-            self.val = self.default_val
+            self.val = self._default_val
 
     def __str__(self):
         num_children = 0 if self.children is None else len(self.children)
@@ -57,10 +57,6 @@ class OctNode:
 
     def __hash__(self):
         return hash((*self.pos, self.res))
-
-    @property
-    def pose(self):
-        return self.pos
 
     def add_child(self, child):
         if self.children is None:
@@ -96,9 +92,9 @@ class OctNode:
                 child_coverage = (self.res // 2)**3
                 if LOG:
                     # DEFAULT_VAL is in log space.
-                    sum_children_vals += math.exp(self.default_val)*((8-len(self.children))*child_coverage)
+                    sum_children_vals += math.exp(self._default_val)*((8-len(self.children))*child_coverage)
                 else:
-                    sum_children_vals += self.default_val*((8-len(self.children))*child_coverage)
+                    sum_children_vals += self._default_val*((8-len(self.children))*child_coverage)
             if LOG:
                 return math.log(sum_children_vals)
             else:
@@ -120,9 +116,9 @@ class OctNode:
             if child_pos not in self.children:
                 # return default value
                 if LOG:
-                    return self.default_val + math.log((self.res//2)**3)
+                    return self._default_val + math.log((self.res//2)**3)
                 else:
-                    return self.default_val*((self.res//2)**3)
+                    return self._default_val*((self.res//2)**3)
             else:
                 return self.children[child_pos][0]
         else:
@@ -162,7 +158,7 @@ class Octree:
         self.depth = dmax
         self.root = OctNode(0, 0, 0, w)
         self.dimensions = dimensions
-        self.default_val = default_val
+        self._default_val = default_val
 
     def valid_resolution(self, res):
         return math.log(res, 2).is_integer()\
@@ -202,7 +198,9 @@ class Octree:
     def print_tree(self, max_depth=None):
         self.print_tree_helper(self.root.value, self.root, 0, max_depth=max_depth)
 
-    def add_node(self, x, y, z, res, val=None):
+    def add_node(self, x, y, z, res):
+        """Note: this method does not allow setting value of this added node.
+        To handle that properly, you should use OctreeDistribution.__setitem__"""
         if x*res >= self.dimensions[0]\
            or y*res >= self.dimensions[1]\
            or z*res >= self.dimensions[2]:
@@ -216,10 +214,8 @@ class Octree:
             yr = y // (next_res // res)
             zr = z // (next_res // res)
             if not node.has_child((xr, yr, zr)):
-                if val is None:
-                    val = self.default_val
                 child = OctNode(xr, yr, zr, next_res,
-                                parent=node, default_val=val)
+                                parent=node, default_val=self._default_val)
                 node.add_child(child)
             node = node.child_at((xr,yr,zr))
             next_res = node.res // 2

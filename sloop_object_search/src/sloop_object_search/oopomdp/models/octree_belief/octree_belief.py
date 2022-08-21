@@ -23,21 +23,31 @@ from sloop_object_search.oopomdp.domain.state import ObjectState
 from .octree import LOG, DEFAULT_VAL, OctNode, Octree
 from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
-class OctreeBelief(pomdp_py.GenerativeDistribution):
+class OctreeDistribution(pomdp_py.GenerativeDistribution):
+    """A distribution over 3D grid cells. A random variable X
+    following this distribution has a value space G^l (the 3D grids)
+    at a given resolution level, l,
 
-    """
-    OctreeBelief is a belief designed specifically for the
-    3D object search problem.
+    Pr(X=x^l) = Val(g_x^l) / Normalizer
 
-    Each object is associated with an octree belief, separate from others.
+    where g_x^l is the octree node at the grid with location x at
+    resolution level l.
+
+    The value stored at a node g_x^l represents an unnormalized
+    probability that X=x^l, and it is the sum of the values of
+    the children of node g_x^l.
+
+    An octree node can be referenced by the voxel it captures, as a tuple: (x, y, z, res)
+
+    Different from OctreeBelief, which is used specifically for
+    representing distribution over ObjectState, this distribution
+    is general.
     """
-    def __init__(self, width, length, height, objid, objclass, octree, default_val=DEFAULT_VAL):
+    def __init__(self, width, length, height, octree, default_val=DEFAULT_VAL):
         """For alpha, beta, gamma, refer to ObjectObservationModel."""
         assert width == length and length == height and math.log(width, 2).is_integer(),\
             "dimensions must be equal and power of 2; Got (%d, %d, %d)" % (width, length, height)
 
-        self._objid = objid
-        self._objclass = objclass
         self._octree = octree
         self._gamma = default_val
 
@@ -63,15 +73,11 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
             next_res = next_res // 2
 
     @property
-    def objid(self):
-        return self._objid
-
-    @property
     def octree(self):
         return self._octree
 
     def known_voxels(self, res):
-        """return set of voxel poses at resolution level"""
+        """return set of voxel poses at given resolution"""
         if res not in self._known_voxels:
             raise ValueError("resolution invalid %d" % res)
         return self._known_voxels[res] #['voxels']
@@ -107,14 +113,12 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
             # node value is not in log space.
             return node_value / self._normalizer
 
-
-    def __getitem__(self, object_state):
-        if object_state.id != self._objid:
-            raise TypeError("Given object state has object id %d\n"\
-                            "but this belief is for object id %d"
-                            % (object_state.id, self._objid))
-        x,y,z = object_state.pose
-        res = object_state.res
+    def __getitem__(self, voxel):
+        """voxel: a tuple (x, y, z, res)"""
+        if type(voxel) != tuple and len(voxel) != 4:
+            raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
+        x,y,z = voxel[:3]
+        res = voxel[3]
         return self._probability(x, y, z, res)
 
     def prob_at(self, x, y, z, res, fast=True):
@@ -169,39 +173,43 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
             # Use the node's value to compute the probability
             return self.normalized_probability(node.value())
 
-    def __setitem__(self, object_state, value):
+    def __setitem__(self, voxel, value):
         """
-        This can only happen for object state at ground level.
+        This can only happen for voxels at ground level.
         The value is unnormalized probability. Will treat as in
         log space if LOG is true.
         """
-        if object_state.res != 1:
-            raise TypeError("Only allow setting the value at ground level.")
-        x,y,z = object_state.pose
+        if type(voxel) != tuple and len(voxel) != 4:
+            raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
+        x,y,z = voxel[:3]
+        res = voxel[3]
         node = self._octree.add_node(x,y,z,1)
         old_value = node.get_val(None)
         node.set_val(None, value)
         self.update_normalizer(old_value, value)
         self.backtrack(node)
 
-    def assign(self, object_state, value):
+    def assign(self, voxel, value):
         """
-        This can happen for object state at different resolution levels.
+        This can happen for voxels at different resolution levels.
         The value is unnormalized probability. Will treat as in
         log space if LOG is true.
 
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
         """
-        if object_state.res >= self._octree.root.res:
+        if type(voxel) != tuple and len(voxel) != 4:
+            raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
+        res = voxel[3]
+        if res >= self._octree.root.res:
             raise ValueError("Resolution too large for assignment (%d>=%d)"
-                             % (object_state.res, self._octree.root.res))
+                             % (res, self._octree.root.res))
 
-        x,y,z = object_state.pose
-        node = self._octree.add_node(x,y,z,object_state.res)
+        x,y,z = voxel[:3]
+        node = self._octree.add_node(x, y, z, res)
         # set the value of the node
-        if object_state.res > 1:
-            for pos in OctNode.child_poses(x,y,z,object_state.res):
+        if res > 1:
+            for pos in OctNode.child_poses(x, y, z, res):
                 if not node.has_child(pos):
                     child = None
                 else:
@@ -221,21 +229,19 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         self._propagate(node)
 
     def random(self, res=1):
-        voxel_pose = self._random_path(res, argmax=False)
-        return ObjectState(self._objid, self._objclass, voxel_pose, res=res)
+        """Returns a voxel position (x,y,z) at resolution 'res'."""
+        voxel_pos = self._random_path(res, argmax=False)
+        return voxel_pos
 
     def mpe(self, res=1):
         voxel_pose = self._random_path(res, argmax=True)
         return ObjectState(self._objid, self._objclass, voxel_pose, res=res)
 
-    def random_child(self, pos=None, res=None, argmax=False, return_pos=False, node=None):
-        """Returns a state that is at a location considered the 'child' of
+    def random_child(self, pos=None, res=None, argmax=False, node=None):
+        """Returns a position (x,y,z) that is a location considered the 'child' of
         the node located at `node`(x,y,z,res), according to the distribution of the
         children of this node. If such child has not been added to the octree,
-        one located at a uniformly chosen child position will be returned.
-
-        If `return_pos` is True, instead of returning a TargetObjectstate object,
-        return the position (x,y,z) of the voxel."""
+        one located at a uniformly chosen child position will be returned."""
         if node is None and (pos is None or res is None):
             raise ValueError("Either provide node, or provide pos&res.")
         if node is None:
@@ -245,11 +251,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                 # return a child pos uniformly at random.
                 child_poses = list(OctNode.child_poses(*pos, res))
                 chosen_pos = random.choice(child_poses)
-                if return_pos:
-                    return chosen_pos
-                else:
-                    return ObjectState(self._objid, self._objclass,
-                                       chosen_pos, res=res)
+                return chosen_pos
 
         # Choose a child position
         child_poses = list(OctNode.child_poses(*node.pos, node.res))
@@ -264,10 +266,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
             else:
                 chosen_pos_index = np.random.choice(np.arange(len(child_poses)), 1, p=child_vals)[0]
                 chosen_pos = child_poses[chosen_pos_index]
-        if return_pos:
-            return chosen_pos
-        else:
-            return ObjectState(self._objid, self._objclass, chosen_pos, res=res)
+        return chosen_pos
 
     def random_ground_child_pos(self, pos, res):
         """Returns (x,y,z) of a ground voxel which is covered by the
@@ -295,7 +294,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         elif node.res == target_res:
             return node.pos
         else:
-            chosen_pos = self.random_child(node=node, argmax=argmax, return_pos=True)
+            chosen_pos = self.random_child(node=node, argmax=argmax)
             child = node.child_at(chosen_pos)
             if child is None:
                 return self._random_unif_child(chosen_pos, node.res // 2, target_res)
@@ -325,13 +324,13 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
             # Update the known_voxels dict as well through update_node_weight_cache
             cur_node_val = cur_node.value()
             cur_supernode.set_val(cur_node.pos, cur_node_val, child=cur_node)
-            self.update_node_weight_cache(*cur_node.pose, cur_node.res, cur_node_val)
+            self.update_node_weight_cache(*cur_node.pos, cur_node.res, cur_node_val)
             cur_node = cur_supernode
             cur_supernode = cur_supernode.parent
         # cur_node is the root node. Also need to call update_node_weight_cache
         assert cur_node.res == self._octree.root.res
         cur_node_val = cur_node.value()
-        self.update_node_weight_cache(*cur_node.pose, cur_node.res, cur_node_val)
+        self.update_node_weight_cache(*cur_node.pos, cur_node.res, cur_node_val)
 
     def _propagate(self, node):
         """Update the value in octree's known_voxels set, for all children voxels,
@@ -350,6 +349,74 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                 else:
                     # want to compute: val / 8
                     self._propagate_helper(*child_pos, res // 2, val / 8)
+
+
+class OctreeBelief(OctreeDistribution):
+
+    """
+    OctreeBelief is a belief designed specifically for the
+    3D object search problem.
+
+    Each object is associated with an octree belief, separate from others.
+    """
+    def __init__(self, width, length, height, objid, objclass, octree, default_val=DEFAULT_VAL):
+        """For alpha, beta, gamma, refer to ObjectObservationModel."""
+        super().__init__(width, length, height, octree, default_val=DEFAULT_VAL)
+        self._objid = objid
+        self._objclass = objclass
+
+    @property
+    def objid(self):
+        return self._objid
+
+    @property
+    def octree(self):
+        return self._octree
+
+    def __getitem__(self, object_state):
+        if object_state.id != self._objid:
+            raise TypeError("Given object state has object id %d\n"\
+                            "but this belief is for object id %d"
+                            % (object_state.id, self._objid))
+        x,y,z = object_state.loc
+        res = object_state.res
+        return self._probability(x, y, z, res)
+
+    def __setitem__(self, object_state, value):
+        """
+        This can only happen for object state at ground level.
+        The value is unnormalized probability. Will treat as in
+        log space if LOG is true.
+        """
+        if object_state.res != 1:
+            raise TypeError("Only allow setting the value at ground level.")
+        x,y,z = object_state.loc
+        super().__setitem__((x,y,z,object_state.res), value)
+
+    def assign(self, object_state, value):
+        """
+        This can happen for object state at different resolution levels.
+        The value is unnormalized probability. Will treat as in
+        log space if LOG is true.
+
+        Note: This will make child voxels a uniform distribution;
+        Should only be used for setting prior.
+        """
+        if object_state.res >= self._octree.root.res:
+            raise ValueError("Resolution too large for assignment (%d>=%d)"
+                             % (object_state.res, self._octree.root.res))
+
+        x,y,z = object_state.pose
+        super().assign((x,y,z,object_state.res), value)
+
+    def random(self, res=1):
+        voxel_pos = self._random_path(res, argmax=False)
+        return ObjectState(self._objid, self._objclass, voxel_pos, res=res)
+
+    def mpe(self, res=1):
+        voxel_pos = self._random_path(res, argmax=True)
+        return ObjectState(self._objid, self._objclass, voxel_pos, res=res)
+
 
 def update_octree_belief(octree_belief, real_action, real_observation,
                          alpha=1000., beta=0., gamma=DEFAULT_VAL):
