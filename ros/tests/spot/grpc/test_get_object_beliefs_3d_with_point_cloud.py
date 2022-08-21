@@ -73,6 +73,8 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
                 markers.append(marker)
             self._octbelief_markers_pub.publish(MarkerArray(markers))
             print(f"Visualized belief for object {bobj_pb.object_id}")
+            print(f"Check it out in rviz: roslaunch rbd_spot_perception view_graphnav_point_cloud.launch")
+            print(f"Note: you may need to add the octree belief topic")
             break
         rospy.spin()
 
