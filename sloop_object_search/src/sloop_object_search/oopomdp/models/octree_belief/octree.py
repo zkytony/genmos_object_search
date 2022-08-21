@@ -23,7 +23,7 @@ else:
 class OctNode:
     def __init__(self, x, y, z, res, parent=None, leaf=True, default_val=DEFAULT_VAL):
         """
-        DEF: node v represents a voxel centered at the position (x, y, z)
+        DEF: node v represents a voxel whose origin is at the position (x, y, z)
         at resolution r d , where d is the depth for node v. The voxel covers a volume
         of size (r d )^3 . Node v has 8 children that subdivide this volume into
         equal-sized cubes at resolution r d /2. The finest resolution is 1.

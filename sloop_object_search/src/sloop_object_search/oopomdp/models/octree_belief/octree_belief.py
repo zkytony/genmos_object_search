@@ -520,7 +520,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
 
         self.default_region_val = default_region_val
         if default_region_val is not None and default_region_val != 0:
-            num_samples = kwargs.pop("num_samples", 30)
+            num_samples = kwargs.pop("num_samples", 200)
             self.fill_region_uniform(default_region_val,
                                      num_samples=num_samples)
 
@@ -529,11 +529,18 @@ class RegionalOctreeDistribution(OctreeDistribution):
         return self._region
 
     def in_region(self, voxel):
-        """voxel: (x,y,z,r)"""
+        """voxel: (x,y,z,r). Returns true if the voxel
+        is in the region. A voxel is in region if it is
+        contained fully in the region."""
         x, y, z, r = voxel
         if type(self.region) == tuple:
+            # center is in region
             voxel_center = (x*r + r/2, y*r + r/2, z*r + r/2)
-            return util.in_box3d_origin(voxel_center, self.region)
+            voxel_min_origin = (x*r, y*r, z*r)
+            voxel_max_origin = (x*r + r, y*r + r, z*r + r)
+            return util.in_box3d_origin(voxel_center, self.region)\
+                and util.in_box3d_origin(voxel_min_origin, self.region)\
+                and util.in_box3d_origin(voxel_max_origin, self.region)
         else:
             # region is a set of locations
             return voxel in self.region
@@ -566,7 +573,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
         else:
             return super()._probability(x, y, z, res, fast=fast)
 
-    def fill_region_uniform(self, default_val, num_samples=30):
+    def fill_region_uniform(self, default_val, num_samples=200):
         """
         This function will set the default values of octnodes within the
         region uniformly with the given value 'default_val'. It works
@@ -593,7 +600,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
             self[(xr, yr, zr, 1)] = default_val
             node = self._octree.get_node(xr, yr, zr, 1)
 
-            # Then, traceback
             while self.in_region((*node.pos, node.res)):
                 node.set_default_val(default_val)
                 node = node.parent

@@ -39,7 +39,7 @@ def make_octnode_marker_msg(pos, res, prob, header, lifetime=1.0):
     marker.scale = Vector3(x=res, y=res, z=res)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(lifetime)
-    marker.color = ColorRGBA(r=0.0, g=0.8, b=0.0, a=prob*500)
+    marker.color = ColorRGBA(r=0.0, g=0.8, b=0.0, a=prob)
     return marker
 
 
