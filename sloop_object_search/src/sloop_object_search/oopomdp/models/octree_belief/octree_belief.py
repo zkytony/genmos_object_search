@@ -494,6 +494,10 @@ class RegionalOctreeDistribution(OctreeDistribution):
     This is an octree distribution with a default value of 0 for
     (ground-level) nodes outside of a region, defined either by a
     box (origin, w, h, l), or a set of voxels (could be at different resolution levels).
+
+    This is practical if the actual valid region (either as
+    the space of possible object locations or as the map) is
+    smaller than the space that the full octree covers.
     """
     def __init__(self, dimensions, region):
         if type(region) != tuple and type(region) != set:
