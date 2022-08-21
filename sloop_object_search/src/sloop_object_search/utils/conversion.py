@@ -19,6 +19,8 @@
 import math
 
 class Frame:
+    ## Note that these frames differ only in translation
+    ## and scaling (i.e. axes are aligned, no rotation)
     # gmapping map
     WORLD = "world"
     # a rectangular region in the gmapping map
