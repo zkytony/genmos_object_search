@@ -84,7 +84,8 @@ class SearchRegion2D(SearchRegion):
 
 
 class SearchRegion3D(SearchRegion):
-    """The 3D search region is represented as an octree.
+    """The 3D search region is represented as an octree_dist
+    (OctreeDistribution).
     We anticipate a 3D search region is necessary only for
     local search.
 
@@ -92,12 +93,12 @@ class SearchRegion3D(SearchRegion):
     should be zero, indicating free space (it is not a belief,
     it is occupancy)."""
     @property
-    def octree(self):
+    def octree_dist(self):
         return self._region_repr
 
-    @octree.setter
-    def octree(self, octree):
-        self._region_repr = octree
+    @octree_dist.setter
+    def octree_dist(self, octree_dist):
+        self._region_repr = octree_dist
 
     def to_octree_pos(self, world_point):
         return self.to_pomdp_pos(world_point)
@@ -105,8 +106,12 @@ class SearchRegion3D(SearchRegion):
     def occupied_at(self, pos, res=1):
         if not self.octree.valid_voxel(*pos, res):
             raise ValueError(f"position {pos} at resolution {res} is not a valid voxel.")
-        node = self.octree.get_node(*pos, res)
+        node = self.octree_dist.octree.get_node(*pos, res)
         if node is None:
             return False
         else:
             return node.value() > 0
+
+    def valid_voxel(self, voxel):
+        """a voxel is a tuple (x, y, z, res)"""
+        return self.octree_dist.octree.valid_voxel(*voxel)

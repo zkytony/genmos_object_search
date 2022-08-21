@@ -13,7 +13,7 @@ from sloop_object_search.utils.open3d_utils import cube_unfilled
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
-from sloop_object_search.oopomdp.models.octree_belief import Octree
+from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeDistribution
 
 
 ########### 2D search region ##############
@@ -76,21 +76,21 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     debug = kwargs.get("debug", False)
 
     dimensions = (octree_size, octree_size, octree_size)
-    octree = Octree(dimensions, default_val=0)
+    octree_dist = OctreeDistribution(Octree(dimensions, default_val=0))
 
     # Either update existing search region, or create a brand new one.
     if existing_search_region is not None:
         # the octree of the search region will be discarded, but its origin is kept.
         search_region = existing_search_region
-        search_region.octree = octree
+        search_region.octree_dist = octree_dist
     else:
         search_region = SearchRegion3D(
-            octree, region_origin=origin,
+            octree_dist, region_origin=origin,
             search_space_resolution=search_space_resolution)
     for p in points_array:
         g = search_region.to_octree_pos(p)
-        if search_region.octree.valid_voxel(*g, 1):
-            search_region.octree.add_node(*g, 1, val=1)
+        if search_region.valid_voxel((*g, 1)):
+            search_region.octree_dist[(*g, 1)] = 1  # set value to be 1
         else:
             if debug:
                 print(f"Warning: voxel {g} is out of bound of the octree. Is your resolution too high?")
@@ -104,20 +104,19 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
         pcd.colors = o3d.utility.Vector3dVector(np.full((len(points_array), 3), (0.8, 0.8, 0.8)))
 
         # visualize octree
-        voxels = search_region.octree.collect_plotting_voxels()
+        voxels = search_region.octree_dist.octree.collect_plotting_voxels()
         vp = [v[:3] for v in voxels]
         vr = [v[3] for v in voxels]  # resolutions
         vv = [v[4] for v in voxels]  # values
         geometries = [pcd]
         print(len(voxels))
         for i in range(len(vp)):
-            if vv[i] > 0:
-                pos = search_region.to_world_pos(vp[i])
-                size = vr[i] * search_region.search_space_resolution  # cube size in meters
-                mesh_box = cube_unfilled(scale=size)
-                mesh_box.translate(np.asarray(pos))
-                mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
-                geometries.append(mesh_box)
+            pos = search_region.to_world_pos(vp[i])
+            size = vr[i] * search_region.search_space_resolution  # cube size in meters
+            mesh_box = cube_unfilled(scale=size)
+            mesh_box.translate(np.asarray(pos))
+            mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
+            geometries.append(mesh_box)
         o3d.visualization.draw_geometries(geometries)
 
     return search_region
