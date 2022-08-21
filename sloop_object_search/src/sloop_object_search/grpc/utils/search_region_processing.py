@@ -9,7 +9,7 @@ from sloop_object_search.utils.math import (remap, euclidean_dist,
                                             eucdist_multi, in_square, in_square_multi)
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
-from sloop_object_search.utils.open3d_utils import cube_unfilled
+from sloop_object_search.utils import open3d_utils
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
@@ -113,34 +113,7 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
 
     # debugging
     if debug:
-
-        # coordinate frame and the region box
-        mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-            size=1.2, origin=origin)
-        region_box = cube_unfilled(scale=sizes)
-        region_box.translate(np.asarray(origin))
-        region_box.paint_uniform_color([0.1, 0.9, 0.1])
-
-        # Will visualize both the point cloud and the octree
-        # visualize point cloud
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points_array)
-        pcd.colors = o3d.utility.Vector3dVector(np.full((len(points_array), 3), (0.8, 0.8, 0.8)))
-
-        # visualize octree
-        voxels = search_region.octree_dist.octree.collect_plotting_voxels()
-        vp = [v[:3] for v in voxels]
-        vr = [v[3] for v in voxels]  # resolutions
-        vv = [v[4] for v in voxels]  # values
-        geometries = [mesh_frame, region_box, pcd]
-        for i in range(len(vp)):
-            pos = search_region.to_world_pos(vp[i])
-            size = vr[i] * search_region.search_space_resolution  # cube size in meters
-            mesh_box = cube_unfilled(scale=size)
-            mesh_box.translate(np.asarray(pos))
-            mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
-            geometries.append(mesh_box)
-        o3d.visualization.draw_geometries(geometries)
+        open3d_utils.draw_search_region3d(search_region, points=points_array)
 
     return search_region
 
@@ -317,27 +290,8 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
 
     ## Debugging
     if debug:
-        # import pdb; pdb.set_trace()
-        # pcd = o3d.geometry.PointCloud()
-        # pcd.points = o3d.utility.Vector3dVector(np.asarray(list(points)))
-        # pcd.colors = o3d.utility.Vector3dVector(np.full((len(points), 3), (0.8, 0.8, 0.8)))
-        # o3d.visualization.draw_geometries([pcd])
-
-        resulting_map = return_search_region.grid_map
-
-        pcd = o3d.geometry.PointCloud()
-        freeloc_points = np.asarray(list(resulting_map.free_locations))
-        freeloc_points = np.append(freeloc_points, np.zeros((len(freeloc_points), 1)), axis=1)
-        pcd.points = o3d.utility.Vector3dVector(freeloc_points)
-        pcd.colors = o3d.utility.Vector3dVector(np.full((len(resulting_map.free_locations), 3), (0.8, 0.8, 0.8)))
-
-        pcd2 = o3d.geometry.PointCloud()
-        obloc_points = np.asarray(list(resulting_map.obstacles))
-        obloc_points = np.append(obloc_points, np.zeros((len(obloc_points), 1)), axis=1)
-        pcd2.points = o3d.utility.Vector3dVector(obloc_points)
-        pcd2.colors = o3d.utility.Vector3dVector(np.full((len(resulting_map.obstacles), 3), (0.2, 0.2, 0.2)))
-        pcd2.points.append([*grid_robot_position, 1])
-        pcd2.colors.append([0.0, 0.8, 0.0])
-        o3d.visualization.draw_geometries([pcd, pcd2])
+        open3d_utils.draw_search_region2d(return_search_region,
+                                          grid_robot_position=grid_robot_position,
+                                          points=points)
 
     return return_search_region
