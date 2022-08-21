@@ -77,7 +77,7 @@ class SpotOctreeBeliefPublisher:
     def __init__(self, args):
         point_cloud_topic = args.point_cloud_topic
         self._cloud_sub = rospy.Subscriber(point_cloud_topic, PointCloud2, self._cloud_cb)
-        octree = Octree(OBJID, (args.size, args.size, args.size))
+        octree = Octree((args.size, args.size, args.size))
         self._octree_belief = OctreeBelief(args.size, args.size, args.size,
                                            OBJID, "OBJ", octree)
         self._search_space_res = args.res

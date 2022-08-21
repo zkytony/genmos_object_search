@@ -67,7 +67,7 @@ def init_object_beliefs_3d(target_objects, search_region, prior=None):
     dimension = search_region.octree.dimensions[0]
     for objid in target_objects:
         target = target_objects[objid]
-        octree = Octree(objid, (dimension, dimension, dimension))
+        octree = Octree((dimension, dimension, dimension))
         octree_belief = OctreeBelief(dimension, dimension, dimension,
                                      objid, target['class'], octree)
         if prior is not None and objid in prior:

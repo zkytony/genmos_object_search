@@ -347,7 +347,7 @@ def init_octree_belief(gridworld, init_robot_state, prior=None):
     # not be included in the state.
     for objid in gridworld.target_objects:
         objclass = gridworld.objects[objid].objtype
-        octree = Octree(objid, (w, l, h))
+        octree = Octree((w, l, h))
         octree_belief = OctreeBelief(w, l, h, objid, objclass, octree)
         if prior is not None and objid in prior:
             for x,y,z,r in prior[objid]:

@@ -49,7 +49,7 @@ def config():
 
 @pytest.fixture
 def search_region():
-    octree = Octree(None, (16, 16, 16), default_val=0)
+    octree = Octree((16, 16, 16), default_val=0)
     for i in range(20):
         x = random.randint(0, 15)
         y = random.randint(0, 15)

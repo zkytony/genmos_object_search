@@ -186,7 +186,7 @@ class BeliefBasic3D(pomdp_py.OOBelief):
         object_beliefs = {robot_state["id"]: robot_belief}
         for objid in target_objects:
             target = target_objects[objid]
-            octree = Octree(objid, (16, 16, 16))
+            octree = Octree((16, 16, 16))
             object_beliefs[objid] = OctreeBelief(16, 16, 16,
                                                  objid, target["class"], octree)
         super().__init__(object_beliefs)

@@ -38,7 +38,7 @@ def test_octree_belief_performance_huge():
 
 def _test_octree_belief_performance(dim,
                                     sample_count=2000):
-    octree = Octree(1, dim)
+    octree = Octree(dim)
     octree_belief = OctreeBelief(*dim, 1, "cube", octree)
 
     # Sampling from the tree - initial state
@@ -74,7 +74,7 @@ def _test_octree_belief_performance(dim,
     # Sampling from partial tree
     print("------ sampling from full tree ------")
     # reset the tree.
-    octree = Octree(1, dim)
+    octree = Octree(dim)
     octree_belief = OctreeBelief(*dim, 1, "cube", octree)
     num_samples = int(dim[0]*dim[1]*dim[2])
     positions = random.sample({(x,y,z)   # random sample without replacement

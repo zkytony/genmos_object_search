@@ -76,7 +76,7 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     debug = kwargs.get("debug", False)
 
     dimensions = (octree_size, octree_size, octree_size)
-    octree = Octree(None, dimensions, default_val=0)
+    octree = Octree(dimensions, default_val=0)
 
     # Either update existing search region, or create a brand new one.
     if existing_search_region is not None:

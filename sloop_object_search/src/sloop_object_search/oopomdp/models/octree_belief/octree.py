@@ -146,7 +146,7 @@ class OctNode:
             return None
 
 class Octree:
-    def __init__(self, objid, dimensions, default_val=DEFAULT_VAL):
+    def __init__(self, dimensions, default_val=DEFAULT_VAL):
         """
         Creates an octree for the given object id, covering volume of
         given dimensions (w,l,h). The depth of the tree is inferred
@@ -154,7 +154,6 @@ class Octree:
 
         default_val: the default value in a ground octnode
         """
-        self.objid = objid
         w,l,h = dimensions
         # requires cubic dimension, power of 2
         assert w == l and l == h and math.log(w, 2).is_integer(),\
@@ -231,14 +230,13 @@ class Octree:
             return node_value / self._normalizer
 
     def __hash__(self):
-        return hash((*self.dimensions, self.depth, self.root, self.objid))
+        return hash((*self.dimensions, self.depth, self.root))
 
     def __eq__(self, other):
         if not isinstance(other, Octree):
             return False
         else:
-            return self.objid == other.objid\
-                and self.dimensions == other.dimensions\
+            return self.dimensions == other.dimensions\
                 and self.normalizer == other.normalizer\
                 and self._known_voxels == other._known_voxels\
                 and self._once_occupied == other._once_occupied\
@@ -356,3 +354,13 @@ class Octree:
         is (10, 1, 5), then the output is (5, 0, 2)"""
         x,y,z = point
         return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
+
+
+class RegionalOctree(Octree):
+    """
+    This is an octree with a default value of 0 for (ground-level) nodes
+    outside of a region, defined either by a box (center, w, h, l), or
+    a set of voxels (could be at different resolution levels).
+    """
+    # def __init__(self,
+    pass
