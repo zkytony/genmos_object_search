@@ -3,7 +3,7 @@
 from tqdm import tqdm
 import pomdp_py
 from ..models.search_region import SearchRegion2D, SearchRegion3D
-from ..models.octree_belief import Octree, OctreeBelief
+from ..models.octree_belief import Octree, OctreeBelief, RegionalOctreeDistribution
 from ..domain.state import ObjectState, RobotState
 
 def init_robot_belief(robot_config, robot_pose_dist, robot_state_class=RobotState, **state_kwargs):
@@ -56,20 +56,20 @@ def init_object_beliefs_2d(target_objects, search_region, prior=None):
 
 def init_object_beliefs_3d(target_objects, search_region, prior=None):
     """we'll use Octree belief. Here, 'search_region' should be a
-    SearchRegion3D. As such, it has an octree used for modeling
-    occupancy. The agent's octree belief will be based on an octree
-    of the same dimension.
-    TODO: how does occupancy inform prior?  How to specify that?
+    SearchRegion3D. As such, it has an RegionalOctreeDistribution
+    used for modeling occupancy. The agent's octree belief will be
+    based on that.
     """
     assert isinstance(search_region, SearchRegion3D),\
         f"search_region should be a SearchRegion3D but its {type(search_region)}"
     object_beliefs = {}
-    dimension = search_region.octree.dimensions[0]
+    dimension = search_region.octree_dist.octree.dimensions[0]
     for objid in target_objects:
         target = target_objects[objid]
-        octree = Octree((dimension, dimension, dimension))
-        octree_belief = OctreeBelief(dimension, dimension, dimension,
-                                     objid, target['class'], octree)
+        octree_dist = RegionalOctreeDistribution(
+            (dimension, dimension, dimension),
+            search_region.octree_dist.region)
+        octree_belief = OctreeBelief(objid, target['class'], octree_dist)
         if prior is not None and objid in prior:
             for x,y,z,r in prior[objid]:
                 state = ObjectState(objid, target["class"], (x,y,z), res=r)

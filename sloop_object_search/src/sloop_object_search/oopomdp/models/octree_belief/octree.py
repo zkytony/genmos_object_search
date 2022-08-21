@@ -58,6 +58,9 @@ class OctNode:
     def __hash__(self):
         return hash((*self.pos, self.res))
 
+    def set_default_val(self, default_val):
+        self._default_val = default_val
+
     def add_child(self, child):
         if self.children is None:
             raise ValueError("Ground node cannot have children")

@@ -360,7 +360,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
     the probability behavior over the 3D space captured by the corresponding
     octree.
     """
-    def __init__(self, objid, objclass, octree_dist, default_val=DEFAULT_VAL):
+    def __init__(self, objid, objclass, octree_dist):
         if not isinstance(octree_dist, OctreeDistribution):
             raise TypeError("octree_dist must be an instance of OctreeDistribution")
         self._objid = objid
@@ -494,18 +494,39 @@ class RegionalOctreeDistribution(OctreeDistribution):
     This is an octree distribution with a default value of 0 for
     (ground-level) nodes outside of a region, defined either by a
     box (origin, w, h, l), or a set of voxels (could be at different resolution levels).
+    For locations within the region, a 'default_region_val'
+    could be set; This requires calling 'fill_region_uniform'
+    in the constructor.
 
     This is practical if the actual valid region (either as
     the space of possible object locations or as the map) is
     smaller than the space that the full octree covers.
+
+    Compared with OccupancyOctreeDistribution, simply: the default
+    value within a region in RegionalOctreeDistribution is configurable (DEFAULT_VAL
+    by default), while the default value within a region in OccupancyOctreeDistribution
+    is always 0.
     """
-    def __init__(self, dimensions, region):
+    def __init__(self, dimensions, region,
+                 default_region_val=DEFAULT_VAL, **kwargs):
+        """The origin in 'region' here should be in POMDP frame (NOT world frame).
+        The origin and w, h, l in 'region' can be float-valued."""
         if type(region) != tuple and type(region) != set:
             raise TypeError("region must be either a tuple (center, w, h, l)"
                             "representing a box, or a set of voxels")
-        self.region = region
+        self._region = region
         # Default value is 0 - it's only non-zero for grids inside the region
         super().__init__(dimensions, default_val=0)
+
+        self.default_region_val = default_region_val
+        if default_region_val is not None and default_region_val != 0:
+            num_samples = kwargs.pop("num_samples", 30)
+            self.fill_region_uniform(default_region_val,
+                                     num_samples=num_samples)
+
+    @property
+    def region(self):
+        return self._region
 
     def in_region(self, voxel):
         """voxel: (x,y,z,r)"""
@@ -543,3 +564,46 @@ class RegionalOctreeDistribution(OctreeDistribution):
             return 0.0
         else:
             return super()._probability(x, y, z, res, fast=fast)
+
+    def fill_region_uniform(self, default_val, num_samples=30):
+        """
+        This function will set the default values of octnodes within the
+        region uniformly with the given value 'default_val'. It works
+        by, for 'num_samples' times,  uniformly sample a location
+        within the region, insert an octnode for that location with
+        'defaul_val', trace back till the root depth wise and change
+        each parent node's default value to be 'default_val', if the
+        parent node's center is within the region.
+        """
+        for i in range(num_samples):
+            if type(self.region) == set:
+                xr, yr, zr = random.sample(self.region, 1)[0]
+            else:
+                xr, yr, zr = util.sample_in_box3d_origin(self.region)
+
+            # check this voxel is within the region
+            xr = int(round(xr))
+            yr = int(round(yr))
+            zr = int(round(zr))
+            if not self.in_region((xr, yr, zr, 1)):
+                continue
+
+            # First, add the node
+            self[(xr, yr, zr, 1)] = default_val
+            node = self._octree.get_node(xr, yr, zr, 1)
+
+            # Then, traceback
+            while self.in_region((*node.pos, node.res)):
+                node.set_default_val(default_val)
+                node = node.parent
+                if node is None:
+                    break
+
+
+class OccupancyOctreeDistribution(RegionalOctreeDistribution):
+    """This is a regional octree distribution without a default value
+    within the region -- i.e. all default values are zero. Nevertheless,
+    only the occupancy within the region is considered; Those outside
+    are ignored."""
+    def __init__(self, dimensions, region):
+        super().__init__(dimensions, region, default_region_val=0)

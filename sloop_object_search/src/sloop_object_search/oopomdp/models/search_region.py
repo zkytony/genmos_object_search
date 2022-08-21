@@ -1,5 +1,5 @@
 from sloop_object_search.utils.conversion import Frame, convert
-from .octree_belief import RegionalOctreeDistribution
+from .octree_belief import OccupancyOctreeDistribution
 
 class SearchRegion:
     """model of the search region. The idea of search region is
@@ -86,7 +86,6 @@ class SearchRegion2D(SearchRegion):
 
 class SearchRegion3D(SearchRegion):
     """The 3D search region is represented as an octree_dist
-    (OctreeDistribution).
     We anticipate a 3D search region is necessary only for
     local search.
 
@@ -94,8 +93,8 @@ class SearchRegion3D(SearchRegion):
     should be zero, indicating free space (it is not a belief,
     it is occupancy)."""
     def __init__(self, octree_dist, **kwargs):
-        assert isinstance(octree_dist, RegionalOctreeDistribution),\
-            "octree_dist must be RegionalOctreeDistribution."
+        assert isinstance(octree_dist, OccupancyOctreeDistribution),\
+            "octree_dist must be OccupancyOctreeDistribution."
         super().__init__(octree_dist, **kwargs)
 
     @property

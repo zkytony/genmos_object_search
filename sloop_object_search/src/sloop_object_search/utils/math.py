@@ -96,6 +96,16 @@ def in_box3d_origin(p, box):
         and abs(py - oy) <= ly\
         and abs(pz - oz) <= lz
 
+def sample_in_box3d_origin(box):
+    """Given a box represented as a tuple (origin, w, l, h),
+    returns a point sampled from within the box"""
+    origin, w, l, h = box
+    dx = random.uniform(0, w)
+    dy = random.uniform(0, l)
+    dz = random.uniform(0, h)
+    return (origin[0] + dx,
+            origin[1] + dy,
+            origin[2] + dz)
 
 def approx_equal(v1, v2, epsilon=1e-6):
     if len(v1) != len(v2):

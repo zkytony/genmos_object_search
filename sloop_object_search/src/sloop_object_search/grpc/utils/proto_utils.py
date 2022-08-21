@@ -45,6 +45,12 @@ def process_search_region_params_3d(search_region_params_3d_pb):
         params["search_space_resolution"] = search_region_params_3d_pb.search_space_resolution
     if search_region_params_3d_pb.HasField('debug'):
         params["debug"] = search_region_params_3d_pb.debug
+    if search_region_params_3d_pb.HasField('region_size_x'):
+        params["region_size_x"] = search_region_params_3d_pb.region_size_x
+    if search_region_params_3d_pb.HasField('region_size_y'):
+        params["region_size_y"] = search_region_params_3d_pb.region_size_y
+    if search_region_params_3d_pb.HasField('region_size_z'):
+        params["region_size_z"] = search_region_params_3d_pb.region_size_z
     return params
 
 
@@ -198,7 +204,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
 
             # each voxel is (x,y,z,r,_) where x,y,z are ground-level voxel coordinates.
             voxels = b_obj.octree.collect_plotting_voxels()
-            probs = [b_obj.prob_at(*Octree.increase_res(voxels[i][:3], 1, voxels[i][3]), voxels[i][3])
+            probs = [b_obj.octree_dist.prob_at(*Octree.increase_res(voxels[i][:3], 1, voxels[i][3]), voxels[i][3])
                      for i in range(len(voxels))]
             for i in range(len(voxels)):
                 vpos = voxels[i][:3]  # voxel location at ground-level (but in pomdp frame)
