@@ -7,6 +7,7 @@ import grpc
 import argparse
 import yaml
 import pomdp_py
+
 from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
@@ -220,10 +221,38 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             # print planning tree
             _dd = pomdp_py.utils.TreeDebugger(agent.tree)
             _dd.p(1)
-        action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent)
-        return slpb2.PlanActionReply(header=proto_utils.make_header(),
+        header = proto_utils.make_header(request.header.frame_id)
+        action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
+        return slpb2.PlanActionReply(header=header,
                                      **{action_type: action_pb})
 
+    def GetObjectBeliefs(self, request, context):
+        if request.robot_id not in self._agents:
+            # agent not yet created
+            return slpb2.GetObjectBeliefsReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=f"agent {robot_id} does not exist. Did you create it?")
+
+        agent = self._agents[request.robot_id]
+        object_beliefs = {}
+        if request.HasField("object_ids"):
+            object_beliefs = {objid: agent.belief.b(objid)
+                              for objid in request.object_ids}
+            if request.robot_id in object_beliefs:
+                logging.warn("removing robot_id in object_ids in GetObjectBeliefs request")
+                object_beliefs.pop(request.robot_id)  # remove belief about robot
+        else:
+            object_beliefs = dict(agent.belief.object_beliefs)
+            object_beliefs.pop(request.robot_id)  # remove belief about robot
+
+        object_beliefs_pb = proto_utils.pomdp_object_beliefs_to_proto(
+            object_beliefs, is_3d=isinstance(agent.search_region, SearchRegion3D))
+        header = proto_utils.make_header(request.header.frame_id)
+        return slpb2.GetObjectBeliefsReply(header=header,
+                                           status=Status.SUCCESSFUL,
+                                           message="got object beliefs",
+                                           object_beliefs=object_beliefs_pb)
 
 
 ###########################################################################

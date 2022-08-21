@@ -9,12 +9,14 @@ from google.protobuf.timestamp_pb2 import Timestamp
 
 from sloop_object_search.grpc.observation_pb2 import PointCloud
 from sloop_object_search.grpc.common_pb2\
-    import Vec3, Header, Pose3D, Quaternion
+    import Vec2, Vec3, Header, Pose3D, Quaternion, Histogram, Voxel3D
 from sloop_object_search.grpc.action_pb2\
     import MoveViewpoint, Find, KeyValueAction, Motion2D, Motion3D
 from .. import sloop_object_search_pb2 as slpb2
 
 from sloop_object_search.oopomdp.domain import action as sloop_action
+from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
+from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
 from sloop_object_search.utils.math import to_rad
 
 
@@ -165,3 +167,51 @@ def interpret_planned_action(plan_action_reply):
         return plan_action_reply.kv_action
     else:
         raise ValueError("unable to determine action.")
+
+
+def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
+    """
+    Args:
+        object_beliefs; Maps from objid to a pomdp_py.GenerativeDistribution
+    Return:
+        A list of ObjectBelief protos
+    """
+    object_beliefs_proto = []
+    for objid in object_beliefs:
+        b_obj = object_beliefs[objid]
+
+        hist_values = []  # the search region locations
+        hist_probs = []   # the probabilities
+        if not isinstance(search_region, SearchRegion3D):
+            # For 2D belief, just iterate over all
+            for s_obj in b_obj:
+                assert s_obj.is_2d, "expecting object state to be 2d."
+                x, y = search_region.to_world_pos(s_obj.loc)
+                hist_values.append(Vec2(x=x, y=y))
+                hist_probs.append(b_obj[s_obj])
+
+        else:
+            # b_obj is octree belief
+            assert isinstance(b_obj, OctreeBelief),\
+                "3d object belief should be octree belief"
+
+            # each voxel is (x,y,z,r,_) where x,y,z are ground-level voxel coordinates.
+            voxels = search_region.octree.collect_plotting_voxels()
+            probs = [b_obj.prob_at(*Octree.change_res(voxels[i][:3], 1, voxels[i][3]), voxels[i][3])
+                     for i in range(len(voxels))]
+            for i in range(len(voxels)):
+                vpos = voxels[i][:3]  # voxel location at ground-level (but in pomdp frame)
+                vres = voxels[i][3]
+                x, y, z = search_region.to_world_pos(vpos)
+                res = vres * search_region.search_space_resolution
+                voxel_pb = Voxel3D(pos=Vec3(x=x, y=y, z=z), res=res)
+                hist_values.append(voxel_pb)
+                hist_probs.append(probs[i])
+
+        dist = Histogram(length=len(hist_values),
+                         values=hist_values,
+                         probs=hist_probs)
+        object_beliefs_proto.append(
+            slpb2.ObjectBelief(object_id=objid,
+                               dist=dist))
+    return object_beliefs_proto
