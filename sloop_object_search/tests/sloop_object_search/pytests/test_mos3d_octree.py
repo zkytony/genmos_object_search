@@ -52,14 +52,14 @@ def test_basics(octree_belief):
     assert abs(octree_belief.prob_at(0,0,0,4) - 1./(4**3)) <= 1e-6
     assert abs(octree_belief.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
     assert abs(octree_belief.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
-    print(octree_belief._octree._known_voxels)
+    print(octree_belief._known_voxels)
 
     # assign a certain (unnormalized) probability to a node. Note that
     # in the assertion statements, the expected probability can be
     # computed based on the probability at the ground resolution level,
     # which is how octree belief is defined.
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = TEST_ALPHA
-    print(octree_belief._octree._known_voxels)
+    print(octree_belief._known_voxels)
     assert abs(octree_belief.prob_at(0,0,1,1) - TEST_ALPHA/(TEST_ALPHA + 16**3 - 1)) <= 1e-6
 
     # 0,0,1 at res=1 is a child in 0,0,0 at res=2
@@ -71,7 +71,7 @@ def test_basics(octree_belief):
 
     # set it back
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = DEFAULT_VAL
-    print(octree_belief._octree._known_voxels)
+    print(octree_belief._known_voxels)
     assert abs(octree_belief.prob_at(0,0,1,1) - 1./(16**3)) <= 1e-6
     assert abs(octree_belief.prob_at(0,0,0,2) - 1./(8**3)) <= 1e-6
     assert abs(octree_belief.prob_at(0,0,0,4) - 1./(4**3)) <= 1e-6

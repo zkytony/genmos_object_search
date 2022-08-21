@@ -164,24 +164,9 @@ class Octree:
         self.dimensions = dimensions
         self.default_val = default_val
 
-        # normalizer; we only need one normalizer at the ground level.
-        # NOTE that the normalizer is not in log space.
-        if LOG:
-            # the default value is in log space; So we have to convert it.
-            self._normalizer = (w*l*h)*math.exp(self.default_val)
-        else:
-            self._normalizer = (w*l*h)*self.default_val
-
-        # stores locations where occupancy was once recorded
-        self._known_voxels = {}
-        next_res = self.root.res
-        while next_res >= 1:
-            # for efficiency; weights are not in log space.
-            self._known_voxels[next_res] = {}  # voxel pose -> weight (not log space)
-            next_res = next_res // 2
-
     def valid_resolution(self, res):
-        return res in self._known_voxels
+        return math.log(res, 2).is_integer()\
+            and res <= self.dimensions[0]
 
     def valid_voxel(self, x, y, z, res):
         if res > self.dimensions[0]:
@@ -192,43 +177,6 @@ class Octree:
                 and 0 <= y*res < self.dimensions[0]\
                 and 0 <= z*res < self.dimensions[0]
 
-    def known_voxels(self, res):
-        """return set of voxel poses at resolution level"""
-        if res not in self._known_voxels:
-            raise ValueError("resolution invalid %d" % res)
-        return self._known_voxels[res] #['voxels']
-
-    def update_node_weight(self, x, y, z, res, value):
-        if LOG:
-            # value is in log space
-            self._known_voxels[res][(x,y,z)] = math.exp(value)
-        else:
-            self._known_voxels[res][(x,y,z)] = value
-
-    def node_weight(self, x, y, z, res):
-        # Note that the weights in known_voxels are not in log space.
-        if res in self._known_voxels and (x,y,z) in self._known_voxels[res]:
-            return self._known_voxels[res][(x,y,z)]
-        else:
-            return None
-
-    def update_normalizer(self, old_value, value):
-        if LOG:
-            self._normalizer += (math.exp(value) - math.exp(old_value))
-        else:
-            self._normalizer += (value - old_value)
-
-    def normalized_probability(self, node_value):
-        """Given the value of some node, which represents unnormalized proability,
-        returns the normalized probability, properly converted to log space
-        depending on the setting of LOG."""
-        if LOG:
-            # node_value is in log space.
-            return node_value - math.log(self._normalizer)  # the normalizer property takes care of log space issue.
-        else:
-            # node value is not in log space.
-            return node_value / self._normalizer
-
     def __hash__(self):
         return hash((*self.dimensions, self.depth, self.root))
 
@@ -238,7 +186,6 @@ class Octree:
         else:
             return self.dimensions == other.dimensions\
                 and self.normalizer == other.normalizer\
-                and self._known_voxels == other._known_voxels\
                 and self._once_occupied == other._once_occupied\
                 and self.depth == other.depth\
                 and self.root == other.root
@@ -274,13 +221,6 @@ class Octree:
                 child = OctNode(xr, yr, zr, next_res,
                                 parent=node, default_val=val)
                 node.add_child(child)
-                if LOG:
-                    # child.value will be log space probability; But we want to store
-                    # natural probability as weights.
-                    self._known_voxels[next_res][(xr,yr,zr)] = math.exp(child.value())
-                else:
-                    # child.value will be natural space probability.
-                    self._known_voxels[next_res][(xr,yr,zr)] = child.value()
             node = node.child_at((xr,yr,zr))
             next_res = node.res // 2
         return node

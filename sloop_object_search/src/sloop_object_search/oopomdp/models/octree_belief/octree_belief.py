@@ -33,6 +33,9 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
     """
     def __init__(self, width, length, height, objid, objclass, octree, default_val=DEFAULT_VAL):
         """For alpha, beta, gamma, refer to ObjectObservationModel."""
+        assert width == length and length == height and math.log(width, 2).is_integer(),\
+            "dimensions must be equal and power of 2; Got (%d, %d, %d)" % (width, length, height)
+
         self._objid = objid
         self._objclass = objclass
         self._octree = octree
@@ -43,6 +46,22 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         self._length = length
         self._height = height
 
+        # normalizer; we only need one normalizer at the ground level.
+        # NOTE that the normalizer is not in log space.
+        if LOG:
+            # the default value is in log space; So we have to convert it.
+            self._normalizer = (width*length*height)*math.exp(self._gamma)
+        else:
+            self._normalizer = (width*length*height)*self._gamma
+
+        # stores locations where occupancy was once recorded (cache)
+        self._known_voxels = {}
+        next_res = self.octree.root.res
+        while next_res >= 1:
+            # for efficiency; weights are not in log space.
+            self._known_voxels[next_res] = {}  # voxel pose -> weight (not log space)
+            next_res = next_res // 2
+
     @property
     def objid(self):
         return self._objid
@@ -50,6 +69,44 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
     @property
     def octree(self):
         return self._octree
+
+    def known_voxels(self, res):
+        """return set of voxel poses at resolution level"""
+        if res not in self._known_voxels:
+            raise ValueError("resolution invalid %d" % res)
+        return self._known_voxels[res] #['voxels']
+
+    def update_node_weight_cache(self, x, y, z, res, value):
+        if LOG:
+            # value is in log space
+            self._known_voxels[res][(x,y,z)] = math.exp(value)
+        else:
+            self._known_voxels[res][(x,y,z)] = value
+
+    def node_weight_in_cache(self, x, y, z, res):
+        # Note that the weights in known_voxels are not in log space.
+        if res in self._known_voxels and (x,y,z) in self._known_voxels[res]:
+            return self._known_voxels[res][(x,y,z)]
+        else:
+            return None
+
+    def update_normalizer(self, old_value, value):
+        if LOG:
+            self._normalizer += (math.exp(value) - math.exp(old_value))
+        else:
+            self._normalizer += (value - old_value)
+
+    def normalized_probability(self, node_value):
+        """Given the value of some node, which represents unnormalized proability,
+        returns the normalized probability, properly converted to log space
+        depending on the setting of LOG."""
+        if LOG:
+            # node_value is in log space.
+            return node_value - math.log(self._normalizer)  # the normalizer property takes care of log space issue.
+        else:
+            # node value is not in log space.
+            return node_value / self._normalizer
+
 
     def __getitem__(self, object_state):
         if object_state.id != self._objid:
@@ -75,13 +132,13 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
 
         if fast:
             # Note that the weights in known_voxels are not in log space.
-            weight = self._octree.node_weight(x, y, z, res)
+            weight = self.node_weight_in_cache(x, y, z, res)
             if weight is not None:
                 if LOG:
                     weight = math.log(weight)  # convert to log space
-                return self._octree.normalized_probability(weight)
+                return self.normalized_probability(weight)
             else:
-                prob_one_voxel = self._octree.normalized_probability(self._gamma)
+                prob_one_voxel = self.normalized_probability(self._gamma)
                 if LOG:
                     # prob_one_voxel is in log space.
                     return math.log(math.exp(prob_one_voxel)*((res)**3))
@@ -102,7 +159,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                     # Has not encountered this position. Thus the voxel
                     # has not been observed. P(v|s',a)=gamma; need to account
                     # for the resolution.
-                    prob_one_voxel = self._octree.normalized_probability(self._gamma)
+                    prob_one_voxel = self.normalized_probability(self._gamma)
                     if LOG:
                         # prob_one_voxel is in log space.
                         return math.log(math.exp(prob_one_voxel)*((res)**3))
@@ -110,7 +167,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                         return prob_one_voxel * ((res)**3)
             # Have previously observed this position and there's a node for it.
             # Use the node's value to compute the probability
-            return self._octree.normalized_probability(node.value())
+            return self.normalized_probability(node.value())
 
     def __setitem__(self, object_state, value):
         """
@@ -124,7 +181,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         node = self._octree.add_node(x,y,z,1)
         old_value = node.get_val(None)
         node.set_val(None, value)
-        self._octree.update_normalizer(old_value, value)
+        self.update_normalizer(old_value, value)
         self.backtrack(node)
 
     def assign(self, object_state, value):
@@ -159,7 +216,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         old_value = node.parent.get_val(node.pos)
         # Make sure the parent agrees with the value of the node
         node.parent.set_val((x,y,z), value, child=node)
-        self._octree.update_normalizer(old_value, value)
+        self.update_normalizer(old_value, value)
         self.backtrack(node)
         self._propagate(node)
 
@@ -265,16 +322,16 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         cur_node = node
         while cur_supernode is not None:
             # Update the value of child through accessing parent;
-            # Update the known_voxels dict as well through update_node_weight
+            # Update the known_voxels dict as well through update_node_weight_cache
             cur_node_val = cur_node.value()
             cur_supernode.set_val(cur_node.pos, cur_node_val, child=cur_node)
-            self._octree.update_node_weight(*cur_node.pose, cur_node.res, cur_node_val)
+            self.update_node_weight_cache(*cur_node.pose, cur_node.res, cur_node_val)
             cur_node = cur_supernode
             cur_supernode = cur_supernode.parent
-        # cur_node is the root node. Also need to call update_node_weight
+        # cur_node is the root node. Also need to call update_node_weight_cache
         assert cur_node.res == self._octree.root.res
         cur_node_val = cur_node.value()
-        self._octree.update_node_weight(*cur_node.pose, cur_node.res, cur_node_val)
+        self.update_node_weight_cache(*cur_node.pose, cur_node.res, cur_node_val)
 
     def _propagate(self, node):
         """Update the value in octree's known_voxels set, for all children voxels,
@@ -284,7 +341,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
     def _propagate_helper(self, x, y, z, res, val):
         """The value is unnormalized probability. Will treat as in
         log space if LOG is true."""
-        self._octree.update_node_weight(x, y, z, res, val)
+        self.update_node_weight_cache(x, y, z, res, val)
         if res > 1:
             for child_pos in OctNode.child_poses(x, y, z, res):
                 if LOG:
@@ -328,7 +385,7 @@ def update_octree_belief(octree_belief, real_action, real_observation,
             else:
                 node.set_val(None, val_t * beta)
         val_tp1 = node.get_val(None)
-        octree_belief.octree.update_normalizer(val_t, val_tp1)
+        octree_belief.update_normalizer(val_t, val_tp1)
         octree_belief.backtrack(node)
     return octree_belief
 
