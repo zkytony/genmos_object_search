@@ -35,7 +35,7 @@ def waypoints_msg_to_arr(waypoints_msg):
 class UpdateSearchRegion3DTestCase:
     def __init__(self, robot_id="robot0",
                  node_name="test_update_search_region_3d_with_point_cloud",
-                 world_frame="graphnav_map", debug=True, num_updates=3):
+                 world_frame="graphnav_map", debug=True, num_updates=1):
         self.node_name = node_name
         self.world_frame = world_frame
         self.debug = debug
@@ -114,4 +114,4 @@ class UpdateSearchRegion3DTestCase:
                                          "debug": self.debug})
 
 if __name__ == "__main__":
-    UpdateSearchRegion3DTestCase().run()
+    UpdateSearchRegion3DTestCase(num_updates=3).run()
