@@ -84,7 +84,11 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     debug = kwargs.get("debug", False)
 
     dimensions = (octree_size, octree_size, octree_size)
-    octree_dist = OccupancyOctreeDistribution(dimensions, (origin, *(sizes / search_space_resolution)))
+
+    origin_pomdp = convert(origin, Frame.WORLD, Frame.POMDP_SPACE,
+                           region_origin=origin,
+                           search_space_resolution=search_space_resolution)
+    octree_dist = OccupancyOctreeDistribution(dimensions, (origin_pomdp, *(sizes / search_space_resolution)))
 
     # Either update existing search region, or create a brand new one.
     if existing_search_region is not None:
