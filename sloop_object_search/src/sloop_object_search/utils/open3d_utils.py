@@ -42,15 +42,20 @@ def cube_unfilled(scale=1, color=[1,0,0]):
     return line_set
 
 
-def draw_search_region3d(search_region, points=None):
+def draw_search_region3d(search_region, octree_dist=None, points=None):
     """
+    By default draws the octree_dist in search_region, unless one
+    is provided.
     points: a numpy array (N, 3) that is the point cloud
     associated with creating this search region.
     """
     if not isinstance(search_region, SearchRegion3D):
         raise TypeError("search region must be SearchRegion3D")
+    if octree_dist is None:
+        octree_dist = search_region.octree_dist
+
     # Draw region box
-    region = search_region.octree_dist.region
+    region = octree_dist.region
     origin, w, l, h = region
     origin = search_region.to_world_pos(origin)
     sizes = np.asarray([w, l, h]) * search_region.search_space_resolution
@@ -70,7 +75,7 @@ def draw_search_region3d(search_region, points=None):
         geometries.append(pcd)
 
     # visualize octree
-    voxels = search_region.octree_dist.octree.collect_plotting_voxels()
+    voxels = octree_dist.octree.collect_plotting_voxels()
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]  # resolutions
     vv = [v[4] for v in voxels]  # values
@@ -82,6 +87,30 @@ def draw_search_region3d(search_region, points=None):
         mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
         geometries.append(mesh_box)
     o3d.visualization.draw_geometries(geometries)
+
+
+def draw_octree_dist(octree_dist):
+    """draw the octree dist in POMDP space."""
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=1.2, origin=[0.0, 0.0, 0.0])
+    geometries = [mesh_frame]
+    # visualize octree
+    voxels = octree_dist.octree.collect_plotting_voxels()
+    vp = [v[:3] for v in voxels]
+    vr = [v[3] for v in voxels]  # resolutions
+    vv = [v[4] for v in voxels]  # values
+    for i in range(len(vp)):
+        pos = vp[i]
+        size = vr[i]  # cube size in meters
+        mesh_box = cube_unfilled(scale=size)
+        mesh_box.translate(np.asarray(pos))
+        mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
+        geometries.append(mesh_box)
+    o3d.visualization.draw_geometries(geometries)
+
+
+def draw_octree_dist_in_search_region(octree_dist, search_region, points=None):
+    draw_search_region3d(search_region, octree_dist=octree_didst, points=points)
 
 
 def draw_search_region2d(search_region, grid_robot_position=None, points=None):

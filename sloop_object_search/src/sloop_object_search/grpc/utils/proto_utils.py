@@ -19,6 +19,7 @@ from sloop_object_search.oopomdp.domain import action as sloop_action
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
 from sloop_object_search.utils.math import to_rad
+from sloop_object_search.utils import open3d_utils
 
 
 def process_search_region_params_2d(search_region_params_2d_pb):
@@ -203,6 +204,8 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                 "3d object belief should be octree belief"
 
             # each voxel is (x,y,z,r,_) where x,y,z are ground-level voxel coordinates.
+            open3d_utils.draw_octree_dist(b_obj.octree_dist)
+
             voxels = b_obj.octree.collect_plotting_voxels()
             probs = [b_obj.octree_dist.prob_at(*Octree.increase_res(voxels[i][:3], 1, voxels[i][3]), voxels[i][3])
                      for i in range(len(voxels))]
