@@ -197,7 +197,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                 "3d object belief should be octree belief"
 
             # each voxel is (x,y,z,r,_) where x,y,z are ground-level voxel coordinates.
-            voxels = search_region.octree.collect_plotting_voxels()
+            voxels = b_obj.octree.collect_plotting_voxels()
             probs = [b_obj.prob_at(*Octree.change_res(voxels[i][:3], 1, voxels[i][3]), voxels[i][3])
                      for i in range(len(voxels))]
             for i in range(len(voxels)):
