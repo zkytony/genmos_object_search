@@ -43,26 +43,21 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
     representing distribution over ObjectState, this distribution
     is general.
     """
-    def __init__(self, width, length, height, octree, default_val=DEFAULT_VAL):
+    def __init__(self, octree, default_val=DEFAULT_VAL):
         """For alpha, beta, gamma, refer to ObjectObservationModel."""
-        assert width == length and length == height and math.log(width, 2).is_integer(),\
-            "dimensions must be equal and power of 2; Got (%d, %d, %d)" % (width, length, height)
-
         self._octree = octree
         self._gamma = default_val
 
         # world dimensions
-        self._width = width
-        self._length = length
-        self._height = height
+        w, l, h = octree.dimensions
 
         # normalizer; we only need one normalizer at the ground level.
         # NOTE that the normalizer is not in log space.
         if LOG:
             # the default value is in log space; So we have to convert it.
-            self._normalizer = (width*length*height)*math.exp(self._gamma)
+            self._normalizer = (w*l*h)*math.exp(self._gamma)
         else:
-            self._normalizer = (width*length*height)*self._gamma
+            self._normalizer = (w*l*h)*self._gamma
 
         # stores locations where occupancy was once recorded (cache)
         self._known_voxels = {}
@@ -352,16 +347,15 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
 
 
 class OctreeBelief(OctreeDistribution):
-
     """
     OctreeBelief is a belief designed specifically for the
     3D object search problem.
 
     Each object is associated with an octree belief, separate from others.
     """
-    def __init__(self, width, length, height, objid, objclass, octree, default_val=DEFAULT_VAL):
+    def __init__(self, objid, objclass, octree, default_val=DEFAULT_VAL):
         """For alpha, beta, gamma, refer to ObjectObservationModel."""
-        super().__init__(width, length, height, octree, default_val=DEFAULT_VAL)
+        super().__init__(octree, default_val=DEFAULT_VAL)
         self._objid = objid
         self._objclass = objclass
 
@@ -480,3 +474,15 @@ def init_octree_belief(gridworld, init_robot_state, prior=None):
         object_beliefs[objid] = octree_belief
     object_beliefs[gridworld.robot_id] = pomdp_py.Histogram({init_robot_state: 1.0})
     return object_beliefs
+
+
+
+
+class RegionalOctree(Octree):
+    """
+    This is an octree with a default value of 0 for (ground-level) nodes
+    outside of a region, defined either by a box (center, w, h, l), or
+    a set of voxels (could be at different resolution levels).
+    """
+    # def __init__(self,
+    pass

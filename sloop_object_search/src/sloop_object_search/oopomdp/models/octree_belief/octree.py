@@ -290,13 +290,3 @@ class Octree:
         is (10, 1, 5), then the output is (5, 0, 2)"""
         x,y,z = point
         return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
-
-
-class RegionalOctree(Octree):
-    """
-    This is an octree with a default value of 0 for (ground-level) nodes
-    outside of a region, defined either by a box (center, w, h, l), or
-    a set of voxels (could be at different resolution levels).
-    """
-    # def __init__(self,
-    pass

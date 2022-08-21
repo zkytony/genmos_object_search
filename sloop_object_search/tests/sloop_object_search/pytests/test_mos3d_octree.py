@@ -41,7 +41,7 @@ else:
 @pytest.fixture
 def octree_belief():
     octree = Octree((16, 16, 16))
-    octree_belief = OctreeBelief(16, 16, 16, 1, "cube", octree)
+    octree_belief = OctreeBelief(1, "cube", octree)
     return octree_belief
 
 def test_basics(octree_belief):
@@ -203,9 +203,9 @@ def test_visualize(octree_belief):
     ax = fig.add_subplot(1,1,1,projection="3d")
     m = plot_octree_belief(ax, octree_belief,
                            alpha="clarity", edgecolor="black", linewidth=0.1)
-    ax.set_xlim([0, octree_belief._width])
-    ax.set_ylim([0, octree_belief._length])
-    ax.set_zlim([0, octree_belief._height])
+    ax.set_xlim([0, octree_belief.octree.dimensions[0]])
+    ax.set_ylim([0, octree_belief.octree.dimensions[1]])
+    ax.set_zlim([0, octree_belief.octree.dimensions[2]])
     ax.grid(False)
     fig.colorbar(m, ax=ax)
     plt.show(block=False)
