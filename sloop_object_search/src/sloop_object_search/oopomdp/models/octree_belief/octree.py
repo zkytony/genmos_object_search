@@ -346,3 +346,13 @@ class Octree:
                 else:
                     child = node.children[pos][1]
                     self._collect_plotting_voxels_helper(child, collector)
+
+    @staticmethod
+    def change_res(point, r1, r2):
+        """Given a point (x,y,z) at resolution r1,
+        returns a new point (x', y', z') expressed
+        in (0-based) coordinates at resolution r2.
+        For example, if r1=1, r2=2, then if point
+        is (10, 1, 5), then the output is (5, 0, 2)"""
+        x,y,z = point
+        return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
