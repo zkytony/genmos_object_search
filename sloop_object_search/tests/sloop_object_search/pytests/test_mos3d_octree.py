@@ -40,7 +40,7 @@ else:
 
 @pytest.fixture
 def octree_belief():
-    octree_dist = OctreeDistribution(Octree((16, 16, 16)))
+    octree_dist = OctreeDistribution((16, 16, 16))
     octree_belief = OctreeBelief(1, "cube", octree_dist)
     return octree_belief
 

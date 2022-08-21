@@ -43,13 +43,13 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
     representing distribution over ObjectState, this distribution
     is general.
     """
-    def __init__(self, octree, default_val=DEFAULT_VAL):
+    def __init__(self, dimensions, default_val=DEFAULT_VAL):
         """For alpha, beta, gamma, refer to ObjectObservationModel."""
-        self._octree = octree
+        self._octree = Octree(dimensions, default_val=default_val)
         self._gamma = default_val
 
         # world dimensions
-        w, l, h = octree.dimensions
+        w, l, h = dimensions
 
         # normalizer; we only need one normalizer at the ground level.
         # NOTE that the normalizer is not in log space.
@@ -486,13 +486,12 @@ def init_octree_belief(gridworld, init_robot_state, prior=None):
     return object_beliefs
 
 
-
-
-class RegionalOctree(Octree):
+class RegionalOctreeDistribution(OctreeDistribution):
     """
-    This is an octree with a default value of 0 for (ground-level) nodes
-    outside of a region, defined either by a box (center, w, h, l), or
-    a set of voxels (could be at different resolution levels).
+    This is an octree distribution with a default value of 0 for
+    (ground-level) nodes outside of a region, defined either by a
+    box (center, w, h, l), or a set of voxels (could be at different resolution levels).
     """
-    # def __init__(self,
-    pass
+    def __init__(self, octree, region, default_val_in_region=DEFAULT_VAL):
+
+        pass
