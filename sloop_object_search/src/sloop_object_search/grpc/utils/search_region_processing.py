@@ -99,18 +99,14 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
         search_region = SearchRegion3D(
             octree_dist, region_origin=origin,
             search_space_resolution=search_space_resolution)
-    cc = 0
+
     for p in points_array:
         g = search_region.to_octree_pos(p)
         if search_region.valid_voxel((*g, 1)):
             search_region.octree_dist[(*g, 1)] = 1  # set value to be 1
-            cc+=1
         else:
             if debug:
                 print(f"Warning: voxel {g} is out of bound of the octree. Is your resolution too high?")
-
-    print(len(points_array), cc)
-
     # debugging
     if debug:
         open3d_utils.draw_search_region3d(search_region, points=points_array)
