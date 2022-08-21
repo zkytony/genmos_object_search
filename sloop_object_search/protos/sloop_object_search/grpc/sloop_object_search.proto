@@ -121,11 +121,14 @@ message ProcessObservationReply {
 message GetObjectBeliefsRequest {
   Header header = 1;
   string robot_id = 2;
+  repeated string object_ids = 3;
 }
 
 message GetObjectBeliefsReply {
   Header header = 1;
-  repeated ObjectBelief object_beliefs = 2;
+  Status status = 2;
+  string message = 3;
+  repeated ObjectBelief object_beliefs = 4;
 }
 
 
@@ -137,17 +140,19 @@ message GetRobotBeliefRequest {
 
 message GetRobotBeliefReply {
   Header header = 1;
+  Status status = 2;
+  string message = 3;
 
   // List of object ids for objects that the robot believes are found
-  repeated string objects_found = 2;
+  repeated string objects_found = 4;
 
   // robot pose (exact or a distribution; see RobotPose message definition)
-  RobotPose pose = 3;
+  RobotPose pose = 5;
 
   // If the robot plans over a topological graph, this returns
   // the id of the topological graph node the robot associates itself
   // with currently.
-  optional string topo_nid = 4;
+  optional string topo_nid = 6;
 }
 
 //// For CreatePlanner rpc ////
@@ -211,7 +216,6 @@ message SearchRegionParams3D {
 }
 
 message ObjectBelief {
-  Header header = 1;
   string object_id = 2;
   Histogram dist = 3;
 }
