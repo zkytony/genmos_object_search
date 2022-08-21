@@ -14,7 +14,7 @@ import geometry_msgs.msg as geometry_msgs
 from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
-from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped
+from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped, WaitForMessages
 from sloop_object_search.grpc.utils.proto_utils import pointcloud2_to_pointcloudproto
 from sloop_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -33,28 +33,33 @@ def waypoints_msg_to_arr(waypoints_msg):
     return arr
 
 class UpdateSearchRegion3DTestCase:
-    def __init__(self, robot_id="test_robot",
+    def __init__(self, robot_id="robot0",
                  node_name="test_update_search_region_3d_with_point_cloud",
-                 world_frame="graphnav_map", debug=True):
-        rospy.init_node(node_name)
-        self.robot_id = robot_id
-        self.world_frame = world_frame  # fixed frame of the world
+                 world_frame="graphnav_map", debug=True, num_updates=3):
+        self.node_name = node_name
+        self.world_frame = world_frame
         self.debug = debug
+        self.robot_id = robot_id
+        self.num_updates = num_updates
+        self._setup()
+
+    def _setup(self):
+        rospy.init_node(self.node_name)
         self.wyp_sub = rospy.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray, self._waypoint_cb)
         self.robot_pose_pub = rospy.Publisher(
             FAKE_ROBOT_POSE_TOPIC, geometry_msgs.PoseStamped, queue_size=10)
-
-        self.pcl_mf_sub = message_filters.Subscriber(POINT_CLOUD_TOPIC, PointCloud2)
-        self.wyp_mf_sub = message_filters.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray)
-        self.ts = message_filters.ApproximateTimeSynchronizer(
-            [self.pcl_mf_sub, self.wyp_mf_sub], 10, 100)  # allow 0.2s difference
-        self.ts.registerCallback(self._update_search_region_callback)
         self._callback_count = 0
 
         self._sloop_client = SloopObjectSearchClient()
 
     def run(self):
-        rospy.spin()
+        for i in range(self.num_updates):
+            cloud_msg, waypoints_msg = WaitForMessages(
+                [POINT_CLOUD_TOPIC, WAYPOINT_TOPIC],
+                [PointCloud2, GraphNavWaypointArray],
+                delay=5, verbose=True).messages
+            self._update_search_region(cloud_msg, waypoints_msg)
+
 
     def _waypoint_cb(self, waypoints_msg):
         # Publish a fake robot pose using waypoint
@@ -69,7 +74,7 @@ class UpdateSearchRegion3DTestCase:
         self.robot_pose_pub.publish(pose_stamped)
         rate.sleep()
 
-    def _update_search_region_callback(self, cloud_msg, waypoints_msg):
+    def _update_search_region(self, cloud_msg, waypoints_msg):
         """The first time a new search region should be created;
         Subsequent calls should update the search region"""
         # convert PointCloud2 to point cloud protobuf
