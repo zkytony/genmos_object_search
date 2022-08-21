@@ -44,12 +44,12 @@ def plot_octree_belief(ax, octree_belief, robot_pose=None, cmap="jet", alpha=0.5
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]
     if LOG:
-        probs = [math.exp(octree_belief._probability(*change_res(v[:3], 1, v[3]),
-                                                     v[3]))
+        probs = [math.exp(octree_belief.octree_dist.prob_at(*change_res(v[:3], 1, v[3]),
+                                                            v[3]))
                  for v in voxels]
     else:
-        probs = [octree_belief._probability(*change_res(v[:3], 1, v[3]),
-                                            v[3])
+        probs = [octree_belief.octree_dist.prob_at(*change_res(v[:3], 1, v[3]),
+                                                   v[3])
                  for v in voxels]
     vmin = min(probs)
     vmax = max(probs)

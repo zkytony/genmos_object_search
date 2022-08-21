@@ -20,9 +20,9 @@ import pytest
 from pomdp_py import OOTransitionModel
 
 from sloop_object_search.oopomdp.models.octree_belief\
-    import  (OctreeBelief, update_octree_belief,
-             Octree, OctNode, LOG, DEFAULT_VAL,
-             plot_octree_belief)
+    import (OctreeBelief, OctreeDistribution, update_octree_belief,
+            Octree, OctNode, LOG, DEFAULT_VAL,
+            plot_octree_belief)
 
 from sloop_object_search.oopomdp import ObjectState
 from sloop_object_search.utils.math import approx_equal
@@ -40,51 +40,51 @@ else:
 
 @pytest.fixture
 def octree_belief():
-    octree = Octree((16, 16, 16))
-    octree_belief = OctreeBelief(1, "cube", octree)
+    octree_dist = OctreeDistribution(Octree((16, 16, 16)))
+    octree_belief = OctreeBelief(1, "cube", octree_dist)
     return octree_belief
 
 def test_basics(octree_belief):
     # Test probability; __getitem__
     print("** Testing Basics")
-    assert abs(octree_belief.prob_at(0,0,1,1) - 1./(16**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,2) - 1./(8**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,4) - 1./(4**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
-    print(octree_belief._known_voxels)
+    assert abs(octree_belief.octree_dist.prob_at(0,0,1,1) - 1./(16**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,2) - 1./(8**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,4) - 1./(4**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
+    print(octree_belief.octree_dist._known_voxels)
 
     # assign a certain (unnormalized) probability to a node. Note that
     # in the assertion statements, the expected probability can be
     # computed based on the probability at the ground resolution level,
     # which is how octree belief is defined.
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = TEST_ALPHA
-    print(octree_belief._known_voxels)
-    assert abs(octree_belief.prob_at(0,0,1,1) - TEST_ALPHA/(TEST_ALPHA + 16**3 - 1)) <= 1e-6
+    print(octree_belief.octree_dist._known_voxels)
+    assert abs(octree_belief.octree_dist.prob_at(0,0,1,1) - TEST_ALPHA/(TEST_ALPHA + 16**3 - 1)) <= 1e-6
 
     # 0,0,1 at res=1 is a child in 0,0,0 at res=2
-    assert abs(octree_belief.prob_at(0,0,0,2) - (TEST_ALPHA+7)/(TEST_ALPHA + 7 + 16**3 - 8)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,1,2) - 8/(TEST_ALPHA + 7 + 16**3 - 8)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,2) - (TEST_ALPHA+7)/(TEST_ALPHA + 7 + 16**3 - 8)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,1,2) - 8/(TEST_ALPHA + 7 + 16**3 - 8)) <= 1e-6
 
     # this should always be true
-    assert abs(octree_belief.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
 
     # set it back
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = DEFAULT_VAL
-    print(octree_belief._known_voxels)
-    assert abs(octree_belief.prob_at(0,0,1,1) - 1./(16**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,2) - 1./(8**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,4) - 1./(4**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
-    assert abs(octree_belief.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
+    print(octree_belief.octree_dist._known_voxels)
+    assert abs(octree_belief.octree_dist.prob_at(0,0,1,1) - 1./(16**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,2) - 1./(8**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,4) - 1./(4**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
+    assert abs(octree_belief.octree_dist.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
 
 def test_assign_prior1(octree_belief):
     print("** Testing Prior assignment (1)")
     print("[start]")
     state = ObjectState(1, "cube", (1,1,1), res=2)
     print("Probability at")
-    print("(1,1,1,2): %.5f" % octree_belief.prob_at(1,1,1,2))
-    print("(0,0,0,1): %.5f" % octree_belief.prob_at(0,0,0,1))
+    print("(1,1,1,2): %.5f" % octree_belief.octree_dist.prob_at(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
     print("MPE: %s" % octree_belief.mpe())
     print("assigning high probability to (1,1,1,2)...")
     if LOG:
@@ -92,11 +92,11 @@ def test_assign_prior1(octree_belief):
     else:
         octree_belief.assign(state, TEST_ALPHA/10)
     print("MPE: %s" % octree_belief.mpe())
-    assert octree_belief.prob_at(0,0,0,1) < octree_belief.prob_at(3,3,3,1)
+    assert octree_belief.octree_dist.prob_at(0,0,0,1) < octree_belief.octree_dist.prob_at(3,3,3,1)
     assert octree_belief.mpe(res=2).loc == (1,1,1)
-    print("(1,1,1,2): %.5f" % octree_belief.prob_at(1,1,1,2))
-    print("(0,0,0,1): %.5f" % octree_belief.prob_at(0,0,0,1))
-    print("(3,3,3,1): %.5f" % octree_belief.prob_at(3,3,3,1))
+    print("(1,1,1,2): %.5f" % octree_belief.octree_dist.prob_at(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
+    print("(3,3,3,1): %.5f" % octree_belief.octree_dist.prob_at(3,3,3,1))
     print("**** Sub test:")
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
@@ -106,8 +106,8 @@ def test_assign_prior2(octree_belief):
     print("[start]")
     state = ObjectState(1, "cube", (5,6,7), res=2)
     print("Probability at")
-    print("(1,1,1,2): %.5f" % octree_belief.prob_at(1,1,1,2))
-    print("(0,0,0,1): %.5f" % octree_belief.prob_at(0,0,0,1))
+    print("(1,1,1,2): %.5f" % octree_belief.octree_dist.prob_at(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
     print("MPE: %s" % octree_belief.mpe())
     print("assigning high probability to (1,1,1,2)...")
     if LOG:
@@ -115,11 +115,11 @@ def test_assign_prior2(octree_belief):
     else:
         octree_belief.assign(state, TEST_ALPHA/10)
     print("MPE: %s" % octree_belief.mpe())
-    assert octree_belief.prob_at(0,0,0,1) < octree_belief.prob_at(11,13,15,1)
+    assert octree_belief.octree_dist.prob_at(0,0,0,1) < octree_belief.octree_dist.prob_at(11,13,15,1)
     assert octree_belief.mpe(res=2).loc == (5,6,7)
-    print("(1,1,1,2): %.5f" % octree_belief.prob_at(1,1,1,2))
-    print("(0,0,0,1): %.5f" % octree_belief.prob_at(0,0,0,1))
-    print("(3,3,3,1): %.5f" % octree_belief.prob_at(3,3,3,1))
+    print("(1,1,1,2): %.5f" % octree_belief.octree_dist.prob_at(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
+    print("(3,3,3,1): %.5f" % octree_belief.octree_dist.prob_at(3,3,3,1))
     print("**** Sub test:")
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
@@ -129,10 +129,10 @@ def test_assign_prior3(octree_belief):
     print("[start]")
     state = ObjectState(1, "cube", (5,6,7), res=2)
     print("Probability at")
-    print("(5, 6, 7, 2): %.5f" % octree_belief.prob_at(5, 6, 7, 2))
-    print("(11,13,15,1): %.5f" % octree_belief.prob_at(11,13,15,1))
-    print("(1,1,1,2): %.5f" % octree_belief.prob_at(1,1,1,2))
-    print("(0,0,0,1): %.5f" % octree_belief.prob_at(0,0,0,1))
+    print("(5, 6, 7, 2): %.5f" % octree_belief.octree_dist.prob_at(5, 6, 7, 2))
+    print("(11,13,15,1): %.5f" % octree_belief.octree_dist.prob_at(11,13,15,1))
+    print("(1,1,1,2): %.5f" % octree_belief.octree_dist.prob_at(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
     print("MPE: %s" % octree_belief.mpe())
     print("assigning high probability to (1,1,1,2)...")
     if LOG:
@@ -140,13 +140,13 @@ def test_assign_prior3(octree_belief):
     else:
         octree_belief.assign(state, 0)
     print("MPE: %s" % octree_belief.mpe())
-    assert octree_belief.prob_at(0,0,0,1) > octree_belief.prob_at(11,13,15,1)
+    assert octree_belief.octree_dist.prob_at(0,0,0,1) > octree_belief.octree_dist.prob_at(11,13,15,1)
     assert octree_belief.mpe(res=2).loc != (5,6,7)
-    print("(5, 6, 7, 2): %.5f" % octree_belief.prob_at(5, 6, 7, 2))
-    print("(11,13,15,1): %.5f" % octree_belief.prob_at(11,13,15,1))
-    print("(1,1,1,2): %.5f" % octree_belief.prob_at(1,1,1,2))
-    print("(0,0,0,1): %.5f" % octree_belief.prob_at(0,0,0,1))
-    print("(3,3,3,1): %.5f" % octree_belief.prob_at(3,3,3,1))
+    print("(5, 6, 7, 2): %.5f" % octree_belief.octree_dist.prob_at(5, 6, 7, 2))
+    print("(11,13,15,1): %.5f" % octree_belief.octree_dist.prob_at(11,13,15,1))
+    print("(1,1,1,2): %.5f" % octree_belief.octree_dist.prob_at(1,1,1,2))
+    print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
+    print("(3,3,3,1): %.5f" % octree_belief.octree_dist.prob_at(3,3,3,1))
     print("**** Sub test:")
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")

@@ -229,8 +229,8 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         return voxel_pos
 
     def mpe(self, res=1):
-        voxel_pose = self._random_path(res, argmax=True)
-        return ObjectState(self._objid, self._objclass, voxel_pose, res=res)
+        voxel_pos = self._random_path(res, argmax=True)
+        return voxel_pos
 
     def random_child(self, pos=None, res=None, argmax=False, node=None):
         """Returns a position (x,y,z) that is a location considered the 'child' of
@@ -346,18 +346,23 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
                     self._propagate_helper(*child_pos, res // 2, val / 8)
 
 
-class OctreeBelief(OctreeDistribution):
+class OctreeBelief(pomdp_py.GenerativeDistribution):
     """
     OctreeBelief is a belief designed specifically for the
     3D object search problem.
 
     Each object is associated with an octree belief, separate from others.
+
+    An octree belief has an underlying octree distribution. This handles
+    the probability behavior over the 3D space captured by the corresponding
+    octree.
     """
-    def __init__(self, objid, objclass, octree, default_val=DEFAULT_VAL):
-        """For alpha, beta, gamma, refer to ObjectObservationModel."""
-        super().__init__(octree, default_val=DEFAULT_VAL)
+    def __init__(self, objid, objclass, octree_dist, default_val=DEFAULT_VAL):
+        if not isinstance(octree_dist, OctreeDistribution):
+            raise TypeError("octree_dist must be an instance of OctreeDistribution")
         self._objid = objid
         self._objclass = objclass
+        self._octree_dist = octree_dist
 
     @property
     def objid(self):
@@ -365,7 +370,11 @@ class OctreeBelief(OctreeDistribution):
 
     @property
     def octree(self):
-        return self._octree
+        return self._octree_dist.octree
+
+    @property
+    def octree_dist(self):
+        return self._octree_dist
 
     def __getitem__(self, object_state):
         if object_state.id != self._objid:
@@ -374,7 +383,7 @@ class OctreeBelief(OctreeDistribution):
                             % (object_state.id, self._objid))
         x,y,z = object_state.loc
         res = object_state.res
-        return self._probability(x, y, z, res)
+        return self._octree_dist.prob_at(x, y, z, res)
 
     def __setitem__(self, object_state, value):
         """
@@ -385,7 +394,7 @@ class OctreeBelief(OctreeDistribution):
         if object_state.res != 1:
             raise TypeError("Only allow setting the value at ground level.")
         x,y,z = object_state.loc
-        super().__setitem__((x,y,z,object_state.res), value)
+        self._octree_dist[(x,y,z,object_state.res)] = value
 
     def assign(self, object_state, value):
         """
@@ -396,25 +405,26 @@ class OctreeBelief(OctreeDistribution):
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
         """
-        if object_state.res >= self._octree.root.res:
+        if object_state.res >= self.octree.root.res:
             raise ValueError("Resolution too large for assignment (%d>=%d)"
                              % (object_state.res, self._octree.root.res))
 
         x,y,z = object_state.pose
-        super().assign((x,y,z,object_state.res), value)
+        self._octree_dist.assign((x,y,z,object_state.res), value)
 
     def random(self, res=1):
-        voxel_pos = self._random_path(res, argmax=False)
+        voxel_pos = self._octree_dist.random(res=res)
         return ObjectState(self._objid, self._objclass, voxel_pos, res=res)
 
     def mpe(self, res=1):
-        voxel_pos = self._random_path(res, argmax=True)
+        voxel_pos = self._octree_dist.mpe(res=res)
         return ObjectState(self._objid, self._objclass, voxel_pos, res=res)
 
 
 def update_octree_belief(octree_belief, real_action, real_observation,
                          alpha=1000., beta=0., gamma=DEFAULT_VAL):
     """
+    For alpha, beta, gamma, refer to ObjectObservationModel.
     real_observation (Observation)
     """
     if not isinstance(real_observation, FovVoxels):
@@ -446,8 +456,8 @@ def update_octree_belief(octree_belief, real_action, real_observation,
             else:
                 node.set_val(None, val_t * beta)
         val_tp1 = node.get_val(None)
-        octree_belief.update_normalizer(val_t, val_tp1)
-        octree_belief.backtrack(node)
+        octree_belief.octree_dist.update_normalizer(val_t, val_tp1)
+        octree_belief.octree_dist.backtrack(node)
     return octree_belief
 
 
