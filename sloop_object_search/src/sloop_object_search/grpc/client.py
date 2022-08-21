@@ -94,7 +94,7 @@ class SloopObjectSearchClient:
         )
         return self.call(self.stub.CreatePlanner, request, timeout=timeout)
 
-    def _require_header(self, kwargs):
+    def _require_header_or_frame_id(self, kwargs):
         if "header" not in kwargs:
             if "frame_id" in kwargs:
                 header = proto_utils.make_header(kwargs.pop("frame_id"))
@@ -105,7 +105,10 @@ class SloopObjectSearchClient:
         return header
 
     def planAction(self, robot_id, **kwargs):
-        header = self._require_header(kwargs)
+        """Requires 'frame_id' to be given, which should be the world frame.
+        This will be the frame used in the response, where the positions, if any,
+        are with respect to."""
+        header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.PlanActionRequest(
             header=header,
@@ -113,3 +116,17 @@ class SloopObjectSearchClient:
             **kwargs
         )
         return self.call(self.stub.PlanAction, request, timeout=timeout)
+
+    def getObjectBeliefs(self, robot_id, object_ids=None, **kwargs):
+        """
+        object_ids (lis): the objects whose beliefs we'd like to get
+        """
+        header = self._require_header_or_frame_id(kwargs)
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        if object_ids is not None:
+            kwargs["object_ids"] = object_ids
+        request = slpb2.GetObjectBeliefsRequest(
+            header=header,
+            robot_id=robot_id,
+            **kwargs)
+        return self.call(self.stub.GetObjectBeliefs, request, timeout=timeout)
