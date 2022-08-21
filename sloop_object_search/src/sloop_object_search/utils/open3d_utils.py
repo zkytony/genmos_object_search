@@ -2,15 +2,20 @@ import open3d as o3d
 
 def cube_unfilled(scale=1, color=[1,0,0]):
     # http://www.open3d.org/docs/0.9.0/tutorial/Basic/visualization.html
+    if hasattr(scale, "__len__"):
+        scale_x, scale_y, scale_z = scale
+    else:
+        scale_x = scale_y = scale_z = scale
+
     points = [
-        [0, 0, 0],
-        [scale, 0, 0],
-        [0, scale, 0],
-        [scale, scale, 0],
-        [0, 0, scale],
-        [scale, 0, scale],
-        [0, scale, scale],
-        [scale, scale, scale],
+        [0,        0,       0],
+        [scale_x,  0,       0],
+        [0,        scale_y, 0],
+        [scale_x,  scale_y, 0],
+        [0,        0,       scale_z],
+        [scale_x,  0,       scale_z],
+        [0,        scale_y, scale_z],
+        [scale_x,  scale_y, scale_z],
     ]
     lines = [
         [0, 1],

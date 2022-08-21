@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .octree_belief import OctreeBelief, OctreeDistribution, update_octree_belief
+from .octree_belief import (OctreeBelief,
+                            OctreeDistribution,
+                            RegionalOctreeDistribution,
+                            update_octree_belief)
 from .octree import Octree, OctNode, LOG, DEFAULT_VAL
 from .visual import plot_octree_belief

@@ -68,6 +68,35 @@ def in_region(p, ranges):
     return all(in_range(p[i], ranges[i])
                for i in range(len(p)))
 
+def in_box3d_center(p, box):
+    """Returns true if point 'p' is inside the 3D box 'box'.
+    The box is represented as a tuple (center, w, l, h), where
+    center is the center point of the box (cx,cy,cz), and lx, ly, lz
+    are dimensions along x, y, z axes, respectively."""
+    if len(p) != 3:
+        raise ValueError("Requires point to be 3D")
+    center, lx, ly, lz = box
+    px, py, pz = p
+    cx, cy, cz = center
+    return abs(px - cx) <= lx/2\
+        and abs(py - cy) <= ly/2\
+        and abs(pz - cz) <= lz/2
+
+def in_box3d_origin(p, box):
+    """Returns true if point 'p' is inside the 3D box 'box'.
+    The box is represented as a tuple (origin, w, l, h), where
+    center is the center point of the box (ox,oy,oz), and lx, ly, lz
+    are dimensions along x, y, z axes, respectively."""
+    if len(p) != 3:
+        raise ValueError("Requires point to be 3D")
+    center, lx, ly, lz = box
+    px, py, pz = p
+    ox, oy, oz = center
+    return abs(px - ox) <= lx\
+        and abs(py - oy) <= ly\
+        and abs(pz - oz) <= lz
+
+
 def approx_equal(v1, v2, epsilon=1e-6):
     if len(v1) != len(v2):
         return False

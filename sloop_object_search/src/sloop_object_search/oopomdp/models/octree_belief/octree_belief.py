@@ -178,6 +178,9 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
             raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
         x,y,z = voxel[:3]
         res = voxel[3]
+        if res != 1:
+            raise ValueError("__setitem__ requires voxel to be"\
+                             "at ground resolution level")
         node = self._octree.add_node(x,y,z,1)
         old_value = node.get_val(None)
         node.set_val(None, value)
@@ -490,8 +493,49 @@ class RegionalOctreeDistribution(OctreeDistribution):
     """
     This is an octree distribution with a default value of 0 for
     (ground-level) nodes outside of a region, defined either by a
-    box (center, w, h, l), or a set of voxels (could be at different resolution levels).
+    box (origin, w, h, l), or a set of voxels (could be at different resolution levels).
     """
-    def __init__(self, octree, region, default_val_in_region=DEFAULT_VAL):
+    def __init__(self, dimensions, region):
+        if type(region) != tuple and type(region) != set:
+            raise TypeError("region must be either a tuple (center, w, h, l)"
+                            "representing a box, or a set of voxels")
+        self.region = region
+        # Default value is 0 - it's only non-zero for grids inside the region
+        super().__init__(dimensions, default_val=0)
 
-        pass
+    def in_region(self, voxel):
+        """voxel: (x,y,z,r)"""
+        x, y, z, r = voxel
+        if type(self.region) == tuple:
+            return util.in_box3d_origin((x*r, y*r, z*r), self.region)
+        else:
+            # region is a set of locations
+            return voxel in self.region
+
+    def __setitem__(self, voxel, value):
+        """
+        This can only happen for voxels at ground level.
+        The value is unnormalized probability. Will treat as in
+        log space if LOG is true.
+        """
+        if type(voxel) != tuple and len(voxel) != 4:
+            raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
+
+        x,y,z = voxel[:3]
+        res = voxel[3]
+        if res != 1:
+            raise ValueError("__setitem__ requires voxel to be"\
+                             "at ground resolution level")
+
+        # if voxel is not in region, then
+        if not self.in_region(voxel):
+            # value is ignored; no assignment happens
+            return
+        else:
+            super().__setitem__(voxel, value)
+
+    def _probability(self, x, y, z, res, fast=True):
+        if not self.in_region((x, y, z, res)):
+            return 0.0
+        else:
+            return super()._probability(x, y, z, res, fast=fast)

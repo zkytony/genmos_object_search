@@ -1,4 +1,5 @@
 from sloop_object_search.utils.conversion import Frame, convert
+from .octree_belief import RegionalOctreeDistribution
 
 class SearchRegion:
     """model of the search region. The idea of search region is
@@ -92,6 +93,11 @@ class SearchRegion3D(SearchRegion):
     Note that the default value of a node in this octree
     should be zero, indicating free space (it is not a belief,
     it is occupancy)."""
+    def __init__(self, octree_dist, **kwargs):
+        assert isinstance(octree_dist, RegionalOctreeDistribution),\
+            "octree_dist must be RegionalOctreeDistribution."
+        super().__init__(octree_dist, **kwargs)
+
     @property
     def octree_dist(self):
         return self._region_repr
