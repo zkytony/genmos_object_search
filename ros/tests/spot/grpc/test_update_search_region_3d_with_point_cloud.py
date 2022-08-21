@@ -15,9 +15,10 @@ from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped, WaitForMessages
-from sloop_object_search.grpc.utils.proto_utils import pointcloud2_to_pointcloudproto
+from sloop_object_search.grpc.utils.proto_utils import make_header, pointcloud2_to_pointcloudproto
 from sloop_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from sloop_object_search.grpc.client import SloopObjectSearchClient
+from config_test_MosAgentBasic3D import TEST_CONFIG
 
 POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 WAYPOINT_TOPIC = "/graphnav_waypoints"
@@ -53,6 +54,9 @@ class UpdateSearchRegion3DTestCase:
         self._sloop_client = SloopObjectSearchClient()
 
     def run(self):
+        self._sloop_client.createAgent(config=TEST_CONFIG,
+                                       robot_id=self.robot_id,
+                                       header=make_header())
         for i in range(self.num_updates):
             cloud_msg, waypoints_msg = WaitForMessages(
                 [POINT_CLOUD_TOPIC, WAYPOINT_TOPIC],

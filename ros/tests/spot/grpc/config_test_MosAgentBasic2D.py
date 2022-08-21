@@ -1,7 +1,7 @@
 TEST_CONFIG = {
     'agent_config': {
         'action': {'h_rotation': 45.0},
-        'agent_class': 'SloopMosAgentTopo2D',
+        'agent_class': 'MosAgentBasic2D',
         'belief': {'prior': {'book': 'uniform'}},
         'detectable_objects': ['book'],
         'foref_model_map_name': 'honolulu',
