@@ -19,7 +19,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcl
 import numpy as np
-from .octree import LOG
+from .octree import LOG, Octree
 from .util_viz import plot_voxels, CMAPS
 from sloop_object_search.utils.math import remap
 from pylab import rcParams
@@ -32,10 +32,6 @@ def _compute_alpha(p, vmin, vmax):
     else:
         return 1.0
 
-def change_res(point, r1, r2):
-    x,y,z = point
-    return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
-
 def plot_octree_belief(ax, octree_belief, robot_pose=None, cmap="jet", alpha=0.5,
                        edgecolor=None, linewidth=1):
     """If robot_pose is not None, then also plot robot pose"""
@@ -44,11 +40,11 @@ def plot_octree_belief(ax, octree_belief, robot_pose=None, cmap="jet", alpha=0.5
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]
     if LOG:
-        probs = [math.exp(octree_belief.octree_dist.prob_at(*change_res(v[:3], 1, v[3]),
+        probs = [math.exp(octree_belief.octree_dist.prob_at(*Octree.increase_res(v[:3], 1, v[3]),
                                                             v[3]))
                  for v in voxels]
     else:
-        probs = [octree_belief.octree_dist.prob_at(*change_res(v[:3], 1, v[3]),
+        probs = [octree_belief.octree_dist.prob_at(*Octree.increase_res(v[:3], 1, v[3]),
                                                    v[3])
                  for v in voxels]
     vmin = min(probs)

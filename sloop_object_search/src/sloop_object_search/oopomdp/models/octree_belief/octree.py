@@ -282,11 +282,17 @@ class Octree:
                     self._collect_plotting_voxels_helper(child, collector)
 
     @staticmethod
-    def change_res(point, r1, r2):
+    def increase_res(point, r1, r2):
         """Given a point (x,y,z) at resolution r1,
         returns a new point (x', y', z') expressed
-        in (0-based) coordinates at resolution r2.
+        in (0-based) coordinates at resolution r2,
+        where r2 >= r1.
+
         For example, if r1=1, r2=2, then if point
-        is (10, 1, 5), then the output is (5, 0, 2)"""
+        is (10, 1, 5), then the output is (5, 0, 2).
+        Only works exactly if r1 <= r2; If r1 > r2,
+        will return """
         x,y,z = point
+        if r1 > r2:
+            raise ValueError("requires r1 <= r2")
         return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))

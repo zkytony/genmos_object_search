@@ -37,10 +37,6 @@ OBJID = "obj"
 
 VAL = 100
 
-def change_res(point, r1, r2):
-    x,y,z = point
-    return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
-
 
 def load_prior_belief(prior_data,
                       region_origin, search_space_resolution):
@@ -144,7 +140,7 @@ class SpotOctreeBeliefPublisher:
         voxels = self._octree_belief.octree.collect_plotting_voxels()
         vp = [v[:3] for v in voxels]
         vr = [v[3] for v in voxels]
-        probs = [self._octree_belief._probability(*change_res(v[:3], 1, v[3]),
+        probs = [self._octree_belief._probability(*Octree.increase_res(v[:3], 1, v[3]),
                                                   v[3])
                  for v in voxels]
 
