@@ -14,7 +14,7 @@ from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief\
-    import Octree, OctreeDistribution, RegionalOctreeDistribution
+    import Octree, OctreeDistribution, OccupancyOctreeDistribution
 
 
 ########### 2D search region ##############
@@ -64,7 +64,13 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     """
     points_array = pointcloudproto_to_array(point_cloud)
     origin = np.min(points_array, axis=0)
-    sizes = np.max(points_array, axis=0) - origin  # size of the search region in each axis
+
+    # size of the search region (in meters)
+    default_sizes = np.max(points_array, axis=0) - origin  # size of the search region in each axis
+    region_size_x = kwargs.get("region_size_x", default_sizes[0])
+    region_size_y = kwargs.get("region_size_y", default_sizes[1])
+    region_size_z = kwargs.get("region_size_z", default_sizes[2])
+    sizes = np.array([region_size_x, region_size_y, region_size_z])
 
     # Size of one dimension of the space that the octree covers
     # Must be a power of two.
@@ -78,7 +84,7 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     debug = kwargs.get("debug", False)
 
     dimensions = (octree_size, octree_size, octree_size)
-    octree_dist = RegionalOctreeDistribution(dimensions, (origin, *(sizes / search_space_resolution)))
+    octree_dist = OccupancyOctreeDistribution(dimensions, (origin, *(sizes / search_space_resolution)))
 
     # Either update existing search region, or create a brand new one.
     if existing_search_region is not None:

@@ -213,6 +213,9 @@ message SearchRegionParams3D {
   optional int32 octree_size = 1;
   optional double search_space_resolution = 2;
   optional bool debug = 3;
+  optional double region_size_x = 4;
+  optional double region_size_y = 5;
+  optional double region_size_z = 6;
 }
 
 message ObjectBelief {

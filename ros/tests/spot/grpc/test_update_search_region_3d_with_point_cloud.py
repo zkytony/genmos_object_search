@@ -111,7 +111,10 @@ class UpdateSearchRegion3DTestCase:
                 point_cloud=cloud_pb,
                 search_region_params_3d={"octree_size": 64,
                                          "search_space_resolution": 0.15,
-                                         "debug": self.debug})
+                                         "debug": self.debug,
+                                         "region_size_x": 4.0,
+                                         "region_size_y": 4.0,
+                                         "region_size_z": 2.5})
 
 if __name__ == "__main__":
-    UpdateSearchRegion3DTestCase(num_updates=3).run()
+    UpdateSearchRegion3DTestCase(num_updates=10).run()
