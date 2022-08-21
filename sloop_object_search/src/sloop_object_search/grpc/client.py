@@ -119,7 +119,7 @@ class SloopObjectSearchClient:
 
     def getObjectBeliefs(self, robot_id, object_ids=None, **kwargs):
         """
-        object_ids (lis): the objects whose beliefs we'd like to get
+        object_ids (list): the objects whose beliefs we'd like to get.
         """
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)

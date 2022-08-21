@@ -6,6 +6,7 @@ if importlib.util.find_spec("ros_numpy") is not None:
     import ros_numpy
 
 from google.protobuf.timestamp_pb2 import Timestamp
+from google.protobuf.any_pb2 import Any
 
 from sloop_object_search.grpc.observation_pb2 import PointCloud
 from sloop_object_search.grpc.common_pb2\
@@ -205,7 +206,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                 x, y, z = search_region.to_world_pos(vpos)
                 res = vres * search_region.search_space_resolution
                 voxel_pb = Voxel3D(pos=Vec3(x=x, y=y, z=z), res=res)
-                hist_values.append(voxel_pb)
+                hist_values.append(to_any_proto(voxel_pb))
                 hist_probs.append(probs[i])
 
         dist = Histogram(length=len(hist_values),
@@ -215,3 +216,8 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
             slpb2.ObjectBelief(object_id=objid,
                                dist=dist))
     return object_beliefs_proto
+
+def to_any_proto(val):
+    val_any = Any()
+    val_any.Pack(val)
+    return val_any

@@ -134,7 +134,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 message="updating existing search region of an agent is not yet implemented")
 
         else:
-            logging.warn(f"Agent {request.robot_id} is not recognized.")
+            logging.warning(f"Agent {request.robot_id} is not recognized.")
             return slpb2.UpdateSearchRegionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
@@ -236,7 +236,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         agent = self._agents[request.robot_id]
         object_beliefs = {}
-        if request.HasField("object_ids"):
+        if len(request.object_ids) > 0:
             object_beliefs = {objid: agent.belief.b(objid)
                               for objid in request.object_ids}
             if request.robot_id in object_beliefs:
@@ -246,8 +246,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             object_beliefs = dict(agent.belief.object_beliefs)
             object_beliefs.pop(request.robot_id)  # remove belief about robot
 
-        object_beliefs_pb = proto_utils.pomdp_object_beliefs_to_proto(
-            object_beliefs, is_3d=isinstance(agent.search_region, SearchRegion3D))
+        object_beliefs_pb = proto_utils.pomdp_object_beliefs_to_proto(object_beliefs, agent.search_region)
         header = proto_utils.make_header(request.header.frame_id)
         return slpb2.GetObjectBeliefsReply(header=header,
                                            status=Status.SUCCESSFUL,

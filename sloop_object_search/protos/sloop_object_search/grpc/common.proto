@@ -55,13 +55,14 @@ message Box3D {
 }
 
 // Voxel in 3D with optional resolution
-// useful for octree representation.
+// useful for octree representation. Designed to represents a
+// voxel in the world frame.
 message Voxel3D {
   Vec3 pos = 1;
-  // res means the number of unit grid cells along one major axis. It is a power
-  // of 2, where the power indicates resolution level.  For example, res = 4
-  // refers to resolution level of 2 because 2^2 = 4.
-  optional int32 res = 3;
+  // res means the number of unit grid cells along one major axis. Note
+  // that the length here is in the world frame (not in pomdp frame),
+  // therefore, this could be any floating number.
+  optional double res = 3;
 }
 
 ///////// Probability distribution ///////////////
