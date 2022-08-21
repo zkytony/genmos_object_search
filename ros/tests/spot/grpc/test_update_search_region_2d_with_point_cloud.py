@@ -12,6 +12,7 @@ import message_filters
 from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
+from sloop_mos_ros.ros_utils import WaitForMessages
 from sloop_object_search.grpc.utils.proto_utils import pointcloud2_to_pointcloudproto
 from sloop_object_search.grpc.common_pb2 import Pose2D
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -29,42 +30,46 @@ def waypoints_msg_to_arr(waypoints_msg):
     return arr
 
 class UpdateSearchRegion2DTestCase:
-    def __init__(self, robot_id="test_robot",
+    def __init__(self, robot_id="robot0",
                  node_name="test_update_search_region_2d_with_point_cloud",
-                 world_frame="graphnav_map", debug=True):
-        rospy.init_node(node_name)
+                 world_frame="graphnav_map", debug=True, num_updates=3):
+        self.node_name = node_name
         self.robot_id = robot_id
         self.world_frame = world_frame  # fixed frame of the world
         self.debug = debug  # whether to show open3d debug window
-        self.pcl_sub = message_filters.Subscriber(POINT_CLOUD_TOPIC, PointCloud2)
-        self.wyp_sub = message_filters.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray)
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.pcl_sub, self.wyp_sub], 10, 0.2)  # allow 0.2s difference
-        self.ts.registerCallback(self._update_search_region_callback)
+        self.num_updates = num_updates
+        self._setup()
 
-        self._callback_count = 0
-
+    def _setup(self):
+        rospy.init_node(self.node_name)
+        self._update_count = 0
         self._sloop_client = SloopObjectSearchClient()
 
     def run(self):
-        rospy.spin()
+        for i in range(self.num_updates):
+            cloud_msg, waypoints_msg = WaitForMessages(
+                [POINT_CLOUD_TOPIC, WAYPOINT_TOPIC],
+                [PointCloud2, GraphNavWaypointArray],
+                delay=5, verbose=True).messages
+            self._update_search_region(cloud_msg, waypoints_msg)
 
-    def _update_search_region_callback(self, cloud_msg, waypoints_msg):
+    def _update_search_region(self, cloud_msg, waypoints_msg):
         """The first time a new search region should be created;
         Subsequent calls should update the search region"""
         # convert PointCloud2 to point cloud protobuf
-        self._callback_count += 1
-        print(f"Received messages! Call count: {self._callback_count}")
+        self._update_count += 1
+        print(f"Received messages! Call count: {self._update_count}")
 
         cloud_pb = pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
 
-        if self._callback_count > len(waypoints_array):
+        if self._update_count > len(waypoints_array):
             print("We have exhausted waypoints. Test complete. Please quit with Ctrl-C.")
 
         else:
             # Use a waypoint as the robot pose
-            robot_pose_pb = Pose2D(x=waypoints_array[self._callback_count][0],
-                                   y=waypoints_array[self._callback_count][1],
+            robot_pose_pb = Pose2D(x=waypoints_array[self._update_count][0],
+                                   y=waypoints_array[self._update_count][1],
                                    th=0.0)
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5

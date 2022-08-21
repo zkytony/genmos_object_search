@@ -48,7 +48,7 @@ class UpdateSearchRegion3DTestCase:
         self.wyp_sub = rospy.Subscriber(WAYPOINT_TOPIC, GraphNavWaypointArray, self._waypoint_cb)
         self.robot_pose_pub = rospy.Publisher(
             FAKE_ROBOT_POSE_TOPIC, geometry_msgs.PoseStamped, queue_size=10)
-        self._callback_count = 0
+        self._update_count = 0
 
         self._sloop_client = SloopObjectSearchClient()
 
@@ -64,10 +64,10 @@ class UpdateSearchRegion3DTestCase:
     def _waypoint_cb(self, waypoints_msg):
         # Publish a fake robot pose using waypoint
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
-        if self._callback_count == 0:
+        if self._update_count == 0:
             waypoint = waypoints_array[0]
         else:
-            waypoint = waypoints_array[self._callback_count-1]
+            waypoint = waypoints_array[self._update_count-1]
         pose_stamped = pose_tuple_to_pose_stamped((*waypoint, 0, 0, 0, 1), "body")
 
         rate = rospy.Rate(10)
@@ -78,21 +78,21 @@ class UpdateSearchRegion3DTestCase:
         """The first time a new search region should be created;
         Subsequent calls should update the search region"""
         # convert PointCloud2 to point cloud protobuf
-        self._callback_count += 1
-        print(f"Received messages! Call count: {self._callback_count}")
+        self._update_count += 1
+        print(f"Received messages! Call count: {self._update_count}")
 
         cloud_pb = pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
 
-        if self._callback_count > len(waypoints_array):
+        if self._update_count > len(waypoints_array):
             print("We have exhausted waypoints. Test complete. Please quit with Ctrl-C.")
 
         else:
             # Use a waypoint as the robot pose
             robot_pose_pb = Pose3D(
-                position=Vec3(x=waypoints_array[self._callback_count-1][0],
-                              y=waypoints_array[self._callback_count-1][1],
-                              z=waypoints_array[self._callback_count-1][2]),
+                position=Vec3(x=waypoints_array[self._update_count-1][0],
+                              y=waypoints_array[self._update_count-1][1],
+                              z=waypoints_array[self._update_count-1][2]),
                 rotation=Quaternion(x=0, y=0, z=0, w=1))
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5
