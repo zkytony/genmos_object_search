@@ -25,7 +25,7 @@ from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
                                             law_of_cos, inverse_law_of_cos,
                                             angle_between, in_box3d_origin)
 from sloop_object_search.utils.algo import PriorityQueue
-from sloop_object_search.oopomdp.models.octree_belief import OctNode
+from sloop_object_search.oopomdp.models.octree_belief import OctNode, Octree
 
 class SensorModel:
     IS_3D = False
@@ -405,6 +405,12 @@ class FrustumCamera(SensorModel):
         self._occlusion_enabled = occlusion_enabled
         self._observation_cache = {}
 
+    def __eq__(self, other):
+        if isinstance(other, FrustumCamera):
+            return self._dim == other._dim\
+                and self._params == other._params\
+                and self._occlusion_enabled == other._occlusion_enabled
+
     @property
     def look(self):
         return self._look
@@ -567,13 +573,17 @@ class FrustumCamera(SensorModel):
 
     def visible_volume(self, sensor_pose, occupancy_octree,
                        num_rays=20, step_size=0.1,
+                       return_obstacles_hit=False,
                        obstacle_res=1,
-                       return_obstacles_hit=False):
-        """Return a voxelized volume that represents visible
+                       voxel_res=1):
+        """Returns a voxelized volume that represents visible
         space if we put the camera at 'sensor_pose' and the
         environment contains occlusion due to occupancy_octree.
         Note that both sensor_pose and occupancy_octree should be in
         POMDP frame.
+
+        The returned object is a set of (x, y, z, r) voxels, at
+        resolution r where r = voxel_res.
 
         If return_obstacles_hit is True, return a second set that
         is the set of obstacles hit by the rays
@@ -584,7 +594,11 @@ class FrustumCamera(SensorModel):
         used as obstacles. Therefore, obstacle_res should be a
         an integer that is power of two. The larger this is, the
         faster this algorithm runs, while the less accurate.
-        Note: setting this to be > 1 may lead to unexpected empty FOV."""
+        Note: setting this to be > 1 may lead to unexpected empty FOV.
+
+        voxel_res: The resolution of a voxel in the volume.
+        If larger, then more coarse, but results in fewer voxels.
+        """
         # We shoot rays from the sensor out, and collect voxels
         # in the volume along the way, until the ray hits an obstacle.
         # The rays are sampled so that they hit a point on the near plane.
@@ -633,8 +647,14 @@ class FrustumCamera(SensorModel):
                 point_on_ray = sensor_pose[:3] + t * step_size * vec_ray
                 voxel_on_ray = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel for the point
 
+                if voxel_res > 1:
+                    voxel_on_ray = Octree.increase_res(voxel_on_ray, 1, voxel_res)
+
+                voxel_on_ray = (*voxel_on_ray, voxel_res)
+
                 if not self._occlusion_enabled:
                     visible_volume.add(voxel_on_ray)
+
                 else:
                     # occlusion enabled
                     if voxel_on_ray in _obstacle_hitting_cache:
@@ -642,37 +662,32 @@ class FrustumCamera(SensorModel):
                         hits = _obstacle_hitting_cache[voxel_on_ray]
                         if hits:
                             hit_obstacle = True
-                            visible_volume.add(voxel_on_ray)
-                            obstacles_hit.add(voxel_on_ray)
                         else:
                             visible_volume.add(voxel_on_ray)
                     else:
                         # if voxel on ray is below surface (i.e. z<0), then, we hit.
                         if voxel_on_ray[2] < 0:
                             hit_obstacle = True
-                            # this obstacle is also visible
-                            visible_volume.add(voxel_on_ray)
-                            obstacles_hit.add(voxel_on_ray)
-                            _obstacle_hitting_cache[voxel_on_ray] = True
                         else:
                             for obstacle_box in obstacles_pq:
                                 if in_box3d_origin(point_on_ray, obstacle_box):
                                     hit_obstacle = True
-                                    # this obstacle is also visible
-                                    visible_volume.add(voxel_on_ray)
-                                    obstacles_hit.add(voxel_on_ray)
-                                    _obstacle_hitting_cache[voxel_on_ray] = True
                                     break
                             if not hit_obstacle:
                                 visible_volume.add(voxel_on_ray)
                                 _obstacle_hitting_cache[voxel_on_ray] = False
-
                 t = t + 1
-
                 # project the ray onto the z axis
                 z_proj_ray = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
                 if z_proj_ray < -far:
                     out_of_bound = True
+
+            if hit_obstacle:
+                # hit obstacle is visible too
+                visible_volume.add(voxel_on_ray)
+                obstacles_hit.add(voxel_on_ray)
+                _obstacle_hitting_cache[voxel_on_ray] = True
+
         if return_obstacles_hit:
             return visible_volume, obstacles_hit
         else:

@@ -145,9 +145,13 @@ def camera():
     return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=10)
 
 @pytest.fixture
+def camera_medium():
+    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=20)
+
+
+@pytest.fixture
 def camera_far():
-    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=30,
-                         occlusion_enabled=False)
+    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=30)
 
 
 @pytest.mark.skip(reason="test takes too long.")
@@ -233,8 +237,8 @@ def test_visible_volume(camera_far, occupancy_octree):
     # have a rotation around x by default
     default_o3d_rotation = [180, 0, 0]  # don't change this
 
-    rotation = [90,0,-45]
-    sensor_pose = (15, 15, 5, *euler_to_quat(*rotation))
+    rotation = [90,0,0]
+    sensor_pose = (15, 5, 5, *euler_to_quat(*rotation))
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
@@ -248,22 +252,22 @@ def test_visible_volume(camera_far, occupancy_octree):
     print("computing visible volume")
     volume, obstacles_hit = camera.visible_volume(
         sensor_pose, occupancy_octree, num_rays=150, step_size=0.6,
-        obstacle_res=1,
+        obstacle_res=1, voxel_res=2,
         return_obstacles_hit=True)
 
     # Draw
     for voxel in volume:
         if voxel not in obstacles_hit:
-            box = o3d.geometry.TriangleMesh.create_box()
-            x, y, z = voxel
-            box.translate(np.asarray([x,y,z]))
+            x, y, z, r = voxel
+            box = o3d.geometry.TriangleMesh.create_box(width=r, height=r, depth=r)
+            box.translate(np.asarray([x*r,y*r,z*r]))
             box.paint_uniform_color([0.0, 0.55, 0.98])
             geometries.append(box)
 
     for voxel in obstacles_hit:
-        box = o3d.geometry.TriangleMesh.create_box()
-        x, y, z = voxel
-        box.translate(np.asarray([x,y,z]))
+        x, y, z, r = voxel
+        box = o3d.geometry.TriangleMesh.create_box(width=r, height=r, depth=r)
+        box.translate(np.asarray([x*r,y*r,z*r]))
         box.paint_uniform_color([0.0, 0.05, 0.75])
         geometries.append(box)
     o3d.visualization.draw_geometries(geometries)
