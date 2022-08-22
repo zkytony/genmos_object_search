@@ -87,12 +87,12 @@ def draw_search_region3d(search_region, octree_dist=None, points=None):
         mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
         geometries.append(mesh_box)
     o3d.visualization.draw_geometries(geometries)
+    return geometries
 
-
-def draw_octree_dist(octree_dist):
+def draw_octree_dist(octree_dist, viz=True):
     """draw the octree dist in POMDP space."""
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-        size=1.2, origin=[0.0, 0.0, 0.0])
+        size=4.0, origin=[0.0, 0.0, 0.0])
     geometries = [mesh_frame]
     # visualize octree
     voxels = octree_dist.octree.collect_plotting_voxels()
@@ -106,11 +106,13 @@ def draw_octree_dist(octree_dist):
         mesh_box.translate(np.asarray(pos))
         mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
         geometries.append(mesh_box)
-    o3d.visualization.draw_geometries(geometries)
+    if viz:
+        o3d.visualization.draw_geometries(geometries)
+    return geometries
 
 
 def draw_octree_dist_in_search_region(octree_dist, search_region, points=None):
-    draw_search_region3d(search_region, octree_dist=octree_didst, points=points)
+    return draw_search_region3d(search_region, octree_dist=octree_didst, points=points)
 
 
 def draw_search_region2d(search_region, grid_robot_position=None, points=None):
@@ -147,3 +149,4 @@ def draw_search_region2d(search_region, grid_robot_position=None, points=None):
         pcd2.colors.append([0.0, 0.8, 0.0])
     geometries.append(pcd2)
     o3d.visualization.draw_geometries(geometries)
+    return geometries

@@ -15,6 +15,7 @@
 import math
 import random
 import numpy as np
+from tqdm import tqdm
 from scipy.spatial.transform import Rotation as R
 
 from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
@@ -22,7 +23,9 @@ from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
                                             vec, R_quat, R_euler, T, R_y,
                                             in_range_inclusive, closest,
                                             law_of_cos, inverse_law_of_cos,
-                                            angle_between)
+                                            angle_between, in_box3d_origin)
+from sloop_object_search.utils.algo import PriorityQueue
+from sloop_object_search.oopomdp.models.octree_belief import OctNode
 
 class SensorModel:
     IS_3D = False
@@ -436,7 +439,7 @@ class FrustumCamera(SensorModel):
 
     def within_range(self, config, point):
         """Returns true if the point is within range of the sensor; but the point might not
-        actually be visible due to occlusion"""
+        actually be visible due to occlusion. To consider occlusion, see 'visible'"""
         p, r = config
         for i in range(6):
             if np.dot(vec(r[i], point), p[i]) >= 0:
@@ -561,6 +564,81 @@ class FrustumCamera(SensorModel):
         point_in_parallel = point_in_parallel/ point_in_parallel[-1]
 
         return point_in_parallel
+
+    def visible_volume(self, sensor_pose, occupancy_octree,
+                       num_rays=20, step_size=0.1):
+        """Return a voxelized volume that represents visible
+        space if we put the camera at 'sensor_pose' and the
+        environment contains occlusion due to occupancy_octree.
+        Note that both sensor_pose and occupancy_octree should be in
+        POMDP frame."""
+        # We shoot rays from the sensor out, and collect voxels
+        # in the volume along the way, until the ray hits an obstacle.
+        # The rays are sampled so that they hit a point on the near plane.
+
+        # obstacles are at the leaf. Each obstacle is a voxel. We represent
+        # them as origin-based boxes
+        obstacles = [leaf for leaf in occupancy_octree.octree.get_leaves()
+                     if leaf.value() > 0]
+        # will use a priority queue, where higher priority means closer the distance to sensor pose
+        obstacles_pq = PriorityQueue()
+        for obstacle in obstacles:
+            gx, gy, gz = obstacle.ground_origin
+            # negative distance because priority queue favors smaller numbers
+            obstacles_pq.push(OctNode.octnode_to_ground_box(obstacle),
+                              -euclidean_dist(sensor_pose[:3], (gx, gy, gz)))
+
+        visible_volume = set()
+        w1, h1 = self._dim[:2]
+        near = self._params[2]
+        far = self._params[3]
+        for i in tqdm(range(num_rays)):
+            # sample a ray which goes through a point on the near plane
+            ray_np_x = random.uniform(-w1/2, w1/2)
+            ray_np_y = random.uniform(-h1/2, h1/2)
+            ray_np_z = self.near  # TODO: why is this not negative
+            ray_up_angle = math.atan2(ray_np_y, ray_np_z)
+
+            # transform the ray to (pomdp) world frame
+            ray_np_world = self.camera_to_world((ray_np_x, ray_np_y, ray_np_z), sensor_pose)
+
+            vec_ray = vec(sensor_pose[:3], ray_np_world)
+            vec_ray = vec_ray / np.linalg.norm(vec_ray)  # normalize
+
+            # advance on the ray, until it hits an obstacle
+            t = 0
+            hit_obstacle = False
+            out_of_bound = False
+            while not hit_obstacle and not out_of_bound:
+                point_on_ray = sensor_pose[:3] + t * step_size * vec_ray
+                for obstacle_box in obstacles_pq:
+                    if in_box3d_origin(point_on_ray, obstacle_box):
+                        hit_obstacle = True
+                        voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
+                        # this obstacle is also visible
+                        visible_volume.add(voxel)
+                        break
+                if not hit_obstacle:
+                    voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
+                    visible_volume.add(voxel)
+                t = t + 1
+                dist_along_principle_axis = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
+                if dist_along_principle_axis > far:
+                    out_of_bound = True
+        return visible_volume
+
+    def camera_to_world(self, point, sensor_pose):
+        """Given a point in the camera frame, and a sensor_pose in
+        the world frame, return the point in the world frame"""
+        if len(sensor_pose) == 7:
+            x, y, z, qx, qy, qz, qw = sensor_pose
+            R = R_quat(qx, qy, qz, qw, affine=True)
+        elif len(sensor_pose) == 6:
+            x, y, z, thx, thy, thz = sensor_pose
+            R = R_euler(thx, thy, thz, affine=True)
+        # sensor_pose = T*R*(0,0,0);
+        point_world = np.matmul(T(x,y,z), np.matmul(R, np.array([*point, 1])))
+        return point_world[:3]
 
 
 ## Utility functions regarding 3D sensors

@@ -144,6 +144,22 @@ class OctNode:
         else:
             return None
 
+    @staticmethod
+    def octnode_to_ground_box(octnode):
+        """given an octnode, return a box represented as
+        (origin, (w,l,h)) at the ground resolution level"""
+        pos = octnode.pos
+        r = octnode.res
+        return ((pos[0]*r, pos[1]*r, pos[2]*r), r, r, r)
+
+    @property
+    def ground_origin(self):
+        """given an octnode, return an origin point
+        at the ground resolution level"""
+        return (self.pos[0]*self.res,
+                self.pos[1]*self.res,
+                self.pos[2]*self.res)
+
 class Octree:
     def __init__(self, dimensions, default_val=DEFAULT_VAL):
         """
