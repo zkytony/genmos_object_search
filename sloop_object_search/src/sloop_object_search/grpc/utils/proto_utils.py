@@ -10,7 +10,8 @@ from google.protobuf.any_pb2 import Any
 
 import pomdp_py
 
-from sloop_object_search.grpc.observation_pb2 import PointCloud, RobotPose
+from sloop_object_search.grpc.observation_pb2\
+    import PointCloud, RobotPose, Language, ObjectDetection
 from sloop_object_search.grpc.common_pb2\
     import Vec2, Vec3, Header, Pose2D, Pose3D, Quaternion, Histogram, Voxel3D
 from sloop_object_search.grpc.action_pb2\
@@ -274,3 +275,14 @@ def robot_belief_to_proto(robot_belief, header=None):
     return slpb2.RobotBelief(robot_id=robot_id,
                              objects_found=list(map(str, mpe_robot_state.objects_found)),
                              pose=robot_pose_pb)
+
+
+def pomdp_observation_from_proto(observation_pb):
+    if isinstance(observation_pb, ObjectDetetion):
+        raise NotImplementedError
+    elif isinstance(observation_pb, RobotPose):
+        raise NotImplementedError
+    elif isinstance(observation_pb, Language):
+        raise NotImplementedError
+    else:
+        raise ValueError(f"Unsupported observation type {type(observation_pb)}")

@@ -33,6 +33,9 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         # planners. Maps from robot id to a planner (pomdp_py.Planner)
         self._planners = {}
 
+        # maps from robot_id to {action_id -> Action}
+        self._actions_planned = {}
+
         self._world_origin = None
 
     def CreateAgent(self, request, context):
@@ -199,6 +202,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             message="Planner created")
 
     def PlanAction(self, request, context):
+        # TODO: add action_id
+        # TODO: avoid planning if previously a planned action is not yet finished
         if request.robot_id not in self._agents:
             # agent not yet created
             return slpb2.PlanActionReply(
@@ -270,6 +275,44 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             status=Status.SUCCESSFUL,
             message="got robot belief",
             robot_belief=robot_belief_pb)
+
+    def ProcessObservation(self, request, context):
+        if request.robot_id not in self._agents:
+            # agent not yet created
+            return slpb2.ProcessObservationReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=f"agent {robot_id} does not exist. Did you create it?")
+
+        agent = self._agents[request.robot_id]
+        if request.HasField("robot_pose"):
+            observation = proto_utils.pomdp_observation_from_proto(request.robot_pose)
+        if request.HasField("object_detection"):
+            observation = proto_utils.pomdp_observation_from_proto(request.object_detection)
+        if request.HasField("langauge"):
+            observation = proto_utils.pomdp_observation_from_proto(request.language)
+
+        if request.HasField("action_id"):
+            action = self._actions_planned[request.robot_id][request.action_id]
+            agent.update_belief(observation, action)
+        else:
+            agent.update_belief(observation)
+        # TODO: update planner
+
+        header = proto_utils.make_header(request.header.frame_id)
+        return slpb2.ProcessObservationReply(
+            header=header,
+            status=Status.SUCCESSFUL,
+            message=f"observation processed. Belief updated.")
+
+    def ActionFinished(self, request, context):
+        if request.robot_id not in self._agents:
+            # agent not yet created
+            return slpb2.ActionFinishedReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=f"agent {robot_id} does not exist. Did you create it?")
+        raise NotImplementedError()
 
 
 

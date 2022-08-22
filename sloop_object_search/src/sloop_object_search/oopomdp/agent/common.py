@@ -144,7 +144,10 @@ class MosAgent(pomdp_py.Agent):
     def reachable(self, pos):
         """Returns True if the given position (as in a viewpoint)
         is reachable by this agent."""
-        raise NotImplementedError
+        raise NotImplementedError()
+
+    def update_belief(self, observation, action=None):
+        raise NotImplementedError()
 
 
 class SloopMosAgent(SloopAgent):

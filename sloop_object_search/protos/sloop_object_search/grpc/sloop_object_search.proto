@@ -20,7 +20,7 @@ service SloopObjectSearch {
   // Update search region by interpreting sensor data such as point cloud.
   rpc UpdateSearchRegion(UpdateSearchRegionRequest) returns (UpdateSearchRegionReply) {}
 
-  // Process observation such as object detection or language
+  // Process observation such as object detection or language, update agent belief
   rpc ProcessObservation(ProcessObservationRequest) returns (ProcessObservationReply) {}
 
   // Get current belief about where the object is over the search region
@@ -34,6 +34,9 @@ service SloopObjectSearch {
 
   // Calls the planner to return an action for execution
   rpc PlanAction(PlanActionRequest) returns (PlanActionReply) {}
+
+  // Signals action execution completion
+  rpc ActionFinished(ActionFinishedRequest) returns (ActionFinishedReply) {}
 }
 
 
@@ -103,9 +106,13 @@ message ProcessObservationRequest {
 
   oneof observation {
     RobotPose robot_pose = 3;
-    ObjectDetection object_detections = 4;
+    ObjectDetection object_detection = 4;
     Language language = 5;
   }
+
+  // the action that the observation is associated with (e.g. received after
+  // action completion)
+  optional string action_id = 6;
 }
 
 message ProcessObservationReply {
@@ -178,9 +185,26 @@ message PlanActionReply {
     KeyValueAction kv_action = 6;
   }
 
+  // server-generated id used to identify an action
+  // associated with a plan request
+  string action_id = 7;
+
   // // A serialized yaml representation of the planning search
   // // tree (UTF-8 encoding), useful for interpretation.
   // optional bytes planning_tree = 5;
+}
+
+//// For ActionFinished rpc ////
+message ActionFinishedRequest {
+  Header header = 1;
+  string robot_id = 2;
+  string action_id = 3;  // action id for which the action execution is finished.
+}
+
+message ActionFinishedReply {
+  Header header = 1;
+  Status status = 2;
+  string message = 3;
 }
 
 

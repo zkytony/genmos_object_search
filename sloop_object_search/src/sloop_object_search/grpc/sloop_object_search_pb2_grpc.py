@@ -54,6 +54,11 @@ class SloopObjectSearchStub(object):
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
                 )
+        self.ActionFinished = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/ActionFinished',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ActionFinishedRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ActionFinishedReply.FromString,
+                )
 
 
 class SloopObjectSearchServicer(object):
@@ -81,7 +86,7 @@ class SloopObjectSearchServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def ProcessObservation(self, request, context):
-        """Process observation such as object detection or language
+        """Process observation such as object detection or language, update agent belief
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -110,6 +115,13 @@ class SloopObjectSearchServicer(object):
 
     def PlanAction(self, request, context):
         """Calls the planner to return an action for execution
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ActionFinished(self, request, context):
+        """Signals action execution completion
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -157,6 +169,11 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
                     servicer.PlanAction,
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.SerializeToString,
+            ),
+            'ActionFinished': grpc.unary_unary_rpc_method_handler(
+                    servicer.ActionFinished,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ActionFinishedRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ActionFinishedReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -301,5 +318,22 @@ class SloopObjectSearch(object):
         return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ActionFinished(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/ActionFinished',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ActionFinishedRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ActionFinishedReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

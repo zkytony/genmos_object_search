@@ -41,13 +41,13 @@ message PointCloud {
 
 
 // Object detection in 3D: each detection is a box with a label.
-message ObjectDetection {
-  message Detection3D {
-    string label = 1;
-    float confidence = 2;
-    Box3D box = 3;
-  }
+message Detection3D {
+  string label = 1;
+  float confidence = 2;
+  Box3D box = 3;
+}
 
+message ObjectDetection {
   Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   repeated Detection3D detections = 3;
@@ -59,6 +59,7 @@ message Language {
   Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   string text = 3;
+  string type = 4;   // type of language. E.g. 'spatial'
 }
 
 
