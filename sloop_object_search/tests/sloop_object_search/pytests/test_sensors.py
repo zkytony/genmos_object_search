@@ -26,7 +26,7 @@ from sloop_object_search.oopomdp.models.sensors import (FanSensor,
 from sloop_object_search.utils.math import to_rad, euler_to_quat, quat_to_euler, R_euler
 from sloop_object_search.utils.plotting import plot_pose
 from sloop_object_search.utils.colors import lighter, rgb_to_hex
-from sloop_object_search.utils.open3d_utils import draw_octree_dist
+from sloop_object_search.utils.open3d_utils import draw_octree_dist, cube_unfilled
 from sloop_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
 
 @pytest.fixture
@@ -230,27 +230,35 @@ def test_visible_volume(camera_far, occupancy_octree):
 
     # The robot by default looks at -z direction. So, it will
     # have a rotation around x by default
-    default_rotation = [180, 0, 0]
+    default_o3d_rotation = [180, 0, 0]  # don't change this
 
-    rotation = [0,0,0]
-    sensor_pose = (0, 0, 0, *euler_to_quat(*rotation))
+    rotation = [90,0,0]
+    sensor_pose = (10, 15, 5, *euler_to_quat(*rotation))
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
 
-    _o3d_rotation = np.array(default_rotation) + np.array(rotation)
+    _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
     arrow.rotate(R_euler(*_o3d_rotation).as_matrix())
     arrow.translate(np.asarray(sensor_pose[:3]))
     arrow.paint_uniform_color([0.4, 0.4, 0.4])
     geometries.append(arrow)
 
     print("computing visible volume")
-    volume = camera.visible_volume(
-        sensor_pose, occupancy_octree, num_rays=100, step_size=0.5)
+    volume, obstacles_hit = camera.visible_volume(
+        sensor_pose, occupancy_octree, num_rays=100, step_size=0.5,
+        return_obstacles_hit=True)
     for voxel in volume:
         box = o3d.geometry.TriangleMesh.create_box()
         x, y, z = voxel
         box.translate(np.asarray([x,y,z]))
         box.paint_uniform_color([0.0, 0.55, 0.98])
+        geometries.append(box)
+
+    for voxel in obstacles_hit:
+        box = o3d.geometry.TriangleMesh.create_box()
+        x, y, z = voxel
+        box.translate(np.asarray([x,y,z]))
+        box.paint_uniform_color([0.0, 0.05, 0.75])
         geometries.append(box)
     o3d.visualization.draw_geometries(geometries)

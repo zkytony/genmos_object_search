@@ -566,12 +566,15 @@ class FrustumCamera(SensorModel):
         return point_in_parallel
 
     def visible_volume(self, sensor_pose, occupancy_octree,
-                       num_rays=20, step_size=0.1):
+                       num_rays=20, step_size=0.1, return_obstacles_hit=False):
         """Return a voxelized volume that represents visible
         space if we put the camera at 'sensor_pose' and the
         environment contains occlusion due to occupancy_octree.
         Note that both sensor_pose and occupancy_octree should be in
-        POMDP frame."""
+        POMDP frame.
+
+        If return_obstacles_hit is True, return a second set that
+        is the set of obstacles hit by the rays"""
         # We shoot rays from the sensor out, and collect voxels
         # in the volume along the way, until the ray hits an obstacle.
         # The rays are sampled so that they hit a point on the near plane.
@@ -589,6 +592,7 @@ class FrustumCamera(SensorModel):
                               -euclidean_dist(sensor_pose[:3], (gx, gy, gz)))
 
         visible_volume = set()
+        obstacles_hit = set()
         w1, h1 = self._dim[:2]
         near = self._params[2]
         far = self._params[3]
@@ -617,6 +621,7 @@ class FrustumCamera(SensorModel):
                         voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
                         # this obstacle is also visible
                         visible_volume.add(voxel)
+                        obstacles_hit.add(voxel)
                         break
                 if not hit_obstacle:
                     voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
@@ -626,7 +631,10 @@ class FrustumCamera(SensorModel):
                 z_proj_ray = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
                 if z_proj_ray < -far:
                     out_of_bound = True
-        return visible_volume
+        if return_obstacles_hit:
+            return visible_volume, obstacles_hit
+        else:
+            return visible_volume
 
     def camera_to_world(self, point, sensor_pose):
         """Given a point in the camera frame, and a sensor_pose in
