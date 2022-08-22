@@ -32,7 +32,7 @@ def init_detection_models(agent_config):
             if type(detector_spec["params"]["sensor"]) == str:
                 # this is a sensor name
                 name = detector_spec["params"]["sensor"]
-                sensor_params = sensor_specs[name]
+                sensor_params = sensor_specs[name]["params"]
             else:
                 assert type(sensor_params) == dict
                 sensor_params = detector_spec["params"]["sensor"]
