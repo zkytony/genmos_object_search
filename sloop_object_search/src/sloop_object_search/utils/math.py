@@ -120,6 +120,24 @@ def boxes_overlap3d_origin(box1, box2):
         and (box1_min_z < box2_max_z)\
         and (box1_max_z > box2_max_z)
 
+def originbox_to_centerbox(origin_box):
+    """given an origin-based box return
+    a center-based box"""
+    origin, w, l, h = origin_box
+    center_x = origin[0] + w/2
+    center_y = origin[1] + l/2
+    center_z = origin[2] + h/2
+    return (center_x, center_y, center_z)
+
+def centerbox_to_originbox(center_box):
+    """given an center-based box return
+    a origin-based box"""
+    center, w, l, h = center_box
+    origin_x = center[0] - w/2
+    origin_y = center[1] - l/2
+    center_z = origin[2] - h/2
+    return (center_x, center_y, center_z)
+
 
 def sample_in_box3d_origin(box):
     """Given a box represented as a tuple (origin, w, l, h),
