@@ -10,15 +10,26 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
     NULL = None  # empty
     NO_POSE = "no_pose"
-    def __init__(self, objid, pose):
-        super().__init__((objid, pose))
+    def __init__(self, objid, pose, sizes=None):
+        """
+        pose: Either a single tuple for position-only,
+                or a tuple (position, orientation).
+        sizes: a tuple (w, l) or (w, l, h)
+            used to indicate the dimensions of the detected object;
+            The detection box is centered at 'pose'.
+        """
+        super().__init__((objid, pose, None))
 
     @property
     def pose(self):
         return self.data[1]
 
     def __str__(self):
-        return f"{self.objid}({self.objid}, {self.pose})"
+        return f"{self.objid}({self.objid}, {self.pose}, {self.box})"
+
+    @property
+    def sizes(self):
+        return self.data[2]
 
     @property
     def id(self):
@@ -38,7 +49,12 @@ class ObjectDetection(pomdp_py.SimpleObservation):
 
     @property
     def loc(self):
-        return self.pose
+        if len(self.pose) == 2 and type(self.pose[0]) == tuple:
+            position = self.pose[0]
+            return position
+        else:
+            # position-only
+            return self.pose
 
     @staticmethod
     def null_observation(objid):

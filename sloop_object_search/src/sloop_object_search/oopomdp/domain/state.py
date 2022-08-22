@@ -12,7 +12,8 @@ class ObjectState(pomdp_py.ObjectState):
         Args:
             objid (str): object id
             objclass (str): object class
-            pose (hashable): object pose
+            pose (hashable): object pose. Either a single tuple for position-only,
+                or a tuple (position, orientation).
             res (None or int): resolution of pose.
                 Used by 3D multi-res POMDP. None by default.
         """
@@ -32,7 +33,12 @@ class ObjectState(pomdp_py.ObjectState):
     def loc(self):
         """object location; we don't consider orientation for now,
         so pose is the rotation."""
-        return self.pose
+        if len(self.pose) == 2 and type(self.pose[0]) == tuple:
+            position = self.pose[0]
+            return position
+        else:
+            # position-only
+            return self.pose
 
     @property
     def id(self):
@@ -79,6 +85,10 @@ class RobotState(pomdp_py.ObjectState):
         looking at a direction, in which case camera_direction is a string
         that indicates the direction e.g. look+x, or 'look'. It is _not_
         meant to be the pose of the camera; that is given by 'pose'.
+
+        Note that robot pose is represented by a single tuple (x,y,th)
+        or (x,y,z,qx,qy,qz,qw). TODO: refactor to be consistent with
+        pose in ObjectState as (position, orientation)
         """
         super().__init__("robot",
                          {"id": robot_id,
