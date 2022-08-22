@@ -96,6 +96,31 @@ def in_box3d_origin(p, box):
         and abs(py - oy) <= ly\
         and abs(pz - oz) <= lz
 
+def boxes_overlap3d_origin(box1, box2):
+    """Return True if the two origin-based boxes overlap
+    https://stackoverflow.com/a/53488289/2893053"""
+    origin1, w1, l1, h1 = box1
+    origin2, w2, l2, h2 = box2
+    box1_min_x = origin1[0]
+    box1_max_x = origin1[0] + w1
+    box1_min_y = origin1[1]
+    box1_max_y = origin1[1] + l1
+    box1_min_z = origin1[2]
+    box1_max_z = origin1[2] + h1
+    box2_min_x = origin2[0]
+    box2_max_x = origin2[0] + w1
+    box2_min_y = origin2[1]
+    box2_max_y = origin2[1] + l1
+    box2_min_z = origin2[2]
+    box2_max_z = origin2[2] + h1
+    return (box1_min_x < box2_max_x)\
+        and (box1_max_x > box2_min_x)\
+        and (box1_min_y < box2_max_y)\
+        and (box1_max_y > box2_min_y)\
+        and (box1_min_z < box2_max_z)\
+        and (box1_max_z > box2_max_z)
+
+
 def sample_in_box3d_origin(box):
     """Given a box represented as a tuple (origin, w, l, h),
     returns a point sampled from within the box"""
