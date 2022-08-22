@@ -123,10 +123,18 @@ class SloopObjectSearchClient:
         """
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        if object_ids is not None:
-            kwargs["object_ids"] = object_ids
+        if object_ids is None:
+            object_ids = []
         request = slpb2.GetObjectBeliefsRequest(
             header=header,
             robot_id=robot_id,
-            **kwargs)
+            object_ids=object_ids)
         return self.call(self.stub.GetObjectBeliefs, request, timeout=timeout)
+
+    def getRobotBelief(self, robot_id, **kwargs):
+        header = self._require_header_or_frame_id(kwargs)
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        request = slpb2.GetRobotBeliefRequest(
+            header=header,
+            robot_id=robot_id)
+        return self.call(self.stub.GetRobotBelief, request, timeout=timeout)

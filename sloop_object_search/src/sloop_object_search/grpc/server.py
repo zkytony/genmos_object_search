@@ -88,7 +88,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
 
-        robot_pose = proto_utils.interpret_robot_pose(request)
+        robot_pose = proto_utils.robot_pose_from_proto(request.robot_pose)
 
         if request.HasField('occupancy_grid'):
             raise NotImplementedError()
@@ -252,6 +252,25 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                                            status=Status.SUCCESSFUL,
                                            message="got object beliefs",
                                            object_beliefs=object_beliefs_pb)
+
+    def GetRobotBelief(self, request, context):
+        if request.robot_id not in self._agents:
+            # agent not yet created
+            return slpb2.GetRobotBeliefReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=f"agent {robot_id} does not exist. Did you create it?")
+
+        agent = self._agents[request.robot_id]
+        robot_belief = agent.belief.b(request.robot_id)
+        header = proto_utils.make_header(request.header.frame_id)
+        robot_belief_pb = proto_utils.robot_belief_to_proto(robot_belief, header)
+        return slpb2.GetRobotBeliefReply(
+            header=header,
+            status=Status.SUCCESSFUL,
+            message="got robot belief",
+            robot_belief=robot_belief_pb)
+
 
 
 ###########################################################################
