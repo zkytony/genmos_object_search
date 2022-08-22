@@ -7,11 +7,11 @@ if importlib.util.find_spec("ros_numpy") is not None:
 
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.any_pb2 import Any
+import logging
 
 import pomdp_py
 
-from sloop_object_search.grpc.observation_pb2\
-    import PointCloud, RobotPose, Language, ObjectDetection
+import sloop_object_search.grpc.observation_pb2 as o_pb2
 from sloop_object_search.grpc.common_pb2\
     import Vec2, Vec3, Header, Pose2D, Pose3D, Quaternion, Histogram, Voxel3D
 from sloop_object_search.grpc.action_pb2\
@@ -19,11 +19,15 @@ from sloop_object_search.grpc.action_pb2\
 from .. import sloop_object_search_pb2 as slpb2
 
 from sloop_object_search.oopomdp.domain import action as sloop_action
+from sloop_object_search.oopomdp.domain import observation as sloop_observation
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
-from sloop_object_search.utils.math import to_rad
+from sloop_object_search.utils.math import to_rad, fround
 from sloop_object_search.utils import open3d_utils
 
+def v3toa(v3):
+    """convert Vec3 proto to numpy array"""
+    return np.array([v3.x, v3.y, v3.z])
 
 def process_search_region_params_2d(search_region_params_2d_pb):
     params = {}
@@ -70,13 +74,13 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 
     points_pb = []
     for p in points_xyz_array:
-        point_pb = PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]))
+        point_pb = o_pb2.PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]))
         points_pb.append(point_pb)
 
     header = Header(stamp=Timestamp().GetCurrentTime(),
                     frame_id=cloud_msg.header.frame_id)
-    cloud_pb = PointCloud(header=header,
-                          points=points_pb)
+    cloud_pb = o_pb2.PointCloud(header=header,
+                                points=points_pb)
     return cloud_pb
 
 
@@ -104,6 +108,9 @@ def posetuple_to_poseproto(pose):
         return Pose2D(x=x, y=y, th=th)
     else:
         raise ValueError(f"Invalid pose: {pose}")
+
+def quatproto_to_tuple(quat):
+    return (quat.x, quat.y, quat.z, quat.w)
 
 def make_header(frame_id=None, stamp=None):
     if stamp is None:
@@ -276,13 +283,43 @@ def robot_belief_to_proto(robot_belief, header=None):
                              objects_found=list(map(str, mpe_robot_state.objects_found)),
                              pose=robot_pose_pb)
 
+def pomdp_detection_from_proto(detection_pb, search_region,
+                               pos_precision='int',
+                               rot_precision=0.001,
+                               size_precision=0.001):
+    """given Detection3D proto, return ObjectDetection object
+    The pose in the detection will be converted to POMDP space.
+    Its position and orientation will be rounded to the specified
+    precision."""
+    objid = detection_pb.label
+    center = detection_pb.box.center
+    sizes = v3toa(detection_pb.box.sizes)
 
-def pomdp_observation_from_proto(observation_pb):
-    if isinstance(observation_pb, ObjectDetetion):
+    # because the POMDP frame and the world frame are axis-aligned,
+    # we only need to convert the position, not rotation.
+    center_pos = (center.position.x, center.position.y, center.position.z)
+    center_rot = fround(rot_precision, quatproto_to_tuple(center.rotation))
+    pomdp_center_pos = fround(pos_precision, search_region.to_pomdp_pos(center_pos))
+    pomdp_sizes = fround(size_precision, sizes / search_region.search_space_resolution)
+    pomdp_pose = (pomdp_center_pos, center_rot)
+    return sloop_observation.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
+
+
+def pomdp_observation_from_proto(observation_pb, search_region, **kwargs):
+    if isinstance(observation_pb, o_pb2.ObjectDetetionArray):
+        objobzs = {}
+        for detection_pb in observation_pb.detections:
+            objo = pomdp_detection_from_proto(
+                detection_pb, search_region, **kwargs)
+            if objo.id not in objobzs:
+                objobzs[objo.id] = objo
+            else:
+                logging.warning(f"multiple detections for {objo.id}. Only keeping one.")
+        return sloop_observation.JointObservation(objobzs)
+
+    elif isinstance(observation_pb, o_pb2.RobotPose):
         raise NotImplementedError
-    elif isinstance(observation_pb, RobotPose):
-        raise NotImplementedError
-    elif isinstance(observation_pb, Language):
+    elif isinstance(observation_pb, o_pb2.Language):
         raise NotImplementedError
     else:
         raise ValueError(f"Unsupported observation type {type(observation_pb)}")

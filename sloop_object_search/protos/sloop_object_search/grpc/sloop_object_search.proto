@@ -106,7 +106,7 @@ message ProcessObservationRequest {
 
   oneof observation {
     RobotPose robot_pose = 3;
-    ObjectDetection object_detection = 4;
+    ObjectDetectionArray object_detections  = 4;
     Language language = 5;
   }
 

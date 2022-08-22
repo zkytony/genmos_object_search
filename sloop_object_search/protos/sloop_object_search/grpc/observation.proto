@@ -47,7 +47,7 @@ message Detection3D {
   Box3D box = 3;
 }
 
-message ObjectDetection {
+message ObjectDetectionArray {
   Header header = 1;
   string robot_id = 2;  // the receiver of this observation
   repeated Detection3D detections = 3;

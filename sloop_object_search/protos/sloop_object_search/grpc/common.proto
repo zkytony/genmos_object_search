@@ -51,7 +51,7 @@ message Quaternion {
 // a box in 3D that may be rotated in space.
 message Box3D {
   Pose3D center = 1;
-  Vec3 size = 2;
+  Vec3 sizes = 2;
 }
 
 // Voxel in 3D with optional resolution

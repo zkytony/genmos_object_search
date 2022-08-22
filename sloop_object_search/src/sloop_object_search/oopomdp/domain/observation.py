@@ -18,7 +18,10 @@ class ObjectDetection(pomdp_py.SimpleObservation):
             used to indicate the dimensions of the detected object;
             The detection box is centered at 'pose'.
         """
-        super().__init__((objid, pose, None))
+        # let's not compare equality using sizes as they
+        # are usually noisy - so we leave it out in super() below
+        self._sizes = sizes
+        super().__init__((objid, pose))
 
     @property
     def pose(self):
@@ -29,7 +32,7 @@ class ObjectDetection(pomdp_py.SimpleObservation):
 
     @property
     def sizes(self):
-        return self.data[2]
+        return self._sizes
 
     @property
     def id(self):
@@ -170,7 +173,8 @@ class GMOSObservation(pomdp_py.Observation):
 
     def __contains__(self, objid):
         return objid in self._objobzs
-
+# alias
+JointObservation = GMOSObservation
 
 ################## Voxel, ported over from 3D-MOS ######################
 class Voxel(pomdp_py.Observation):
