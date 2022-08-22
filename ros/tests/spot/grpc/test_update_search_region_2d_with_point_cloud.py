@@ -13,7 +13,7 @@ from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_mos_ros.ros_utils import WaitForMessages
-from sloop_object_search.grpc.utils.proto_utils import make_header, pointcloud2_to_pointcloudproto
+from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Pose2D
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from config_test_MosAgentBasic2D import TEST_CONFIG
@@ -49,7 +49,7 @@ class UpdateSearchRegion2DTestCase:
     def run(self):
         self._sloop_client.createAgent(config=TEST_CONFIG,
                                        robot_id=self.robot_id,
-                                       header=make_header())
+                                       header=proto_utils.make_header())
         for i in range(self.num_updates):
             cloud_msg, waypoints_msg = WaitForMessages(
                 [POINT_CLOUD_TOPIC, WAYPOINT_TOPIC],
@@ -64,7 +64,7 @@ class UpdateSearchRegion2DTestCase:
         self._update_count += 1
         print(f"Received messages! Call count: {self._update_count}")
 
-        cloud_pb = pointcloud2_to_pointcloudproto(cloud_msg)
+        cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
 
         if self._update_count > len(waypoints_array):
@@ -72,9 +72,10 @@ class UpdateSearchRegion2DTestCase:
 
         else:
             # Use a waypoint as the robot pose
-            robot_pose_pb = Pose2D(x=waypoints_array[self._update_count][0],
-                                   y=waypoints_array[self._update_count][1],
-                                   th=0.0)
+            robot_pose = (waypoints_array[self._update_count][0],
+                          waypoints_array[self._update_count][1], 0.0)
+            robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5
                 region_size = 12.0
@@ -88,7 +89,7 @@ class UpdateSearchRegion2DTestCase:
                 header=cloud_pb.header,
                 robot_id=self.robot_id,
                 is_3d=False,
-                robot_pose_2d=robot_pose_pb,
+                robot_pose=robot_pose_pb,
                 point_cloud=cloud_pb,
                 search_region_params_2d={"layout_cut": layout_cut,
                                          "region_size": region_size,

@@ -8,9 +8,11 @@ if importlib.util.find_spec("ros_numpy") is not None:
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.any_pb2 import Any
 
-from sloop_object_search.grpc.observation_pb2 import PointCloud
+import pomdp_py
+
+from sloop_object_search.grpc.observation_pb2 import PointCloud, RobotPose
 from sloop_object_search.grpc.common_pb2\
-    import Vec2, Vec3, Header, Pose3D, Quaternion, Histogram, Voxel3D
+    import Vec2, Vec3, Header, Pose2D, Pose3D, Quaternion, Histogram, Voxel3D
 from sloop_object_search.grpc.action_pb2\
     import MoveViewpoint, Find, KeyValueAction, Motion2D, Motion3D
 from .. import sloop_object_search_pb2 as slpb2
@@ -82,7 +84,7 @@ def pointcloudproto_to_array(point_cloud):
                              for p in point_cloud.points])
     return points_array
 
-def pose_to_pose3dproto(pose_msg):
+def posemsg_to_pose3dproto(pose_msg):
     return Pose3D(position=Vec3(x=pose_msg.position.x,
                                 y=pose_msg.position.y,
                                 z=pose_msg.position.z),
@@ -91,6 +93,16 @@ def pose_to_pose3dproto(pose_msg):
                                       z=pose_msg.orientation.z,
                                       w=pose_msg.orientation.w))
 
+def posetuple_to_poseproto(pose):
+    if len(pose) == 7:
+        x,y,z,qx,qy,qz,qw = pose
+        return Pose3D(position=Vec3(x=x, y=y, z=z),
+                      rotation=Quaternion(x=qx, y=qy, z=qz, w=qw))
+    elif len(pose) == 3:
+        x,y,th = pose
+        return Pose2D(x=x, y=y, th=th)
+    else:
+        raise ValueError(f"Invalid pose: {pose}")
 
 def make_header(frame_id=None, stamp=None):
     if stamp is None:
@@ -100,34 +112,39 @@ def make_header(frame_id=None, stamp=None):
     else:
         return Header(stamp=stamp, frame_id=frame_id)
 
-def interpret_robot_pose(request):
-    """Given a request proto object whose definition contains
+def robot_pose_from_proto(robot_pose_pb):
+    """returns a tuple representation from RobotPose proto.
 
-        oneof robot_pose {
-            Pose2D robot_pose_2d = 4;
-            Pose3D robot_pose_3d = 5;
-          }
-
-    return a tuple representation of the pose. If it is 2D,
-    then return (x, y, th). If it is 3D, then return (x, y, z,
-    qx, qy, qz, qw).
+    If it is 2D, then return (x, y, th). If it is 3D, then return (x, y, z, qx,
+    qy, qz, qw).
     """
-    if request.HasField('robot_pose_2d'):
-        robot_pose = (request.robot_pose_2d.x,
-                      request.robot_pose_2d.y,
-                      request.robot_pose_2d.th)
-    elif request.HasField('robot_pose_3d'):
-        robot_pose = (request.robot_pose_3d.position.x,
-                      request.robot_pose_3d.position.y,
-                      request.robot_pose_3d.position.z,
-                      request.robot_pose_3d.rotation.x,
-                      request.robot_pose_3d.rotation.y,
-                      request.robot_pose_3d.rotation.z,
-                      request.robot_pose_3d.rotation.w,)
+    if not isinstance(robot_pose_pb, RobotPose):
+        raise TypeError("robot_pose_pb should be RobotPose")
+    if robot_pose_pb.HasField("pose_2d"):
+        pose2d = robot_pose_pb.pose_2d
+        return (pose2d.x, pose2d.y, pose2d.th)
+    elif robot_pose_pb.HasField("pose_3d"):
+        pose3d = robot_pose_pb.pose_3d
+        return (pose3d.position.x, pose3d.position.y, pose3d.position.z,
+                pose3d.rotation.x, pose3d.rotation.y, pose3d.rotation.z,
+                pose3d.rotation.w)
+    elif robot_pose_pb.HasField("pose_particles"):
+        raise NotImplementedError("can't handle 'pose_particles' yet")
+    elif robot_pose_pb.HasField("pose_hist"):
+        raise NotImplementedError("can't handle 'pose_hist' yet")
     else:
         raise ValueError("request does not contain valid robot pose field.")
-    return robot_pose
+    return None
 
+def robot_pose_proto_from_tuple(robot_pose):
+    """Returns a RobotPose proto from a given tuple
+    representation of robot pose."""
+    if len(robot_pose) == 3:
+        return RobotPose(pose_2d=posetuple_to_poseproto(robot_pose))
+    elif len(robot_pose) == 7:
+        return RobotPose(pose_3d=posetuple_to_poseproto(robot_pose))
+    else:
+        raise ValueError(f"Invalid pose: {robot_pose}")
 
 def pomdp_action_to_proto(action, agent, header=None):
     if header is None:
@@ -225,7 +242,35 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                                dist=dist))
     return object_beliefs_proto
 
+
 def to_any_proto(val):
     val_any = Any()
     val_any.Pack(val)
     return val_any
+
+
+def robot_belief_to_proto(robot_belief, header=None):
+    """Given a pomdp_py.WeightedParticles or pomdp_py.Histogram
+    representation of robot belief, return a RobotBelief proto.
+    Uncertainty over the robot belief is possibly in its pose. We
+    assume the robot observes its other attributes such as 'objects_found'."""
+    if not isinstance(robot_belief, pomdp_py.WeightedParticles)\
+       and not isinstance(robot_belief, pomdp_py.Histogram):
+        raise TypeError("robot_belief should be either "
+                        "pomdp_py.WeightedParticles or pomdp_py.Histogram")
+    if header is None:
+        header = make_header()
+    # For now, we return the most likely robot state, although
+    # the protobuf definition is more general.
+    mpe_robot_state = robot_belief.mpe()
+    robot_id = mpe_robot_state["id"]
+    if mpe_robot_state.is_2d:
+        pose_field = {"pose_2d": posetuple_to_poseproto(mpe_robot_state.pose)}
+    else:
+        pose_field = {"pose_3d": posetuple_to_poseproto(mpe_robot_state.pose)}
+    robot_pose_pb = RobotPose(header=header,
+                              robot_id=robot_id,
+                              **pose_field)
+    return slpb2.RobotBelief(robot_id=robot_id,
+                             objects_found=list(map(str, mpe_robot_state.objects_found)),
+                             pose=robot_pose_pb)

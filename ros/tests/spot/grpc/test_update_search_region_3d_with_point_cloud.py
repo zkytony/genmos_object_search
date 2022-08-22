@@ -15,7 +15,7 @@ from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped, WaitForMessages
-from sloop_object_search.grpc.utils.proto_utils import make_header, pointcloud2_to_pointcloudproto
+from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from config_test_MosAgentBasic3D import TEST_CONFIG
@@ -56,7 +56,7 @@ class UpdateSearchRegion3DTestCase:
     def run(self):
         self._sloop_client.createAgent(config=TEST_CONFIG,
                                        robot_id=self.robot_id,
-                                       header=make_header())
+                                       header=proto_utils.make_header())
         for i in range(self.num_updates):
             cloud_msg, waypoints_msg = WaitForMessages(
                 [POINT_CLOUD_TOPIC, WAYPOINT_TOPIC],
@@ -85,7 +85,7 @@ class UpdateSearchRegion3DTestCase:
         self._update_count += 1
         print(f"Received messages! Call count: {self._update_count}")
 
-        cloud_pb = pointcloud2_to_pointcloudproto(cloud_msg)
+        cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
 
         if self._update_count > len(waypoints_array):
@@ -93,11 +93,11 @@ class UpdateSearchRegion3DTestCase:
 
         else:
             # Use a waypoint as the robot pose
-            robot_pose_pb = Pose3D(
-                position=Vec3(x=waypoints_array[self._update_count-1][0],
-                              y=waypoints_array[self._update_count-1][1],
-                              z=waypoints_array[self._update_count-1][2]),
-                rotation=Quaternion(x=0, y=0, z=0, w=1))
+            robot_pose = (waypoints_array[self._update_count-1][0],
+                          waypoints_array[self._update_count-1][1],
+                          waypoints_array[self._update_count-1][2],
+                          0, 0, 0, 1)
+            robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5
                 region_size = 12.0
@@ -111,7 +111,7 @@ class UpdateSearchRegion3DTestCase:
                 header=cloud_pb.header,
                 robot_id=self.robot_id,
                 is_3d=True,
-                robot_pose_3d=robot_pose_pb,
+                robot_pose=robot_pose_pb,
                 point_cloud=cloud_pb,
                 search_region_params_3d={"octree_size": 64,
                                          "search_space_resolution": 0.15,

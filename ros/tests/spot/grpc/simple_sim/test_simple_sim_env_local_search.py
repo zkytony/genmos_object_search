@@ -52,12 +52,12 @@ class TestSimpleEnvLocalSearch:
                                        robot_id=self.robot_id)
 
         # need to get a region point cloud and a pose use that as search region
-        region_cloud_msg, pose_msg = ros_utils.WaitForMessages(
+        region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
             [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=10, verbose=True).messages
         cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-        robot_pose_pb = proto_utils.pose_to_pose3dproto(pose_msg.pose)
+        robot_pose_pb = proto_utils.posemsg_to_pose3dproto(pose_stamped_msg.pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=self.robot_id,
                                               is_3d=True,

@@ -328,6 +328,16 @@ def tf2msg_from_robot_state(srobot, world_frame, robot_frame, **kwargs):
     t.transform.rotation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
     return t
 
+def make_viz_marker_from_robot_pose_3d(robot_id, robot_pose, header, **kwargs):
+    marker = Marker(header=header)
+    marker.id = hash16(robot_id)
+    x,y,z,qx,qy,qz,qw = robot_pose
+    marker.pose.position = geometry_msgs.msg.Point(x=x, y=y, z=z)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    kwargs["viz_type"] = Marker.ARROW
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
 
 def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
                      color=[0.0, 0.8, 0.0, 0.8], scale=1.0, lifetime=1.0):

@@ -77,19 +77,16 @@ message UpdateSearchRegionRequest {
   bool is_3d = 3;
 
   // robot pose in the world frame
-  oneof robot_pose {
-    Pose2D robot_pose_2d = 4;
-    Pose3D robot_pose_3d = 5;
-  }
+  RobotPose robot_pose = 4;
 
   oneof search_region {
-    OccupancyGrid occupancy_grid = 6;
-    PointCloud point_cloud = 7;
+    OccupancyGrid occupancy_grid = 5;
+    PointCloud point_cloud = 6;
   }
 
   oneof search_region_params {
-    SearchRegionParams2D search_region_params_2d = 8;
-    SearchRegionParams3D search_region_params_3d = 9;
+    SearchRegionParams2D search_region_params_2d = 7;
+    SearchRegionParams3D search_region_params_3d = 8;
   }
 }
 
@@ -142,17 +139,7 @@ message GetRobotBeliefReply {
   Header header = 1;
   Status status = 2;
   string message = 3;
-
-  // List of object ids for objects that the robot believes are found
-  repeated string objects_found = 4;
-
-  // robot pose (exact or a distribution; see RobotPose message definition)
-  RobotPose pose = 5;
-
-  // If the robot plans over a topological graph, this returns
-  // the id of the topological graph node the robot associates itself
-  // with currently.
-  optional string topo_nid = 6;
+  RobotBelief robot_belief = 4;
 }
 
 //// For CreatePlanner rpc ////
@@ -221,4 +208,20 @@ message SearchRegionParams3D {
 message ObjectBelief {
   string object_id = 2;
   Histogram dist = 3;
+}
+
+
+message RobotBelief {
+  string robot_id = 1;
+
+  // List of object ids for objects that the robot believes are found
+  repeated string objects_found = 2;
+
+  // robot pose (exact or a distribution; see RobotPose message definition)
+  RobotPose pose = 3;
+
+  // If the robot plans over a topological graph, this returns
+  // the id of the topological graph node the robot associates itself
+  // with currently.
+  optional string topo_nid = 4;
 }
