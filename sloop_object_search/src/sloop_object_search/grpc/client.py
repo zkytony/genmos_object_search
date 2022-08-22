@@ -144,7 +144,7 @@ class SloopObjectSearchClient:
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
-            observation = {"object_detection": observation_pb}
+            observation = {"object_detections": observation_pb}
         elif isinstance(observation_pb, o_pb2.RobotPose):
             observation = {"robot_pose": observation_pb}
         elif isinstance(observation_pb, o_pb2.Language):

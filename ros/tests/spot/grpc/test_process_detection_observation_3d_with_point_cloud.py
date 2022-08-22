@@ -17,7 +17,8 @@ from geometry_msgs.msg import Point, Quaternion, Vector3
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Status, Voxel3D
-from sloop_object_search.grpc.observation_pb2 import ObjectDetection, Detection3D
+from sloop_object_search.grpc.observation_pb2\
+    import ObjectDetectionArray, Detection3D
 from sloop_object_search.utils.misc import hash16
 
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
@@ -35,13 +36,18 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
 
         # First, suppose the robot receives no detection
         header = proto_utils.make_header(self.world_frame)
-        object_detection = ObjectDetection(header=header,
-                                           robot_id=self.robot_id,
-                                           detections=[])
-        self._sloop_client.processObservation(self.robot_id, object_detection, header=header)
+        object_detection = ObjectDetectionArray(header=header,
+                                                robot_id=self.robot_id,
+                                                detections=[])
+        response = self._sloop_client.processObservation(
+            self.robot_id, object_detection, header=header)
+        assert response.status == Status.SUCCESSFUL
+        print("no-detection processing successful")
+
 
         rospy.spin()
 
 if __name__ == "__main__":
-    GetRobotBeliefTestCase(node_name="test_get_robot_belief_3d_with_point_cloud",
-                           debug=False).run()
+    ProcessDetectionObservationTestCase(
+        node_name="test_get_robot_belief_3d_with_point_cloud",
+        debug=False).run()

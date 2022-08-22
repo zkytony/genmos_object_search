@@ -126,7 +126,7 @@ def robot_pose_from_proto(robot_pose_pb):
     If it is 2D, then return (x, y, th). If it is 3D, then return (x, y, z, qx,
     qy, qz, qw).
     """
-    if not isinstance(robot_pose_pb, RobotPose):
+    if not isinstance(robot_pose_pb, o_pb2.RobotPose):
         raise TypeError("robot_pose_pb should be RobotPose")
     if robot_pose_pb.HasField("pose_2d"):
         pose2d = robot_pose_pb.pose_2d
@@ -148,9 +148,9 @@ def robot_pose_proto_from_tuple(robot_pose):
     """Returns a RobotPose proto from a given tuple
     representation of robot pose."""
     if len(robot_pose) == 3:
-        return RobotPose(pose_2d=posetuple_to_poseproto(robot_pose))
+        return o_pb2.RobotPose(pose_2d=posetuple_to_poseproto(robot_pose))
     elif len(robot_pose) == 7:
-        return RobotPose(pose_3d=posetuple_to_poseproto(robot_pose))
+        return o_pb2.RobotPose(pose_3d=posetuple_to_poseproto(robot_pose))
     else:
         raise ValueError(f"Invalid pose: {robot_pose}")
 
@@ -276,9 +276,9 @@ def robot_belief_to_proto(robot_belief, header=None):
         pose_field = {"pose_2d": posetuple_to_poseproto(mpe_robot_state.pose)}
     else:
         pose_field = {"pose_3d": posetuple_to_poseproto(mpe_robot_state.pose)}
-    robot_pose_pb = RobotPose(header=header,
-                              robot_id=robot_id,
-                              **pose_field)
+    robot_pose_pb = o_pb2.RobotPose(header=header,
+                                    robot_id=robot_id,
+                                    **pose_field)
     return slpb2.RobotBelief(robot_id=robot_id,
                              objects_found=list(map(str, mpe_robot_state.objects_found)),
                              pose=robot_pose_pb)
@@ -306,7 +306,7 @@ def pomdp_detection_from_proto(detection_pb, search_region,
 
 
 def pomdp_observation_from_proto(observation_pb, search_region, **kwargs):
-    if isinstance(observation_pb, o_pb2.ObjectDetetionArray):
+    if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
         objobzs = {}
         for detection_pb in observation_pb.detections:
             objo = pomdp_detection_from_proto(
