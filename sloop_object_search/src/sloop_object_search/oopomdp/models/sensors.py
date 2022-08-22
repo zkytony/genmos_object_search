@@ -596,7 +596,7 @@ class FrustumCamera(SensorModel):
             # sample a ray which goes through a point on the near plane
             ray_np_x = random.uniform(-w1/2, w1/2)
             ray_np_y = random.uniform(-h1/2, h1/2)
-            ray_np_z = self.near  # TODO: why is this not negative
+            ray_np_z = -self.near
             ray_up_angle = math.atan2(ray_np_y, ray_np_z)
 
             # transform the ray to (pomdp) world frame
@@ -622,8 +622,9 @@ class FrustumCamera(SensorModel):
                     voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
                     visible_volume.add(voxel)
                 t = t + 1
-                dist_along_principle_axis = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
-                if dist_along_principle_axis > far:
+                # project the ray onto the z axis
+                z_proj_ray = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
+                if z_proj_ray < -far:
                     out_of_bound = True
         return visible_volume
 

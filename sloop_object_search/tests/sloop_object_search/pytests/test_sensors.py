@@ -228,19 +228,25 @@ def test_visible_volume(camera_far, occupancy_octree):
     camera = camera_far
     geometries = draw_octree_dist(occupancy_octree, viz=False)
 
-    rotation = [-90, 0, 0]
-    sensor_pose = (10, 3, 5, *euler_to_quat(*rotation))
+    # The robot by default looks at -z direction. So, it will
+    # have a rotation around x by default
+    default_rotation = [180, 0, 0]
+
+    rotation = [0,0,0]
+    sensor_pose = (0, 0, 0, *euler_to_quat(*rotation))
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
-    arrow.rotate(R_euler(*rotation).as_matrix())
+
+    _o3d_rotation = np.array(default_rotation) + np.array(rotation)
+    arrow.rotate(R_euler(*_o3d_rotation).as_matrix())
     arrow.translate(np.asarray(sensor_pose[:3]))
     arrow.paint_uniform_color([0.4, 0.4, 0.4])
     geometries.append(arrow)
 
     print("computing visible volume")
     volume = camera.visible_volume(
-        sensor_pose, occupancy_octree, num_rays=500, step_size=2.0)
+        sensor_pose, occupancy_octree, num_rays=100, step_size=0.5)
     for voxel in volume:
         box = o3d.geometry.TriangleMesh.create_box()
         x, y, z = voxel
