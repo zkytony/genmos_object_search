@@ -615,18 +615,23 @@ class FrustumCamera(SensorModel):
             out_of_bound = False
             while not hit_obstacle and not out_of_bound:
                 point_on_ray = sensor_pose[:3] + t * step_size * vec_ray
-                for obstacle_box in obstacles_pq:
-                    if in_box3d_origin(point_on_ray, obstacle_box):
-                        hit_obstacle = True
-                        voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
-                        # this obstacle is also visible
-                        visible_volume.add(voxel)
-                        obstacles_hit.add(voxel)
-                        break
+
+                if self._occlusion_enabled:
+                    for obstacle_box in obstacles_pq:
+                        if in_box3d_origin(point_on_ray, obstacle_box):
+                            hit_obstacle = True
+                            voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
+                            # this obstacle is also visible
+                            visible_volume.add(voxel)
+                            obstacles_hit.add(voxel)
+                            break
+
                 if not hit_obstacle:
                     voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
                     visible_volume.add(voxel)
+
                 t = t + 1
+
                 # project the ray onto the z axis
                 z_proj_ray = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
                 if z_proj_ray < -far:

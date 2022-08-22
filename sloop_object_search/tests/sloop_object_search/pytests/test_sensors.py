@@ -146,7 +146,8 @@ def camera():
 
 @pytest.fixture
 def camera_far():
-    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=30)
+    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=30,
+                         occlusion_enabled=False)
 
 
 @pytest.mark.skip(reason="test takes too long.")
@@ -246,14 +247,17 @@ def test_visible_volume(camera_far, occupancy_octree):
 
     print("computing visible volume")
     volume, obstacles_hit = camera.visible_volume(
-        sensor_pose, occupancy_octree, num_rays=100, step_size=0.5,
+        sensor_pose, occupancy_octree, num_rays=150, step_size=0.4,
         return_obstacles_hit=True)
+
+    # Draw
     for voxel in volume:
-        box = o3d.geometry.TriangleMesh.create_box()
-        x, y, z = voxel
-        box.translate(np.asarray([x,y,z]))
-        box.paint_uniform_color([0.0, 0.55, 0.98])
-        geometries.append(box)
+        if voxel not in obstacles_hit:
+            box = o3d.geometry.TriangleMesh.create_box()
+            x, y, z = voxel
+            box.translate(np.asarray([x,y,z]))
+            box.paint_uniform_color([0.0, 0.55, 0.98])
+            geometries.append(box)
 
     for voxel in obstacles_hit:
         box = o3d.geometry.TriangleMesh.create_box()
