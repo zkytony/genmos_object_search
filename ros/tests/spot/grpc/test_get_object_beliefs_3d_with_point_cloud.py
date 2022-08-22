@@ -79,5 +79,5 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
         rospy.spin()
 
 if __name__ == "__main__":
-    GetObjectBeliefsTestCase(node_name="test_create_planner_3d_with_point_cloud",
+    GetObjectBeliefsTestCase(node_name="test_get_object_beliefs_3d_with_point_cloud",
                              debug=False).run()
