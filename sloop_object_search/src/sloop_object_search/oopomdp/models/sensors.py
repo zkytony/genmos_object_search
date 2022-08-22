@@ -566,7 +566,9 @@ class FrustumCamera(SensorModel):
         return point_in_parallel
 
     def visible_volume(self, sensor_pose, occupancy_octree,
-                       num_rays=20, step_size=0.1, return_obstacles_hit=False):
+                       num_rays=20, step_size=0.1,
+                       obstacle_res=1,
+                       return_obstacles_hit=False):
         """Return a voxelized volume that represents visible
         space if we put the camera at 'sensor_pose' and the
         environment contains occlusion due to occupancy_octree.
@@ -574,7 +576,15 @@ class FrustumCamera(SensorModel):
         POMDP frame.
 
         If return_obstacles_hit is True, return a second set that
-        is the set of obstacles hit by the rays"""
+        is the set of obstacles hit by the rays
+
+        obstacle_res: The resolution of octree nodes considered
+        for obstacles. If larger than 1, then the corresponding
+        parents (at the desired resolution) of leaf nodes will be
+        used as obstacles. Therefore, obstacle_res should be a
+        an integer that is power of two. The larger this is, the
+        faster this algorithm runs, while the less accurate.
+        Note: setting this to be > 1 may lead to unexpected empty FOV."""
         # We shoot rays from the sensor out, and collect voxels
         # in the volume along the way, until the ray hits an obstacle.
         # The rays are sampled so that they hit a point on the near plane.
@@ -587,9 +597,15 @@ class FrustumCamera(SensorModel):
         obstacles_pq = PriorityQueue()
         for obstacle in obstacles:
             gx, gy, gz = obstacle.ground_origin
+            node = obstacle
+            if obstacle_res > 1:
+                while node.res < obstacle_res:
+                    node = node.parent
+            node_box = ((gx, gy, gz), node.res, node.res, node.res)
             # negative distance because priority queue favors smaller numbers
-            obstacles_pq.push(OctNode.octnode_to_ground_box(obstacle),
-                              -euclidean_dist(sensor_pose[:3], (gx, gy, gz)))
+            obstacles_pq.push(node_box, -euclidean_dist(sensor_pose[:3], (gx, gy, gz)))
+
+        _obstacle_hitting_cache = {}  # maps from voxel to bool, if True, the voxel hits an obstacle
 
         visible_volume = set()
         obstacles_hit = set()
@@ -615,20 +631,41 @@ class FrustumCamera(SensorModel):
             out_of_bound = False
             while not hit_obstacle and not out_of_bound:
                 point_on_ray = sensor_pose[:3] + t * step_size * vec_ray
+                voxel_on_ray = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel for the point
 
-                if self._occlusion_enabled:
-                    for obstacle_box in obstacles_pq:
-                        if in_box3d_origin(point_on_ray, obstacle_box):
+                if not self._occlusion_enabled:
+                    visible_volume.add(voxel_on_ray)
+                else:
+                    # occlusion enabled
+                    if voxel_on_ray in _obstacle_hitting_cache:
+                        # Cache hit
+                        hits = _obstacle_hitting_cache[voxel_on_ray]
+                        if hits:
                             hit_obstacle = True
-                            voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
+                            visible_volume.add(voxel_on_ray)
+                            obstacles_hit.add(voxel_on_ray)
+                        else:
+                            visible_volume.add(voxel_on_ray)
+                    else:
+                        # if voxel on ray is below surface (i.e. z<0), then, we hit.
+                        if voxel_on_ray[2] < 0:
+                            hit_obstacle = True
                             # this obstacle is also visible
-                            visible_volume.add(voxel)
-                            obstacles_hit.add(voxel)
-                            break
-
-                if not hit_obstacle:
-                    voxel = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel
-                    visible_volume.add(voxel)
+                            visible_volume.add(voxel_on_ray)
+                            obstacles_hit.add(voxel_on_ray)
+                            _obstacle_hitting_cache[voxel_on_ray] = True
+                        else:
+                            for obstacle_box in obstacles_pq:
+                                if in_box3d_origin(point_on_ray, obstacle_box):
+                                    hit_obstacle = True
+                                    # this obstacle is also visible
+                                    visible_volume.add(voxel_on_ray)
+                                    obstacles_hit.add(voxel_on_ray)
+                                    _obstacle_hitting_cache[voxel_on_ray] = True
+                                    break
+                            if not hit_obstacle:
+                                visible_volume.add(voxel_on_ray)
+                                _obstacle_hitting_cache[voxel_on_ray] = False
 
                 t = t + 1
 

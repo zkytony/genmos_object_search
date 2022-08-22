@@ -233,8 +233,8 @@ def test_visible_volume(camera_far, occupancy_octree):
     # have a rotation around x by default
     default_o3d_rotation = [180, 0, 0]  # don't change this
 
-    rotation = [90,0,0]
-    sensor_pose = (10, 15, 5, *euler_to_quat(*rotation))
+    rotation = [90,0,-45]
+    sensor_pose = (15, 15, 5, *euler_to_quat(*rotation))
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
@@ -247,7 +247,8 @@ def test_visible_volume(camera_far, occupancy_octree):
 
     print("computing visible volume")
     volume, obstacles_hit = camera.visible_volume(
-        sensor_pose, occupancy_octree, num_rays=150, step_size=0.4,
+        sensor_pose, occupancy_octree, num_rays=150, step_size=0.6,
+        obstacle_res=1,
         return_obstacles_hit=True)
 
     # Draw
