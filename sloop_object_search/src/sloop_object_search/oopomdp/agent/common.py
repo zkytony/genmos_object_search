@@ -11,14 +11,36 @@ from . import belief
 
 
 def init_detection_models(agent_config):
+    """A detection model is initialized with nsensor
+    and quality parameters.
+    """
     robot = agent_config["robot"]
+
+    sensor_specs = {}
+    for sensor_spec in robot.get("sensors", []):
+        sensor_specs[sensor_spec["name"]] = sensor_spec
+
     detection_models = {}
     for objid in robot["detectors"]:
         detector_spec = robot["detectors"][objid]
+        # Detector spec is either a list of a dictionary.
+        # If it is a list, the first element is sensor parameters,
+        # while the second element is quality parameters. Note
+        # that the sensor parameters could reuse what's specified
+        # in robot['sensors']
         if "sensor" in detector_spec["params"]:
-            detector_params = [detector_spec["params"]["sensor"], detector_spec["params"]["quality"]]
+            if type(detector_spec["params"]["sensor"]) == str:
+                # this is a sensor name
+                name = detector_spec["params"]["sensor"]
+                sensor_params = sensor_specs[name]
+            else:
+                assert type(sensor_params) == dict
+                sensor_params = detector_spec["params"]["sensor"]
+
+            detector_params = [sensor_params, detector_spec["params"]["quality"]]
         else:
             detector_params = detector_spec["params"]
+
         detection_model = import_class(detector_spec["class"])(
             objid, *detector_params
         )
@@ -163,4 +185,7 @@ class SloopMosAgent(SloopAgent):
                          init_object_beliefs=init_object_beliefs)
 
     def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
+        raise NotImplementedError()
+
+    def update_belief(self, observation, action=None):
         raise NotImplementedError()

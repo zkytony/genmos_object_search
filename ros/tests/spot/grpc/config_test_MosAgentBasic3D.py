@@ -11,11 +11,16 @@ TEST_CONFIG = {
         'objects': {'book': {'class': 'book',
                              'color': [200, 100, 80],
                              'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'}}},
-        'robot': {'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
-                                         'params': {"sensor": {'fov': 61,
-                                                               'far': 5,
-                                                               'near': 1},
-                                                    "quality": [1e5, 0.1]}}},
+        'robot': {
+            'sensors': [{
+                'name': 'camera',
+                'params': {'fov': 61,
+                           'far': 5,
+                           'near': 1}
+            }],
+            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                                   'params': {"sensor": "camera",
+                                              "quality": [1e5, 0.1]}}},
                   'id': 'robot0',
                   'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
                              'params': {'step_size': 1.0,
