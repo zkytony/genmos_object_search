@@ -372,7 +372,7 @@ def make_octnode_marker_msg(pos, res, prob, header, lifetime=1.0, color=[0.0, 0.
     marker.color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=prob)
     return marker
 
-def make_octree_belief_proto_markers_msg(octree_belief_pb, header):
+def make_octree_belief_proto_markers_msg(octree_belief_pb, header, alpha_scaling=1.0):
     """given an octree belief's protobuf representation,
     which is a Histogram, make a MarkerArray message for it."""
     markers = []
@@ -383,7 +383,7 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header):
 
         pos = [voxel.pos.x, voxel.pos.y, voxel.pos.z]
         prob = hist_pb.probs[i]
-        marker = make_octnode_marker_msg(pos, voxel.res, prob, header, lifetime=0)  # 0 is forever
+        marker = make_octnode_marker_msg(pos, voxel.res, prob*alpha_scaling, header, lifetime=0)  # 0 is forever
         markers.append(marker)
     return MarkerArray(markers)
 

@@ -30,9 +30,44 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         super()._setup()
         self._robot_markers_pub = rospy.Publisher(
             "~robot_pose", MarkerArray, queue_size=10, latch=True)
+        self._octbelief_markers_pub = rospy.Publisher(
+            "~octree_belief", MarkerArray, queue_size=10, latch=True)
+
+    def get_and_visualize_belief(self):
+        response = self._sloop_client.getObjectBeliefs(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        assert response.status == Status.SUCCESSFUL
+        print("got belief")
+
+        # visualize the belief
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        markers = []
+        for bobj_pb in response.object_beliefs:
+            msg = ros_utils.make_octree_belief_proto_markers_msg(bobj_pb, header, alpha_scaling=0.01)
+            self._octbelief_markers_pub.publish(msg)
+        print("belief visualized")
+
+    def get_and_visualize_robot_pose(self):
+        response = self._sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        assert response.status == Status.SUCCESSFUL
+        print("got robot belief")
+        robot_pose = proto_utils.robot_pose_from_proto(response.robot_belief.pose)
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        marker = ros_utils.make_viz_marker_from_robot_pose_3d(
+            self.robot_id, robot_pose, header=header, scale=Vector3(x=1.2, y=0.2, z=0.2),
+            lifetime=0)  # forever
+        self._robot_markers_pub.publish(MarkerArray([marker]))
+        return response.robot_belief.pose
+
 
     def run(self):
         super().run()
+
+        self.get_and_visualize_belief()
+        robot_pose_pb = self.get_and_visualize_robot_pose()
 
         # First, suppose the robot receives no detection
         header = proto_utils.make_header(self.world_frame)
@@ -40,10 +75,13 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                                                 robot_id=self.robot_id,
                                                 detections=[])
         response = self._sloop_client.processObservation(
-            self.robot_id, object_detection, header=header)
+            self.robot_id, object_detection, robot_pose_pb, header=header)
         assert response.status == Status.SUCCESSFUL
         print("no-detection processing successful")
 
+        # see belief now
+        self.get_and_visualize_belief()
+        self.get_and_visualize_robot_pose()
 
         rospy.spin()
 

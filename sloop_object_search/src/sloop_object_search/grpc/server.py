@@ -285,15 +285,13 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 message=f"agent {robot_id} does not exist. Did you create it?")
 
         agent = self._agents[request.robot_id]
-        if request.HasField("robot_pose"):
+        if request.HasField("object_detections"):
             observation = proto_utils.pomdp_observation_from_proto(
-                request.robot_pose, agent.search_region)
-        elif request.HasField("object_detections"):
-            observation = proto_utils.pomdp_observation_from_proto(
-                request.object_detections, agent.search_region)
+                request.robot_pose, request.object_detections, agent.search_region)
+
         elif request.HasField("langauge"):
             observation = proto_utils.pomdp_observation_from_proto(
-                request.language, agent.search_region)
+                request.robot_pose, request.language, agent.search_region)
 
         if request.HasField("action_id"):
             action = self._actions_planned[request.robot_id][request.action_id]
@@ -301,7 +299,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             # agent.update_belief(observation, action)
         else:
             logging.warning("Supposed to update belief")
-            # agent.update_belief(observation)
+            agent.update_belief(observation)
         # TODO: update planner
 
         header = proto_utils.make_header(request.header.frame_id)

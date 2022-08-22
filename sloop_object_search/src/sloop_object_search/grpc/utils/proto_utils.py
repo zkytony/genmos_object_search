@@ -229,7 +229,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                 "3d object belief should be octree belief"
 
             # each voxel is (x,y,z,r,_) where x,y,z are ground-level voxel coordinates.
-            open3d_utils.draw_octree_dist(b_obj.octree_dist)
+            # open3d_utils.draw_octree_dist(b_obj.octree_dist)
             voxels = b_obj.octree_dist.collect_plotting_voxels()
             probs = [b_obj.octree_dist.prob_at(*Octree.increase_res(voxels[i][:3], 1, voxels[i][3]), voxels[i][3])
                      for i in range(len(voxels))]
@@ -305,9 +305,12 @@ def pomdp_detection_from_proto(detection_pb, search_region,
     return sloop_observation.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
 
-def pomdp_observation_from_proto(observation_pb, search_region, **kwargs):
+def pomdp_observation_from_proto(robot_pose_pb, observation_pb, search_region, **kwargs):
     if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
-        objobzs = {}
+        robot_id = observation_pb.robot_id
+        robot_pose = robot_pose_from_proto(robot_pose_pb)
+        robot_obz = sloop_observation.RobotLocalization(robot_id, robot_pose)
+        objobzs = {robot_id: robot_obz}
         for detection_pb in observation_pb.detections:
             objo = pomdp_detection_from_proto(
                 detection_pb, search_region, **kwargs)

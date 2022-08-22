@@ -114,7 +114,7 @@ class UpdateSearchRegion3DTestCase:
                 robot_pose=robot_pose_pb,
                 point_cloud=cloud_pb,
                 search_region_params_3d={"octree_size": 64,
-                                         "search_space_resolution": 0.15,
+                                         "search_space_resolution": 0.1,
                                          "debug": self.debug,
                                          "region_size_x": 4.0,
                                          "region_size_y": 4.0,

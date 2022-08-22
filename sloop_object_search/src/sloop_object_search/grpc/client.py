@@ -140,17 +140,16 @@ class SloopObjectSearchClient:
             robot_id=robot_id)
         return self.call(self.stub.GetRobotBelief, request, timeout=timeout)
 
-    def processObservation(self, robot_id, observation_pb, **kwargs):
+    def processObservation(self, robot_id, observation_pb, robot_pose_pb, **kwargs):
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
             observation = {"object_detections": observation_pb}
-        elif isinstance(observation_pb, o_pb2.RobotPose):
-            observation = {"robot_pose": observation_pb}
         elif isinstance(observation_pb, o_pb2.Language):
             observation = {"language": observation_pb}
         request = slpb2.ProcessObservationRequest(
             header=header,
             robot_id=robot_id,
+            robot_pose=robot_pose_pb,
             **observation)
         return self.call(self.stub.ProcessObservation, request, timeout=timeout)

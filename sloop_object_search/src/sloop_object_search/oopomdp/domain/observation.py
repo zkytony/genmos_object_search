@@ -80,6 +80,26 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         else:
             return center_bbox
 
+class RobotLocalization(pomdp_py.SimpleObservation):
+    def __init__(self, robot_id, robot_pose):
+        self.robot_id = robot_id
+        self.pose = robot_pose
+        data = (self.robot_id, self.pose)
+        super().__init__(data)
+
+    @property
+    def is_2d(self):
+        return len(self.pose) == 3  # x, y, th
+
+    @property
+    def loc(self):
+        if self.is_2d:
+            return self.pose[:2]
+        else:
+            # 3d
+            return self.pose[:3]
+
+
 
 class RobotObservation(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose, objects_found, camera_direction, *args):
