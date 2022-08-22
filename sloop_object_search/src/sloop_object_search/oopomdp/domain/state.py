@@ -87,8 +87,8 @@ class RobotState(pomdp_py.ObjectState):
         meant to be the pose of the camera; that is given by 'pose'.
 
         Note that robot pose is represented by a single tuple (x,y,th)
-        or (x,y,z,qx,qy,qz,qw). TODO: refactor to be consistent with
-        pose in ObjectState as (position, orientation)
+        or (x,y,z,qx,qy,qz,qw). This is distinct from pose representation
+        in ObjectState as (position, orientation).
         """
         super().__init__("robot",
                          {"id": robot_id,

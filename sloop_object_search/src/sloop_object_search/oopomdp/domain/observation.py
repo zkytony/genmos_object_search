@@ -5,6 +5,7 @@ GMOS observation breaks down to:
 """
 import pomdp_py
 from sloop_object_search.utils.misc import det_dict_hash
+from sloop_object_search.utils import math as math_utils
 
 class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
@@ -20,6 +21,8 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         """
         # let's not compare equality using sizes as they
         # are usually noisy - so we leave it out in super() below
+        if sizes is None:
+            sizes = (1, 1, 1)
         self._sizes = sizes
         super().__init__((objid, pose))
 
@@ -65,6 +68,17 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     @staticmethod
     def null_observation(objid):
         return ObjectDetection(objid, ObjectDetection.NULL)
+
+    @property
+    def bbox_axis_aligned(self, origin_rep=True):
+        """axis-aligned boudning box. If origin_rep is True,
+        return origin-based box. Otherwise,
+        return center-based box"""
+        center_bbox = (self.loc, *self.sizes)
+        if origin_rep:
+            return math_utils.centerbox_to_originbox(center_bbox)
+        else:
+            return center_bbox
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
@@ -222,7 +236,7 @@ class FovVoxels(pomdp_py.Observation):
 
     def __init__(self, voxels):
         """
-        voxels: dictionary (x,y,z)->Voxel, or objid->Voxel
+        voxels: dictionary (x,y,z)->Voxel, (x,y,z,r)->Voxel, or objid->Voxel
                 If this is the unfactored observation, then there are UNKNOWN
                 voxels in this set. Otherwise, voxels can either be labeled i or OTHER,
         """

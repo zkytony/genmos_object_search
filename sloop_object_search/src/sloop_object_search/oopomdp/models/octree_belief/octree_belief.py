@@ -424,7 +424,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         return ObjectState(self._objid, self._objclass, voxel_pos, res=res)
 
 
-def update_octree_belief(octree_belief, real_action, real_observation,
+def update_octree_belief(octree_belief, real_observation,
                          alpha=1000., beta=0., gamma=DEFAULT_VAL):
     """
     For alpha, beta, gamma, refer to ObjectObservationModel.
