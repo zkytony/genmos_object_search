@@ -17,6 +17,7 @@ import tf2_ros
 import tf2_geometry_msgs.tf2_geometry_msgs
 
 from sloop_object_search.utils.misc import hash16
+import sloop_object_search.grpc.common_pb2 as common_pb2
 
 
 def IS_TAG(t):
@@ -338,7 +339,6 @@ def make_viz_marker_from_robot_pose_3d(robot_id, robot_pose, header, **kwargs):
     _fill_viz_marker(marker, **kwargs)
     return marker
 
-
 def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
                      color=[0.0, 0.8, 0.0, 0.8], scale=1.0, lifetime=1.0):
     marker.type = viz_type
@@ -350,6 +350,42 @@ def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
     marker.lifetime = rospy.Duration(lifetime)
     color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
     marker.color = color
+
+def make_octnode_marker_msg(pos, res, prob, header, lifetime=1.0, color=[0.0, 0.8, 0.0]):
+    """
+    Creates an rviz marker for a OctNode, specified
+    by the given 3D position (in frame of header),
+    resolution (in meters), and with transparency determined by
+    given probability.
+    """
+    marker = Marker()
+    marker.header = header
+    marker.id = hash16((*pos, res))
+    marker.type = Marker.CUBE
+    marker.pose.position = geometry_msgs.msg.Point(x=pos[0] + res/2,
+                                                   y=pos[1] + res/2,
+                                                   z=pos[2] + res/2)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
+    marker.scale = geometry_msgs.msg.Vector3(x=res, y=res, z=res)
+    marker.action = Marker.ADD
+    marker.lifetime = rospy.Duration(lifetime)
+    marker.color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=prob)
+    return marker
+
+def make_octree_belief_proto_markers_msg(octree_belief_pb, header):
+    """given an octree belief's protobuf representation,
+    which is a Histogram, make a MarkerArray message for it."""
+    markers = []
+    hist_pb = octree_belief_pb.dist
+    for i in range(hist_pb.length):
+        voxel = common_pb2.Voxel3D()
+        hist_pb.values[i].Unpack(voxel)
+
+        pos = [voxel.pos.x, voxel.pos.y, voxel.pos.z]
+        prob = hist_pb.probs[i]
+        marker = make_octnode_marker_msg(pos, voxel.res, prob, header, lifetime=0)  # 0 is forever
+        markers.append(marker)
+    return MarkerArray(markers)
 
 
 ### Communication ###
