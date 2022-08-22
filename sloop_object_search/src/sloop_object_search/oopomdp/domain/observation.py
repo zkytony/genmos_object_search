@@ -25,7 +25,7 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         return self.data[1]
 
     def __str__(self):
-        return f"{self.objid}({self.objid}, {self.pose}, {self.box})"
+        return f"{self.objid}({self.objid}, {self.pose}, {self.sizes})"
 
     @property
     def sizes(self):
@@ -49,6 +49,9 @@ class ObjectDetection(pomdp_py.SimpleObservation):
 
     @property
     def loc(self):
+        # location (i.e. position)
+        if self.pose is None:
+            return None
         if len(self.pose) == 2 and type(self.pose[0]) == tuple:
             position = self.pose[0]
             return position
