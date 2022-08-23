@@ -149,11 +149,6 @@ def camera_medium():
     return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=20)
 
 
-@pytest.fixture
-def camera_far():
-    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=30)
-
-
 @pytest.mark.skip(reason="test takes too long.")
 def test_frustum_camera(camera, show_plots):
     points = []
@@ -228,6 +223,10 @@ def occupancy_octree():
     return octree_dist
 
 
+@pytest.fixture
+def camera_far():
+    return FrustumCamera(fov=60, aspect_ratio=0.75, near=1, far=30)
+
 def test_visible_volume(camera_far, occupancy_octree):
     # for debugging, visualize the occupancy octree
     camera = camera_far
@@ -235,10 +234,10 @@ def test_visible_volume(camera_far, occupancy_octree):
 
     # The robot by default looks at -z direction. So, it will
     # have a rotation around x by default
-    default_o3d_rotation = [180, 0, 0]  # don't change this
+    default_o3d_rotation = [180,0,0]  # don't change this
 
-    rotation = [0,0,0]
-    position = [4.277523355012637, 3.9782915879178717, 0.0452081835584708]
+    rotation = [90,0,0]
+    position = [15, 5, 5]
     sensor_pose = (*position, *euler_to_quat(*rotation))
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,

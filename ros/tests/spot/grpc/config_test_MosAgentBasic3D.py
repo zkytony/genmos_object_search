@@ -18,8 +18,7 @@ TEST_CONFIG = {
                 'name': 'camera',
                 'params': {'fov': 61,
                            'far': 5,
-                           'near': 1,
-                           'camera_installation_pose': [0, 0, 0, 0, -90, 0]}  # points to +x
+                           'near': 1}  # points to +x
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",

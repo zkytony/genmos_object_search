@@ -326,7 +326,7 @@ class FrustumCamera(SensorModel):
         far: far-plane's distance to the camera
         """
         # Initially, the camera is always at (0,0,0), looking at direction (0,0,-1)
-        # This can be changed by calling `transform_camera()`
+        # This is the configuration when the camera pose is (0,0,0,0,0,0,1)
         #
         # 6 planes:
         #     3
@@ -415,7 +415,7 @@ class FrustumCamera(SensorModel):
     def look(self):
         return self._look
 
-    def transform_camera(self, pose, permanent=False):#x, y, z, thx, thy, thz, permanent=False):
+    def transform_camera(self, pose):
         """Transformation relative to current pose; Affects where the sensor's field of view.
         thx, thy, thz are in degrees. Returns the configuration after the transform is applied.
         In other words, this is saying `set up the camera at the given pose`."""
@@ -428,15 +428,7 @@ class FrustumCamera(SensorModel):
         r_moved = np.transpose(np.matmul(T(x, y, z),
                                          np.matmul(R, np.transpose(self._r))))
         p_moved =  np.transpose(np.matmul(R, np.transpose(self._p)))
-        if permanent:
-            self._p = p_moved
-            self._r = r_moved
-            self._volume = np.transpose(np.matmul(T(x, y, z),
-                                                  np.matmul(R, np.transpose(self._volume))))
-            self._look = get_camera_direction3d(
-                pose, default_camera_direction=self.look)
         return p_moved, r_moved
-
 
     def in_range(self, point, sensor_pose):
         p, r = self.transform_camera(sensor_pose)
@@ -510,6 +502,7 @@ class FrustumCamera(SensorModel):
             observed = random.uniform(0,1) < alpha / (alpha + beta)
         return observed
 
+
     def visible_volume(self, sensor_pose, occupancy_octree,
                        num_rays=20, step_size=0.1,
                        return_obstacles_hit=False,
@@ -571,7 +564,6 @@ class FrustumCamera(SensorModel):
             ray_np_y = random.uniform(-h1/2, h1/2)
             ray_np_z = -self.near
             ray_up_angle = math.atan2(ray_np_y, ray_np_z)
-            #
 
             # transform the ray to (pomdp) world frame
             ray_np_world = self.camera_to_world((ray_np_x, ray_np_y, ray_np_z), sensor_pose)

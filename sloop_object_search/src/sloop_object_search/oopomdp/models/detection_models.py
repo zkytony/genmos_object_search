@@ -547,13 +547,8 @@ class FrustumVoxelAlphaBeta(FrustumModel):
         """
         super().__init__(objid, frustum_params,
                          quality_params)
-        # by default, the camera looks at -z, as defined. The user
-        # can, however, supply a permanent transform in the camera frame.
-        camera_installation_pose = frustum_params.get(
-            "camera_installation_pose", (0, 0, 0, 0, 0, 0))
+        # by default, the camera looks at -z, as defined.
         self.sensor = FrustumCamera(**frustum_params)
-        self.sensor.transform_camera(camera_installation_pose, permanent=True)
-        print(f"FrustumCamera for {objid} installed to look at {self.sensor.look} by default")
         self.params = quality_params
 
     @property
