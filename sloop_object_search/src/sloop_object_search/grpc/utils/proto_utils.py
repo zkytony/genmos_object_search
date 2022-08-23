@@ -328,8 +328,8 @@ def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs)
         detections = {}
         for detection_pb in observation_pb.detections:
             objo = pomdp_detection_from_proto(
-                detection_pb, search_region, **kwargs)
-            if objo.id not in objobzs:
+                detection_pb, agent.search_region, **kwargs)
+            if objo.id not in detections:
                 detections[objo.id] = objo
             else:
                 logging.warning(f"multiple detections for {objo.id}. Only keeping one.")

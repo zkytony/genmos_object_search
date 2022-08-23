@@ -70,7 +70,6 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     def null_observation(objid):
         return ObjectDetection(objid, ObjectDetection.NULL)
 
-    @property
     def bbox_axis_aligned(self, origin_rep=True):
         """axis-aligned boudning box. If origin_rep is True,
         return origin-based box. Otherwise,

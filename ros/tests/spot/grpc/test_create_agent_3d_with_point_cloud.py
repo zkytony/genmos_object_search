@@ -29,6 +29,7 @@ class CreateAgentTestCase(BaseTestCase3D):
         response = self._sloop_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.FAILED
 
+        self.config = TEST_CONFIG
         self._sloop_client.createAgent(config=TEST_CONFIG,
                                        robot_id=self.robot_id,
                                        header=pbutil.make_header())

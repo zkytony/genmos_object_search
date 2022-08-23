@@ -24,7 +24,7 @@ TEST_CONFIG = {
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
-                                              "quality": [1e5, 0.0]}}},
+                                              "quality": [1e5, 0.1]}}},
                   'id': 'robot0',
                   'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
                              'params': {'step_size': 1.0,

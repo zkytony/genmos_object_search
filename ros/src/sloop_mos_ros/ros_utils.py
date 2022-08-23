@@ -299,6 +299,24 @@ def make_viz_marker_from_object_state(sobj, header, **kwargs):
     _fill_viz_marker(marker, **kwargs)
     return marker
 
+def make_viz_marker_for_object(objid, pose, header, **kwargs):
+    """
+    Args:
+       pose (x,y,z,qx,qy,qz,qw)
+       viz_type (int): e.g. Marker.CUBE
+       color (std_msgs.ColorRGBA)
+       scale (float or geometry_msgs.Vector3)
+    """
+    marker = Marker(header=header)
+    marker.ns = "object"
+    marker.id = hash16(objid)
+    loc = pose[:3]
+    rot = pose[3:]
+    marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=rot[0], y=rot[1], z=rot[2], w=rot[3])
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
 def tf2msg_from_object_loc(loc, world_frame, object_frame, **kwargs):
     stamp = kwargs.get("stamp", rospy.Time.now())
     t = geometry_msgs.msg.TransformStamped(
@@ -375,10 +393,10 @@ def make_octnode_marker_msg(pos, res, header, alpha=1.0,
     marker.color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=alpha)
     return marker
 
-def clear_octnode_markers(header):
+def clear_markers(header, ns):
     marker = Marker()
     marker.header = header
-    marker.ns = "octnode"
+    marker.ns = ns
     marker.action = Marker.DELETEALL
     return MarkerArray([marker])
 

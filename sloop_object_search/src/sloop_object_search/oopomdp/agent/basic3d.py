@@ -61,7 +61,7 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
-    def update_belief(self, observation, action=None, debug=False):
+    def update_belief(self, observation, action=None, debug=True):
         """
         update belief given observation. If the observation is
         object detections, we expect it to be of type JointObservation,
@@ -72,7 +72,6 @@ class MosAgentBasic3D(MosAgent):
                                  " to the object detections.")
 
             robot_pose = observation.z(self.robot_id).pose
-            print(robot_pose)
             visible_volume = None  # we will
             for objid in observation:
                 if objid == self.robot_id:
@@ -102,10 +101,10 @@ class MosAgentBasic3D(MosAgent):
                         voxels[voxel] = Voxel(voxel, Voxel.FREE)
                     else:
                         x,y,z,r = voxel
-                        bbox = objo.bbox_axis_aligned
+                        bbox = objo.bbox_axis_aligned()
                         voxel_box = ((x*r, y*r, z*r), r, r, r)
                         if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
-                            voxels[voxel] = objid
+                            voxels[voxel] = Voxel(voxel, objid)
                             overlapped = True
                         else:
                             voxels[voxel] = Voxel(voxel, Voxel.FREE)

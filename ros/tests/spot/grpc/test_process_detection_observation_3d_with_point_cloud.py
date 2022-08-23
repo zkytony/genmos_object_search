@@ -19,7 +19,8 @@ from tf2_ros import TransformBroadcaster
 
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.utils import proto_utils
-from sloop_object_search.grpc.common_pb2 import Status, Voxel3D
+from sloop_object_search.grpc.common_pb2\
+    import Status, Voxel3D, Box3D, Pose3D, Vec3
 from sloop_object_search.grpc.observation_pb2\
     import ObjectDetectionArray, Detection3D
 from sloop_object_search.utils.misc import hash16
@@ -38,6 +39,8 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
             "~robot_pose", MarkerArray, queue_size=10, latch=True)
         self._octbelief_markers_pub = rospy.Publisher(
             "~octree_belief", MarkerArray, queue_size=10, latch=True)
+        self._object_markers_pub = rospy.Publisher(
+            "~objects", MarkerArray, queue_size=10, latch=True)
         self.br = TransformBroadcaster()
 
     def get_and_visualize_belief(self, o3dviz=True):
@@ -56,7 +59,7 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                 draw_octree_dist(bobj.octree_dist)
 
             # clear and republish
-            clear_msg = ros_utils.clear_octnode_markers(header)
+            clear_msg = ros_utils.clear_markers(header, ns="octnode")
             self._octbelief_markers_pub.publish(clear_msg)
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=1.0)
@@ -83,14 +86,25 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         self._robot_markers_pub.publish(MarkerArray([marker]))
 
         # publish tf
-        rot = np.array(quat_to_euler(*robot_pose[3:]))
-        robot_pose_aligned = (*robot_pose[:3], *euler_to_quat(*rot))
         trobot = ros_utils.tf2msg_from_robot_pose(
-            robot_pose_aligned, self.world_frame, self.robot_id)
+            robot_pose, self.world_frame, self.robot_id)
         self.br.sendTransform(trobot)
 
         return response.robot_belief.pose
 
+    def make_up_object(self, objid, object_loc, objsizes):
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="object")
+        self._object_markers_pub.publish(clear_msg)
+        marker = ros_utils.make_viz_marker_for_object(
+            objid, (*object_loc, 0, 0, 0, 1), header,
+            scale=Vector3(*objsizes), lifetime=0)
+        self._object_markers_pub.publish(MarkerArray([marker]))
+
+        tobj = ros_utils.tf2msg_from_object_loc(
+            object_loc, self.world_frame, objid)
+        self.br.sendTransform(tobj)
 
     def run(self, o3dviz=False):
         super().run()
@@ -98,20 +112,80 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         self.get_and_visualize_belief(o3dviz=o3dviz)
         robot_pose_pb = self.get_and_visualize_robot_pose()
 
-        time.sleep(2)
-        # First, suppose the robot receives no detection
+        # ############### Test 1 #######################
+        # # First, suppose the robot receives no detection
+        # print("testing no-detection processing")
+        # time.sleep(2)
+        # header = proto_utils.make_header(self.world_frame)
+        # object_detection = ObjectDetectionArray(header=header,
+        #                                         robot_id=self.robot_id,
+        #                                         detections=[])
+        # response = self._sloop_client.processObservation(
+        #     self.robot_id, object_detection, robot_pose_pb, header=header)
+        # assert response.status == Status.SUCCESSFUL
+        # print("no-detection processing done")
+
+        # # see belief now
+        # self.get_and_visualize_belief(o3dviz=o3dviz)
+        # self.get_and_visualize_robot_pose()
+
+        # ############### Test 2 #######################
+        # # suppose the robot receive detection outside FOV
+        # print("testing out-of-fov processing")
+        # time.sleep(3)
+        # robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
+        # target_id = self.config["agent_config"]["targets"][0]
+        # obj_loc = [0.87, 1.92, 0.25]
+        # objsizes = [0.75, 1.0, 0.75]
+        # self.make_up_object(target_id, obj_loc, objsizes)
+        # objbox = Box3D(center=proto_utils.posetuple_to_poseproto((*obj_loc, 0, 0, 0, 1)),
+        #                sizes=Vec3(x=objsizes[0],
+        #                           y=objsizes[1],
+        #                           z=objsizes[2]))
+
+        # header = proto_utils.make_header(self.world_frame)
+        # object_detection = ObjectDetectionArray(
+        #     header=header,
+        #     robot_id=self.robot_id,
+        #     detections=[Detection3D(label=target_id,
+        #                             box=objbox)])
+        # response = self._sloop_client.processObservation(
+        #     self.robot_id, object_detection, robot_pose_pb, header=header)
+        # assert response.status == Status.SUCCESSFUL
+        # print("out-of-fov detection processing successful")
+        # # see belief now
+        # self.get_and_visualize_belief(o3dviz=o3dviz)
+        # self.get_and_visualize_robot_pose()
+
+
+        ############### Test 3 #######################
+        # suppose the robot receive detection within FOV
+        print("testing within-fov processing")
+        time.sleep(3)
+        robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
+        target_id = self.config["agent_config"]["targets"][0]
+        obj_loc = [4.20, 4.39, 0.45]
+        objsizes = [0.75, 1.0, 0.75]
+        self.make_up_object(target_id, obj_loc, objsizes)
+        objbox = Box3D(center=proto_utils.posetuple_to_poseproto((*obj_loc, 0, 0, 0, 1)),
+                       sizes=Vec3(x=objsizes[0],
+                                  y=objsizes[1],
+                                  z=objsizes[2]))
+
         header = proto_utils.make_header(self.world_frame)
-        object_detection = ObjectDetectionArray(header=header,
-                                                robot_id=self.robot_id,
-                                                detections=[])
+        object_detection = ObjectDetectionArray(
+            header=header,
+            robot_id=self.robot_id,
+            detections=[Detection3D(label=target_id,
+                                    box=objbox)])
         response = self._sloop_client.processObservation(
             self.robot_id, object_detection, robot_pose_pb, header=header)
         assert response.status == Status.SUCCESSFUL
-        print("no-detection processing successful")
-
+        print("wihtin-fov detection processing successful")
         # see belief now
         self.get_and_visualize_belief(o3dviz=o3dviz)
         self.get_and_visualize_robot_pose()
+
 
         rospy.spin()
 
