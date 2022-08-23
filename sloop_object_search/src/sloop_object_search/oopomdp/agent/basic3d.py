@@ -61,7 +61,7 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
-    def update_belief(self, observation, action=None):
+    def update_belief(self, observation, action=None, debug=False):
         """
         update belief given observation. If the observation is
         object detections, we expect it to be of type JointObservation,
@@ -117,16 +117,17 @@ class MosAgentBasic3D(MosAgent):
                 if objid in self.target_objects:
                     b_obj = self.belief.b(objid)
 
-                    _visualize_octree_belief(b_obj, robot_pose,
-                                             visible_volume=visible_volume, obstacles_hit=obstacles_hit)
+                    if debug:
+                        _visualize_octree_belief(b_obj, robot_pose,
+                                                 visible_volume=visible_volume, obstacles_hit=obstacles_hit)
 
                     b_obj_new = update_octree_belief(b_obj, FovVoxels(voxels),
                                                      alpha=detection_model.alpha,
                                                      beta=detection_model.beta)
 
-                    _visualize_octree_belief(b_obj_new, robot_pose,
-                                             visible_volume=visible_volume, obstacles_hit=obstacles_hit)
-
+                    if debug:
+                        _visualize_octree_belief(b_obj_new, robot_pose,
+                                                 visible_volume=visible_volume, obstacles_hit=obstacles_hit)
 
                     self.belief.set_object_belief(objid, b_obj_new)
 

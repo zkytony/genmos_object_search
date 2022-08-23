@@ -362,6 +362,7 @@ def make_octnode_marker_msg(pos, res, header, alpha=1.0,
     """
     marker = Marker()
     marker.header = header
+    marker.ns = "octnode"
     marker.id = hash16((*pos, res))
     marker.type = Marker.CUBE
     marker.pose.position = geometry_msgs.msg.Point(x=pos[0] + res/2,
@@ -373,6 +374,13 @@ def make_octnode_marker_msg(pos, res, header, alpha=1.0,
     marker.lifetime = rospy.Duration(lifetime)
     marker.color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=alpha)
     return marker
+
+def clear_octnode_markers(header):
+    marker = Marker()
+    marker.header = header
+    marker.ns = "octnode"
+    marker.action = Marker.DELETEALL
+    return MarkerArray([marker])
 
 def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.COLOR_MAP_JET,
                                          alpha_scaling=1.0):

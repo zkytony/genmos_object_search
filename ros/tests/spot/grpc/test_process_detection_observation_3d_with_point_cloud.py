@@ -54,6 +54,10 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
             bobj = pickle.loads(bobj_pb.dist_obj)
             if o3dviz:
                 draw_octree_dist(bobj.octree_dist)
+
+            # clear and republish
+            clear_msg = ros_utils.clear_octnode_markers(header)
+            self._octbelief_markers_pub.publish(clear_msg)
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=1.0)
             self._octbelief_markers_pub.publish(msg)
@@ -88,11 +92,11 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         return response.robot_belief.pose
 
 
-    def run(self, o3dviz=True):
+    def run(self, o3dviz=False):
         super().run()
 
-        self.get_and_visualize_belief()
-        robot_pose_pb = self.get_and_visualize_robot_pose(o3dviz=o3dviz)
+        self.get_and_visualize_belief(o3dviz=o3dviz)
+        robot_pose_pb = self.get_and_visualize_robot_pose()
 
         time.sleep(2)
         # First, suppose the robot receives no detection
