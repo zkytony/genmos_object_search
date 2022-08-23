@@ -27,6 +27,7 @@ from sloop_object_search.grpc.observation_pb2\
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import euler_to_quat, quat_to_euler
 from sloop_object_search.utils.open3d_utils import draw_octree_dist
+from sloop_object_search.utils.colors import lighter
 from sloop_object_search.oopomdp.models.octree_belief import plot_octree_belief
 
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
@@ -54,12 +55,23 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         fovs = json.loads(response.fovs.decode('utf-8'))
         markers = []
         for objid in fovs:
-            color = np.array(self.config["agent_config"]["objects"][objid].get(
+            free_color = np.array(self.config["agent_config"]["objects"][objid].get(
                 "color", [200, 100, 200]))/255
+            hit_color = lighter(free_color*255, -0.25)/255
+
+            obstacles_hit = set(map(tuple, fovs[objid]['obstacles_hit']))
             for voxel in fovs[objid]['visible_volume']:
+                voxel = tuple(voxel)
+                if voxel in obstacles_hit:
+                    continue
                 m = ros_utils.make_viz_marker_for_voxel(
-                    voxel, header, color=color, ns="fov",
-                    lifetime=0)
+                    voxel, header, color=free_color, ns="fov",
+                    lifetime=0, alpha=0.7)
+                markers.append(m)
+            for voxel in obstacles_hit:
+                m = ros_utils.make_viz_marker_for_voxel(
+                    voxel, header, color=hit_color, ns="fov",
+                    lifetime=0, alpha=0.7)
                 markers.append(m)
         self._fovs_markers_pub.publish(MarkerArray(markers))
 
@@ -126,11 +138,21 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
             object_loc, self.world_frame, objid)
         self.br.sendTransform(tobj)
 
-    def run(self, o3dviz=False):
-        super().run()
+    def test_one_round(self, objloc, objsizes=[0.75, 1.0, 0.75], o3dviz=True):
+
+        detections = []
+        if objloc is not None:
+            target_id = self.config["agent_config"]["targets"][0]
+            self.make_up_object(target_id, obj_loc, objsizes)
+            objbox = Box3D(center=proto_utils.posetuple_to_poseproto((*obj_loc, 0, 0, 0, 1)),
+                           sizes=Vec3(x=objsizes[0],
+                                      y=objsizes[1],
+                                      z=objsizes[2]))
+            detections.append(Detection3D(label=target_id, box=objbox))
 
         self.get_and_visualize_belief(o3dviz=o3dviz)
         robot_pose_pb = self.get_and_visualize_robot_pose()
+        robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
 
         ############### Test 1 #######################
         # First, suppose the robot receives no detection
@@ -139,7 +161,7 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         header = proto_utils.make_header(self.world_frame)
         object_detection = ObjectDetectionArray(header=header,
                                                 robot_id=self.robot_id,
-                                                detections=[])
+                                                detections=detections)
         response = self._sloop_client.processObservation(
             self.robot_id, object_detection, robot_pose_pb,
             header=header, return_fov=True)
@@ -150,6 +172,14 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         self.visualize_fovs(response)
         self.get_and_visualize_belief(o3dviz=o3dviz)
         self.get_and_visualize_robot_pose()
+
+
+    def run(self, o3dviz=False):
+        super().run()
+
+        self.test_one_round(None, o3dviz=o3dviz)
+        # obj_loc = [0.87, 1.92, 0.25]
+        # objsizes = [0.75, 1.0, 0.75]
 
         # ############### Test 2 #######################
         # # suppose the robot receive detection outside FOV
