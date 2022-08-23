@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
-from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution
+from sloop_object_search.utils.colors import color_map, COLOR_MAP_GRAYS
+from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
 
 def cube_unfilled(scale=1, color=[1,0,0]):
@@ -89,7 +90,8 @@ def draw_search_region3d(search_region, octree_dist=None, points=None):
     o3d.visualization.draw_geometries(geometries)
     return geometries
 
-def draw_octree_dist(octree_dist, viz=True):
+def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
+                     cmap=COLOR_MAP_GRAYS):
     """draw the octree dist in POMDP space."""
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
         size=4.0, origin=[0.0, 0.0, 0.0])
@@ -98,13 +100,19 @@ def draw_octree_dist(octree_dist, viz=True):
     voxels = octree_dist.octree.collect_plotting_voxels()
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]  # resolutions
-    vv = [v[4] for v in voxels]  # values
+    probs = [octree_dist.prob_at(
+        *Octree.increase_res(v[:3], 1, v[3]), v[3])
+             for v in voxels]
     for i in range(len(vp)):
         pos = vp[i]
         size = vr[i]  # cube size in meters
         mesh_box = cube_unfilled(scale=size)
         mesh_box.translate(np.asarray(pos))
-        mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
+        if color_by_prob:
+            color = color_map(probs[i], [0.0, 1.0], cmap)
+        else:
+            color = [0.9, 0.1, 0.1]
+        mesh_box.paint_uniform_color(color)
         geometries.append(mesh_box)
     if viz:
         o3d.visualization.draw_geometries(geometries)

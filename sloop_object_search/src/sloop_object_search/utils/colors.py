@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from .math import remap
 
 # colors
 def lighter(color, percent):
@@ -31,6 +32,45 @@ def linear_color_gradient(rgb_start, rgb_end, n):
             for i in range(3)
         ))
     return colors
+
+def color_map(val, val_posts, rgb_posts):
+    """Given a value that lies between an interval in valposts
+    which should be [minval, post1, post2, ..., postn, maxval],
+    paired with rgb posts, extrapolate the color for val.
+
+    val_posts can be [minval, maxval] only. In that case,
+    it will be expanded to contain intermediate values.
+
+    val_posts should be a list of numbers or floats.
+    rgb_posts should be a list of [r,g,b] arrays or tuples
+
+    we have some predefined rgb_posts, such as COLOR_MAP_JET"""
+    if len(val_posts) == 2:
+        val_posts = np.linspace(val_posts[0], val_posts[1], num=len(rgb_posts))
+    else:
+        if len(val_posts) != len(rgb_posts):
+            raise ValueError("number of values posts should equal"\
+                             "the number of rgb posts. Or, specify [minval, maxval]")
+
+    # determine which post val falls into
+    for i in range(1, len(val_posts)):
+        in_range = val_posts[i-1] <= val <= val_posts[i]
+        if in_range:
+            rgb_min = rgb_posts[i-1]
+            rgb_max = rgb_posts[i]
+            r = remap(val, val_posts[i-1], val_posts[i], rgb_min[0], rgb_max[0])
+            g = remap(val, val_posts[i-1], val_posts[i], rgb_min[1], rgb_max[1])
+            b = remap(val, val_posts[i-1], val_posts[i], rgb_min[2], rgb_max[2])
+            return np.array([r, g, b])
+    raise ValueError(f"value {val} does not fall in any interval in {val_posts}")
+
+COLOR_MAP_JET = [[0.43, 0.07, 0.0],
+                 [0.0, 0.9, 0.93],
+                 [0.93, 0.53, 0.0],
+                 [0.07, 0.0, 0.43]]
+
+COLOR_MAP_GRAYS = [[0.95, 0.95, 0.95],
+                   [0.05, 0.05, 0.05]]
 
 def rgb_to_hex(rgb):
     r,g,b = rgb
