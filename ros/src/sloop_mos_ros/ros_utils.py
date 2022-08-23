@@ -17,6 +17,7 @@ import tf2_ros
 import tf2_geometry_msgs.tf2_geometry_msgs
 
 from sloop_object_search.utils.misc import hash16
+from sloop_object_search.utils.math import remap
 import sloop_object_search.grpc.common_pb2 as common_pb2
 
 
@@ -377,13 +378,17 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, alpha_scaling
     which is a Histogram, make a MarkerArray message for it."""
     markers = []
     hist_pb = octree_belief_pb.dist
+    prob_max = max(hist_pb.probs)
+    prob_min = min(hist_pb.probs)
     for i in range(hist_pb.length):
         voxel = common_pb2.Voxel3D()
         hist_pb.values[i].Unpack(voxel)
 
         pos = [voxel.pos.x, voxel.pos.y, voxel.pos.z]
         prob = hist_pb.probs[i]
-        marker = make_octnode_marker_msg(pos, voxel.res, prob*alpha_scaling, header, lifetime=0)  # 0 is forever
+        prob_alpha = remap(prob, prob_min, prob_max, 0.0, 1.0)*alpha_scaling
+        marker = make_octnode_marker_msg(
+            pos, voxel.res, prob_alpha, header, lifetime=0)  # 0 is forever
         markers.append(marker)
     return MarkerArray(markers)
 
