@@ -112,50 +112,50 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         self.get_and_visualize_belief(o3dviz=o3dviz)
         robot_pose_pb = self.get_and_visualize_robot_pose()
 
-        # ############### Test 1 #######################
-        # # First, suppose the robot receives no detection
-        # print("testing no-detection processing")
-        # time.sleep(2)
-        # header = proto_utils.make_header(self.world_frame)
-        # object_detection = ObjectDetectionArray(header=header,
-        #                                         robot_id=self.robot_id,
-        #                                         detections=[])
-        # response = self._sloop_client.processObservation(
-        #     self.robot_id, object_detection, robot_pose_pb, header=header)
-        # assert response.status == Status.SUCCESSFUL
-        # print("no-detection processing done")
+        ############### Test 1 #######################
+        # First, suppose the robot receives no detection
+        print("testing no-detection processing")
+        time.sleep(2)
+        header = proto_utils.make_header(self.world_frame)
+        object_detection = ObjectDetectionArray(header=header,
+                                                robot_id=self.robot_id,
+                                                detections=[])
+        response = self._sloop_client.processObservation(
+            self.robot_id, object_detection, robot_pose_pb, header=header)
+        assert response.status == Status.SUCCESSFUL
+        print("no-detection processing done")
 
-        # # see belief now
-        # self.get_and_visualize_belief(o3dviz=o3dviz)
-        # self.get_and_visualize_robot_pose()
+        # see belief now
+        self.get_and_visualize_belief(o3dviz=o3dviz)
+        self.get_and_visualize_robot_pose()
 
-        # ############### Test 2 #######################
-        # # suppose the robot receive detection outside FOV
-        # print("testing out-of-fov processing")
-        # time.sleep(3)
-        # robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
-        # target_id = self.config["agent_config"]["targets"][0]
-        # obj_loc = [0.87, 1.92, 0.25]
-        # objsizes = [0.75, 1.0, 0.75]
-        # self.make_up_object(target_id, obj_loc, objsizes)
-        # objbox = Box3D(center=proto_utils.posetuple_to_poseproto((*obj_loc, 0, 0, 0, 1)),
-        #                sizes=Vec3(x=objsizes[0],
-        #                           y=objsizes[1],
-        #                           z=objsizes[2]))
+        ############### Test 2 #######################
+        # suppose the robot receive detection outside FOV
+        print("testing out-of-fov processing")
+        time.sleep(3)
+        robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
+        target_id = self.config["agent_config"]["targets"][0]
+        obj_loc = [0.87, 1.92, 0.25]
+        objsizes = [0.75, 1.0, 0.75]
+        self.make_up_object(target_id, obj_loc, objsizes)
+        objbox = Box3D(center=proto_utils.posetuple_to_poseproto((*obj_loc, 0, 0, 0, 1)),
+                       sizes=Vec3(x=objsizes[0],
+                                  y=objsizes[1],
+                                  z=objsizes[2]))
 
-        # header = proto_utils.make_header(self.world_frame)
-        # object_detection = ObjectDetectionArray(
-        #     header=header,
-        #     robot_id=self.robot_id,
-        #     detections=[Detection3D(label=target_id,
-        #                             box=objbox)])
-        # response = self._sloop_client.processObservation(
-        #     self.robot_id, object_detection, robot_pose_pb, header=header)
-        # assert response.status == Status.SUCCESSFUL
-        # print("out-of-fov detection processing successful")
-        # # see belief now
-        # self.get_and_visualize_belief(o3dviz=o3dviz)
-        # self.get_and_visualize_robot_pose()
+        header = proto_utils.make_header(self.world_frame)
+        object_detection = ObjectDetectionArray(
+            header=header,
+            robot_id=self.robot_id,
+            detections=[Detection3D(label=target_id,
+                                    box=objbox)])
+        response = self._sloop_client.processObservation(
+            self.robot_id, object_detection, robot_pose_pb, header=header)
+        assert response.status == Status.SUCCESSFUL
+        print("out-of-fov detection processing successful")
+        # see belief now
+        self.get_and_visualize_belief(o3dviz=o3dviz)
+        self.get_and_visualize_robot_pose()
 
 
         ############### Test 3 #######################
@@ -164,7 +164,7 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         time.sleep(3)
         robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
         target_id = self.config["agent_config"]["targets"][0]
-        obj_loc = [4.20, 4.39, 0.45]
+        obj_loc = [4.20, 5.09, 0.45]
         objsizes = [0.75, 1.0, 0.75]
         self.make_up_object(target_id, obj_loc, objsizes)
         objbox = Box3D(center=proto_utils.posetuple_to_poseproto((*obj_loc, 0, 0, 0, 1)),
