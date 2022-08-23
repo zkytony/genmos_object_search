@@ -119,7 +119,12 @@ message ProcessObservationRequest {
   optional string action_id = 6;
 
   // return the pomdp model's fov corresponding to the object detection
+  // Note that for different detectors (for different objects), there may
+  // be different fovs
   optional bool return_fov = 7;
+
+  // debug flag
+  optional bool debug = 8;
 }
 
 message ProcessObservationReply {
@@ -127,9 +132,11 @@ message ProcessObservationReply {
   Status status = 2;
   string message = 3;
 
-  // set if 'return_fov' is True
-  repeated Voxel3D visible_volume = 5;  // the voxels within the
-  repeated Voxel3D obstacles_hit = 6;  // the
+  // set if 'return_fov' is True. This is a serialized
+  // JSON string of the format:
+  //   {'objid' -> {'visible_volume': [ [x,y,z] ... ],
+  //                'obstacles_hit': [ [x,y,z] ... ] }}
+  bytes fovs = 4;
 }
 
 //// For GetObjectBeliefs rpc ////
@@ -199,10 +206,6 @@ message PlanActionReply {
   // server-generated id used to identify an action
   // associated with a plan request
   string action_id = 7;
-
-  // // A serialized yaml representation of the planning search
-  // // tree (UTF-8 encoding), useful for interpretation.
-  // optional bytes planning_tree = 5;
 }
 
 //// For ActionFinished rpc ////
@@ -243,7 +246,7 @@ message SearchRegionParams3D {
 message ObjectBelief {
   string object_id = 1;
   Histogram dist = 2;
-  // possible to pass over the python belief object; For debugging;
+  // the pickled python belief object; For debugging;
   // the positions may be in POMDP frame
   optional bytes dist_obj = 3;
 }
