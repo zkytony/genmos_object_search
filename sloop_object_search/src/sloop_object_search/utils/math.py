@@ -127,7 +127,7 @@ def originbox_to_centerbox(origin_box):
     center_x = origin[0] + w/2
     center_y = origin[1] + l/2
     center_z = origin[2] + h/2
-    return (center_x, center_y, center_z)
+    return ((center_x, center_y, center_z), w, l, h)
 
 def centerbox_to_originbox(center_box):
     """given an center-based box return
@@ -135,8 +135,8 @@ def centerbox_to_originbox(center_box):
     center, w, l, h = center_box
     origin_x = center[0] - w/2
     origin_y = center[1] - l/2
-    center_z = origin[2] - h/2
-    return (center_x, center_y, center_z)
+    origin_z = center[2] - h/2
+    return ((origin_x, origin_y, origin_z), w, l, h)
 
 
 def sample_in_box3d_origin(box):
