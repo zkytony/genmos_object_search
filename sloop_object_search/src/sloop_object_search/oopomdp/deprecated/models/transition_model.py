@@ -148,7 +148,7 @@ class RobotTransBasic3D(RobotTransitionModel):
                                 reachable_positions=None,
                                 pos_precision="int",
                                 rot_precision=0.001,
-                                default_forward_direction=DEFAULT_3DCAMERA_LOOK_DIRECTION):
+                                default_forward_direction=None):
         """
         pose transform where the action is specified by change
 
@@ -161,6 +161,8 @@ class RobotTransBasic3D(RobotTransitionModel):
         """
         # We transform this direction vector to the given pose, which gives
         # us the current camera direction
+        if default_forward_direction is None:
+            raise ValueError("default_forward_direction must be provided.")
         robot_facing = get_camera_direction3d(
             pose, default_camera_direction=default_forward_direction) # camere by default looks at (0,0,-1)
         forward, dth = motion
