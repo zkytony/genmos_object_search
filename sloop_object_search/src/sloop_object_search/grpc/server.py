@@ -287,11 +287,11 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         agent = self._agents[request.robot_id]
         if request.HasField("object_detections"):
             observation = proto_utils.pomdp_observation_from_proto(
-                request.robot_pose, request.object_detections, agent.search_region)
+                request.robot_pose, request.object_detections, agent)
 
         elif request.HasField("langauge"):
             observation = proto_utils.pomdp_observation_from_proto(
-                request.robot_pose, request.language, agent.search_region)
+                request.robot_pose, request.language, agent)
 
         if request.HasField("action_id"):
             action = self._actions_planned[request.robot_id][request.action_id]

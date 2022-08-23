@@ -22,7 +22,8 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         # let's not compare equality using sizes as they
         # are usually noisy - so we leave it out in super() below
         if sizes is None:
-            sizes = (1, 1, 1)
+            if pose != ObjectDetection.NULL:
+                sizes = (1, 1, 1)
         self._sizes = sizes
         super().__init__((objid, pose))
 
@@ -74,6 +75,8 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         """axis-aligned boudning box. If origin_rep is True,
         return origin-based box. Otherwise,
         return center-based box"""
+        if self.pose == ObjectDetection.NULL:
+            raise RuntimeError("NULL object detection has no bounding box.")
         center_bbox = (self.loc, *self.sizes)
         if origin_rep:
             return math_utils.centerbox_to_originbox(center_bbox)

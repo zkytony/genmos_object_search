@@ -18,8 +18,8 @@ from sloop_object_search.grpc.action_pb2\
     import MoveViewpoint, Find, KeyValueAction, Motion2D, Motion3D
 from .. import sloop_object_search_pb2 as slpb2
 
-from sloop_object_search.oopomdp.domain import action as sloop_action
-from sloop_object_search.oopomdp.domain import observation as sloop_observation
+from sloop_object_search.oopomdp.domain import action as slpa
+from sloop_object_search.oopomdp.domain import observation as slpo
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
 from sloop_object_search.utils.math import to_rad, fround
@@ -157,13 +157,13 @@ def robot_pose_proto_from_tuple(robot_pose):
 def pomdp_action_to_proto(action, agent, header=None):
     if header is None:
         header = make_header()
-    if isinstance(action, sloop_action.MotionAction):
+    if isinstance(action, slpa.MotionAction):
         action_type = "move_action"
-        if isinstance(action, sloop_action.MotionAction2D):
+        if isinstance(action, slpa.MotionAction2D):
             raise NotImplementedError()
-        elif isinstance(action, sloop_action.MotionActionTopo):
+        elif isinstance(action, slpa.MotionActionTopo):
             raise NotImplementedError()
-        elif isinstance(action, sloop_action.MotionAction3D):
+        elif isinstance(action, slpa.MotionAction3D):
             dpos_pomdp, drot = action.motion
             # we need to convert the position change from pomdp frame to
             # the world frame.
@@ -176,7 +176,7 @@ def pomdp_action_to_proto(action, agent, header=None):
                                       motion_3d=motion_pb,
                                       name=action.name,
                                       expected_cost=action.step_cost)
-    elif isinstance(action, sloop_action.FindAction):
+    elif isinstance(action, slpa.FindAction):
         action_type = "find_action"
         action_pb = Find(header=header,
                          robot_id=agent.robot_id,
@@ -302,23 +302,36 @@ def pomdp_detection_from_proto(detection_pb, search_region,
     pomdp_center_pos = fround(pos_precision, search_region.to_pomdp_pos(center_pos))
     pomdp_sizes = fround(size_precision, sizes / search_region.search_space_resolution)
     pomdp_pose = (pomdp_center_pos, center_rot)
-    return sloop_observation.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
+    return slpo.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
 
-def pomdp_observation_from_proto(robot_pose_pb, observation_pb, search_region, **kwargs):
+def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs):
     if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
         robot_id = observation_pb.robot_id
         robot_pose = robot_pose_from_proto(robot_pose_pb)
-        robot_obz = sloop_observation.RobotLocalization(robot_id, robot_pose)
+        robot_obz = slpo.RobotLocalization(robot_id, robot_pose)
         objobzs = {robot_id: robot_obz}
+
+        # we will receive an observation for every detectable object.
+        # if the object isn't detected, its pose is NULL.
+        # First collect what we do detect
+        detections = {}
         for detection_pb in observation_pb.detections:
             objo = pomdp_detection_from_proto(
                 detection_pb, search_region, **kwargs)
             if objo.id not in objobzs:
-                objobzs[objo.id] = objo
+                detections[objo.id] = objo
             else:
                 logging.warning(f"multiple detections for {objo.id}. Only keeping one.")
-        return sloop_observation.JointObservation(objobzs)
+
+        # Now go through every detectable object
+        for objid in agent.detection_models:
+            if objid not in detections:
+                objo = slpo.ObjectDetection(objid, slpo.ObjectDetection.NULL)
+            else:
+                objo = detections[objid]
+            objobzs[objid] = objo
+        return slpo.JointObservation(objobzs)
 
     elif isinstance(observation_pb, o_pb2.RobotPose):
         raise NotImplementedError
