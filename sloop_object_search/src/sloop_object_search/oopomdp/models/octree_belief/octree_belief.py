@@ -461,18 +461,22 @@ class RegionalOctreeDistribution(OctreeDistribution):
     the space of possible object locations or as the map) is
     smaller than the space that the full octree covers.
 
+    If region is None, then the region is the entire space.
+
     Compared with OccupancyOctreeDistribution, simply: the default
     value within a region in RegionalOctreeDistribution is configurable (DEFAULT_VAL
     by default), while the default value within a region in OccupancyOctreeDistribution
     is always 0.
     """
-    def __init__(self, dimensions, region,
+    def __init__(self, dimensions, region=None,
                  default_region_val=DEFAULT_VAL, **kwargs):
         """The origin in 'region' here should be in POMDP frame (NOT world frame).
         The origin and w, h, l in 'region' can be float-valued."""
-        if type(region) != tuple and type(region) != set:
+        if region is not None and type(region) != tuple and type(region) != set:
             raise TypeError("region must be either a tuple (center, w, h, l)"
                             "representing a box, or a set of voxels")
+        if region is None:
+            region = ((0,0,0), dimensions[0], dimensions[1], dimensions[2])
         self._region = region
         # Default value is 0 - it's only non-zero for grids inside the region
         super().__init__(dimensions, default_val=0)
@@ -608,5 +612,5 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
     within the region -- i.e. all default values are zero. Nevertheless,
     only the occupancy within the region is considered; Those outside
     are ignored."""
-    def __init__(self, dimensions, region):
-        super().__init__(dimensions, region, default_region_val=0)
+    def __init__(self, dimensions, region=None):
+        super().__init__(dimensions, region=region, default_region_val=0)

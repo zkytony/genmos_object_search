@@ -109,7 +109,7 @@ class SearchRegion3D(SearchRegion):
         return self.to_pomdp_pos(world_point)
 
     def occupied_at(self, pos, res=1):
-        if not self.octree.valid_voxel(*pos, res):
+        if not self.octree_dist.octree.valid_voxel(*pos, res):
             raise ValueError(f"position {pos} at resolution {res} is not a valid voxel.")
         node = self.octree_dist.octree.get_node(*pos, res)
         if node is None:

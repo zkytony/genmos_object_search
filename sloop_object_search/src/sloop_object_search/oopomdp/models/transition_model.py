@@ -310,7 +310,8 @@ class RobotTransBasic3D(RobotTransitionModel):
     def _transform_pose_axis(cls, pose, motion,
                              reachability_func=None,
                              pos_precision="int",
-                             rot_precision=0.001):
+                             rot_precision=0.001,
+                             **kwargs):
         """pose transform where the action is specified by change
 
         By default, motion specifies relative position and

@@ -5,7 +5,7 @@ import random
 from sloop.osm.datasets.map_info_utils import register_map, load_filepaths
 from sloop_object_search.oopomdp.domain.state import RobotState
 from sloop_object_search.oopomdp.agent.basic3d import MosAgentBasic3D
-from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
+from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief, OccupancyOctreeDistribution
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -49,13 +49,13 @@ def config():
 
 @pytest.fixture
 def search_region():
-    octree = Octree((16, 16, 16), default_val=0)
+    octree_dist = OccupancyOctreeDistribution((16, 16, 16))
     for i in range(20):
         x = random.randint(0, 15)
         y = random.randint(0, 15)
         z = random.randint(0, 15)
-        octree.add_node(x,y,z,1, val=1)
-    search_region = SearchRegion3D(octree, search_space_resolution=0.5)
+        octree_dist[(x,y,z,1)] = 1
+    search_region = SearchRegion3D(octree_dist, search_space_resolution=0.5)
     return search_region
 
 

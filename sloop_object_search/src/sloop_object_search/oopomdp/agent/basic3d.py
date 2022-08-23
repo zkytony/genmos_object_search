@@ -2,10 +2,11 @@ import pomdp_py
 from . import belief
 from ..domain.observation import JointObservation, ObjectDetection, Voxel, FovVoxels
 from ..models.transition_model import RobotTransBasic3D
+from ..models.sensors import FrustumCamera
 from ..models.policy_model import PolicyModelBasic3D
 from ..models.octree_belief import update_octree_belief
 from .common import MosAgent, SloopMosAgent,\
-    init_object_transition_models, init_primitive_movements
+    init_object_transition_models, init_primitive_movements, init_detection_models
 from sloop_object_search.utils import math as math_utils
 
 class MosAgentBasic3D(MosAgent):
@@ -13,15 +14,37 @@ class MosAgentBasic3D(MosAgent):
     def __init__(self, agent_config, search_region,
                  init_robot_pose_dist,
                  init_object_beliefs=None):
+        # Check that all sensors have the same look direction.
+        # Otherwise, the robot needs a primary camera direction.
+        detection_models = init_detection_models(agent_config)
+        self.default_forward_direction = None
+        for d in detection_models:
+            camera_model = detection_models[d].sensor
+            assert isinstance(camera_model, FrustumCamera),\
+                "For now, 3D agent sensor should be FrustumCamera"
+            if self.default_forward_direction is None:
+                self.default_forward_direction = camera_model.look
+            else:
+                if self.default_forward_direction != camera_model.look:
+                    try:
+                        self.default_forward_direction\
+                            = agent_config["robot"]["default_forward_direction"]
+                    except KeyError:
+                        raise ValueError("robot has multiple cameras that look in different directions."
+                                         "Requires specifying 'default_primary_camera_direction' to know"
+                                         "the robot's default forward direction")
+
         super().__init__(agent_config, search_region,
                          init_robot_pose_dist,
                          init_object_beliefs=init_object_beliefs)
+
 
     def init_transition_and_policy_models(self):
         robot_trans_model = RobotTransBasic3D(
             self.robot_id, self.reachable,
             self.detection_models,
-            no_look=self.no_look)
+            no_look=self.no_look,
+            default_forward_direction=self.default_forward_direction)
         object_transition_models = {
             self.robot_id: robot_trans_model,
             **init_object_transition_models(self.agent_config)}
@@ -40,7 +63,7 @@ class MosAgentBasic3D(MosAgent):
         """A position is reachable if it is a valid
         voxel and it is not occupied. Assume 'pos' is a
         position at the ground resolution level"""
-        return self.search_region.octree.valid_voxel(*pos, 1)\
+        return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
     def update_belief(self, observation, action=None):
@@ -71,6 +94,7 @@ class MosAgentBasic3D(MosAgent):
                 params = self.agent_config["belief"].get("visible_volume_params", {})
                 visible_volume = detection_model.sensor.visible_volume(
                     robot_pose, self.search_region.octree_dist, **params)
+
                 # Note: if the voxels are bigger, this shouldn't be that slow.
                 # we will label voxels that
                 voxels = {}  # maps from voxel to label
