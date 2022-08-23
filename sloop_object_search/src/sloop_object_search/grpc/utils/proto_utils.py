@@ -127,6 +127,8 @@ def robot_pose_from_proto(robot_pose_pb):
 
     If it is 2D, then return (x, y, th). If it is 3D, then return (x, y, z, qx,
     qy, qz, qw).
+
+    Note that this doesn't change the frame.
     """
     if not isinstance(robot_pose_pb, o_pb2.RobotPose):
         raise TypeError("robot_pose_pb should be RobotPose")
@@ -311,8 +313,10 @@ def pomdp_detection_from_proto(detection_pb, search_region,
 def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs):
     if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
         robot_id = observation_pb.robot_id
-        robot_pose = robot_pose_from_proto(robot_pose_pb)
-        robot_obz = slpo.RobotLocalization(robot_id, robot_pose)
+        robot_pose_world = robot_pose_from_proto(robot_pose_pb)
+        robot_pose_pomdp = (*agent.search_region.to_pomdp_pos(robot_pose_world[:3]),
+                            *robot_pose_world[3:])
+        robot_obz = slpo.RobotLocalization(robot_id, robot_pose_pomdp)
         objobzs = {robot_id: robot_obz}
 
         # we will receive an observation for every detectable object.
