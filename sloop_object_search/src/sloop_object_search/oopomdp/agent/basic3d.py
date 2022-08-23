@@ -61,7 +61,7 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
-    def update_belief(self, observation, action=None, debug=False):
+    def update_belief(self, observation, action=None, return_fov=False, debug=False):
         """
         update belief given observation. If the observation is
         object detections, we expect it to be of type JointObservation,
@@ -87,30 +87,9 @@ class MosAgentBasic3D(MosAgent):
                 # update of surrounding voxels.
                 detection_model = self.detection_models[objid]
                 params = self.agent_config["belief"].get("visible_volume_params", {})
-                visible_volume, obstacles_hit = detection_model.sensor.visible_volume(
-                    robot_pose, self.search_region.octree_dist,
-                    return_obstacles_hit=True, **params)
-
-                # Note: if the voxels are bigger, this shouldn't be that slow.
-                # we will label voxels that
-                voxels = {}  # maps from voxel to label
-                overlapped = True
-                for voxel in visible_volume:
-                    # voxel should by (x,y,z,r)
-                    if objo.pose == ObjectDetection.NULL:
-                        voxels[voxel] = Voxel(voxel, Voxel.FREE)
-                    else:
-                        x,y,z,r = voxel
-                        bbox = objo.bbox_axis_aligned()
-                        voxel_box = ((x*r, y*r, z*r), r, r, r)
-                        if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
-                            voxels[voxel] = Voxel(voxel, objid)
-                            overlapped = True
-                        else:
-                            voxels[voxel] = Voxel(voxel, Voxel.FREE)
-
-                if not overlapped:
-                    print(f"Warning: detected object {objid} but it is not in agent's FOV model.")
+                fov_voxels, visible_volume, obstacles_hit =\
+                    build_volumetric_observation(objo, detection_model.sensor,
+                                                 robot_pose, self.search_region.octree_dist, **params)
 
                 # Now, we finally update belief, if objid is a target object
                 if objid in self.target_objects:
@@ -120,7 +99,7 @@ class MosAgentBasic3D(MosAgent):
                         _visualize_octree_belief(b_obj, robot_pose,
                                                  visible_volume=visible_volume, obstacles_hit=obstacles_hit)
 
-                    b_obj_new = update_octree_belief(b_obj, FovVoxels(voxels),
+                    b_obj_new = update_octree_belief(b_obj, fov_voxels,
                                                      alpha=detection_model.alpha,
                                                      beta=detection_model.beta)
 
@@ -132,6 +111,44 @@ class MosAgentBasic3D(MosAgent):
                 else:
                     # objid is not a target object. It may be a correlated object
                     raise NotImplementedError("Doesn't handle correlated object right now.")
+
+
+def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_octree,
+                                 **params):
+    """Return a FovVoxels object as the representation of volumetric observation,
+    built based on an object detection, the camera model, robot_pose, obstacles
+    modeled by occupancy octree.
+
+    Also returns (visible_volume, obstacles_hit).
+    """
+    assert isinstance(detection, ObjectDetection)
+    visible_volume, obstacles_hit = camera_model.visible_volume(
+        robot_pose, occupancy_octree,
+        return_obstacles_hit=True, **params)
+
+    # Note: if the voxels are bigger, this shouldn't be that slow.
+    # we will label voxels that
+    voxels = {}  # maps from voxel to label
+    overlapped = True
+    for voxel in visible_volume:
+        # voxel should by (x,y,z,r)
+        if detection.pose == ObjectDetection.NULL:
+            voxels[voxel] = Voxel(voxel, Voxel.FREE)
+        else:
+            x,y,z,r = voxel
+            bbox = detection.bbox_axis_aligned()
+            voxel_box = ((x*r, y*r, z*r), r, r, r)
+            if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
+                voxels[voxel] = Voxel(voxel, detection.id)
+                overlapped = True
+            else:
+                voxels[voxel] = Voxel(voxel, Voxel.FREE)
+
+    if not overlapped:
+        print(f"Warning: detected object {objid} but it is not in agent's FOV model.")
+
+    return FovVoxels(voxels), visible_volume, obstacles_hit
+
 
 
 #### useful debugging method
