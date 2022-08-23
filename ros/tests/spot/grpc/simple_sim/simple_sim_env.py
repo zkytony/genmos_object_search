@@ -176,8 +176,8 @@ class SimpleSimEnvROSNode:
                 color=color, scale=0.5, lifetime=1.0)
             markers.append(obj_marker)
             # get a tf transform from world to object
-            tobj = ros_utils.tf2msg_from_object_state(
-                sobj, self.world_frame, f"{sobj.objclass}_{objid}")
+            tobj = ros_utils.tf2msg_from_object_loc(
+                sobj.loc, self.world_frame, f"{sobj.objclass}_{objid}")
             tf2msgs.append(tobj)
 
         srobot = state.s(self.env.robot_id)
@@ -187,8 +187,8 @@ class SimpleSimEnvROSNode:
             scale=Vector3(x=0.8, y=0.1, z=0.1))
         markers.append(robot_marker)
         # get a tf transform from world to robot
-        trobot = ros_utils.tf2msg_from_robot_state(
-            srobot, self.world_frame, f"robot_{srobot['id']}")
+        trobot = ros_utils.tf2msg_from_robot_pose(
+            srobot.pose, self.world_frame, f"robot_{srobot['id']}")
         tf2msgs.append(trobot)
         return MarkerArray(markers), tf2msgs
 
