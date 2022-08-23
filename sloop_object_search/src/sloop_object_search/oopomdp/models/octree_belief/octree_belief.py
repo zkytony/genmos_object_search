@@ -353,13 +353,20 @@ def update_octree_belief(octree_belief, real_observation,
        raise TypeError("Belief update should happen using"\
                        " unfactored observation (type Observation)")
 
-    for voxel_pose in real_observation.voxels:
-        voxel = real_observation.voxels[voxel_pose]
-        if len(voxel_pose) == 3:
-            voxel_pose = (*voxel_pose, 1)
+    for voxel_pos in real_observation.voxels:
+        # voxel_pos is x, y, z, r
+        voxel = real_observation.voxels[voxel_pos]
+        if len(voxel_pos) == 3:
+            voxel_pos = (*voxel_pos, 1)
+        res = voxel_pos[-1]
 
-        x, y, z, res = voxel_pose
-        node = octree_belief.octree.add_node(x,y,z,res)
+        # add node if not exist
+        node = octree_belief.octree.get_node(*voxel_pos)
+        if node is None:
+            # add node through assigning probability
+            octree_belief.octree_dist[voxel_pos] = gamma * (res**3)
+            node = octree_belief.octree.get_node(*voxel_pos)
+
         val_t = node.value()   # get value at node.
         if not node.leaf:
             node.remove_children()  # we are overwriting this node
@@ -482,11 +489,11 @@ class RegionalOctreeDistribution(OctreeDistribution):
         else:
             super().__setitem__(voxel, value)
 
-    def _probability(self, x, y, z, res, fast=True):
+    def _probability(self, x, y, z, res):
         if not self.in_region((x, y, z, res)):
             return 0.0
         else:
-            return super()._probability(x, y, z, res, fast=fast)
+            return super()._probability(x, y, z, res)
 
     def fill_region_uniform(self, default_val, num_samples=200):
         """
@@ -534,7 +541,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 node = node.parent
                 if node is None:
                     break
-                import pdb; pdb.set_trace()
 
 
 class OccupancyOctreeDistribution(RegionalOctreeDistribution):

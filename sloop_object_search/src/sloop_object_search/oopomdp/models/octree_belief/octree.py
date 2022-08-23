@@ -211,7 +211,6 @@ class Octree:
             return False
         else:
             return self.dimensions == other.dimensions\
-                and self.normalizer == other.normalizer\
                 and self._once_occupied == other._once_occupied\
                 and self.depth == other.depth\
                 and self.root == other.root
