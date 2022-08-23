@@ -32,7 +32,8 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
         self._octbelief_markers_pub = rospy.Publisher(
             "~octree_belief", MarkerArray, queue_size=10, latch=True)
 
-    def run(self):
+    def run(self, o3dviz=True):
+        """o3dviz: visualize octree belief in open3d"""
         super().run()
         response = self._sloop_client.getObjectBeliefs(
             self.robot_id, header=pbutil.make_header(self.world_frame))
@@ -45,7 +46,8 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
         markers = []
         for bobj_pb in response.object_beliefs:
             bobj = pickle.loads(bobj_pb.dist_obj)
-            # draw_octree_dist(bobj.octree_dist, cmap=cmaps.COLOR_MAP_GRAYS2)
+            if o3dviz:
+                draw_octree_dist(bobj.octree_dist, cmap=cmaps.COLOR_MAP_GRAYS2)
             msg = ros_utils.make_octree_belief_proto_markers_msg(bobj_pb, header)
             self._octbelief_markers_pub.publish(msg)
             print(f"Visualized belief for object {bobj_pb.object_id}")
