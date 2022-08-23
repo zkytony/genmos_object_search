@@ -61,7 +61,7 @@ class RobotTransBasic3D(RobotTransitionModel):
         transform_kwargs:
             pos_precision (default: 'int'): precision setting for transformed position
             rot_precision (default: '0.001'): precision setting for transformed rotation
-            default_camera_direction (tuple): DEFAULT_3DCAMERA_LOOK_DIRECTION
+            default_forward_direction (tuple): DEFAULT_3DCAMERA_LOOK_DIRECTION
                 [used by forward motion scheme]. Note that this corresponds to
                 the default robot's forward direction. If the robot has multiple
                 cameras, this should be set to the robot's default forward direction.
@@ -112,7 +112,8 @@ class RobotTransBasic3D(RobotTransitionModel):
     def _transform_pose_axis(cls, pose, motion,
                              reachable_positions=None,
                              pos_precision="int",
-                             rot_precision=0.001):
+                             rot_precision=0.001,
+                             **kwargs):
         """pose transform where the action is specified by change
 
         By default, motion specifies relative position and
@@ -147,7 +148,7 @@ class RobotTransBasic3D(RobotTransitionModel):
                                 reachable_positions=None,
                                 pos_precision="int",
                                 rot_precision=0.001,
-                                default_camera_direction=DEFAULT_3DCAMERA_LOOK_DIRECTION):
+                                default_forward_direction=DEFAULT_3DCAMERA_LOOK_DIRECTION):
         """
         pose transform where the action is specified by change
 
@@ -161,7 +162,7 @@ class RobotTransBasic3D(RobotTransitionModel):
         # We transform this direction vector to the given pose, which gives
         # us the current camera direction
         robot_facing = get_camera_direction3d(
-            pose, default_camera_direction=default_camera_direction) # camere by default looks at (0,0,-1)
+            pose, default_camera_direction=default_forward_direction) # camere by default looks at (0,0,-1)
         forward, dth = motion
 
         # project this vector to xy plane, then obtain the "shadow" on xy plane
