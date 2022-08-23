@@ -183,7 +183,6 @@ def test_time(octree_belief):
     print("Avg sample time (res=4): %.3f" % (tot_res4 % 1000))
 
 def test_visualize(octree_belief):
-    import matplotlib.pyplot as plt
     fig = plt.gcf()
     ax = fig.add_subplot(1,1,1,projection="3d")
     m = plot_octree_belief(ax, octree_belief,

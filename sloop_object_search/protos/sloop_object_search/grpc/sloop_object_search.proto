@@ -234,8 +234,11 @@ message SearchRegionParams3D {
 }
 
 message ObjectBelief {
-  string object_id = 2;
-  Histogram dist = 3;
+  string object_id = 1;
+  Histogram dist = 2;
+  // possible to pass over the python belief object; For debugging;
+  // the positions may be in POMDP frame
+  optional bytes dist_obj = 3;
 }
 
 

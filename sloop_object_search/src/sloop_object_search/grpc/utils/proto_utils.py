@@ -8,6 +8,7 @@ if importlib.util.find_spec("ros_numpy") is not None:
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.any_pb2 import Any
 import logging
+import pickle
 
 import pomdp_py
 
@@ -21,7 +22,8 @@ from .. import sloop_object_search_pb2 as slpb2
 from sloop_object_search.oopomdp.domain import action as slpa
 from sloop_object_search.oopomdp.domain import observation as slpo
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
-from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
+from sloop_object_search.oopomdp.models.octree_belief\
+    import Octree, OctreeBelief, plot_octree_belief
 from sloop_object_search.utils.math import to_rad, fround
 from sloop_object_search.utils import open3d_utils
 
@@ -247,7 +249,8 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                          probs=hist_probs)
         object_beliefs_proto.append(
             slpb2.ObjectBelief(object_id=objid,
-                               dist=dist))
+                               dist=dist,
+                               dist_obj=pickle.dumps(b_obj)))
     return object_beliefs_proto
 
 

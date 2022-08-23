@@ -9,6 +9,8 @@
 # Requires both point cloud and waypoints
 import rospy
 import numpy as np
+import time
+import pickle
 
 from std_msgs.msg import ColorRGBA, Header
 from visualization_msgs.msg import Marker, MarkerArray
@@ -20,8 +22,24 @@ from sloop_object_search.grpc.common_pb2 import Status, Voxel3D
 from sloop_object_search.grpc.observation_pb2\
     import ObjectDetectionArray, Detection3D
 from sloop_object_search.utils.misc import hash16
+from sloop_object_search.oopomdp.models.octree_belief import plot_octree_belief
 
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
+
+import matplotlib.pyplot as plt
+def _test_visualize(octree_belief):
+    fig = plt.gcf()
+    ax = fig.add_subplot(1,1,1,projection="3d")
+    m = plot_octree_belief(ax, octree_belief,
+                           alpha="clarity", edgecolor="black", linewidth=0.1)
+    ax.set_xlim([0, octree_belief.octree.dimensions[0]])
+    ax.set_ylim([0, octree_belief.octree.dimensions[1]])
+    ax.set_zlim([0, octree_belief.octree.dimensions[2]])
+    ax.grid(False)
+    fig.colorbar(m, ax=ax)
+    plt.show(block=False)
+    plt.pause(1)
+    ax.clear()
 
 
 class ProcessDetectionObservationTestCase(CreateAgentTestCase):
@@ -44,8 +62,12 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                         frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
-            msg = ros_utils.make_octree_belief_proto_markers_msg(bobj_pb, header, alpha_scaling=0.01)
+            bobj = pickle.loads(bobj_pb.dist_obj)
+            _test_visualize(bobj)
+            msg = ros_utils.make_octree_belief_proto_markers_msg(
+                bobj_pb, header, alpha_scaling=1.0)
             self._octbelief_markers_pub.publish(msg)
+
         print("belief visualized")
 
     def get_and_visualize_robot_pose(self):
@@ -69,6 +91,7 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         self.get_and_visualize_belief()
         robot_pose_pb = self.get_and_visualize_robot_pose()
 
+        time.sleep(2)
         # First, suppose the robot receives no detection
         header = proto_utils.make_header(self.world_frame)
         object_detection = ObjectDetectionArray(header=header,

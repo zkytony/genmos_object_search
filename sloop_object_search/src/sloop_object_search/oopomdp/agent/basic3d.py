@@ -68,7 +68,7 @@ class MosAgentBasic3D(MosAgent):
                 # correlated object, then each voxel will inform the belief
                 # update of surrounding voxels.
                 detection_model = self.detection_models[objid]
-                params = self.agent_config["belief"].get("visible_volume_args", {})
+                params = self.agent_config["belief"].get("visible_volume_params", {})
                 visible_volume = detection_model.sensor.visible_volume(
                     robot_pose, self.search_region.octree_dist, **params)
                 # Note: if the voxels are bigger, this shouldn't be that slow.
@@ -78,7 +78,7 @@ class MosAgentBasic3D(MosAgent):
                 for voxel in visible_volume:
                     # voxel should by (x,y,z,r)
                     if objo.pose == ObjectDetection.NULL:
-                        voxels[voxel] = Voxel.FREE
+                        voxels[voxel] = Voxel(voxel, Voxel.FREE)
                     else:
                         x,y,z,r = voxel
                         bbox = objo.bbox_axis_aligned
@@ -98,7 +98,7 @@ class MosAgentBasic3D(MosAgent):
                     b_obj_new = update_octree_belief(b_obj, FovVoxels(voxels),
                                                      alpha=detection_model.alpha,
                                                      beta=detection_model.beta)
-                    self.belief.set_object_belief(b_obj_new)
+                    self.belief.set_object_belief(objid, b_obj_new)
 
                 else:
                     # objid is not a target object. It may be a correlated object
