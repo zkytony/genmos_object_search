@@ -549,8 +549,6 @@ class FrustumVoxelAlphaBeta(FrustumModel):
                          quality_params)
         self.sensor = FrustumCamera(**frustum_params)
         self.params = quality_params
-        if octree.LOG:
-            raise NotImplementedError("Does not handle log-space probability for now.")
 
     @property
     def alpha(self):
@@ -571,7 +569,7 @@ class FrustumVoxelAlphaBeta(FrustumModel):
         voxel = Voxel(si.loc, Voxel.UNKNOWN)
         if srobot.in_range(self.sensor, si):
             if FrustumCamera.sensor_functioning(
-                    self.alpha, self.beta, log=octree.LOG):
+                    self.alpha, self.beta):
                 voxel.label = si.id
             else:
                 voxel.label = Voxel.OTHER

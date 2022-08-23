@@ -14,11 +14,8 @@
 
 import math
 
-LOG = False  # the values are log-space probabilities.
-if LOG:
-    DEFAULT_VAL=0.
-else:
-    DEFAULT_VAL=1.
+DEFAULT_VAL=1.   # default unnormalized value of an octree node.
+
 
 class OctNode:
     def __init__(self, x, y, z, res, parent=None, leaf=True, default_val=DEFAULT_VAL):
@@ -95,22 +92,11 @@ class OctNode:
         if self.children is not None:
             sum_children_vals = 0  # this is not in log space
             if len(self.children) > 0:
-                if LOG:
-                    # children value is in log space.
-                    sum_children_vals += sum([math.exp(self.children[p][0]) for p in self.children])
-                else:
-                    sum_children_vals += sum([self.children[p][0] for p in self.children])
+                sum_children_vals += sum([self.children[p][0] for p in self.children])
             if len(self.children) < 8:
                 child_coverage = (self.res // 2)**3
-                if LOG:
-                    # DEFAULT_VAL is in log space.
-                    sum_children_vals += math.exp(self._default_val)*((8-len(self.children))*child_coverage)
-                else:
-                    sum_children_vals += self._default_val*((8-len(self.children))*child_coverage)
-            if LOG:
-                return math.log(sum_children_vals)
-            else:
-                return sum_children_vals
+                sum_children_vals += self._default_val*((8-len(self.children))*child_coverage)
+            return sum_children_vals
         else:
             # This node is ground level. It stores its own value.
             assert self.res == 1
@@ -134,10 +120,7 @@ class OctNode:
         if child_pos is not None:
             if child_pos not in self.children:
                 # return default value
-                if LOG:
-                    return self._default_val + math.log((self.res//2)**3)
-                else:
-                    return self._default_val*((self.res//2)**3)
+                return self._default_val*((self.res//2)**3)
             else:
                 return self.children[child_pos][0]
         else:

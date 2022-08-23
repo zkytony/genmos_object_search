@@ -20,7 +20,7 @@ import sys
 import copy
 import sloop_object_search.utils.math as util
 from sloop_object_search.oopomdp.domain.state import ObjectState
-from .octree import LOG, DEFAULT_VAL, OctNode, Octree
+from .octree import DEFAULT_VAL, OctNode, Octree
 from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
 class OctreeDistribution(pomdp_py.GenerativeDistribution):
@@ -53,11 +53,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
 
         # normalizer; we only need one normalizer at the ground level.
         # NOTE that the normalizer is not in log space.
-        if LOG:
-            # the default value is in log space; So we have to convert it.
-            self._normalizer = (w*l*h)*math.exp(self._gamma)
-        else:
-            self._normalizer = (w*l*h)*self._gamma
+        self._normalizer = (w*l*h)*self._gamma
 
         # stores locations where occupancy was once recorded (cache)
         self._known_voxels = {}
@@ -78,11 +74,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         return self._known_voxels[res] #['voxels']
 
     def update_node_weight_cache(self, x, y, z, res, value):
-        if LOG:
-            # value is in log space
-            self._known_voxels[res][(x,y,z)] = math.exp(value)
-        else:
-            self._known_voxels[res][(x,y,z)] = value
+        self._known_voxels[res][(x,y,z)] = value
 
     def node_weight_in_cache(self, x, y, z, res):
         # Note that the weights in known_voxels are not in log space.
@@ -92,21 +84,13 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
             return None
 
     def update_normalizer(self, old_value, value):
-        if LOG:
-            self._normalizer += (math.exp(value) - math.exp(old_value))
-        else:
-            self._normalizer += (value - old_value)
+        self._normalizer += (value - old_value)
 
     def normalized_probability(self, node_value):
         """Given the value of some node, which represents unnormalized proability,
-        returns the normalized probability, properly converted to log space
-        depending on the setting of LOG."""
-        if LOG:
-            # node_value is in log space.
-            return node_value - math.log(self._normalizer)  # the normalizer property takes care of log space issue.
-        else:
-            # node value is not in log space.
-            return node_value / self._normalizer
+        returns the normalized probability.."""
+        # node value is not in log space.
+        return node_value / self._normalizer
 
     def __getitem__(self, voxel):
         """voxel: a tuple (x, y, z, res)"""
@@ -133,16 +117,10 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
             # Note that the weights in known_voxels are not in log space.
             weight = self.node_weight_in_cache(x, y, z, res)
             if weight is not None:
-                if LOG:
-                    weight = math.log(weight)  # convert to log space
                 return self.normalized_probability(weight)
             else:
                 prob_one_voxel = self.normalized_probability(self._gamma)
-                if LOG:
-                    # prob_one_voxel is in log space.
-                    return math.log(math.exp(prob_one_voxel)*((res)**3))
-                else:
-                    return prob_one_voxel * ((res)**3)
+                return prob_one_voxel * ((res)**3)
         else:
             node = self._octree.root
             next_res = self._octree.root.res // 2  # resolution
@@ -159,11 +137,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
                     # has not been observed. P(v|s',a)=gamma; need to account
                     # for the resolution.
                     prob_one_voxel = self.normalized_probability(self._gamma)
-                    if LOG:
-                        # prob_one_voxel is in log space.
-                        return math.log(math.exp(prob_one_voxel)*((res)**3))
-                    else:
-                        return prob_one_voxel * ((res)**3)
+                    return prob_one_voxel * ((res)**3)
             # Have previously observed this position and there's a node for it.
             # Use the node's value to compute the probability
             return self.normalized_probability(node.value())
@@ -171,8 +145,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
     def __setitem__(self, voxel, value):
         """
         This can only happen for voxels at ground level.
-        The value is unnormalized probability. Will treat as in
-        log space if LOG is true.
+        The value is unnormalized probability.
         """
         if type(voxel) != tuple and len(voxel) != 4:
             raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
@@ -190,8 +163,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
     def assign(self, voxel, value):
         """
         This can happen for voxels at different resolution levels.
-        The value is unnormalized probability. Will treat as in
-        log space if LOG is true.
+        The value is unnormalized probability.
 
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
@@ -212,10 +184,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
                     child = None
                 else:
                     child = node.child_at(pos)
-                if LOG:
-                    node.set_val(pos, value - math.log(8), child=child)
-                else:
-                    node.set_val(pos, value / 8, child=child)
+                node.set_val(pos, value / 8, child=child)
         else:
             # node is at ground level so it has no children. Just set its value
             node.set_val(None, value)
@@ -336,17 +305,12 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         self._propagate_helper(*node.pos, node.res, node.value())
 
     def _propagate_helper(self, x, y, z, res, val):
-        """The value is unnormalized probability. Will treat as in
-        log space if LOG is true."""
+        """The value is unnormalized probability. """
         self.update_node_weight_cache(x, y, z, res, val)
         if res > 1:
             for child_pos in OctNode.child_poses(x, y, z, res):
-                if LOG:
-                    # want to compute: log(exp(val)/8) = log(exp(val)) - log(8) = x - log(8)
-                    self._propagate_helper(*child_pos, res // 2, val - math.log(8))
-                else:
-                    # want to compute: val / 8
-                    self._propagate_helper(*child_pos, res // 2, val / 8)
+                # want to compute: val / 8
+                self._propagate_helper(*child_pos, res // 2, val / 8)
 
 
 class OctreeBelief(pomdp_py.GenerativeDistribution):
@@ -391,8 +355,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
     def __setitem__(self, object_state, value):
         """
         This can only happen for object state at ground level.
-        The value is unnormalized probability. Will treat as in
-        log space if LOG is true.
+        The value is unnormalized probability.
         """
         if object_state.res != 1:
             raise TypeError("Only allow setting the value at ground level.")
@@ -402,8 +365,7 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
     def assign(self, object_state, value):
         """
         This can happen for object state at different resolution levels.
-        The value is unnormalized probability. Will treat as in
-        log space if LOG is true.
+        The value is unnormalized probability.
 
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
@@ -448,21 +410,13 @@ def update_octree_belief(octree_belief, real_observation,
         val_t = node.value()   # get value at node.
         if not node.leaf:
             node.remove_children()  # we are overwriting this node
-        if LOG:
-            if voxel.label == Voxel.UNKNOWN:
-                node.set_val(None, val_t + gamma)
-            elif voxel.label == octree_belief.objid:
-                node.set_val(None, val_t + alpha)
-            else:
-                node.set_val(None, val_t + beta)
+        if voxel.label == Voxel.UNKNOWN:
+            node.set_val(None, (val_t * gamma)*(res**3))
+        elif voxel.label == octree_belief.objid:
+            # override potential previous belief of free space due to beta=0
+            node.set_val(None, (val_t * alpha)*(res**3))
         else:
-            if voxel.label == Voxel.UNKNOWN:
-                node.set_val(None, (val_t * gamma)*(res**3))
-            elif voxel.label == octree_belief.objid:
-                # override potential previous belief of free space due to beta=0
-                node.set_val(None, (val_t * alpha)*(res**3))
-            else:
-                node.set_val(None, (val_t * beta)*(res**3))
+            node.set_val(None, (val_t * beta)*(res**3))
         val_tp1 = node.value()
         octree_belief.octree_dist.update_normalizer(val_t, val_tp1)
         octree_belief.octree_dist.backtrack(node)
@@ -553,8 +507,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
     def __setitem__(self, voxel, value):
         """
         This can only happen for voxels at ground level.
-        The value is unnormalized probability. Will treat as in
-        log space if LOG is true.
+        The value is unnormalized probability.
         """
         if type(voxel) != tuple and len(voxel) != 4:
             raise ValueError("Requires voxel to be a tuple (x,y,z,res)")

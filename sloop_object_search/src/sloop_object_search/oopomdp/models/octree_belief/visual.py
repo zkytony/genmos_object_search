@@ -19,7 +19,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcl
 import numpy as np
-from .octree import LOG, Octree
+from .octree import Octree
 from .util_viz import plot_voxels, CMAPS
 from sloop_object_search.utils.math import remap
 from pylab import rcParams
@@ -39,13 +39,8 @@ def plot_octree_belief(ax, octree_belief, robot_pose=None, cmap="jet", alpha=0.5
     voxels = octree_belief.octree.collect_plotting_voxels()
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]
-    if LOG:
-        probs = [math.exp(octree_belief.octree_dist.prob_at(*Octree.increase_res(v[:3], 1, v[3]),
-                                                            v[3]))
-                 for v in voxels]
-    else:
-        probs = [octree_belief.octree_dist.prob_at(*Octree.increase_res(v[:3], 1, v[3]),
-                                                   v[3])
+    probs = [octree_belief.octree_dist.prob_at(*Octree.increase_res(v[:3], 1, v[3]),
+                                               v[3])
                  for v in voxels]
     vmin = min(probs)
     vmax = max(probs)

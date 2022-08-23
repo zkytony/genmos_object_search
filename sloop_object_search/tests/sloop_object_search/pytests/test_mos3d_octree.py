@@ -21,7 +21,7 @@ from pomdp_py import OOTransitionModel
 
 from sloop_object_search.oopomdp.models.octree_belief\
     import (OctreeBelief, OctreeDistribution, update_octree_belief,
-            Octree, OctNode, LOG, DEFAULT_VAL,
+            Octree, OctNode, DEFAULT_VAL,
             plot_octree_belief)
 
 from sloop_object_search.oopomdp import ObjectState
@@ -30,12 +30,8 @@ from sloop_object_search.oopomdp.models.sensors import FrustumCamera
 from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
 
-if LOG:
-    TEST_ALPHA = math.log(100000)
-    TEST_BETA = math.log(0.00001)
-else:
-    TEST_ALPHA = 100000
-    TEST_BETA = 0.00001
+TEST_ALPHA = 100000
+TEST_BETA = 0.00001
 
 
 @pytest.fixture
@@ -87,10 +83,7 @@ def test_assign_prior1(octree_belief):
     print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
     print("MPE: %s" % octree_belief.mpe())
     print("assigning high probability to (1,1,1,2)...")
-    if LOG:
-        octree_belief.assign(state, TEST_ALPHA - math.log(10))
-    else:
-        octree_belief.assign(state, TEST_ALPHA/10)
+    octree_belief.assign(state, TEST_ALPHA/10)
     print("MPE: %s" % octree_belief.mpe())
     assert octree_belief.octree_dist.prob_at(0,0,0,1) < octree_belief.octree_dist.prob_at(3,3,3,1)
     assert octree_belief.mpe(res=2).loc == (1,1,1)
@@ -110,10 +103,7 @@ def test_assign_prior2(octree_belief):
     print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
     print("MPE: %s" % octree_belief.mpe())
     print("assigning high probability to (1,1,1,2)...")
-    if LOG:
-        octree_belief.assign(state, TEST_ALPHA - math.log(10))
-    else:
-        octree_belief.assign(state, TEST_ALPHA/10)
+    octree_belief.assign(state, TEST_ALPHA/10)
     print("MPE: %s" % octree_belief.mpe())
     assert octree_belief.octree_dist.prob_at(0,0,0,1) < octree_belief.octree_dist.prob_at(11,13,15,1)
     assert octree_belief.mpe(res=2).loc == (5,6,7)
@@ -135,10 +125,7 @@ def test_assign_prior3(octree_belief):
     print("(0,0,0,1): %.5f" % octree_belief.octree_dist.prob_at(0,0,0,1))
     print("MPE: %s" % octree_belief.mpe())
     print("assigning high probability to (1,1,1,2)...")
-    if LOG:
-        octree_belief.assign(state, float("-inf"))
-    else:
-        octree_belief.assign(state, 0)
+    octree_belief.assign(state, 0)
     print("MPE: %s" % octree_belief.mpe())
     assert octree_belief.octree_dist.prob_at(0,0,0,1) > octree_belief.octree_dist.prob_at(11,13,15,1)
     assert octree_belief.mpe(res=2).loc != (5,6,7)
@@ -165,8 +152,6 @@ def test_mpe_random(octree_belief, res=1):
             results.append(rnd_state)
             if mpe_state == rnd_state:
                 num_same += 1
-        if LOG:
-            mpe_prob = math.exp(mpe_prob)
         print("Expected probability: %.5f; Actual frequency: %.5f"
               % (mpe_prob, num_same / len(results)))
         assert abs(num_same / len(results) - mpe_prob) <= 1e-2

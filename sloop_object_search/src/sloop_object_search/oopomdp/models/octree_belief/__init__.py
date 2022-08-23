@@ -17,5 +17,5 @@ from .octree_belief import (OctreeBelief,
                             RegionalOctreeDistribution,
                             OccupancyOctreeDistribution,
                             update_octree_belief)
-from .octree import Octree, OctNode, LOG, DEFAULT_VAL
+from .octree import Octree, OctNode, DEFAULT_VAL
 from .visual import plot_octree_belief
