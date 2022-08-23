@@ -313,7 +313,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
                 self._propagate_helper(*child_pos, res // 2, val / 8)
 
     def collect_plotting_voxels(self):
-        self.octree.collect_plotting_voxels()
+        return self.octree.collect_plotting_voxels()
 
 
 class OctreeBelief(pomdp_py.GenerativeDistribution):
@@ -583,44 +583,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 node = node.parent
                 if node is None:
                     break
-
-    def collect_plotting_voxels(self):
-        """Returns voxel positions and resolutions that should
-        be plotted for RegionalOctreeDistribution, that is, voxels
-        within the region. Note that not all of these actually exist in the tree as a node.
-        The return format: [(x*r,y*r,z*r,r,v)...] (note the coordinates
-        are at the ground level.). Note 'v' is the node value.
-
-        Modified based on Octree.collect_plotting_voxels"""
-        collector = []
-        self._collect_plotting_voxels_helper(self.octree.root, collector)
-        return collector
-
-    def _collect_plotting_voxels_helper(self, node, collector):
-        """the only difference from Octree's method of the same name
-        is we collect a node as long as it is in the region"""
-        if self.in_region((*node.pos, node.res)):
-            collector.append((node.pos[0]*node.res,
-                              node.pos[1]*node.res,
-                              node.pos[2]*node.res,
-                              node.res,
-                              node.value()))
-            if node.leaf:
-                return
-
-        for pos in OctNode.child_poses(*node.pos, node.res):
-            if pos not in node.children\
-               or node.children[pos][1] is None:
-                    res = node.res // 2
-                    collector.append((pos[0]*res,
-                                      pos[1]*res,
-                                      pos[2]*res,
-                                      res,
-                                      node.get_val(pos)))  # child pos and resolution
-            else:
-                child = node.children[pos][1]
-                self._collect_plotting_voxels_helper(child, collector)
-
 
 
 class OccupancyOctreeDistribution(RegionalOctreeDistribution):

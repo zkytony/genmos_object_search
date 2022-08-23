@@ -16,6 +16,7 @@
 import time
 import math
 import pytest
+import matplotlib.pyplot as plt
 
 from pomdp_py import OOTransitionModel
 
@@ -181,6 +182,7 @@ def test_time(octree_belief):
     print("Avg sample time (res=1): %.3f" % (tot_res1 % 1000))
     print("Avg sample time (res=2): %.3f" % (tot_res2 % 1000))
     print("Avg sample time (res=4): %.3f" % (tot_res4 % 1000))
+
 
 def test_visualize(octree_belief):
     fig = plt.gcf()

@@ -149,7 +149,7 @@ def _visualize_octree_belief(octree_belief, robot_pose, occupancy_octree=None,
     geometries.append(draw_robot_pose(robot_pose))
     # Draw the octree belief
     geometries.extend(draw_octree_dist(octree_belief.octree_dist, viz=False,
-                                       cmap=cmaps.COLOR_MAP_JET))
+                                       cmap=cmaps.COLOR_MAP_GRAYS))
     # Draw the FOV
     if visible_volume is not None:
         geometries.extend(draw_fov(visible_volume, obstacles_hit))

@@ -73,7 +73,8 @@ class UpdateSearchRegion3DTestCase:
             waypoint = waypoints_array[0]
         else:
             waypoint = waypoints_array[self._update_count-1]
-        pose_stamped = pose_tuple_to_pose_stamped((*waypoint, *euler_to_quat(90, 0, 0)), "body")
+        pose_stamped = pose_tuple_to_pose_stamped(
+            (*waypoint, *euler_to_quat(90, 0, 0)), "body")
 
         rate = rospy.Rate(10)
         self.robot_pose_pub.publish(pose_stamped)
@@ -96,7 +97,7 @@ class UpdateSearchRegion3DTestCase:
             # Use a waypoint as the robot pose
             robot_pose = (waypoints_array[self._update_count-1][0],
                           waypoints_array[self._update_count-1][1],
-                          waypoints_array[self._update_count-1][2],
+                          0.45,
                           *euler_to_quat(90, 0, 0))
             robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
             if rospy.get_param('map_name') == "cit_first_floor":

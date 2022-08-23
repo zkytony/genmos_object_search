@@ -99,13 +99,13 @@ def draw_search_region3d(search_region, octree_dist=None, points=None,
     return geometries
 
 def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
-                     cmap=cmaps.COLOR_MAP_HALLOWEEN):
+                     cmap=cmaps.COLOR_MAP_GRAYS):
     """draw the octree dist in POMDP space."""
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
         size=4.0, origin=[0.0, 0.0, 0.0])
     geometries = [mesh_frame]
     # visualize octree
-    voxels = octree_dist.octree.collect_plotting_voxels()
+    voxels = octree_dist.collect_plotting_voxels()
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]  # resolutions
     probs = [octree_dist.prob_at(

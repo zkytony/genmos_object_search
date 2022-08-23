@@ -24,6 +24,7 @@ from sloop_object_search.grpc.observation_pb2\
     import ObjectDetectionArray, Detection3D
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import euler_to_quat, quat_to_euler
+from sloop_object_search.utils.open3d_utils import draw_octree_dist
 from sloop_object_search.oopomdp.models.octree_belief import plot_octree_belief
 
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
@@ -66,10 +67,11 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         markers = []
         for bobj_pb in response.object_beliefs:
             bobj = pickle.loads(bobj_pb.dist_obj)
+            draw_octree_dist(bobj.octree_dist)
             # _test_visualize(bobj)
-            msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=1.0)
-            self._octbelief_markers_pub.publish(msg)
+            # msg = ros_utils.make_octree_belief_proto_markers_msg(
+            #     bobj_pb, header, alpha_scaling=1.0)
+            # self._octbelief_markers_pub.publish(msg)
 
         print("belief visualized")
 

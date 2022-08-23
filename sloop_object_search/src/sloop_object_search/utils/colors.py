@@ -73,6 +73,12 @@ class cmaps:
     COLOR_MAP_GRAYS = [[0.95, 0.95, 0.95],
                        [0.05, 0.05, 0.05]]
 
+    # This one goes into darker gray quicker
+    COLOR_MAP_GRAYS2 = [[0.95, 0.95, 0.95],
+                        [0.5, 0.5, 0.5],
+                        [0.2, 0.2, 0.2],
+                        [0.05, 0.05, 0.05]]
+
     COLOR_MAP_HALLOWEEN = [[0.98, 0.82, 0.55],
                            [0.53, 0.52, 0.48],
                            [0.05, 0.05, 0.05]]
