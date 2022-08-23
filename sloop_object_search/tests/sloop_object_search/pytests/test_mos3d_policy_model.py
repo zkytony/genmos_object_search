@@ -26,7 +26,7 @@ def positions():
     return positions
 
 def test_policy_model_basic_3d(init_state, positions):
-    trobot = RobotTransBasic3D("robot", positions, {})
+    trobot = RobotTransBasic3D("robot", lambda x: x in positions, {})
     movements = basic_discrete_moves3d()
     policy_model = PolicyModelBasic3D(["green_car"], trobot,
                                       movements)

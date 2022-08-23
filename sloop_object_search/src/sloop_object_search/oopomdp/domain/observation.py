@@ -132,7 +132,7 @@ class RobotObservation(pomdp_py.SimpleObservation):
     def from_state(srobot, pose=None):
         """If 'pose' is set, it overrides the pose in srobot"""
         return RobotObservation(srobot['id'],
-                                pose if pose is None else srobot['pose'],
+                                pose if pose is not None else srobot['pose'],
                                 srobot['objects_found'],
                                 srobot['camera_direction'])
 

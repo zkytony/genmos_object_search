@@ -237,8 +237,9 @@ def test_visible_volume(camera_far, occupancy_octree):
     # have a rotation around x by default
     default_o3d_rotation = [180, 0, 0]  # don't change this
 
-    rotation = [90,0,0]
-    sensor_pose = (15, 5, 5, *euler_to_quat(*rotation))
+    rotation = [0,0,0]
+    position = [4.277523355012637, 3.9782915879178717, 0.0452081835584708]
+    sensor_pose = (*position, *euler_to_quat(*rotation))
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
