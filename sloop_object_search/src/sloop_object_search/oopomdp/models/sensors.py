@@ -576,7 +576,7 @@ class FrustumCamera(SensorModel):
             hit_obstacle = False
             out_of_bound = False
             while not hit_obstacle and not out_of_bound:
-                point_on_ray = sensor_pose[:3] + t * step_size * vec_ray
+                point_on_ray = ray_np_world + t * step_size * vec_ray
                 voxel_on_ray = tuple(int(round(x)) for x in point_on_ray)  # ground-level voxel for the point
 
                 if voxel_res > 1:

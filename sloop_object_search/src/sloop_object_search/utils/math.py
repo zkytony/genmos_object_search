@@ -107,18 +107,19 @@ def boxes_overlap3d_origin(box1, box2):
     box1_max_y = origin1[1] + l1
     box1_min_z = origin1[2]
     box1_max_z = origin1[2] + h1
+
     box2_min_x = origin2[0]
-    box2_max_x = origin2[0] + w1
+    box2_max_x = origin2[0] + w2
     box2_min_y = origin2[1]
-    box2_max_y = origin2[1] + l1
+    box2_max_y = origin2[1] + l2
     box2_min_z = origin2[2]
-    box2_max_z = origin2[2] + h1
+    box2_max_z = origin2[2] + h2
     return (box1_min_x < box2_max_x)\
         and (box1_max_x > box2_min_x)\
         and (box1_min_y < box2_max_y)\
         and (box1_max_y > box2_min_y)\
         and (box1_min_z < box2_max_z)\
-        and (box1_max_z > box2_max_z)
+        and (box1_max_z > box2_min_z)
 
 def originbox_to_centerbox(origin_box):
     """given an origin-based box return
