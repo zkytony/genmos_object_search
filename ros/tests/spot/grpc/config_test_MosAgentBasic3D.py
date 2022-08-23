@@ -4,7 +4,7 @@ TEST_CONFIG = {
         'agent_class': 'MosAgentBasic3D',
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
-                                             "voxel_res": 1},
+                                             "voxel_res": 2},
                    "init_params": {"num_samples": 3000}},
         'detectable_objects': ['book'],
         'foref_model_map_name': 'honolulu',
