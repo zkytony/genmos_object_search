@@ -327,6 +327,7 @@ def tf2msg_from_object_loc(loc, world_frame, object_frame, **kwargs):
     t.transform.rotation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
     return t
 
+
 def make_viz_marker_from_robot_state(srobot, header, **kwargs):
     marker = Marker(header=header)
     marker.id = hash16(srobot["id"])
@@ -370,8 +371,13 @@ def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
     color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
     marker.color = color
 
+def make_viz_marker_for_voxel(voxel, header, ns="voxel", **kwargs):
+    """voxel is (x,y,z,r), where x,y,z is a point in world frame and
+    r is the size in meters."""
+    return make_octnode_marker_msg(voxel[:3], voxel[3], header, ns=ns, **kwargs)
+
 def make_octnode_marker_msg(pos, res, header, alpha=1.0,
-                            lifetime=1.0, color=[0.0, 0.8, 0.0]):
+                            lifetime=1.0, color=[0.0, 0.8, 0.0], ns="octnode"):
     """
     Creates an rviz marker for a OctNode, specified
     by the given 3D position (in frame of header),
@@ -380,7 +386,7 @@ def make_octnode_marker_msg(pos, res, header, alpha=1.0,
     """
     marker = Marker()
     marker.header = header
-    marker.ns = "octnode"
+    marker.ns = ns
     marker.id = hash16((*pos, res))
     marker.type = Marker.CUBE
     marker.pose.position = geometry_msgs.msg.Point(x=pos[0] + res/2,

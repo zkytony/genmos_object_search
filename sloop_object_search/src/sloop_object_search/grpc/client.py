@@ -137,7 +137,8 @@ class SloopObjectSearchClient:
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         request = slpb2.GetRobotBeliefRequest(
             header=header,
-            robot_id=robot_id)
+            robot_id=robot_id,
+            **kwargs)
         return self.call(self.stub.GetRobotBelief, request, timeout=timeout)
 
     def processObservation(self, robot_id, observation_pb, robot_pose_pb, **kwargs):
@@ -151,5 +152,6 @@ class SloopObjectSearchClient:
             header=header,
             robot_id=robot_id,
             robot_pose=robot_pose_pb,
-            **observation)
+            **observation,
+            **kwargs)
         return self.call(self.stub.ProcessObservation, request, timeout=timeout)

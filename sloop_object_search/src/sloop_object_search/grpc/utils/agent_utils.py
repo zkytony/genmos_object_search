@@ -1,10 +1,12 @@
 import json
 
+import logging
 import pomdp_py
+import time
 
 from sloop_object_search.oopomdp.agent import\
     SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D
-import sloop_object_search.domain.observation as slpo
+import sloop_object_search.oopomdp.domain.observation as slpo
 
 VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "MosAgentBasic2D",
@@ -117,8 +119,18 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
                 sensor_params_world["far"] / search_region.search_space_resolution
     return agent_config_pomdp
 
+def voxel_to_world(v, search_region):
+    """Given a voxel (x,y,z,r) where (x,y,z) is a point
+    at the space with resolution r, return a voxel (x',y',z',r')in
+    the world frame such that (x',y',z') refers to a point in
+    the world frame, and r' is the size of the voxel in meters."""
+    x,y,z,r = v
+    # Convert the voxel to its ground level origin, then convert to world frame
+    world_pos = search_region.to_world_pos((x*r, y*r, z*r))
+    world_res = r * search_region.search_space_resolution
+    return [*world_pos, world_res]
 
-def update_belief(request, agent, obervation, action=None):
+def update_belief(request, agent, observation, action=None):
     """
     performs belief update and returns what the request wants.
 
@@ -128,19 +140,22 @@ def update_belief(request, agent, obervation, action=None):
         observation: pomdp Observation
         action: pomdp action
     """
+    _start_time = time.time()
+    result = {}
     if isinstance(observation, slpo.JointObservation):
         if isinstance(agent, MosAgentBasic3D):
             fovs = agent.update_belief(observation, debug=request.debug,
                                        return_fov=request.return_fov)
             if fovs is not None:
-                json_str = json_serialize_fovs3d(fovs)
-                return {"fovs": json_str.encode(encoding='utf-8')}
-    return {}
-
-def json_serialize_fovs3d(fovs):
-    fovs_dict = {}
-    for objid in fovs:
-        visible_volume, obstacles_hit = fovs[objid]
-        fovs_dict[objid] = {"visible_volume": list(map(list, visible_volume)),
-                            "obstacles_hit":  list(map(list, obstacles_hit))}
-    json_str = json.dumps(fovs_dict)
+                # serialize fovs as json string
+                fovs_dict = {}
+                convert_func = lambda v: voxel_to_world(v, agent.search_region)
+                for objid in fovs:
+                    visible_volume, obstacles_hit = fovs[objid]
+                    fovs_dict[objid] = {"visible_volume": list(map(convert_func, visible_volume)),
+                                        "obstacles_hit":  list(map(convert_func, obstacles_hit))}
+                json_str = json.dumps(fovs_dict)
+                result = {"fovs": json_str.encode(encoding='utf-8')}
+    _total_time = time.time() - _start_time
+    logging.info("Belief update took: {:.4f}s".format(_total_time))
+    return result
