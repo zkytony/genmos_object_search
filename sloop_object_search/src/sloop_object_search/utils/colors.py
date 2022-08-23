@@ -64,13 +64,19 @@ def color_map(val, val_posts, rgb_posts):
             return np.array([r, g, b])
     raise ValueError(f"value {val} does not fall in any interval in {val_posts}")
 
-COLOR_MAP_JET = [[0.43, 0.07, 0.0],
-                 [0.0, 0.9, 0.93],
-                 [0.93, 0.53, 0.0],
-                 [0.07, 0.0, 0.43]]
+class cmaps:
+    COLOR_MAP_JET = [[0.43, 0.07, 0.0],
+                     [0.0, 0.9, 0.93],
+                     [0.93, 0.53, 0.0],
+                     [0.07, 0.0, 0.43]]
 
-COLOR_MAP_GRAYS = [[0.95, 0.95, 0.95],
-                   [0.05, 0.05, 0.05]]
+    COLOR_MAP_GRAYS = [[0.95, 0.95, 0.95],
+                       [0.05, 0.05, 0.05]]
+
+    COLOR_MAP_HALLOWEEN = [[0.98, 0.82, 0.55],
+                           [0.53, 0.52, 0.48],
+                           [0.05, 0.05, 0.05]]
+
 
 def rgb_to_hex(rgb):
     r,g,b = rgb

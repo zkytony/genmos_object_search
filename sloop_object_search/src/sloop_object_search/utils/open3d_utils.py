@@ -1,6 +1,6 @@
 import open3d as o3d
 import numpy as np
-from sloop_object_search.utils.colors import color_map, COLOR_MAP_GRAYS
+from sloop_object_search.utils.colors import color_map, cmaps
 from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
 
@@ -43,7 +43,8 @@ def cube_unfilled(scale=1, color=[1,0,0]):
     return line_set
 
 
-def draw_search_region3d(search_region, octree_dist=None, points=None):
+def draw_search_region3d(search_region, octree_dist=None, points=None,
+                         color_by_prob=True, cmap=cmaps.COLOR_MAP_HALLOWEEN):
     """
     By default draws the octree_dist in search_region, unless one
     is provided.
@@ -79,19 +80,25 @@ def draw_search_region3d(search_region, octree_dist=None, points=None):
     voxels = octree_dist.octree.collect_plotting_voxels()
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]  # resolutions
-    vv = [v[4] for v in voxels]  # values
+    probs = [octree_dist.prob_at(
+        *Octree.increase_res(v[:3], 1, v[3]), v[3])
+             for v in voxels]
     for i in range(len(vp)):
         pos = search_region.to_world_pos(vp[i])
         size = vr[i] * search_region.search_space_resolution  # cube size in meters
         mesh_box = cube_unfilled(scale=size)
         mesh_box.translate(np.asarray(pos))
-        mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
+        if color_by_prob:
+            color = color_map(probs[i], [min(probs), max(probs)], cmap)
+        else:
+            color = [0.9, 0.1, 0.1]
+        mesh_box.paint_uniform_color(color)
         geometries.append(mesh_box)
     o3d.visualization.draw_geometries(geometries)
     return geometries
 
 def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
-                     cmap=COLOR_MAP_GRAYS):
+                     cmap=cmaps.COLOR_MAP_HALLOWEEN):
     """draw the octree dist in POMDP space."""
     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
         size=4.0, origin=[0.0, 0.0, 0.0])
@@ -109,7 +116,7 @@ def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
         mesh_box = cube_unfilled(scale=size)
         mesh_box.translate(np.asarray(pos))
         if color_by_prob:
-            color = color_map(probs[i], [0.0, 1.0], cmap)
+            color = color_map(probs[i], [min(probs), max(probs)], cmap)
         else:
             color = [0.9, 0.1, 0.1]
         mesh_box.paint_uniform_color(color)
