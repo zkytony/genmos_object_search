@@ -299,18 +299,17 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         if request.HasField("action_id"):
             action = self._actions_planned[request.robot_id][request.action_id]
-            logging.warning("Supposed to update belief")
-            # agent.update_belief(observation, action)
+            aux = agent_utils.update_belief(request, agent, observation, action)
         else:
-            logging.warning("Supposed to update belief")
-            agent.update_belief(observation)
+            aux = agent_utils.update_belief(request, agent, observation)
         # TODO: update planner
 
         header = proto_utils.make_header(request.header.frame_id)
         return slpb2.ProcessObservationReply(
             header=header,
             status=Status.SUCCESSFUL,
-            message=f"observation processed. Belief updated.")
+            message=f"observation processed. Belief updated.",
+            **aux)
 
     def ActionFinished(self, request, context):
         if request.robot_id not in self._agents:

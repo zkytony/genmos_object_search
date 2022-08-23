@@ -61,18 +61,25 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
-    def update_belief(self, observation, action=None, return_fov=False, debug=False):
+    def update_belief(self, observation, action=None, debug=False, **kwargs):
         """
         update belief given observation. If the observation is
         object detections, we expect it to be of type JointObservation,
+
+        kwargs:
+            return_fov: if observation contains object detection, then if
+               True, return a mapping from objid to (visible_volume, obstacles_hit)
         """
         if isinstance(observation, JointObservation):
             if not self.robot_id in observation:
                 raise ValueError("requires knowing robot pose corresponding"\
+
                                  " to the object detections.")
 
             robot_pose = observation.z(self.robot_id).pose
-            visible_volume = None  # we will
+            return_fov = kwargs.get("return_fov", False)
+
+            fovs = {}  # maps from objid to (visible_volume, obstacles_hit)
             for objid in observation:
                 if objid == self.robot_id:
                     continue
@@ -80,37 +87,36 @@ class MosAgentBasic3D(MosAgent):
                 if not isinstance(objo, ObjectDetection):
                     raise NotImplementedError(f"Unable to handle object observation of type {type(objo)}")
 
-                # We will construct a volumetric observation about this
-                # object. If the observation is about a target object, each
-                # voxel is used to update belief. If the observation is about a
-                # correlated object, then each voxel will inform the belief
-                # update of surrounding voxels.
+                # construct a volumetric observation about this object.
                 detection_model = self.detection_models[objid]
                 params = self.agent_config["belief"].get("visible_volume_params", {})
                 fov_voxels, visible_volume, obstacles_hit =\
                     build_volumetric_observation(objo, detection_model.sensor,
-                                                 robot_pose, self.search_region.octree_dist, **params)
+                        robot_pose, self.search_region.octree_dist, **params)
 
-                # Now, we finally update belief, if objid is a target object
+                # Now, we finally update belief, if objid is a target object, each
+                # voxel is used to update belief.
                 if objid in self.target_objects:
                     b_obj = self.belief.b(objid)
-
                     if debug:
                         _visualize_octree_belief(b_obj, robot_pose,
                                                  visible_volume=visible_volume, obstacles_hit=obstacles_hit)
-
-                    b_obj_new = update_octree_belief(b_obj, fov_voxels,
-                                                     alpha=detection_model.alpha,
-                                                     beta=detection_model.beta)
-
+                    alpha = detection_model.alpha,
+                    beta = detection_model.beta
+                    b_obj_new = update_octree_belief(b_obj, fov_voxels, alpha, beta)
                     if debug:
                         _visualize_octree_belief(b_obj_new, robot_pose)
-
                     self.belief.set_object_belief(objid, b_obj_new)
-
                 else:
-                    # objid is not a target object. It may be a correlated object
+                    # objid is not a target object. It may be a correlated object each
+                    # voxel will inform the belief update of surrounding voxels.
                     raise NotImplementedError("Doesn't handle correlated object right now.")
+
+                # save fov used for belief update
+                fovs[objid] = (visible_volume, obstacles_hit)
+
+            if return_fov:
+                return fovs
 
 
 def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_octree,

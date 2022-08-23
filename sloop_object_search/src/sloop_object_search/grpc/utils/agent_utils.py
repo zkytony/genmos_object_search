@@ -1,6 +1,10 @@
+import json
+
 import pomdp_py
+
 from sloop_object_search.oopomdp.agent import\
     SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D
+import sloop_object_search.domain.observation as slpo
 
 VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "MosAgentBasic2D",
@@ -112,3 +116,31 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             sensor_params_pomdp["far"] =\
                 sensor_params_world["far"] / search_region.search_space_resolution
     return agent_config_pomdp
+
+
+def update_belief(request, agent, obervation, action=None):
+    """
+    performs belief update and returns what the request wants.
+
+    Args:
+        request (ProcessObservationRequest)
+        agent: pomdp agent
+        observation: pomdp Observation
+        action: pomdp action
+    """
+    if isinstance(observation, slpo.JointObservation):
+        if isinstance(agent, MosAgentBasic3D):
+            fovs = agent.update_belief(observation, debug=request.debug,
+                                       return_fov=request.return_fov)
+            if fovs is not None:
+                json_str = json_serialize_fovs3d(fovs)
+                return {"fovs": json_str.encode(encoding='utf-8')}
+    return {}
+
+def json_serialize_fovs3d(fovs):
+    fovs_dict = {}
+    for objid in fovs:
+        visible_volume, obstacles_hit = fovs[objid]
+        fovs_dict[objid] = {"visible_volume": list(map(list, visible_volume)),
+                            "obstacles_hit":  list(map(list, obstacles_hit))}
+    json_str = json.dumps(fovs_dict)

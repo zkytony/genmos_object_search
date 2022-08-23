@@ -173,6 +173,9 @@ class MosAgent(pomdp_py.Agent):
         raise NotImplementedError()
 
     def update_belief(self, observation, action=None):
+        """Should update the agent's belief given observation and
+        optionally action. May return auxiliary information
+        produced during belief update for later debugging."""
         raise NotImplementedError()
 
 
