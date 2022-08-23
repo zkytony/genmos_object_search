@@ -157,7 +157,7 @@ class MosAgent(pomdp_py.Agent):
         if init_object_beliefs is None:
             init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
-                prior=self.agent_config["belief"].get("prior", {}))
+                belief_config=self.agent_config["belief"])
         init_robot_belief = belief.init_robot_belief(self.agent_config["robot"],
                                                      init_robot_pose_dist)
         init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,

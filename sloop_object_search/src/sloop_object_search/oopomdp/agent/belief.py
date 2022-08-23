@@ -29,10 +29,11 @@ def init_robot_belief(robot_config, robot_pose_dist, robot_state_class=RobotStat
         raise NotImplementedError("currently, {type(robot_pose_dist)}"
                                   "is not a supported type of robot pose distribution.")
 
-def init_object_beliefs_2d(target_objects, search_region, prior=None):
+def init_object_beliefs_2d(target_objects, search_region, belief_config={}):
     """prior: dictionary objid->{loc->prob}"""
     assert isinstance(search_region, SearchRegion2D),\
         f"search_region should be a SearchRegion2D but its {type(search_region)}"
+    prior = belief_config.get("prior", {})
     object_beliefs = {}
     if prior is None:
         prior = {}
@@ -54,7 +55,7 @@ def init_object_beliefs_2d(target_objects, search_region, prior=None):
         object_beliefs[objid] = pomdp_py.Histogram(object_belief_dist)
     return object_beliefs
 
-def init_object_beliefs_3d(target_objects, search_region, prior=None):
+def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
     """we'll use Octree belief. Here, 'search_region' should be a
     SearchRegion3D. As such, it has an RegionalOctreeDistribution
     used for modeling occupancy. The agent's octree belief will be
@@ -62,13 +63,16 @@ def init_object_beliefs_3d(target_objects, search_region, prior=None):
     """
     assert isinstance(search_region, SearchRegion3D),\
         f"search_region should be a SearchRegion3D but its {type(search_region)}"
+    prior = belief_config.get("prior", {})
+    init_params = belief_config.get("init_params", {})
     object_beliefs = {}
     dimension = search_region.octree_dist.octree.dimensions[0]
     for objid in target_objects:
         target = target_objects[objid]
         octree_dist = RegionalOctreeDistribution(
             (dimension, dimension, dimension),
-            search_region.octree_dist.region)
+            search_region.octree_dist.region,
+            num_samples=init_params.get("num_samples", 200))
         octree_belief = OctreeBelief(objid, target['class'], octree_dist)
         if prior is not None and objid in prior:
             for x,y,z,r in prior[objid]:
@@ -77,13 +81,13 @@ def init_object_beliefs_3d(target_objects, search_region, prior=None):
         object_beliefs[objid] = octree_belief
     return object_beliefs
 
-def init_object_beliefs(target_objects, search_region, prior=None):
+def init_object_beliefs(target_objects, search_region, belief_config={}):
     if isinstance(search_region, SearchRegion2D):
-        return init_object_beliefs_2d(target_objects, search_region, prior=prior)
+        return init_object_beliefs_2d(target_objects, search_region, belief_config=belief_config)
     else:
         assert isinstance(search_region, SearchRegion3D),\
             "search region is of invalid type ({}).".format(type(search_region))
-        return init_object_beliefs_3d(target_objects, search_region, prior=prior)
+        return init_object_beliefs_3d(target_objects, search_region, belief_config=belief_config)
 
 def accumulate_object_beliefs(search_region,
                               object_beliefs):

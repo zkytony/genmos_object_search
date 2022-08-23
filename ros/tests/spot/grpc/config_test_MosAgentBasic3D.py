@@ -4,7 +4,8 @@ TEST_CONFIG = {
         'agent_class': 'MosAgentBasic3D',
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
-                                             "voxel_res": 2}},
+                                             "voxel_res": 1},
+                   "init_params": {"num_samples": 3000}},
         'detectable_objects': ['book'],
         'foref_model_map_name': 'honolulu',
         'foref_models_dir': '/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/models',
@@ -17,12 +18,13 @@ TEST_CONFIG = {
             'sensors': [{
                 'name': 'camera',
                 'params': {'fov': 61,
-                           'far': 5,
-                           'near': 1}  # points to +x
+                           'far': 20,
+                           'near': 1,
+                           'occlusion_enabled': True}
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
-                                              "quality": [1e5, 0.1]}}},
+                                              "quality": [1e5, 0.0]}}},
                   'id': 'robot0',
                   'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
                              'params': {'step_size': 1.0,
