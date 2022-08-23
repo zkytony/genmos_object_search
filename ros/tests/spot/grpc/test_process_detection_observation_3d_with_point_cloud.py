@@ -86,7 +86,8 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         # means looking at +x, therefore we rotate the marker for robot pose
         # so that it starts out looking at -z.
         marker = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, (0,0,0,*euler_to_quat(0, 90, 0)), header=header, scale=Vector3(x=1.2, y=0.2, z=0.2),
+            self.robot_id, (0,0,0,*euler_to_quat(0, 90, 0)),
+            header=header, scale=Vector3(x=1.2, y=0.2, z=0.2),
             lifetime=0)  # forever
         self._robot_markers_pub.publish(MarkerArray([marker]))
 
