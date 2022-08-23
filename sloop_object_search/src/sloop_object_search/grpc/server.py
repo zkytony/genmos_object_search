@@ -293,6 +293,10 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             observation = proto_utils.pomdp_observation_from_proto(
                 request.robot_pose, request.language, agent)
 
+        elif request.HasField("robot_pose"):
+            observation = proto_utils.pomdp_observation_from_proto(
+                request.robot_pose, request.robot_pose, agent)
+
         if request.HasField("action_id"):
             action = self._actions_planned[request.robot_id][request.action_id]
             logging.warning("Supposed to update belief")

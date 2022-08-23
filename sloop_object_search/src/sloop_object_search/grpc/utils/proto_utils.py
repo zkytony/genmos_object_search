@@ -311,14 +311,17 @@ def pomdp_detection_from_proto(detection_pb, search_region,
 
 
 def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs):
-    if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
-        robot_id = observation_pb.robot_id
+    """Converts an observation proto into a pomdp Observation object"""
+    robot_id = observation_pb.robot_id
+
+    # First, interpret robot pose proto as a pomdp-space robot pose
+    if robot_pose_pb is not None:
         robot_pose_world = robot_pose_from_proto(robot_pose_pb)
         robot_pose_pomdp = (*agent.search_region.to_pomdp_pos(robot_pose_world[:3]),
                             *robot_pose_world[3:])
         robot_obz = slpo.RobotLocalization(robot_id, robot_pose_pomdp)
-        objobzs = {robot_id: robot_obz}
 
+    if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
         # we will receive an observation for every detectable object.
         # if the object isn't detected, its pose is NULL.
         # First collect what we do detect
@@ -332,6 +335,7 @@ def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs)
                 logging.warning(f"multiple detections for {objo.id}. Only keeping one.")
 
         # Now go through every detectable object
+        objobzs = {robot_id: robot_obz}
         for objid in agent.detection_models:
             if objid not in detections:
                 objo = slpo.ObjectDetection(objid, slpo.ObjectDetection.NULL)
@@ -341,8 +345,11 @@ def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs)
         return slpo.JointObservation(objobzs)
 
     elif isinstance(observation_pb, o_pb2.RobotPose):
-        raise NotImplementedError
+        # just return the RobotLocalization observation
+        return robot_obz
+
     elif isinstance(observation_pb, o_pb2.Language):
         raise NotImplementedError
+
     else:
         raise ValueError(f"Unsupported observation type {type(observation_pb)}")
