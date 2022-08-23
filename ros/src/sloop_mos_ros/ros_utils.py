@@ -406,9 +406,9 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
     which is a Histogram, make a MarkerArray message for it."""
     def _compute_alpha(p, vmin, vmax):
         if vmax - vmin > 0.0:
-            return remap(p, vmin, vmax, 0.0, 1.0)
+            return remap(p, vmin, vmax, 0.0, 0.8)
         else:
-            return 1.0
+            return 0.8
 
     markers = []
     hist_pb = octree_belief_pb.dist
