@@ -117,12 +117,19 @@ message ProcessObservationRequest {
   // the action that the observation is associated with (e.g. received after
   // action completion)
   optional string action_id = 6;
+
+  // return the pomdp model's fov corresponding to the object detection
+  optional bool return_fov = 7;
 }
 
 message ProcessObservationReply {
   Header header = 1;
   Status status = 2;
   string message = 3;
+
+  // set if 'return_fov' is True
+  repeated Voxel3D visible_volume = 5;  // the voxels within the
+  repeated Voxel3D obstacles_hit = 6;  // the
 }
 
 //// For GetObjectBeliefs rpc ////
