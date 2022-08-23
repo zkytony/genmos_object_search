@@ -50,8 +50,6 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
     def visualize_fovs(self, response):
         header = Header(stamp=rospy.Time.now(),
                         frame_id=self.world_frame)
-        clear_msg = ros_utils.clear_markers(header, ns="fov")
-        self._object_markers_pub.publish(clear_msg)
         fovs = json.loads(response.fovs.decode('utf-8'))
         markers = []
         for objid in fovs:
@@ -66,12 +64,12 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                     continue
                 m = ros_utils.make_viz_marker_for_voxel(
                     voxel, header, color=free_color, ns="fov",
-                    lifetime=2, alpha=0.7)
+                    lifetime=0, alpha=0.7)
                 markers.append(m)
             for voxel in obstacles_hit:
                 m = ros_utils.make_viz_marker_for_voxel(
                     voxel, header, color=hit_color, ns="fov",
-                    lifetime=2, alpha=0.7)
+                    lifetime=0, alpha=0.7)
                 markers.append(m)
         self._fovs_markers_pub.publish(MarkerArray(markers))
 
@@ -90,9 +88,6 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
             if o3dviz:
                 draw_octree_dist(bobj.octree_dist)
 
-            # clear and republish
-            clear_msg = ros_utils.clear_markers(header, ns="octnode")
-            self._octbelief_markers_pub.publish(clear_msg)
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=1.0)
             self._octbelief_markers_pub.publish(msg)
@@ -127,8 +122,6 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
     def make_up_object(self, objid, object_loc, objsizes):
         header = Header(stamp=rospy.Time.now(),
                         frame_id=self.world_frame)
-        clear_msg = ros_utils.clear_markers(header, ns="object")
-        self._object_markers_pub.publish(clear_msg)
         marker = ros_utils.make_viz_marker_for_object(
             objid, (*object_loc, 0, 0, 0, 1), header,
             scale=Vector3(*objsizes), lifetime=0)
@@ -150,26 +143,41 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                                       z=objsizes[2]))
             detections.append(Detection3D(label=target_id, box=objbox))
 
+        # Clear everything
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._object_markers_pub.publish(clear_msg)
+
+        # visualize belief now, with robot and object
         self.get_and_visualize_belief(o3dviz=o3dviz)
         robot_pose_pb = self.get_and_visualize_robot_pose()
+        if objloc is not None:
+            self.make_up_object(target_id, objloc, objsizes)
+
         robot_pose = proto_utils.robot_pose_from_proto(robot_pose_pb)
 
-        ############### Test 1 #######################
-        # First, suppose the robot receives no detection
+        # Send the process observation RPC request
         time.sleep(3)
-        header = proto_utils.make_header(self.world_frame)
-        object_detection = ObjectDetectionArray(header=header,
+        header_pb = proto_utils.make_header(self.world_frame)
+        object_detection = ObjectDetectionArray(header=header_pb,
                                                 robot_id=self.robot_id,
                                                 detections=detections)
         response = self._sloop_client.processObservation(
             self.robot_id, object_detection, robot_pose_pb,
-            header=header, return_fov=True)
+            header=header_pb, return_fov=True)
         assert response.status == Status.SUCCESSFUL
 
-        # see belief now
+        # see belief now, with robot and object, and fov
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._object_markers_pub.publish(clear_msg)
         self.visualize_fovs(response)
         self.get_and_visualize_belief(o3dviz=o3dviz)
         self.get_and_visualize_robot_pose()
+        if objloc is not None:
+            self.make_up_object(target_id, objloc, objsizes)
 
 
     def run(self, o3dviz=False):

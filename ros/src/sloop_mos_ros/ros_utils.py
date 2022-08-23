@@ -400,6 +400,7 @@ def make_octnode_marker_msg(pos, res, header, alpha=1.0,
     return marker
 
 def clear_markers(header, ns):
+    """BUG: RVIZ actually clears all messages"""
     marker = Marker()
     marker.header = header
     marker.ns = ns
