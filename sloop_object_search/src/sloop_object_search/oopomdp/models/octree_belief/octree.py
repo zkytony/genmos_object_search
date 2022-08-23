@@ -186,9 +186,9 @@ class Octree:
             "dimensions must be equal and power of 2; Got (%d, %d, %d)" % (w,l,h)
         dmax = int(round(math.log(w*l*h, 2)))
         self.depth = dmax
-        self.root = OctNode(0, 0, 0, w)
-        self.dimensions = dimensions
         self._default_val = default_val
+        self.dimensions = dimensions
+        self.root = OctNode(0, 0, 0, w, default_val=self._default_val)
 
     def valid_resolution(self, res):
         return math.log(res, 2).is_integer()\
