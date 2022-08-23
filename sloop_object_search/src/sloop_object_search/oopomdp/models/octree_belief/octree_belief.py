@@ -55,33 +55,9 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         # NOTE that the normalizer is not in log space.
         self._normalizer = (w*l*h)*self._gamma
 
-        # stores locations where occupancy was once recorded (cache)
-        self._known_voxels = {}
-        next_res = self.octree.root.res
-        while next_res >= 1:
-            # for efficiency; weights are not in log space.
-            self._known_voxels[next_res] = {}  # voxel pose -> weight (not log space)
-            next_res = next_res // 2
-
     @property
     def octree(self):
         return self._octree
-
-    def known_voxels(self, res):
-        """return set of voxel poses at given resolution"""
-        if res not in self._known_voxels:
-            raise ValueError("resolution invalid %d" % res)
-        return self._known_voxels[res] #['voxels']
-
-    def update_node_weight_cache(self, x, y, z, res, value):
-        self._known_voxels[res][(x,y,z)] = value
-
-    def node_weight_in_cache(self, x, y, z, res):
-        # Note that the weights in known_voxels are not in log space.
-        if res in self._known_voxels and (x,y,z) in self._known_voxels[res]:
-            return self._known_voxels[res][(x,y,z)]
-        else:
-            return None
 
     def update_normalizer(self, old_value, value):
         self._normalizer += (value - old_value)
@@ -100,10 +76,10 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         res = voxel[3]
         return self._probability(x, y, z, res)
 
-    def prob_at(self, x, y, z, res, fast=False):
-        return self._probability(x, y, z, res, fast=fast)
+    def prob_at(self, x, y, z, res):
+        return self._probability(x, y, z, res)
 
-    def _probability(self, x, y, z, res, fast=True):
+    def _probability(self, x, y, z, res):
         """
         Probability of object present at voxel centered at the position (x, y, z)
         with resolution `res`. See OctNode definition.
@@ -113,34 +89,25 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         if not self._octree.valid_resolution(res):
             raise ValueError("Resolution %d is not defined in the octree" % res)
 
-        if fast:
-            # Note that the weights in known_voxels are not in log space.
-            weight = self.node_weight_in_cache(x, y, z, res)
-            if weight is not None:
-                return self.normalized_probability(weight)
-            else:
-                prob_one_voxel = self.normalized_probability(self._gamma)
-                return prob_one_voxel * ((res)**3)
-        else:
-            node = self._octree.root
-            next_res = self._octree.root.res // 2  # resolution
-            while next_res >= res:
-                xr = x // (next_res // res)
-                yr = y // (next_res // res)
-                zr = z // (next_res // res)
+        node = self._octree.root
+        next_res = self._octree.root.res // 2  # resolution
+        while next_res >= res:
+            xr = x // (next_res // res)
+            yr = y // (next_res // res)
+            zr = z // (next_res // res)
 
-                if node.has_child((xr, yr, zr)):
-                    next_res = next_res // 2
-                    node = node.child_at((xr, yr, zr))
-                else:
-                    # Has not encountered this position. Thus the voxel
-                    # has not been observed. Need to account for
-                    # the resolution difference between this node and query res.
-                    val = node.get_val((xr, yr, zr)) / ((next_res // res)**3)
-                    return self.normalized_probability(val)
-            # Have previously observed this position and there's a node for it.
-            # Use the node's value to compute the probability
-            return self.normalized_probability(node.value())
+            if node.has_child((xr, yr, zr)):
+                next_res = next_res // 2
+                node = node.child_at((xr, yr, zr))
+            else:
+                # Has not encountered this position. Thus the voxel
+                # has not been observed. Need to account for
+                # the resolution difference between this node and query res.
+                val = node.get_val((xr, yr, zr)) / ((next_res // res)**3)
+                return self.normalized_probability(val)
+        # Have previously observed this position and there's a node for it.
+        # Use the node's value to compute the probability
+        return self.normalized_probability(node.value())
 
     def __setitem__(self, voxel, value):
         """
@@ -193,7 +160,6 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         node.parent.set_val((x,y,z), value, child=node)
         self.update_normalizer(old_value, value)
         self.backtrack(node)
-        self._propagate(node)
 
     def random(self, res=1):
         """Returns a voxel position (x,y,z) at resolution 'res'."""
@@ -288,29 +254,13 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         cur_node = node
         while cur_supernode is not None:
             # Update the value of child through accessing parent;
-            # Update the known_voxels dict as well through update_node_weight_cache
             cur_node_val = cur_node.value()
             cur_supernode.set_val(cur_node.pos, cur_node_val, child=cur_node)
-            self.update_node_weight_cache(*cur_node.pos, cur_node.res, cur_node_val)
             cur_node = cur_supernode
             cur_supernode = cur_supernode.parent
-        # cur_node is the root node. Also need to call update_node_weight_cache
+        # cur_node is the root node.
         assert cur_node.res == self._octree.root.res
         cur_node_val = cur_node.value()
-        self.update_node_weight_cache(*cur_node.pos, cur_node.res, cur_node_val)
-
-    def _propagate(self, node):
-        """Update the value in octree's known_voxels set, for all children voxels,
-        at all resolution levels."""
-        self._propagate_helper(*node.pos, node.res, node.value())
-
-    def _propagate_helper(self, x, y, z, res, val):
-        """The value is unnormalized probability. """
-        self.update_node_weight_cache(x, y, z, res, val)
-        if res > 1:
-            for child_pos in OctNode.child_poses(x, y, z, res):
-                # want to compute: val / 8
-                self._propagate_helper(*child_pos, res // 2, val / 8)
 
     def collect_plotting_voxels(self):
         return self.octree.collect_plotting_voxels()
