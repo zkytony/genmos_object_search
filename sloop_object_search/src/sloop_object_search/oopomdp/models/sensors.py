@@ -510,67 +510,6 @@ class FrustumCamera(SensorModel):
             observed = random.uniform(0,1) < alpha / (alpha + beta)
         return observed
 
-
-    def perspectiveTransform(self, x, y, z, sensor_pose):
-        # @params:
-        # - x,y,z: points in world space
-        # - sensor_pose: [eye_x, eye_y, eye_z, theta_x, theta_y, theta_z]
-
-        point_in_world = [x,y,z,1.0]
-        eye = sensor_pose[:3]
-        rot = sensor_pose[3:]
-
-        #default up and look vector when camera pose is (0,0,0)
-        up = np.array([0.0, 1.0, 0.0])
-        look = np.array([0.0, 0.0, -1.0])
-
-        #transform up, look vector according to current camera pose
-        r = R.from_quat([rot[0],rot[1],rot[2],rot[3]])
-        curr_up = r.apply(up)
-        curr_look = r.apply(look)
-        curr_up += eye
-        curr_look += eye
-
-        #derive camera space axis u,v,w -> lookat Matrix
-        w = - (curr_look - eye) / np.linalg.norm(curr_look - eye)
-        v = curr_up - np.dot(curr_up, w) * w
-        v = v / np.linalg.norm(v)
-        u = np.cross(v,w)
-        lookat = np.array([u, v, w])
-
-        #Transform point in World Space to perspective Camera Space
-        mat = np.eye(4)
-        mat[0, 3] = -eye[0]
-        mat[1, 3] = -eye[1]
-        mat[2, 3] = -eye[2]
-        point_in_camera = np.matmul(mat, point_in_world)
-
-        axis_mat = np.eye(4)
-        axis_mat[:3, :3] = lookat
-        point_in_camera = np.matmul(axis_mat, point_in_camera)
-
-        #Transform point in perspective Camera Space to normalized perspective Camera Space
-        p_norm =  1.0 / ( self._params[3]  * np.tan(( self._params[0] * (np.pi/180.0) )/2) )
-        norm_mat = np.eye(4, dtype = np.float32)
-        norm_mat[0, 0] = p_norm
-        norm_mat[1, 1] = p_norm
-        norm_mat[2, 2] = 1.0 / self._params[-1]
-        point_in_norm = np.vmatmul(norm_mat, point_in_camera)
-
-        #Transform point in normalized perspective Camera Space to parallel camera viewing space
-        c = - self._params[2] / self._params[3]
-        unhinge_mat = np.eye(4, dtype=np.float32)
-        unhinge_mat[2,2] = -1.0 / (1+c)
-        unhinge_mat[2,3] = c / (1+c)
-        unhinge_mat[3,2] = -1.0
-        unhinge_mat[3,3] = 0.0
-        point_in_parallel = np.matmul(unhinge_mat, point_in_norm)
-
-        #De-homogenize
-        point_in_parallel = point_in_parallel/ point_in_parallel[-1]
-
-        return point_in_parallel
-
     def visible_volume(self, sensor_pose, occupancy_octree,
                        num_rays=20, step_size=0.1,
                        return_obstacles_hit=False,
@@ -632,6 +571,7 @@ class FrustumCamera(SensorModel):
             ray_np_y = random.uniform(-h1/2, h1/2)
             ray_np_z = -self.near
             ray_up_angle = math.atan2(ray_np_y, ray_np_z)
+            #
 
             # transform the ray to (pomdp) world frame
             ray_np_world = self.camera_to_world((ray_np_x, ray_np_y, ray_np_z), sensor_pose)
