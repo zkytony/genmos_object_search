@@ -219,6 +219,9 @@ class Voxel(pomdp_py.Observation):
     OTHER = "other" #i.e. not i (same as FREE but for object observation)
     UNKNOWN = "unknown"
     def __init__(self, pose, label):
+        """voxel pose could be (x,y,z), which is assumed to be
+        at ground resolution level, or (x,y,z,r) which is a location
+        at resolution r"""
         self._pose = pose
         self._label = label
     @property
@@ -226,7 +229,13 @@ class Voxel(pomdp_py.Observation):
         return self._pose
     @property
     def loc(self):
-        return self.pose
+        return self.pose[:3]
+    @property
+    def res(self):
+        if len(self.pose) == 3:
+            return 1
+        else:
+            return self.pose[-1]
     @property
     def label(self):
         return self._label
@@ -234,10 +243,7 @@ class Voxel(pomdp_py.Observation):
     def label(self, val):
         self._label = val
     def __str__(self):
-        if self._pose is None:
-            return "(%s, %s)" % (None, self._label)
-        else:
-            return "(%d, %d, %d, %s)" % (*self._pose, self._label)
+        return "({}, {})".format(self.pose, self.label)
     def __repr__(self):
         return self.__str__()
     def __hash__(self):

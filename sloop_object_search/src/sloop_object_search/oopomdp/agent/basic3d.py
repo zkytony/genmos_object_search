@@ -69,7 +69,7 @@ class MosAgentBasic3D(MosAgent):
                 # update of surrounding voxels.
                 detection_model = self.detection_models[objid]
                 params = self.agent_config["belief"].get("visible_volume_args", {})
-                visible_volume = dmodel.visible_volume(
+                visible_volume = detection_model.sensor.visible_volume(
                     robot_pose, self.search_region.octree_dist, **params)
                 # Note: if the voxels are bigger, this shouldn't be that slow.
                 # we will label voxels that
@@ -77,14 +77,17 @@ class MosAgentBasic3D(MosAgent):
                 overlapped = True
                 for voxel in visible_volume:
                     # voxel should by (x,y,z,r)
-                    x,y,z,r = voxel
-                    bbox = objo.bbox_axis_aligned
-                    voxel_box = ((x*r, y*r, z*r), r, r, r)
-                    if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
-                        voxels[voxel] = objid
-                        overlapped = True
-                    else:
+                    if objo.pose == ObjectDetection.NULL:
                         voxels[voxel] = Voxel.FREE
+                    else:
+                        x,y,z,r = voxel
+                        bbox = objo.bbox_axis_aligned
+                        voxel_box = ((x*r, y*r, z*r), r, r, r)
+                        if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
+                            voxels[voxel] = objid
+                            overlapped = True
+                        else:
+                            voxels[voxel] = Voxel(voxel, Voxel.FREE)
 
                 if not overlapped:
                     print(f"Warning: detected object {objid} but it is not in agent's FOV model.")
