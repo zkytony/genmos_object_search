@@ -15,6 +15,7 @@ import pickle
 from std_msgs.msg import ColorRGBA, Header
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point, Quaternion, Vector3
+from tf2_ros import TransformBroadcaster
 
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.utils import proto_utils
@@ -22,6 +23,7 @@ from sloop_object_search.grpc.common_pb2 import Status, Voxel3D
 from sloop_object_search.grpc.observation_pb2\
     import ObjectDetectionArray, Detection3D
 from sloop_object_search.utils.misc import hash16
+from sloop_object_search.utils.math import euler_to_quat, quat_to_euler
 from sloop_object_search.oopomdp.models.octree_belief import plot_octree_belief
 
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
@@ -50,6 +52,7 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
             "~robot_pose", MarkerArray, queue_size=10, latch=True)
         self._octbelief_markers_pub = rospy.Publisher(
             "~octree_belief", MarkerArray, queue_size=10, latch=True)
+        self.br = TransformBroadcaster()
 
     def get_and_visualize_belief(self):
         response = self._sloop_client.getObjectBeliefs(
@@ -63,7 +66,7 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         markers = []
         for bobj_pb in response.object_beliefs:
             bobj = pickle.loads(bobj_pb.dist_obj)
-            _test_visualize(bobj)
+            # _test_visualize(bobj)
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=1.0)
             self._octbelief_markers_pub.publish(msg)
@@ -77,11 +80,23 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
         print("got robot belief")
         robot_pose = proto_utils.robot_pose_from_proto(response.robot_belief.pose)
         header = Header(stamp=rospy.Time.now(),
-                        frame_id=self.world_frame)
+                        frame_id=self.robot_id)
+
+        # The camera by default looks at -z; Because in ROS, 0 degree
+        # means looking at +x, therefore we rotate the marker for robot pose
+        # so that it starts out looking at -z.
         marker = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, robot_pose, header=header, scale=Vector3(x=1.2, y=0.2, z=0.2),
+            self.robot_id, (0,0,0,*euler_to_quat(0, 90, 0)), header=header, scale=Vector3(x=1.2, y=0.2, z=0.2),
             lifetime=0)  # forever
         self._robot_markers_pub.publish(MarkerArray([marker]))
+
+        # publish tf
+        rot = np.array(quat_to_euler(*robot_pose[3:]))
+        robot_pose_aligned = (*robot_pose[:3], *euler_to_quat(*rot))
+        trobot = ros_utils.tf2msg_from_robot_pose(
+            robot_pose_aligned, self.world_frame, self.robot_id)
+        self.br.sendTransform(trobot)
+
         return response.robot_belief.pose
 
 
