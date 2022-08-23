@@ -58,6 +58,10 @@ class OctNode:
     def set_default_val(self, default_val):
         self._default_val = default_val
 
+    @property
+    def default_val(self):
+        return self._default_val
+
     def add_child(self, child):
         if self.children is None:
             raise ValueError("Ground node cannot have children")
@@ -287,6 +291,8 @@ class Octree:
         return collector
 
     def _collect_plotting_voxels_helper(self, node, collector):
+        """We will collect all nodes in the octree for plotting,
+        plus children that don't exist"""
         if node.leaf:
             collector.append((node.pos[0]*node.res,
                               node.pos[1]*node.res,
@@ -296,7 +302,7 @@ class Octree:
         else:
             for pos in OctNode.child_poses(*node.pos, node.res):
                 if pos not in node.children\
-                   or node.children[pos][1] is None:
+                   or node.children[pos][1] is None:  # node at this pos has not been created
                         res = node.res // 2
                         collector.append((pos[0]*res,
                                           pos[1]*res,
