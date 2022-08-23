@@ -19,6 +19,7 @@ import tf2_geometry_msgs.tf2_geometry_msgs
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import remap
 import sloop_object_search.grpc.common_pb2 as common_pb2
+from sloop_object_search.utils.colors import color_map, cmaps
 
 
 def IS_TAG(t):
@@ -351,7 +352,8 @@ def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
     color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
     marker.color = color
 
-def make_octnode_marker_msg(pos, res, prob, header, lifetime=1.0, color=[0.0, 0.8, 0.0]):
+def make_octnode_marker_msg(pos, res, header, alpha=1.0,
+                            lifetime=1.0, color=[0.0, 0.8, 0.0]):
     """
     Creates an rviz marker for a OctNode, specified
     by the given 3D position (in frame of header),
@@ -369,12 +371,19 @@ def make_octnode_marker_msg(pos, res, prob, header, lifetime=1.0, color=[0.0, 0.
     marker.scale = geometry_msgs.msg.Vector3(x=res, y=res, z=res)
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(lifetime)
-    marker.color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=prob)
+    marker.color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=alpha)
     return marker
 
-def make_octree_belief_proto_markers_msg(octree_belief_pb, header, alpha_scaling=1.0):
+def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.COLOR_MAP_JET,
+                                         alpha_scaling=1.0):
     """given an octree belief's protobuf representation,
     which is a Histogram, make a MarkerArray message for it."""
+    def _compute_alpha(p, vmin, vmax):
+        if vmax - vmin > 0.0:
+            return remap(p, vmin, vmax, 0.05, 1.0)
+        else:
+            return 1.0
+
     markers = []
     hist_pb = octree_belief_pb.dist
     prob_max = max(hist_pb.probs)
@@ -385,9 +394,11 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, alpha_scaling
 
         pos = [voxel.pos.x, voxel.pos.y, voxel.pos.z]
         prob = hist_pb.probs[i]
-        prob_alpha = remap(prob, prob_min, prob_max, 0.0, 1.0)*alpha_scaling
+        color = color_map(prob, [prob_min, prob_max], cmap)
+        alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
         marker = make_octnode_marker_msg(
-            pos, voxel.res, prob_alpha, header, lifetime=0)  # 0 is forever
+            pos, voxel.res, header, lifetime=0,  # 0 is forever
+            color=color, alpha=alpha)
         markers.append(marker)
     return MarkerArray(markers)
 

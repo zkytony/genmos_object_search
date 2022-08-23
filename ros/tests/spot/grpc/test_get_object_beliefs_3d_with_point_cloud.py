@@ -45,12 +45,12 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
         markers = []
         for bobj_pb in response.object_beliefs:
             bobj = pickle.loads(bobj_pb.dist_obj)
-            draw_octree_dist(bobj.octree_dist, cmap=cmaps.COLOR_MAP_GRAYS2)
-            # msg = ros_utils.make_octree_belief_proto_markers_msg(bobj_pb, header)
-            # # self._octbelief_markers_pub.publish(msg)
+            # draw_octree_dist(bobj.octree_dist, cmap=cmaps.COLOR_MAP_GRAYS2)
+            msg = ros_utils.make_octree_belief_proto_markers_msg(bobj_pb, header)
+            self._octbelief_markers_pub.publish(msg)
             print(f"Visualized belief for object {bobj_pb.object_id}")
-            # print(f"Check it out in rviz: roslaunch rbd_spot_perception view_graphnav_point_cloud.launch")
-            # print(f"Note: you may need to add the octree belief topic")
+            print(f"Check it out in rviz: roslaunch rbd_spot_perception view_graphnav_point_cloud.launch")
+            print(f"Note: you may need to add the octree belief topic")
             break
 
         rospy.spin()

@@ -65,10 +65,10 @@ def color_map(val, val_posts, rgb_posts):
     raise ValueError(f"value {val} does not fall in any interval in {val_posts}")
 
 class cmaps:
-    COLOR_MAP_JET = [[0.43, 0.07, 0.0],
-                     [0.0, 0.9, 0.93],
+    COLOR_MAP_JET = [[0.07, 0.0, 0.43],
                      [0.93, 0.53, 0.0],
-                     [0.07, 0.0, 0.43]]
+                     [0.0, 0.9, 0.93],
+                     [0.43, 0.07, 0.0]]
 
     COLOR_MAP_GRAYS = [[0.95, 0.95, 0.95],
                        [0.05, 0.05, 0.05]]
