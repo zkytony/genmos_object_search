@@ -101,7 +101,7 @@ class MosAgentBasic3D(MosAgent):
                     if debug:
                         _visualize_octree_belief(b_obj, robot_pose,
                                                  visible_volume=visible_volume, obstacles_hit=obstacles_hit)
-                    alpha = detection_model.alpha,
+                    alpha = detection_model.alpha
                     beta = detection_model.beta
                     b_obj_new = update_octree_belief(b_obj, fov_voxels, alpha, beta)
                     if debug:
