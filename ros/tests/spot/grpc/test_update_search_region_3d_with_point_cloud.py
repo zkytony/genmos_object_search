@@ -18,6 +18,7 @@ from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped, WaitForMessages
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from sloop_object_search.grpc.client import SloopObjectSearchClient
+from sloop_object_search.utils.math import euler_to_quat, quat_to_euler
 from config_test_MosAgentBasic3D import TEST_CONFIG
 
 POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
@@ -72,7 +73,7 @@ class UpdateSearchRegion3DTestCase:
             waypoint = waypoints_array[0]
         else:
             waypoint = waypoints_array[self._update_count-1]
-        pose_stamped = pose_tuple_to_pose_stamped((*waypoint, 0, 0, 0, 1), "body")
+        pose_stamped = pose_tuple_to_pose_stamped((*waypoint, *euler_to_quat(90, 0, 0)), "body")
 
         rate = rospy.Rate(10)
         self.robot_pose_pub.publish(pose_stamped)
@@ -96,7 +97,7 @@ class UpdateSearchRegion3DTestCase:
             robot_pose = (waypoints_array[self._update_count-1][0],
                           waypoints_array[self._update_count-1][1],
                           waypoints_array[self._update_count-1][2],
-                          0, 0, 0, 1)
+                          *euler_to_quat(90, 0, 0))
             robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5
