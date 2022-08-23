@@ -100,7 +100,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         res = voxel[3]
         return self._probability(x, y, z, res)
 
-    def prob_at(self, x, y, z, res, fast=True):
+    def prob_at(self, x, y, z, res, fast=False):
         return self._probability(x, y, z, res, fast=fast)
 
     def _probability(self, x, y, z, res, fast=True):
@@ -134,10 +134,10 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
                     node = node.child_at((xr, yr, zr))
                 else:
                     # Has not encountered this position. Thus the voxel
-                    # has not been observed. P(v|s',a)=gamma; need to account
-                    # for the resolution.
-                    prob_one_voxel = self.normalized_probability(self._gamma)
-                    return prob_one_voxel * ((res)**3)
+                    # has not been observed. Need to account for
+                    # the resolution difference between this node and query res.
+                    val = node.get_val((xr, yr, zr)) / ((next_res // res)**3)
+                    return self.normalized_probability(val)
             # Have previously observed this position and there's a node for it.
             # Use the node's value to compute the probability
             return self.normalized_probability(node.value())
@@ -580,9 +580,11 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 self.backtrack(node)
                 if not node.leaf:
                     node.remove_children()  # we are overwriting this node
+                assert self.prob_at(*node.pos, node.res) == self.normalized_probability(node.value())
                 node = node.parent
                 if node is None:
                     break
+                import pdb; pdb.set_trace()
 
 
 class OccupancyOctreeDistribution(RegionalOctreeDistribution):
