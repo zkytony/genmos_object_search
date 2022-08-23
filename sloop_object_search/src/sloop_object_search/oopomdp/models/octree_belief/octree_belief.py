@@ -429,20 +429,25 @@ def update_octree_belief(octree_belief, real_observation,
     """
     For alpha, beta, gamma, refer to ObjectObservationModel.
     real_observation (Observation)
+
+    Note that this method does not require voxels in real_observation
+    to be at ground resolution level; If a voxel is at a higher resolution
+    level, then the corresponding octnode's children will be removed.
     """
     if not isinstance(real_observation, FovVoxels):
-       raise TypeError("Belief update should happen using "\
-                       "unfactored observation (type Observation)")
+       raise TypeError("Belief update should happen using"\
+                       " unfactored observation (type Observation)")
 
-    # Make a copy
-    octree_belief = copy.deepcopy(octree_belief)  # ? is this necessary?
     for voxel_pose in real_observation.voxels:
-        ## TODO: Should make sure voxel_pose is actually within search space boundary,
-        ## which is specified in the octree_belief already.
         voxel = real_observation.voxels[voxel_pose]
-        x, y, z = voxel_pose
-        node = octree_belief.octree.add_node(x,y,z,1)  # real_observation is ground level.
-        val_t = node.get_val(None)  # get value at node.
+        if len(voxel_pose) == 3:
+            voxel_pose = (*voxel_pose, 1)
+
+        x, y, z, res = voxel_pose
+        node = octree_belief.octree.add_node(x,y,z,res)
+        val_t = node.value()   # get value at node.
+        if not node.leaf:
+            node.remove_children()  # we are overwriting this node
         if LOG:
             if voxel.label == Voxel.UNKNOWN:
                 node.set_val(None, val_t + gamma)
@@ -452,13 +457,13 @@ def update_octree_belief(octree_belief, real_observation,
                 node.set_val(None, val_t + beta)
         else:
             if voxel.label == Voxel.UNKNOWN:
-                node.set_val(None, val_t * gamma)
+                node.set_val(None, (val_t * gamma)*(res**3))
             elif voxel.label == octree_belief.objid:
                 # override potential previous belief of free space due to beta=0
-                node.set_val(None, val_t * alpha)
+                node.set_val(None, (val_t * alpha)*(res**3))
             else:
-                node.set_val(None, val_t * beta)
-        val_tp1 = node.get_val(None)
+                node.set_val(None, (val_t * beta)*(res**3))
+        val_tp1 = node.value()
         octree_belief.octree_dist.update_normalizer(val_t, val_tp1)
         octree_belief.octree_dist.backtrack(node)
     return octree_belief

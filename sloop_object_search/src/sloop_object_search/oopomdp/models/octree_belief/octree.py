@@ -81,8 +81,17 @@ class OctNode:
     def has_child(self, pos):
         return self.child_at(pos) != None
 
+    @property
+    def is_root(self):
+        return self.parent is None
+
     def value(self):
-        """The value of this node is the sum of its children"""
+        """The value of this node is the sum of its children;
+        If this is a leaf node (unless a root), then its value is
+        stored in its parent."""
+        if self.leaf and not self.is_root:
+            return self.get_val(None)
+
         if self.children is not None:
             sum_children_vals = 0  # this is not in log space
             if len(self.children) > 0:
@@ -111,10 +120,17 @@ class OctNode:
         if child_pos is not None:
             self.children[child_pos] = (val, child)
         else:
-            assert self.res == 1
-            self.val = val
+            if self.res == 1:
+                self.val = val
+            else:
+                assert self.leaf
+                self.parent.set_val(self.pos, val, child=self)
 
     def get_val(self, child_pos):
+        """get value at child_pos. If child_pos is None,
+        then return own value, as stored in parent. This
+        function shouldn't be used by non-leaf nodes if
+        child_pos is not None"""
         if child_pos is not None:
             if child_pos not in self.children:
                 # return default value
@@ -125,13 +141,21 @@ class OctNode:
             else:
                 return self.children[child_pos][0]
         else:
-            assert self.res == 1  # a ground octnode
-            return self.val
+            if self.res == 1:
+                return self.val
+            else:
+                assert self.leaf
+                return self.parent.get_val(self.pos)
+
+    def remove_children(self):
+        if not self.leaf and self.res > 1:
+            self.children = {}
+            self.leaf = True
 
     @staticmethod
     def child_poses(x, y, z, res):
         """return a set of poses of the children of node
-        centered at (x, y, z, res); Doesn't matter if the child node exists"""
+        centered at (x, y, z, res); Doesn't matter whether the child node exists"""
         if res > 1:
             xc, yc, zc = x*2, y*2, z*2
             poses = set({
