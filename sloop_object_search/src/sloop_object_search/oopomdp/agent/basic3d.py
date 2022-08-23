@@ -11,12 +11,10 @@ from sloop_object_search.utils import math as math_utils
 
 class MosAgentBasic3D(MosAgent):
 
-    def __init__(self, agent_config, search_region,
-                 init_robot_pose_dist,
-                 init_object_beliefs=None):
+    def init_detection_models(self):
         # Check that all sensors have the same look direction.
         # Otherwise, the robot needs a primary camera direction.
-        detection_models = init_detection_models(agent_config)
+        detection_models = init_detection_models(self.agent_config)
         self.default_forward_direction = None
         for d in detection_models:
             camera_model = detection_models[d].sensor
@@ -28,16 +26,12 @@ class MosAgentBasic3D(MosAgent):
                 if self.default_forward_direction != camera_model.look:
                     try:
                         self.default_forward_direction\
-                            = agent_config["robot"]["default_forward_direction"]
+                            = self.agent_config["robot"]["default_forward_direction"]
                     except KeyError:
                         raise ValueError("robot has multiple cameras that look in different directions."
                                          "Requires specifying 'default_primary_camera_direction' to know"
                                          "the robot's default forward direction")
-
-        super().__init__(agent_config, search_region,
-                         init_robot_pose_dist,
-                         init_object_beliefs=init_object_beliefs)
-
+        return detection_models
 
     def init_transition_and_policy_models(self):
         robot_trans_model = RobotTransBasic3D(

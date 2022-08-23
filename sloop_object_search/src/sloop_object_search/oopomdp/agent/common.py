@@ -125,7 +125,7 @@ class MosAgent(pomdp_py.Agent):
             init_robot_pose_dist, init_object_beliefs)
 
         # Observation Model (Mos)
-        self.detection_models = init_detection_models(agent_config)
+        self.detection_models = self.init_detection_models()
         self.localization_model = interpret_localization_model(robot)
         self.robot_observation_model = RobotObservationModel(
             robot['id'], localization_model=self.localization_model)
@@ -146,6 +146,10 @@ class MosAgent(pomdp_py.Agent):
                          transition_model,
                          observation_model,
                          reward_model)
+
+    def init_detection_models(self):
+        detection_models = init_detection_models(self.agent_config)
+        return detection_models
 
     def init_belief(self, init_robot_pose_dist, init_object_beliefs=None):
         """Override this method if initial belief is constructed in
