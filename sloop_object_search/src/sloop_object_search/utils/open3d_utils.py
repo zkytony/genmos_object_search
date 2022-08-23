@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 from sloop_object_search.utils.colors import color_map, cmaps
+from sloop_object_search.utils import math as math_utils
 from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
 
@@ -164,4 +165,43 @@ def draw_search_region2d(search_region, grid_robot_position=None, points=None):
         pcd2.colors.append([0.0, 0.8, 0.0])
     geometries.append(pcd2)
     o3d.visualization.draw_geometries(geometries)
+    return geometries
+
+
+def draw_robot_pose(robot_pose):
+    # The robot by default looks at -z direction in the pomdp model,
+    # but in open3d, the 0-degree direction is +x. So, it will
+    # have a rotation around x by default
+    default_o3d_rotation = [180,0,0]  # don't change this
+
+    rotation = math_utils.quat_to_euler(*robot_pose[3:])
+    position = robot_pose[:3]
+    sensor_pose = (*position, *math_utils.euler_to_quat(*rotation))
+    arrow = o3d.geometry.TriangleMesh.create_arrow(
+        cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
+        cone_height=1.8)
+
+    _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
+    arrow.rotate(math_utils.R_euler(*_o3d_rotation).as_matrix())
+    arrow.translate(np.asarray(sensor_pose[:3]))
+    arrow.paint_uniform_color([0.4, 0.4, 0.4])
+    return arrow
+
+def draw_fov(visible_volume, obstacles_hit=None):
+    geometries = []
+    for voxel in visible_volume:
+        if voxel not in obstacles_hit:
+            x, y, z, r = voxel
+            box = o3d.geometry.TriangleMesh.create_box(width=r, height=r, depth=r)
+            box.translate(np.asarray([x*r,y*r,z*r]))
+            box.paint_uniform_color([0.0, 0.55, 0.98])
+            geometries.append(box)
+
+    if obstacles_hit is not None:
+        for voxel in obstacles_hit:
+            x, y, z, r = voxel
+            box = o3d.geometry.TriangleMesh.create_box(width=r, height=r, depth=r)
+            box.translate(np.asarray([x*r,y*r,z*r]))
+            box.paint_uniform_color([0.0, 0.05, 0.75])
+            geometries.append(box)
     return geometries

@@ -1,4 +1,5 @@
 import pomdp_py
+import numpy as np
 from . import belief
 from ..domain.observation import JointObservation, ObjectDetection, Voxel, FovVoxels
 from ..models.transition_model import RobotTransBasic3D
@@ -71,6 +72,7 @@ class MosAgentBasic3D(MosAgent):
                                  " to the object detections.")
 
             robot_pose = observation.z(self.robot_id).pose
+            print(robot_pose)
             visible_volume = None  # we will
             for objid in observation:
                 if objid == self.robot_id:
@@ -86,8 +88,9 @@ class MosAgentBasic3D(MosAgent):
                 # update of surrounding voxels.
                 detection_model = self.detection_models[objid]
                 params = self.agent_config["belief"].get("visible_volume_params", {})
-                visible_volume = detection_model.sensor.visible_volume(
-                    robot_pose, self.search_region.octree_dist, **params)
+                visible_volume, obstacles_hit = detection_model.sensor.visible_volume(
+                    robot_pose, self.search_region.octree_dist,
+                    return_obstacles_hit=True, **params)
 
                 # Note: if the voxels are bigger, this shouldn't be that slow.
                 # we will label voxels that
@@ -113,11 +116,41 @@ class MosAgentBasic3D(MosAgent):
                 # Now, we finally update belief, if objid is a target object
                 if objid in self.target_objects:
                     b_obj = self.belief.b(objid)
+
+                    _visualize_octree_belief(b_obj, robot_pose,
+                                             visible_volume=visible_volume, obstacles_hit=obstacles_hit)
+
                     b_obj_new = update_octree_belief(b_obj, FovVoxels(voxels),
                                                      alpha=detection_model.alpha,
                                                      beta=detection_model.beta)
+
+                    _visualize_octree_belief(b_obj_new, robot_pose,
+                                             visible_volume=visible_volume, obstacles_hit=obstacles_hit)
+
+
                     self.belief.set_object_belief(objid, b_obj_new)
 
                 else:
                     # objid is not a target object. It may be a correlated object
                     raise NotImplementedError("Doesn't handle correlated object right now.")
+
+
+#### useful debugging method
+import open3d as o3d
+from sloop_object_search.utils.colors import cmaps
+from sloop_object_search.utils.open3d_utils\
+    import draw_octree_dist, cube_unfilled, draw_robot_pose, draw_fov
+def _visualize_octree_belief(octree_belief, robot_pose, occupancy_octree=None,
+                             visible_volume=None, obstacles_hit=None):
+    geometries = []
+    if occupancy_octree is not None:
+        geometries = draw_octree_dist(occupancy_octree, viz=False)
+    # Draw the robot
+    geometries.append(draw_robot_pose(robot_pose))
+    # Draw the octree belief
+    geometries.extend(draw_octree_dist(octree_belief.octree_dist, viz=False,
+                                       cmap=cmaps.COLOR_MAP_JET))
+    # Draw the FOV
+    if visible_volume is not None:
+        geometries.extend(draw_fov(visible_volume, obstacles_hit))
+    o3d.visualization.draw_geometries(geometries)
