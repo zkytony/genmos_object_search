@@ -111,18 +111,18 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
 
     def __setitem__(self, voxel, value):
         """
-        This can only happen for voxels at ground level.
+        If voxel is not ground-level, then we will overwrite
+        the existing voxel and the children of this voxel will
+        have uniform probability.
         The value is unnormalized probability.
         """
         if type(voxel) != tuple and len(voxel) != 4:
             raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
-        x,y,z = voxel[:3]
-        res = voxel[3]
-        if res != 1:
-            raise ValueError("__setitem__ requires voxel to be"\
-                             "at ground resolution level")
-        node = self._octree.add_node(x,y,z,1)
-        old_value = node.get_val(None)
+        x,y,z,res = voxel
+        node = self._octree.add_node(x,y,z,res)
+        old_value = node.value()
+        if not node.leaf:
+            node.remove_children()
         node.set_val(None, value)
         self.update_normalizer(old_value, value)
         self.backtrack(node)
@@ -310,8 +310,6 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         This can only happen for object state at ground level.
         The value is unnormalized probability.
         """
-        if object_state.res != 1:
-            raise TypeError("Only allow setting the value at ground level.")
         x,y,z = object_state.loc
         self._octree_dist[(x,y,z,object_state.res)] = value
 
@@ -470,18 +468,12 @@ class RegionalOctreeDistribution(OctreeDistribution):
 
     def __setitem__(self, voxel, value):
         """
-        This can only happen for voxels at ground level.
         The value is unnormalized probability.
         """
         if type(voxel) != tuple and len(voxel) != 4:
             raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
 
-        x,y,z = voxel[:3]
-        res = voxel[3]
-        if res != 1:
-            raise ValueError("__setitem__ requires voxel to be"\
-                             "at ground resolution level")
-
+        x,y,z,res = voxel
         # if voxel is not in region, then
         if not self.in_region(voxel):
             # value is ignored; no assignment happens
