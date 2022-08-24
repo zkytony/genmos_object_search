@@ -113,10 +113,6 @@ def robot_pose_from_proto(robot_pose_pb):
         return (pose3d.position.x, pose3d.position.y, pose3d.position.z,
                 pose3d.rotation.x, pose3d.rotation.y, pose3d.rotation.z,
                 pose3d.rotation.w)
-    elif robot_pose_pb.HasField("pose_particles"):
-        raise NotImplementedError("can't handle 'pose_particles' yet")
-    elif robot_pose_pb.HasField("pose_hist"):
-        raise NotImplementedError("can't handle 'pose_hist' yet")
     else:
         raise ValueError("request does not contain valid robot pose field.")
     return None
@@ -240,10 +236,8 @@ def robot_belief_to_proto(robot_belief, header=None):
     representation of robot belief, return a RobotBelief proto.
     Uncertainty over the robot belief is possibly in its pose. We
     assume the robot observes its other attributes such as 'objects_found'."""
-    if not isinstance(robot_belief, pomdp_py.WeightedParticles)\
-       and not isinstance(robot_belief, pomdp_py.Histogram):
-        raise TypeError("robot_belief should be either "
-                        "pomdp_py.WeightedParticles or pomdp_py.Histogram")
+    if not isinstance(robot_belief, pomdp_py.Gaussian):
+        raise TypeError("robot_belief should be a pomdp_pyGaussian")
     if header is None:
         header = make_header()
     # For now, we return the most likely robot state, although

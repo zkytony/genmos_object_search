@@ -63,10 +63,11 @@ message Language {
 }
 
 
-// The observation of robot pose is either a single pose,
-// or a representation of the belief in the robot pose.
-// If latter, the representation could be particles or
-// a histogram.
+
+// The POMDP agent allows the robot to have uncertainty over its pose.
+// It expects a localization module on the system will output estimates
+// about the robot pose, with uncertainty represented by a covariance
+// matrix.
 //
 // The robot pose determines where the robot receives observation.
 // By default, it should be the pose of the camera or some
@@ -79,7 +80,11 @@ message RobotPose {
   oneof pose {
     Pose2D pose_2d = 3;
     Pose3D pose_3d = 4;
-    WeightedParticles pose_particles = 5;
-    Histogram pose_hist = 6;
   }
+
+  // This is a row-major covariance matrix.
+  // For 2D pose, the variables are [x y yaw]
+  // For 3D pose, the variables are [x y z thx thy thz]
+  //    (the last three are rotations about the respective axes]
+  repeated double covariance = 5;
 }
