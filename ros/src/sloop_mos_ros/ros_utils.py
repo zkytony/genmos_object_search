@@ -432,7 +432,7 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
     which is a Histogram, make a MarkerArray message for it."""
     def _compute_alpha(p, vmin, vmax):
         if vmax - vmin > 0.0:
-            return remap(p, vmin, vmax, 0.0, 0.8)
+            return math_utils.remap(p, vmin, vmax, 0.0, 0.8)
         else:
             return 0.8
 
@@ -471,7 +471,7 @@ def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, st
     # looking at -z. Note this must be specified with respect to the robot frame.
     header = std_msgs.msg.Header(stamp=stamp, frame_id=robot_frame)
     marker = make_viz_marker_from_robot_pose_3d(
-        robot_frame, (0,0,0,*euler_to_quat(0, 90, 0)),
+        robot_frame, (0,0,0,*math_utils.euler_to_quat(0, 90, 0)),
         header=header, scale=scale, lifetime=lifetime, **kwargs)
     tf2msg = tf2msg_from_robot_pose(robot_pose, world_frame, robot_frame)
     return marker, tf2msg

@@ -99,24 +99,10 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got robot belief")
-        robot_pose = proto_utils.robot_pose_from_proto(response.robot_belief.pose)
-        header = Header(stamp=rospy.Time.now(),
-                        frame_id=self.robot_id)
-
-        # The camera by default looks at -z; Because in ROS, 0 degree
-        # means looking at +x, therefore we rotate the marker for robot pose
-        # so that it starts out looking at -z.
-        marker = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, (0,0,0,*euler_to_quat(0, 90, 0)),
-            header=header, scale=Vector3(x=0.4, y=0.05, z=0.05),
-            lifetime=0)  # forever
+        marker, trobot = ros_utils.viz_msgs_for_robot_pose_proto(
+            response.robot_belief.pose, self.world_frame, self.robot_id)
         self._robot_markers_pub.publish(MarkerArray([marker]))
-
-        # publish tf
-        trobot = ros_utils.tf2msg_from_robot_pose(
-            robot_pose, self.world_frame, self.robot_id)
         self.br.sendTransform(trobot)
-
         return response.robot_belief.pose
 
     def make_up_object(self, objid, object_loc, objsizes):
