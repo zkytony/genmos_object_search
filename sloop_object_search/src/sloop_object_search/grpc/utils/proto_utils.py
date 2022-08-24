@@ -1,10 +1,5 @@
 import numpy as np
 
-# we don't want to crash if a ros-related package is not installed.
-import importlib
-if importlib.util.find_spec("ros_numpy") is not None:
-    import ros_numpy
-
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.any_pb2 import Any
 import logging
@@ -62,28 +57,6 @@ def process_search_region_params_3d(search_region_params_3d_pb):
     if search_region_params_3d_pb.HasField('region_size_z'):
         params["region_size_z"] = search_region_params_3d_pb.region_size_z
     return params
-
-
-def pointcloud2_to_pointcloudproto(cloud_msg):
-    """
-    Converts a PointCloud2 message to a PointCloud proto message.
-
-    Args:
-       cloud_msg (sensor_msgs.PointCloud2)
-    """
-    pcl_raw_array = ros_numpy.point_cloud2.pointcloud2_to_array(cloud_msg)
-    points_xyz_array = ros_numpy.point_cloud2.get_xyz_points(pcl_raw_array)
-
-    points_pb = []
-    for p in points_xyz_array:
-        point_pb = o_pb2.PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]))
-        points_pb.append(point_pb)
-
-    header = Header(stamp=Timestamp().GetCurrentTime(),
-                    frame_id=cloud_msg.header.frame_id)
-    cloud_pb = o_pb2.PointCloud(header=header,
-                                points=points_pb)
-    return cloud_pb
 
 
 def pointcloudproto_to_array(point_cloud):

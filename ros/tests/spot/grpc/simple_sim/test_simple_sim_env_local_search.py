@@ -56,7 +56,7 @@ class TestSimpleEnvLocalSearch:
             [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=10, verbose=True).messages
-        cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose_pb = proto_utils.posemsg_to_pose3dproto(pose_stamped_msg.pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=self.robot_id,

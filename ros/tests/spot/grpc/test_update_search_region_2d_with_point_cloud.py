@@ -13,6 +13,7 @@ from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
 from sloop_mos_ros.ros_utils import WaitForMessages
+from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Pose2D
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -64,7 +65,7 @@ class UpdateSearchRegion2DTestCase:
         self._update_count += 1
         print(f"Received messages! Call count: {self._update_count}")
 
-        cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(cloud_msg)
+        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
 
         if self._update_count > len(waypoints_array):

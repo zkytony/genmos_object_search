@@ -16,9 +16,16 @@ import tf2_ros
 # STUPID ROS PROBLEM.
 import tf2_geometry_msgs.tf2_geometry_msgs
 
+# we don't want to crash if a ros-related package is not installed.
+import importlib
+if importlib.util.find_spec("ros_numpy") is not None:
+    import ros_numpy
+
+import sloop_object_search.grpc.common_pb2 as common_pb2
+import sloop_object_search.grpc.observation_pb2 as o_pb2
+import sloop_object_search.grpc.common_pb2 as c_pb2
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import remap
-import sloop_object_search.grpc.common_pb2 as common_pb2
 from sloop_object_search.utils.colors import color_map, cmaps
 
 
@@ -282,6 +289,30 @@ def _convert_img(img, encoding='passthrough'):
     msg = bridge.cv2_to_imgmsg(img, encoding=encoding)
     return msg
 
+def pointcloud2_to_pointcloudproto(cloud_msg):
+    """
+    Converts a PointCloud2 message to a PointCloud proto message.
+
+    Args:
+       cloud_msg (sensor_msgs.PointCloud2)
+    """
+    pcl_raw_array = ros_numpy.point_cloud2.pointcloud2_to_array(cloud_msg)
+    points_xyz_array = ros_numpy.point_cloud2.get_xyz_points(pcl_raw_array)
+
+    points_pb = []
+    for p in points_xyz_array:
+        point_pb = o_pb2.PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]))
+        points_pb.append(point_pb)
+
+    header = c_pb2.Header(stamp=Timestamp().GetCurrentTime(),
+                          frame_id=cloud_msg.header.frame_id)
+    cloud_pb = o_pb2.PointCloud(header=header,
+                                points=points_pb)
+    return cloud_pb
+
+
+
+
 ### Visualization ###
 from visualization_msgs.msg import Marker, MarkerArray
 def make_viz_marker_from_object_state(sobj, header, **kwargs):
@@ -434,6 +465,16 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
             color=color, alpha=alpha)
         markers.append(marker)
     return MarkerArray(markers)
+
+def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, stamp=None):
+    """Given a robot_pose_proto obtained from sloop grpc server,
+    return a tuple (marker, tf2msg) for visualization. Note that
+    this function accounts for the differences in default look
+    direction between ROS and SLOOP."""
+    if stamp is None:
+        stamp = rospy.Time.now()
+    robot_pose = proto_utils.robot_pose_from_proto(response.robot_belief.pose)
+
 
 
 ### Communication ###

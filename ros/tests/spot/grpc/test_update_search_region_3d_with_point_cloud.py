@@ -14,7 +14,7 @@ import geometry_msgs.msg as geometry_msgs
 from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
-from sloop_mos_ros.ros_utils import pose_tuple_to_pose_stamped, WaitForMessages
+from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -59,7 +59,7 @@ class UpdateSearchRegion3DTestCase:
                                        robot_id=self.robot_id,
                                        header=proto_utils.make_header())
         for i in range(self.num_updates):
-            cloud_msg, waypoints_msg = WaitForMessages(
+            cloud_msg, waypoints_msg = ros_utils.WaitForMessages(
                 [POINT_CLOUD_TOPIC, WAYPOINT_TOPIC],
                 [PointCloud2, GraphNavWaypointArray],
                 delay=5, verbose=True).messages
@@ -73,7 +73,7 @@ class UpdateSearchRegion3DTestCase:
             waypoint = waypoints_array[0]
         else:
             waypoint = waypoints_array[self._update_count-1]
-        pose_stamped = pose_tuple_to_pose_stamped(
+        pose_stamped = ros_utils.pose_tuple_to_pose_stamped(
             (*waypoint, *euler_to_quat(90, 0, 0)), "body")
 
         rate = rospy.Rate(10)
@@ -87,7 +87,7 @@ class UpdateSearchRegion3DTestCase:
         self._update_count += 1
         print(f"Received messages! Call count: {self._update_count}")
 
-        cloud_pb = proto_utils.pointcloud2_to_pointcloudproto(cloud_msg)
+        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(cloud_msg)
         waypoints_array = waypoints_msg_to_arr(waypoints_msg)
 
         if self._update_count > len(waypoints_array):
