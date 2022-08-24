@@ -227,6 +227,7 @@ def angle_between(v1, v2):
     return to_deg(np.arccos(
         np.clip(np.dot(v1, v2)/(np.linalg.norm(v1)*np.linalg.norm(v2)), -1.0, 1.0)))
 
+
 # Probability
 def sep_spatial_sample(candidates, sep, num_samples,
                        sample_func=None, rnd=random):

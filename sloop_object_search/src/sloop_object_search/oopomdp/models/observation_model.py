@@ -68,12 +68,11 @@ class ObjectDetectionModel:
 
 
 class LocalizationModel:
-    """Pr(z_pose | s_pose)"""
+    """Pr(z_pose | s_pose)."""
     def sample(self, robot_pose):
         raise NotImplementedError()
     def probability(self, z_pose, robot_pose):
         raise NotImplementedError()
-
 
 class IdentityLocalizationModel(LocalizationModel):
     def sample(self, robot_pose):
@@ -87,7 +86,16 @@ class RobotObservationModel(pomdp_py.ObservationModel):
         """Pr(zrobot | srobot); there could be noise in
         robot localization, i.e. pose, but other fields
         of RobotObservation are perfectly observed. If
-        localization_model is None, then it's set to identity."""
+        localization_model is None, then it's set to identity.
+
+        Using identity localization model means we don't
+        simulate localization noise during planning. Noise
+        from localization could still be considered for planning
+        since robot belief in its pose is Gaussian.
+
+        There is no 'probability' function in this model
+        because robot belief is updated based on actual
+        robot localization directly."""
         self.robot_id = robot_id
         if localization_model is None:
             localization_model = IdentityLocalizationModel()
@@ -103,18 +111,6 @@ class RobotObservationModel(pomdp_py.ObservationModel):
         pose_observed = self.localization_model.sample(srobot_next["pose"])
         robot_obz = self.observation_class.from_state(srobot_next, pose=pose_observed)
         return robot_obz
-
-    def probability(self, zrobot, snext, action):
-        srobot_next = snext.s(self.robot_id)
-        zrobot_from_state = self.observation_class.from_state(
-            srobot_next, pose=zrobot.pose)
-        if zrobot_from_state != zrobot:
-            return self.epsilon
-        else:
-            z_pose = zrobot.pose
-            s_pose = srobot_next.pose
-            pr_pose = self.localization_model.probability(z_pose, s_pose)
-            return pr_pose
 
 
 class RobotObservationModelTopo(RobotObservationModel):

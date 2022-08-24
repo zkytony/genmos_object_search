@@ -16,6 +16,7 @@ from .. import sloop_object_search_pb2 as slpb2
 
 from sloop_object_search.oopomdp.domain import action as slpa
 from sloop_object_search.oopomdp.domain import observation as slpo
+from sloop_object_search.oopomdp.agent.belief import RobotStateBelief
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeBelief, plot_octree_belief
@@ -95,27 +96,57 @@ def make_header(frame_id=None, stamp=None):
     else:
         return Header(stamp=stamp, frame_id=frame_id)
 
-def robot_pose_from_proto(robot_pose_pb):
+def robot_pose_from_proto(robot_pose_pb, include_cov=False):
     """returns a tuple representation from RobotPose proto.
 
     If it is 2D, then return (x, y, th). If it is 3D, then return (x, y, z, qx,
     qy, qz, qw).
 
     Note that this doesn't change the frame.
+
+    If include_cov is True, then return a covariance
+    matrix in the robot_pose_pb.
     """
     if not isinstance(robot_pose_pb, o_pb2.RobotPose):
         raise TypeError("robot_pose_pb should be RobotPose")
     if robot_pose_pb.HasField("pose_2d"):
         pose2d = robot_pose_pb.pose_2d
-        return (pose2d.x, pose2d.y, pose2d.th)
+        pose = (pose2d.x, pose2d.y, pose2d.th)
+
+        if include_cov:
+            if len(robot_pose_pb.covariance) > 0:
+                assert len(robot_pose_pb.covariance) == 9,\
+                    "covariance matrix for 2D pose in proto should be a 9-element double list"
+                cov = np.array(robot_pose_pb.covariance).reshape(3, 3)
+            else:
+                cov = np.zeros((3, 3))
+
     elif robot_pose_pb.HasField("pose_3d"):
         pose3d = robot_pose_pb.pose_3d
-        return (pose3d.position.x, pose3d.position.y, pose3d.position.z,
+        pose = (pose3d.position.x, pose3d.position.y, pose3d.position.z,
                 pose3d.rotation.x, pose3d.rotation.y, pose3d.rotation.z,
                 pose3d.rotation.w)
+
+        if include_cov:
+            if len(robot_pose_pb.covariance) > 0:
+                assert len(robot_pose_pb.covariance) == 36,\
+                    "covariance matrix for 3D pose in proto should be a 36-element double list"
+                cov = np.array(robot_pose_pb.covariance).reshape(6, 6)
+            else:
+                cov = np.zeros((6, 6))
+
     else:
         raise ValueError("request does not contain valid robot pose field.")
-    return None
+
+    if include_cov:
+        return pose, cov
+    else:
+        return pose
+
+def robot_localization_from_proto(robot_pose_pb):
+    """Returns a RobotLocalization object from RobotPose proto"""
+    pose, cov = robot_pose_from_proto(robot_pose_pb, include_cov=True)
+    return slpo.RobotLocalization(robot_pose_pb.robot_id, pose, cov)
 
 def robot_pose_proto_from_tuple(robot_pose):
     """Returns a RobotPose proto from a given tuple
@@ -236,7 +267,7 @@ def robot_belief_to_proto(robot_belief, header=None):
     representation of robot belief, return a RobotBelief proto.
     Uncertainty over the robot belief is possibly in its pose. We
     assume the robot observes its other attributes such as 'objects_found'."""
-    if not isinstance(robot_belief, pomdp_py.Gaussian):
+    if not isinstance(robot_belief, RobotStateBelief):
         raise TypeError("robot_belief should be a pomdp_pyGaussian")
     if header is None:
         header = make_header()

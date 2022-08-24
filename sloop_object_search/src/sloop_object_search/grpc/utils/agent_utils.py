@@ -7,13 +7,14 @@ import time
 from sloop_object_search.oopomdp.agent import\
     SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D
 import sloop_object_search.oopomdp.domain.observation as slpo
+from sloop_object_search.oopomdp.agent import belief
 
 VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "MosAgentBasic2D",
                 "SloopMosAgentTopo2D",
                 "MosAgentBasic3D"}
 
-def create_agent(robot_id, agent_config_world, robot_pose, search_region):
+def create_agent(robot_id, agent_config_world, robot_localization, search_region):
     """
     Creates a SLOOP POMDP agent named 'robot_id', with the given
     config (dict). The initial pose, in world frame, is given by
@@ -48,8 +49,7 @@ def create_agent(robot_id, agent_config_world, robot_pose, search_region):
     agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(
         agent_config_world, search_region)
     agent_class = eval(agent_config_pomdp["agent_class"])
-    # For now, assume no significant noise in localization
-    init_robot_pose_dist =  pomdp_py.Histogram({robot_pose: 1.0})
+    init_robot_pose_dist = belief.robot_pose_dist_from_localization(robot_localization)
     agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist)
     return agent
 

@@ -91,7 +91,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
 
-        robot_pose = proto_utils.robot_pose_from_proto(request.robot_pose)
+        zrobotloc = proto_utils.robot_localization_from_proto(request.robot_pose)
+        robot_pose = zrobotloc.pose
 
         if request.HasField('occupancy_grid'):
             raise NotImplementedError()
@@ -123,7 +124,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if request.robot_id in self._pending_agents:
             # prepare for creation
             self._pending_agents[request.robot_id]["search_region"] = search_region
-            self._pending_agents[request.robot_id]["init_robot_pose"] = robot_pose
+            self._pending_agents[request.robot_id]["init_robot_localization"] = zrobotloc
             self._create_agent(request.robot_id)
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
@@ -158,7 +159,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             f"Internal error: agent {robot_id} already exists."
         info = self._pending_agents.pop(robot_id)
         self._agents[robot_id] = agent_utils.create_agent(
-            robot_id, info["agent_config"], info["init_robot_pose"], info["search_region"])
+            robot_id, info["agent_config"], info["init_robot_localization"], info["search_region"])
         self._check_invariant()
 
     def _check_invariant(self):

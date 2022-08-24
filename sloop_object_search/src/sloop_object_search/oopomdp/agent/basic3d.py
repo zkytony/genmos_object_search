@@ -1,7 +1,8 @@
 import pomdp_py
 import numpy as np
 from . import belief
-from ..domain.observation import JointObservation, ObjectDetection, Voxel, FovVoxels
+from ..domain.observation\
+    import JointObservation, ObjectDetection, Voxel, FovVoxels, RobotLocalization
 from ..models.transition_model import RobotTransBasic3D
 from ..models.sensors import FrustumCamera
 from ..models.policy_model import PolicyModelBasic3D
@@ -61,6 +62,58 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
+    def update_belief_given_detection(self, observation, debug=False, **kwargs):
+        assert isinstance(observation, JointObservation)
+        if not self.robot_id in observation:
+            raise ValueError("requires knowing robot pose corresponding"\
+                             " to the object detections.")
+
+        robot_pose = observation.z(self.robot_id).pose
+        return_fov = kwargs.get("return_fov", False)
+
+        fovs = {}  # maps from objid to (visible_volume, obstacles_hit)
+        for objid in observation:
+            if objid == self.robot_id:
+                continue
+            objo = observation.z(objid)
+            if not isinstance(objo, ObjectDetection):
+                raise NotImplementedError(f"Unable to handle object observation of type {type(objo)}")
+
+            # construct a volumetric observation about this object.
+            detection_model = self.detection_models[objid]
+            params = self.agent_config["belief"].get("visible_volume_params", {})
+            fov_voxels, visible_volume, obstacles_hit =\
+                build_volumetric_observation(objo, detection_model.sensor,
+                    robot_pose, self.search_region.octree_dist, **params)
+
+            # Now, we finally update belief, if objid is a target object, each
+            # voxel is used to update belief.
+            if objid in self.target_objects:
+                b_obj = self.belief.b(objid)
+                if debug:
+                    _visualize_octree_belief(b_obj, robot_pose,
+                                             visible_volume=visible_volume, obstacles_hit=obstacles_hit)
+                alpha = detection_model.alpha
+                beta = detection_model.beta
+                b_obj_new = update_octree_belief(b_obj, fov_voxels, alpha, beta)
+                if debug:
+                    _visualize_octree_belief(b_obj_new, robot_pose)
+                self.belief.set_object_belief(objid, b_obj_new)
+            else:
+                # objid is not a target object. It may be a correlated object each
+                # voxel will inform the belief update of surrounding voxels.
+                raise NotImplementedError("Doesn't handle correlated object right now.")
+
+            # save fov used for belief update
+            fovs[objid] = (visible_volume, obstacles_hit)
+
+        if return_fov:
+            return fovs
+
+    def update_robot_belief(self, observation):
+        zrobot = belief.get_zrobot_for_update(observation)
+
+
     def update_belief(self, observation, action=None, debug=False, **kwargs):
         """
         update belief given observation. If the observation is
@@ -71,52 +124,11 @@ class MosAgentBasic3D(MosAgent):
                True, return a mapping from objid to (visible_volume, obstacles_hit)
         """
         if isinstance(observation, JointObservation):
-            if not self.robot_id in observation:
-                raise ValueError("requires knowing robot pose corresponding"\
-
-                                 " to the object detections.")
-
-            robot_pose = observation.z(self.robot_id).pose
-            return_fov = kwargs.get("return_fov", False)
-
-            fovs = {}  # maps from objid to (visible_volume, obstacles_hit)
-            for objid in observation:
-                if objid == self.robot_id:
-                    continue
-                objo = observation.z(objid)
-                if not isinstance(objo, ObjectDetection):
-                    raise NotImplementedError(f"Unable to handle object observation of type {type(objo)}")
-
-                # construct a volumetric observation about this object.
-                detection_model = self.detection_models[objid]
-                params = self.agent_config["belief"].get("visible_volume_params", {})
-                fov_voxels, visible_volume, obstacles_hit =\
-                    build_volumetric_observation(objo, detection_model.sensor,
-                        robot_pose, self.search_region.octree_dist, **params)
-
-                # Now, we finally update belief, if objid is a target object, each
-                # voxel is used to update belief.
-                if objid in self.target_objects:
-                    b_obj = self.belief.b(objid)
-                    if debug:
-                        _visualize_octree_belief(b_obj, robot_pose,
-                                                 visible_volume=visible_volume, obstacles_hit=obstacles_hit)
-                    alpha = detection_model.alpha
-                    beta = detection_model.beta
-                    b_obj_new = update_octree_belief(b_obj, fov_voxels, alpha, beta)
-                    if debug:
-                        _visualize_octree_belief(b_obj_new, robot_pose)
-                    self.belief.set_object_belief(objid, b_obj_new)
-                else:
-                    # objid is not a target object. It may be a correlated object each
-                    # voxel will inform the belief update of surrounding voxels.
-                    raise NotImplementedError("Doesn't handle correlated object right now.")
-
-                # save fov used for belief update
-                fovs[objid] = (visible_volume, obstacles_hit)
-
-            if return_fov:
-                return fovs
+            return self.update_belief_given_detection(
+                observation, debug=debug, **kwargs)
+        elif isinstance(observation, RobotLocalization):
+            raise NotImplementedError()
+        raise NotImplementedError()
 
 
 def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_octree,
