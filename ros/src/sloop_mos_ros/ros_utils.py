@@ -21,11 +21,14 @@ import importlib
 if importlib.util.find_spec("ros_numpy") is not None:
     import ros_numpy
 
+import google.protobuf.timestamp_pb2
+import google.protobuf.any_pb2
 import sloop_object_search.grpc.common_pb2 as common_pb2
 import sloop_object_search.grpc.observation_pb2 as o_pb2
 import sloop_object_search.grpc.common_pb2 as c_pb2
+from sloop_object_search.grpc.utils import proto_utils
+from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import hash16
-from sloop_object_search.utils.math import remap
 from sloop_object_search.utils.colors import color_map, cmaps
 
 
@@ -228,12 +231,6 @@ def tf2_lookup_transform(tf2buf, target_frame, source_frame, timestamp):
                      .format(target_frame, source_frame))
 
 ### Mathematics ###
-def euclidean_dist(p1, p2):
-    return math.sqrt(sum([(a - b)** 2 for a, b in zip(p1, p2)]))
-
-def vec_norm(v):
-    return math.sqrt(sum(a**2 for a in v))
-
 def quat_diff(q1, q2):
     """returns the quaternion space difference between two
     quaternion q1 and q2"""
@@ -248,7 +245,7 @@ def quat_diff_angle(q1, q2):
     """returns the angle (radians) between q1 and q2; signed"""
     # reference: https://stackoverflow.com/a/23263233/2893053
     qd = quat_diff(q1, q2)
-    return 2*math.atan2(vec_norm(qd[:3]), qd[3])
+    return 2*math.atan2(math_utils.vec_norm(qd[:3]), qd[3])
 
 def quat_diff_angle_relative(q1, q2):
     """returns the angle (radians) between q1 and q2;
@@ -258,15 +255,6 @@ def quat_diff_angle_relative(q1, q2):
     # reference: https://stackoverflow.com/a/23263233/2893053
     ad = quat_diff_angle(q1, q2)
     return min(2*math.pi - ad, ad)
-
-def to_degrees(th):
-    return th*180 / math.pi
-
-def to_radians(th):
-    return th*math.pi / 180
-
-def remap(oldval, oldmin, oldmax, newmin, newmax):
-    return (((oldval - oldmin) * (newmax - newmin)) / (oldmax - oldmin)) + newmin
 
 
 ### Sensor Messages ###
@@ -301,10 +289,10 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 
     points_pb = []
     for p in points_xyz_array:
-        point_pb = o_pb2.PointCloud.Point(pos=Vec3(x=p[0], y=p[1], z=p[2]))
+        point_pb = o_pb2.PointCloud.Point(pos=c_pb2.Vec3(x=p[0], y=p[1], z=p[2]))
         points_pb.append(point_pb)
 
-    header = c_pb2.Header(stamp=Timestamp().GetCurrentTime(),
+    header = c_pb2.Header(stamp=google.protobuf.timestamp_pb2.Timestamp().GetCurrentTime(),
                           frame_id=cloud_msg.header.frame_id)
     cloud_pb = o_pb2.PointCloud(header=header,
                                 points=points_pb)
@@ -466,15 +454,27 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
         markers.append(marker)
     return MarkerArray(markers)
 
-def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, stamp=None):
+def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, stamp=None,
+                                  **kwargs):
     """Given a robot_pose_proto obtained from sloop grpc server,
     return a tuple (marker, tf2msg) for visualization. Note that
     this function accounts for the differences in default look
     direction between ROS and SLOOP."""
     if stamp is None:
         stamp = rospy.Time.now()
-    robot_pose = proto_utils.robot_pose_from_proto(response.robot_belief.pose)
+    scale = kwargs.pop("scale", geometry_msgs.msg.Vector3(x=0.4, y=0.05, z=0.05))
+    lifetime = kwargs.pop("lifetime", 0)
 
+    robot_pose = proto_utils.robot_pose_from_proto(robot_pose_proto)
+    # The camera by default looks at -z; Because in ROS, 0 degree means looking
+    # at +x, therefore we rotate the marker for robot pose so that it starts out
+    # looking at -z. Note this must be specified with respect to the robot frame.
+    header = std_msgs.msg.Header(stamp=stamp, frame_id=robot_frame)
+    marker = make_viz_marker_from_robot_pose_3d(
+        robot_frame, (0,0,0,*euler_to_quat(0, 90, 0)),
+        header=header, scale=scale, lifetime=lifetime, **kwargs)
+    tf2msg = tf2msg_from_robot_pose(robot_pose, world_frame, robot_frame)
+    return marker, tf2msg
 
 
 ### Communication ###

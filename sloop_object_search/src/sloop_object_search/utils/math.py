@@ -68,89 +68,6 @@ def in_region(p, ranges):
     return all(in_range(p[i], ranges[i])
                for i in range(len(p)))
 
-def in_box3d_center(p, box):
-    """Returns true if point 'p' is inside the 3D box 'box'.
-    The box is represented as a tuple (center, w, l, h), where
-    center is the center point of the box (cx,cy,cz), and lx, ly, lz
-    are dimensions along x, y, z axes, respectively."""
-    if len(p) != 3:
-        raise ValueError("Requires point to be 3D")
-    center, lx, ly, lz = box
-    px, py, pz = p
-    cx, cy, cz = center
-    return abs(px - cx) <= lx/2\
-        and abs(py - cy) <= ly/2\
-        and abs(pz - cz) <= lz/2
-
-def in_box3d_origin(p, box):
-    """Returns true if point 'p' is inside the 3D box 'box'.
-    The box is represented as a tuple (origin, w, l, h), where
-    center is the center point of the box (ox,oy,oz), and lx, ly, lz
-    are dimensions along x, y, z axes, respectively."""
-    if len(p) != 3:
-        raise ValueError("Requires point to be 3D")
-    center, lx, ly, lz = box
-    px, py, pz = p
-    ox, oy, oz = center
-    return abs(px - ox) <= lx\
-        and abs(py - oy) <= ly\
-        and abs(pz - oz) <= lz
-
-def boxes_overlap3d_origin(box1, box2):
-    """Return True if the two origin-based boxes overlap
-    https://stackoverflow.com/a/53488289/2893053"""
-    origin1, w1, l1, h1 = box1
-    origin2, w2, l2, h2 = box2
-    box1_min_x = origin1[0]
-    box1_max_x = origin1[0] + w1
-    box1_min_y = origin1[1]
-    box1_max_y = origin1[1] + l1
-    box1_min_z = origin1[2]
-    box1_max_z = origin1[2] + h1
-
-    box2_min_x = origin2[0]
-    box2_max_x = origin2[0] + w2
-    box2_min_y = origin2[1]
-    box2_max_y = origin2[1] + l2
-    box2_min_z = origin2[2]
-    box2_max_z = origin2[2] + h2
-    return (box1_min_x < box2_max_x)\
-        and (box1_max_x > box2_min_x)\
-        and (box1_min_y < box2_max_y)\
-        and (box1_max_y > box2_min_y)\
-        and (box1_min_z < box2_max_z)\
-        and (box1_max_z > box2_min_z)
-
-def originbox_to_centerbox(origin_box):
-    """given an origin-based box return
-    a center-based box"""
-    origin, w, l, h = origin_box
-    center_x = origin[0] + w/2
-    center_y = origin[1] + l/2
-    center_z = origin[2] + h/2
-    return ((center_x, center_y, center_z), w, l, h)
-
-def centerbox_to_originbox(center_box):
-    """given an center-based box return
-    a origin-based box"""
-    center, w, l, h = center_box
-    origin_x = center[0] - w/2
-    origin_y = center[1] - l/2
-    origin_z = center[2] - h/2
-    return ((origin_x, origin_y, origin_z), w, l, h)
-
-
-def sample_in_box3d_origin(box):
-    """Given a box represented as a tuple (origin, w, l, h),
-    returns a point sampled from within the box"""
-    origin, w, l, h = box
-    dx = random.uniform(0, w)
-    dy = random.uniform(0, l)
-    dz = random.uniform(0, h)
-    return (origin[0] + dx,
-            origin[1] + dy,
-            origin[2] + dz)
-
 def approx_equal(v1, v2, epsilon=1e-6):
     if len(v1) != len(v2):
         return False
@@ -292,6 +209,9 @@ def vec(p1, p2):
     if type(p2) != np.ndarray:
         p2 = np.array(p2)
     return p2 - p1
+
+def vec_norm(v):
+    return math.sqrt(sum(a**2 for a in v))
 
 def proj(vec1, vec2, scalar=False):
     # Project vec1 onto vec2. Returns a vector in the direction of vec2.
@@ -504,6 +424,90 @@ def inverse_law_of_cos(a, b, c):
     the angle between a and b (i.e. opposite of c), in degrees"""
     costh = (a**2 + b**2 - c**2) / (2*a*b)
     return to_deg(math.acos(costh))
+
+def in_box3d_center(p, box):
+    """Returns true if point 'p' is inside the 3D box 'box'.
+    The box is represented as a tuple (center, w, l, h), where
+    center is the center point of the box (cx,cy,cz), and lx, ly, lz
+    are dimensions along x, y, z axes, respectively."""
+    if len(p) != 3:
+        raise ValueError("Requires point to be 3D")
+    center, lx, ly, lz = box
+    px, py, pz = p
+    cx, cy, cz = center
+    return abs(px - cx) <= lx/2\
+        and abs(py - cy) <= ly/2\
+        and abs(pz - cz) <= lz/2
+
+def in_box3d_origin(p, box):
+    """Returns true if point 'p' is inside the 3D box 'box'.
+    The box is represented as a tuple (origin, w, l, h), where
+    center is the center point of the box (ox,oy,oz), and lx, ly, lz
+    are dimensions along x, y, z axes, respectively."""
+    if len(p) != 3:
+        raise ValueError("Requires point to be 3D")
+    center, lx, ly, lz = box
+    px, py, pz = p
+    ox, oy, oz = center
+    return abs(px - ox) <= lx\
+        and abs(py - oy) <= ly\
+        and abs(pz - oz) <= lz
+
+def boxes_overlap3d_origin(box1, box2):
+    """Return True if the two origin-based boxes overlap
+    https://stackoverflow.com/a/53488289/2893053"""
+    origin1, w1, l1, h1 = box1
+    origin2, w2, l2, h2 = box2
+    box1_min_x = origin1[0]
+    box1_max_x = origin1[0] + w1
+    box1_min_y = origin1[1]
+    box1_max_y = origin1[1] + l1
+    box1_min_z = origin1[2]
+    box1_max_z = origin1[2] + h1
+
+    box2_min_x = origin2[0]
+    box2_max_x = origin2[0] + w2
+    box2_min_y = origin2[1]
+    box2_max_y = origin2[1] + l2
+    box2_min_z = origin2[2]
+    box2_max_z = origin2[2] + h2
+    return (box1_min_x < box2_max_x)\
+        and (box1_max_x > box2_min_x)\
+        and (box1_min_y < box2_max_y)\
+        and (box1_max_y > box2_min_y)\
+        and (box1_min_z < box2_max_z)\
+        and (box1_max_z > box2_min_z)
+
+def originbox_to_centerbox(origin_box):
+    """given an origin-based box return
+    a center-based box"""
+    origin, w, l, h = origin_box
+    center_x = origin[0] + w/2
+    center_y = origin[1] + l/2
+    center_z = origin[2] + h/2
+    return ((center_x, center_y, center_z), w, l, h)
+
+def centerbox_to_originbox(center_box):
+    """given an center-based box return
+    a origin-based box"""
+    center, w, l, h = center_box
+    origin_x = center[0] - w/2
+    origin_y = center[1] - l/2
+    origin_z = center[2] - h/2
+    return ((origin_x, origin_y, origin_z), w, l, h)
+
+
+def sample_in_box3d_origin(box):
+    """Given a box represented as a tuple (origin, w, l, h),
+    returns a point sampled from within the box"""
+    origin, w, l, h = box
+    dx = random.uniform(0, w)
+    dy = random.uniform(0, l)
+    dz = random.uniform(0, h)
+    return (origin[0] + dx,
+            origin[1] + dy,
+            origin[2] + dz)
+
 
 ## Statistics
 # confidence interval
