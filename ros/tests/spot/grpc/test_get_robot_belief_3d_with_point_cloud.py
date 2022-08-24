@@ -13,6 +13,7 @@ import numpy as np
 from std_msgs.msg import ColorRGBA, Header
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point, Quaternion, Vector3
+from tf2_ros import TransformBroadcaster
 
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.utils import proto_utils
@@ -28,6 +29,7 @@ class GetRobotBeliefTestCase(CreateAgentTestCase):
         super()._setup()
         self._robot_markers_pub = rospy.Publisher(
             "~robot_pose", MarkerArray, queue_size=10, latch=True)
+        self.br = TransformBroadcaster()
 
     def run(self):
         super().run()
@@ -36,13 +38,9 @@ class GetRobotBeliefTestCase(CreateAgentTestCase):
         assert response.status == Status.SUCCESSFUL
         print("got robot belief")
 
-        robot_pose = proto_utils.robot_pose_from_proto(response.robot_belief.pose)
-
-        header = Header(stamp=rospy.Time.now(),
-                        frame_id=self.world_frame)
-        marker = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, robot_pose, header=header, scale=Vector3(x=1.2, y=0.2, z=0.2),
-            lifetime=0)  # forever
+        marker, trobot = ros_utils.viz_msgs_for_robot_pose_proto(
+            response.robot_belief.pose, self.world_frame, self.robot_id)
+        self.br.sendTransform(trobot)
         self._robot_markers_pub.publish(MarkerArray([marker]))
         print(f"Visualized robot pose")
         print(f"Check it out in rviz: roslaunch rbd_spot_perception view_graphnav_point_cloud.launch")

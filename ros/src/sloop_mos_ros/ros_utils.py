@@ -1,8 +1,9 @@
 # ROS Utilities
+import sys
 import math
 import numpy as np
+import pickle
 
-import sys
 import rospy
 import geometry_msgs
 import std_msgs
