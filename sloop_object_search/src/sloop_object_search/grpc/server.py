@@ -289,7 +289,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             observation = proto_utils.pomdp_observation_from_proto(
                 request.robot_pose, request.object_detections, agent)
 
-        elif request.HasField("langauge"):
+        elif request.HasField("language"):
             observation = proto_utils.pomdp_observation_from_proto(
                 request.robot_pose, request.language, agent)
 

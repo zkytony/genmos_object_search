@@ -142,12 +142,20 @@ class SloopObjectSearchClient:
         return self.call(self.stub.GetRobotBelief, request, timeout=timeout)
 
     def processObservation(self, robot_id, observation_pb, robot_pose_pb, **kwargs):
+        """If observation_pb is None, then will still send over
+        the request as long as robot_pose_pb is not None."""
+        assert isinstance(robot_pose_pb, o_pb2.RobotPose),\
+            "robot_pose_pb must be a RobotPose proto."
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        observation = {}
         if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
             observation = {"object_detections": observation_pb}
         elif isinstance(observation_pb, o_pb2.Language):
             observation = {"language": observation_pb}
+        else:
+            if observation_pb is not None:
+                raise ValueError(f"Unrecognized observation_pb: {type(observation_pb)}")
         request = slpb2.ProcessObservationRequest(
             header=header,
             robot_id=robot_id,
