@@ -93,7 +93,10 @@ class TestSimpleEnvLocalSearch:
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
             print("plan action finished. Action planned:")
             action = proto_utils.interpret_planned_action(response)
-            print(action)
+
+            # Now, we need to execute the action, and receive observation
+            # from SimpleEnv.
+
 
 
 

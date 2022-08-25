@@ -22,6 +22,14 @@ class PlanActionTestcase(CreatePlannerTestCase):
         action = pbutil.interpret_planned_action(response)
         print("plan action test passed. Action planned:")
         print(action)
+        print("action id:", response.action_id)
+
+        # Request again. This time should fail.
+        response = self._sloop_client.planAction(
+            self.robot_id,
+            header=pbutil.make_header(frame_id=self.world_frame))
+        assert response.status == Status.FAILED
+        print("test passed.")
 
 if __name__ == "__main__":
     PlanActionTestcase(node_name="test_plan_action_3d_with_point_cloud",
