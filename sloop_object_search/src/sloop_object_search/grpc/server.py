@@ -35,9 +35,15 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         # planners. Maps from robot id to a planner (pomdp_py.Planner)
         self._planners = {}
 
-        # maps from robot_id to (action_id, Action)
+        # maps from robot_id to (action_id, Action). Note that
+        # once the robot finishes executing the action, its entry
+        # will be removed.
         self._actions_planned = {}
-        self._action_seq = 0   # an sequence ID used for identifying an action
+        # maps from robot_id to {action_id -> Action}. Accumulated
+        # as the robot finishes executing actions.
+        self._actions_finished = {}
+        # an sequence ID used for identifying an action
+        self._action_seq = 0
 
         self._world_origin = None
 
@@ -205,6 +211,9 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             message="Planner created")
 
     def PlanAction(self, request, context):
+        """The agent can only plan and execute one action at a time.
+        Before a previously planned action is marked finished, no
+        more planning will happen."""
         if request.robot_id not in self._agents:
             # agent not yet created
             return slpb2.PlanActionReply(
@@ -237,8 +246,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         header = proto_utils.make_header(request.header.frame_id)
         action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
         action_id = self._make_action_id(agent, action)
-        if agent.robot_id not in self._actions_planned:
-            self._actions_planned[agent.robot_id] = {}
         self._actions_planned[agent.robot_id] = (action_id, action)
         return slpb2.PlanActionReply(header=header,
                                      action_id=action_id,
@@ -305,7 +312,24 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         agent = self._agents[request.robot_id]
         action = None
         if request.HasField("action_id"):
-            action = self._actions_planned[request.robot_id][request.action_id]
+            # make sure the action id here matches the action id of the planned action
+            planned_action_id = self._planned_action_id(request.robot_id)
+            if request.action_id != planned_action_id:
+                # mismatch - this should not happen
+                return slpb2.ProcessObservationReply(
+                    header=proto_utils.make_header(),
+                    status=Status.FAILED,
+                    message=f"action id mismatch. Action in request {request.action_id}"\
+                             " is not the planned action {planned_action_id}")
+            action = self._actions_planned[request.robot_id][1]
+
+            if request.HasField("action_finished") and request.action_finished:
+                # mark action as finished
+                if request.robot_id not in self._actions_finished:
+                    self._actions_finished[request.robot_id] = {}
+                self._actions_finished[request.robot_id][request.action_id] = action
+                self._action_planned.pop(robot_id)
+
         observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)
         aux = agent_utils.update_belief(request, agent, observation, action=action)
         # TODO: update planner
@@ -316,14 +340,20 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             message=f"observation processed. Belief updated.",
             **aux)
 
-    def ActionFinished(self, request, context):
-        if request.robot_id not in self._agents:
-            # agent not yet created
-            return slpb2.ActionFinishedReply(
-                header=proto_utils.make_header(),
-                status=Status.FAILED,
-                message=f"agent {request.robot_id} does not exist. Did you create it?")
-        raise NotImplementedError()
+    def _planned_action_id(self, robot_id):
+        if robot_id not in self._actions_planned:
+            return None
+        else:
+            return self._actions_planned[robot_id][0]
+
+    def _mark_action_finished(self, robot_id, action_id):
+        planned_action_id, planned_action = self._action_planned.pop(robot_id)
+        if planned_action_id != action_id:
+            return False
+        if robot_id not in self._actions_finished:
+            self._actions_finished[robot_id] = {}
+        self._actions_finished[robot_id][action_id] = planned_action
+        return True
 
 
 

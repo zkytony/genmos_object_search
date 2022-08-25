@@ -35,8 +35,6 @@ service SloopObjectSearch {
   // Calls the planner to return an action for execution
   rpc PlanAction(PlanActionRequest) returns (PlanActionReply) {}
 
-  // Signals action execution completion
-  rpc ActionFinished(ActionFinishedRequest) returns (ActionFinishedReply) {}
 }
 
 
@@ -118,14 +116,17 @@ message ProcessObservationRequest {
   // the action that the observation is associated with (e.g. received after
   // action completion)
   optional string action_id = 7;
+  // Set this to true if by the time this observation request is sent,
+  // the action has finished.
+  optional bool action_finished = 8;
 
   // return the pomdp model's fov corresponding to the object detection
   // Note that for different detectors (for different objects), there may
   // be different fovs
-  optional bool return_fov = 8;
+  optional bool return_fov = 9;
 
   // debug flag
-  optional bool debug = 9;
+  optional bool debug = 10;
 }
 
 message ProcessObservationReply {
@@ -208,19 +209,6 @@ message PlanActionReply {
   // server-generated id used to identify an action
   // associated with a plan request
   string action_id = 7;
-}
-
-//// For ActionFinished rpc ////
-message ActionFinishedRequest {
-  Header header = 1;
-  string robot_id = 2;
-  string action_id = 3;  // action id for which the action execution is finished.
-}
-
-message ActionFinishedReply {
-  Header header = 1;
-  Status status = 2;
-  string message = 3;
 }
 
 
