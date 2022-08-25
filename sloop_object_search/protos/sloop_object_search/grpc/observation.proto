@@ -88,3 +88,10 @@ message RobotPose {
   //    (the last three are rotations about the respective axes]
   repeated double covariance = 5;
 }
+
+// List of object ids that are (just) found
+message ObjectsFound {
+  Header header = 1;
+  string robot_id = 2;
+  repeated string object_ids = 3;
+}

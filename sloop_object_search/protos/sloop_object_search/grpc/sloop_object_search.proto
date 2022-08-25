@@ -112,19 +112,20 @@ message ProcessObservationRequest {
   oneof observation {
     ObjectDetectionArray object_detections  = 4;
     Language language = 5;
+    ObjectsFound objects_foudn = 6;
   }
 
   // the action that the observation is associated with (e.g. received after
   // action completion)
-  optional string action_id = 6;
+  optional string action_id = 7;
 
   // return the pomdp model's fov corresponding to the object detection
   // Note that for different detectors (for different objects), there may
   // be different fovs
-  optional bool return_fov = 7;
+  optional bool return_fov = 8;
 
   // debug flag
-  optional bool debug = 8;
+  optional bool debug = 9;
 }
 
 message ProcessObservationReply {
@@ -256,14 +257,11 @@ message ObjectBelief {
 message RobotBelief {
   string robot_id = 1;
 
-  // List of object ids for objects that the robot believes are found
-  repeated string objects_found = 2;
-
   // robot pose (exact or a distribution; see RobotPose message definition)
-  RobotPose pose = 3;
+  RobotPose pose = 2;
 
   // If the robot plans over a topological graph, this returns
   // the id of the topological graph node the robot associates itself
   // with currently.
-  optional string topo_nid = 4;
+  optional string topo_nid = 3;
 }
