@@ -38,14 +38,16 @@ class GetRobotBeliefTestCase(CreateAgentTestCase):
         assert response.status == Status.SUCCESSFUL
         print("got robot belief")
 
-        marker, trobot = ros_utils.viz_msgs_for_robot_pose_proto(
-            response.robot_belief.pose, self.world_frame, self.robot_id)
-        self.br.sendTransform(trobot)
-        self._robot_markers_pub.publish(MarkerArray([marker]))
-        print(f"Visualized robot pose")
+        print(f"Visualizing robot pose")
         print(f"Check it out in rviz: roslaunch rbd_spot_perception view_graphnav_point_cloud.launch")
         print(f"Note: you may need to add the robot pose topic")
-        rospy.spin()
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            marker, trobot = ros_utils.viz_msgs_for_robot_pose_proto(
+                response.robot_belief.pose, self.world_frame, self.robot_id)
+            self.br.sendTransform(trobot)
+            self._robot_markers_pub.publish(MarkerArray([marker]))
+            rate.sleep()
 
 if __name__ == "__main__":
     GetRobotBeliefTestCase(node_name="test_get_robot_belief_3d_with_point_cloud",

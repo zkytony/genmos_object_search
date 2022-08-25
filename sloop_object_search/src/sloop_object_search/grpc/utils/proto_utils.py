@@ -271,19 +271,20 @@ def robot_belief_to_proto(robot_belief, header=None):
         raise TypeError("robot_belief should be a pomdp_pyGaussian")
     if header is None:
         header = make_header()
-    # For now, we return the most likely robot state, although
-    # the protobuf definition is more general.
+
     mpe_robot_state = robot_belief.mpe()
     robot_id = mpe_robot_state["id"]
     if mpe_robot_state.is_2d:
         pose_field = {"pose_2d": posetuple_to_poseproto(mpe_robot_state.pose)}
     else:
         pose_field = {"pose_3d": posetuple_to_poseproto(mpe_robot_state.pose)}
-    robot_pose_pb = o_pb2.RobotPose(header=header,
-                                    robot_id=robot_id,
-                                    **pose_field)
+    covariance = np.asarray(robot_belief.pose_dist.covariance).flatten()
+    robot_pose_pb = o_pb2.RobotPose(header=header, robot_id=robot_id,
+                                    covariance=covariance, **pose_field)
+    objects_found_pb = o_pb2.ObjectsFound(header=header, robot_id=robot_id,
+                                          object_ids=list(map(str, mpe_robot_state.objects_found)))
     return slpb2.RobotBelief(robot_id=robot_id,
-                             objects_found=list(map(str, mpe_robot_state.objects_found)),
+                             objects_found=objects_found_pb,
                              pose=robot_pose_pb)
 
 def pomdp_detection_from_proto(detection_pb, search_region,
