@@ -1,4 +1,4 @@
-from sloop_object_search.utils.conversion import Frame, convert
+from sloop_object_search.utils.conversion import Frame, convert, convert_cov
 from .octree_belief import OccupancyOctreeDistribution
 
 class SearchRegion:
@@ -21,6 +21,10 @@ class SearchRegion:
         self._region_origin = region_origin
         self._search_space_resolution = search_space_resolution
 
+    @classmethod
+    def is_3d(cls):
+        raise NotImplementedError
+
     @property
     def region_repr(self):
         return self._region_repr
@@ -34,21 +38,39 @@ class SearchRegion:
         return self._search_space_resolution
 
     def to_world_pos(self, p):
-        """converts a grid position to a world frame position"""
+        """converts a pomdp position to a world frame position"""
         return convert(p, Frame.POMDP_SPACE, Frame.WORLD,
                        region_origin=self.region_origin,
                        search_space_resolution=self.search_space_resolution)
 
     def to_pomdp_pos(self, world_point):
-        """converts a grid position to a world frame position"""
+        """converts a pomdp position to a world frame position"""
         return convert(world_point, Frame.WORLD, Frame.POMDP_SPACE,
                        region_origin=self.region_origin,
                        search_space_resolution=self.search_space_resolution)
 
     def to_region_pos(self, p):
-        """converts a grid position to a world frame position"""
+        """converts a pomdp position to a world frame position"""
         return convert(p, Frame.POMDP_SPACE, Frame.REGION,
                        search_space_resolution=self.search_space_resolution)
+
+    def to_world_cov(self, cov):
+        """given a covariance for the pomdp frame to the world frame"""
+        return convert_cov(cov, Frame.POMDP_SPACE, Frame.WORLD,
+                           search_space_resolution=self.search_space_resolution,
+                           is_3d=self.__class__.is_3d)
+
+    def to_pomdp_cov(self, world_cov):
+        """given a covariance for the world frame to the pomdp frame"""
+        return convert_cov(world_cov, Frame.WORLD, Frame.POMDP_SPACE,
+                           search_space_resolution=self.search_space_resolution,
+                           is_3d=self.__class__.is_3d)
+
+    def to_region_cov(self, cov):
+        """given a covariance for the POMDP frame to the region frame"""
+        return convert_cov(cov, Frame.POMDP_SPACE, Frame.REGION,
+                           search_space_resolution=self.search_space_resolution,
+                           is_3d=self.__class__.is_3d)
 
     def __len__(self):
         # size of the search region
@@ -65,6 +87,10 @@ class SearchRegion2D(SearchRegion):
         super().__init__(grid_map,
                          region_origin=region_origin,
                          search_space_resolution=grid_size)
+
+    @classmethod
+    def is_3d(cls):
+        return False
 
     @property
     def grid_map(self):
@@ -96,6 +122,10 @@ class SearchRegion3D(SearchRegion):
         assert isinstance(octree_dist, OccupancyOctreeDistribution),\
             "octree_dist must be OccupancyOctreeDistribution."
         super().__init__(octree_dist, **kwargs)
+
+    @classmethod
+    def is_3d(cls):
+        return True
 
     @property
     def octree_dist(self):
