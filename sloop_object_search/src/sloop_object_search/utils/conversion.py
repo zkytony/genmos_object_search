@@ -17,6 +17,7 @@
 # the X axis is East, Y axis is North.
 #   Note that a point in the gmapping coordinate frame has unit in meter.
 import math
+import numpy as np
 
 class Frame:
     ## Note that these frames differ only in translation
@@ -116,3 +117,43 @@ def _region2searchspace(region_point, search_space_resolution):
 def _searchspace2region(search_space_point, search_space_resolution):
     return tuple(search_space_point[i] * search_space_resolution
                  for i in range(len(search_space_point)))
+
+
+### convert covariance ###
+def convert_cov(cov, from_frame, to_frame,
+                search_space_resolution=None):
+    """given covariance matrix in 'from_frame', return the
+    covariance matrix in 'to_frame'. The covariance matrix
+    is given by a 2D array."""
+    cov = np.asarray(cov)
+    all_frames = {Frame.WORLD, Frame.REGION, Frame.POMDP_SPACE}
+    if not (from_frame.lower() in all_frames and to_frame.lower() in all_frames):
+        raise ValueError("Unrecognized frame %s or %s" % (from_frame, to_frame))
+    if from_frame == to_frame:
+        return cov
+
+    if from_frame == Frame.WORLD:
+        if to_frame == Frame.REGION:
+            # covariance doesn't change between WORLD and REGION frames because
+            # there is only translation between the two.
+            return cov
+        else:
+            # from WORLD to POMDP: divide covariance by squared search space resolution
+            return cov / (search_space_resolution**2)
+
+    elif from_frame == Frame.REGION:
+        if to_frame == Frame.WORLD:
+            # covariance doesn't change between WORLD and REGION frames because
+            # there is only translation between the two.
+            return cov
+        else:
+            # from REGION to POMDP: divide covariance by squared search space resolution
+            return cov / (search_space_resolution**2)
+
+    elif from_frame == Frame.POMDP_SPACE:
+        if to_frame == Frame.REGION:
+            # scale by covariance squared
+            return cov * (search_space_resolution**2)
+        else:
+            # from REGION to POMDP: divide covariance by squared search space resolution
+            return cov * (search_space_resolution**2)
