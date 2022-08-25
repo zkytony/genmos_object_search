@@ -83,11 +83,19 @@ class ProcessRobotPoseObservationTestCase(CreateAgentTestCase):
         self.test_one_round((0, 0, 0, 0, 0, 0))
         time.sleep(2)
         print("----------")
-        self.test_one_round((5, 0, -2, 0, 0, 90))  # rotate around world frame z axis, cw
+        self.test_one_round((5, 0, -2, 0, 0, 0))  # rotate around world frame z axis, cw
         time.sleep(2)
         print("----------")
         self.test_one_round((0, 0, 0, 0, 0, 90))  # rotate around world frame z axis, cw
-
+        time.sleep(2)
+        print("----------")
+        self.test_one_round((0, 0, 0, 0, 0, 90))  # rotate around world frame z axis, cw
+        time.sleep(2)
+        print("----------")
+        self.test_one_round((0, 0, 0, 45, 0, 0))  # rotate around world frame x axis, cw
+        time.sleep(2)
+        print("----------")
+        self.test_one_round((-3, 0, 5, 0, 0, 0))
         rospy.spin()
 
 if __name__ == "__main__":
