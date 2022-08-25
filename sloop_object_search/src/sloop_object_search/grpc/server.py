@@ -320,7 +320,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                     header=proto_utils.make_header(),
                     status=Status.FAILED,
                     message=f"action id mismatch. Action in request {request.action_id}"\
-                             " is not the planned action {planned_action_id}")
+                             f" is not the planned action {planned_action_id}")
             action = self._actions_planned[request.robot_id][1]
 
             if request.HasField("action_finished") and request.action_finished:
@@ -328,7 +328,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 if request.robot_id not in self._actions_finished:
                     self._actions_finished[request.robot_id] = {}
                 self._actions_finished[request.robot_id][request.action_id] = action
-                self._action_planned.pop(robot_id)
+                self._actions_planned.pop(request.robot_id)
 
         observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)
         aux = agent_utils.update_belief(request, agent, observation, action=action)
@@ -345,15 +345,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return None
         else:
             return self._actions_planned[robot_id][0]
-
-    def _mark_action_finished(self, robot_id, action_id):
-        planned_action_id, planned_action = self._action_planned.pop(robot_id)
-        if planned_action_id != action_id:
-            return False
-        if robot_id not in self._actions_finished:
-            self._actions_finished[robot_id] = {}
-        self._actions_finished[robot_id][action_id] = planned_action
-        return True
 
 
 
