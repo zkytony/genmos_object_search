@@ -144,7 +144,9 @@ def robot_pose_from_proto(robot_pose_pb, include_cov=False):
         return pose
 
 def robot_localization_from_proto(robot_pose_pb):
-    """Returns a RobotLocalization object from RobotPose proto"""
+    """Returns a RobotLocalization object from RobotPose proto.
+    Note that this is just a type conversion; it doesn't assume
+    which frame robot_pose_pb is in"""
     pose, cov = robot_pose_from_proto(robot_pose_pb, include_cov=True)
     return slpo.RobotLocalization(robot_pose_pb.robot_id, pose, cov)
 
@@ -315,33 +317,78 @@ def pomdp_detection_from_proto(detection_pb, search_region,
     pomdp_pose = (pomdp_center_pos, center_rot)
     return slpo.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
+def pomdp_robot_observation_from_request(request, agent, action=None):
+    """Create a RobotObservation object from request."""
+    # This is a bit tricky so single it out. Basically, need to set
+    # 'camera_direction' field properly to respect the 'no_look' attribute
+    # of the agent (i.e. whether the agent actively decides whether to
+    # process observation about objects now).
+    assert isinstance(request, slpb2.ProcessObservationRequest),\
+        "request must be ProcessObservationRequest"
+    if request.robot_id != agent.robot_id:
+        raise ValueError("request is not for the agent")
 
-def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs):
-    """Converts an observation proto into a pomdp Observation object"""
-    robot_id = observation_pb.robot_id
+    if not agent.no_look:
+        if action is None or not isinstance(action, slpa.LookAction):
+            camera_direction = None  # agent has Look action, but didn't take it.
+        else:
+            camera_direction = action.name
+    else:
+        # agent accepts receiving detections
+        camera_direction = "look"  # set this to make reward model happy.
+    # Now, create robot localization
+    robot_pose_world, robot_pose_world_cov = robot_pose_from_proto(
+        request.robot_pose, include_cov=True)
+    robot_pose_pomdp, robot_pose_pomdp_cov =\
+        agent.search_region.to_pomdp_pose(robot_pose_world, robot_pose_world_cov)
+    robot_pose_estimate_pomdp = slpo.RobotLocalization(agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
 
-    # First, interpret robot pose proto as a pomdp-space robot pose
-    if robot_pose_pb is not None:
-        robot_pose_world = robot_pose_from_proto(robot_pose_pb)
-        robot_pose_pomdp = (*agent.search_region.to_pomdp_pos(robot_pose_world[:3]),
-                            *robot_pose_world[3:])
-        robot_obz = slpo.RobotLocalization(robot_id, robot_pose_pomdp)
+    # objects found
+    objects_found = set(agent.belief.b(agent.robot_id).mpe().objects_found)  # objects already found
+    if request.HasField("objects_found"):
+        objects_found |= set(request.objects_found.object_ids)
+    objects_found = tuple(sorted(objects_found))
 
-    if isinstance(observation_pb, o_pb2.ObjectDetectionArray):
-        # we will receive an observation for every detectable object.
-        # if the object isn't detected, its pose is NULL.
+    # Now create the robot observation object
+    robot_observation_class = agent.robot_observation_model.observation_class
+    if isinstance(robot_observation_class, slpo.RobotObservationTopo):
+        raise NotImplementedError("Not considering topo yet")
+    else:
+        robot_observation = slpo.RobotObservation(agent.robot_id,
+                                                  robot_pose_estimate_pomdp,
+                                                  objects_found,
+                                                  camera_direction)
+    return robot_observation
+
+def pomdp_observation_from_request(request, agent, action=None):
+    """Given a ProcessObservationRequest, and the
+    agent this request is for, return a pomdp Observation
+    observation that represents that observation contained
+    in the request."""
+    assert isinstance(request, slpb2.ProcessObservationRequest),\
+        "request must be ProcessObservationRequest"
+    if request.robot_id != agent.robot_id:
+        raise ValueError("request is not for the agent")
+
+    # we will always create a robot observation
+    robot_observation = pomdp_robot_observation_from_request(request, agent, action=action)
+
+    if request.HasField("object_detections"):
+        # Create JointObservation based on object detections
+        # We will make an ObjectDetection observation for
+        # every detectable object. if the object isn't detected,
+        # its pose is NULL.
         # First collect what we do detect
         detections = {}
-        for detection_pb in observation_pb.detections:
-            objo = pomdp_detection_from_proto(
-                detection_pb, agent.search_region, **kwargs)
+        for detection_pb in request.object_detections.detections:
+            objo = pomdp_detection_from_proto(detection_pb, agent.search_region)
             if objo.id not in detections:
                 detections[objo.id] = objo
             else:
                 logging.warning(f"multiple detections for {objo.id}. Only keeping one.")
 
         # Now go through every detectable object
-        objobzs = {robot_id: robot_obz}
+        objobzs = {agent.robot_id: robot_observation}
         for objid in agent.detection_models:
             if objid not in detections:
                 objo = slpo.ObjectDetection(objid, slpo.ObjectDetection.NULL)
@@ -350,12 +397,7 @@ def pomdp_observation_from_proto(robot_pose_pb, observation_pb, agent, **kwargs)
             objobzs[objid] = objo
         return slpo.JointObservation(objobzs)
 
-    elif isinstance(observation_pb, o_pb2.RobotPose):
-        # just return the RobotLocalization observation
-        return robot_obz
+    elif request.HasField("language"):
+        raise NotImplementedError("Not there yet")
 
-    elif isinstance(observation_pb, o_pb2.Language):
-        raise NotImplementedError
-
-    else:
-        raise ValueError(f"Unsupported observation type {type(observation_pb)}")
+    return robot_observation

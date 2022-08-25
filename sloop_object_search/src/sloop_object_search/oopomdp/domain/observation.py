@@ -122,12 +122,16 @@ class RobotLocalization(pomdp_py.SimpleObservation):
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
-    def __init__(self, robot_id, robot_pose, objects_found, camera_direction, *args):
+    def __init__(self, robot_id, robot_pose_est, objects_found, camera_direction, *args):
+        """
+        'robot_pose_est' could be a single pose tuple, or a RobotLocalization
+        object. The latter models uncertainty around the estimation, while
+        the assumes perfect observation."""
         self.robot_id = robot_id
-        self.pose = robot_pose
+        self._pose_est = robot_pose_est
         self.objects_found = objects_found
         self.camera_direction = camera_direction
-        data = (self.robot_id, self.pose, self.objects_found, self.camera_direction, *args)
+        data = (self.robot_id, self._pose_est, self.objects_found, self.camera_direction, *args)
         super().__init__(data)
 
     def __str__(self):
@@ -153,10 +157,23 @@ class RobotObservation(pomdp_py.SimpleObservation):
                                 srobot['objects_found'],
                                 srobot['camera_direction'])
 
+    @property
+    def pose(self):
+        """Returns the most likely robot pose - will return the pose tuple."""
+        if isinstance(self._pose_est, RobotLocalization):
+            return self._pose_est.pose
+        else:
+            return self._pose_est
+
+    @property
+    def pose_estimate(self):
+        return self._pose_est
+
+
 class RobotObservationTopo(RobotObservation):
-    def __init__(self, robot_id, robot_pose, objects_found, camera_direction, topo_nid):
+    def __init__(self, robot_id, robot_pose_est, objects_found, camera_direction, topo_nid):
         super().__init__(robot_id,
-                         robot_pose,
+                         robot_pose_est,
                          objects_found,
                          camera_direction,
                          topo_nid)

@@ -1,6 +1,8 @@
 import pomdp_py
 from sloop.agent import SloopAgent
 from sloop_object_search.utils.misc import import_class, import_func
+from ..domain.observation import RobotLocalization, RobotObservation, JointObservation
+from ..domain.state import RobotState
 from ..models.search_region import SearchRegion2D
 from ..models.observation_model import (GMOSObservationModel,
                                         RobotObservationModel,
@@ -172,12 +174,56 @@ class MosAgent(pomdp_py.Agent):
         is reachable by this agent."""
         raise NotImplementedError()
 
-    def update_belief(self, observation, action=None):
-        """Should update the agent's belief given observation and
-        optionally action. May return auxiliary information
-        produced during belief update for later debugging."""
+    def update_belief(self, observation, action=None, debug=False, **kwargs):
+        """
+        update belief given observation.  We can accept two kinds of observations:
+        either JointObservation, which should contain object detections and a
+        robot observation, or a RobotObservation object, which is used to
+        update the robot belief only.
+
+        kwargs:
+            return_fov: if observation contains object detection, then if
+               True, return a mapping from objid to (visible_volume, obstacles_hit)
+        """
+        if isinstance(observation, JointObservation):
+            # update robot belief
+            if self.robot_id in observation:
+                robot_observation = observation.z(self.robot_id)
+                self.update_robot_belief(robot_observation, action=action, debug=debug, **kwargs)
+
+            return self.update_object_beliefs(
+                observation, action=action, debug=debug, **kwargs)
+        elif isinstance(observation, RobotObservation):
+            return self.update_robot_belief(observation, action=action, **kwargs)
         raise NotImplementedError()
 
+    def update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
+        raise NotImplementedError()
+
+    def update_robot_belief(self, observation, action=None, **kwargs):
+        """Accepts only RobotObservation as observation type. In particular,
+        it should contain 'robot_pose' of type RobotLocalization.
+        Override this function for more specific agents.
+
+        kwargs can contain 'robot_state_class' or additional state attributes
+        used for creating robot state objects."""
+        if not isinstance(observation, RobotObservation):
+            raise TypeError("updating robot belief requires observation"\
+                            " to be of type RobotLocalization")
+
+        if not isinstance(observation.pose_estimate, RobotLocalization):
+            raise ValueError("For robot belief update, expect pose in observation"\
+                             " to be a RobotLocalization which captures uncertainty")
+
+        pose_estimate = observation.pose_estimate
+        new_pose_dist = belief.RobotPoseDist(pose_estimate.pose, pose_estimate.cov)
+        robot_state_class = kwargs.pop("robot_state_class", RobotState)
+        new_robot_belief = belief.RobotStateBelief(
+            self.robot_id, new_pose_dist,
+            objects_found=observation.objects_found,
+            camera_direction=observation.camera_direction,
+            robot_state_class=robot_state_class,
+            **kwargs)
 
 class SloopMosAgent(SloopAgent):
     def __init__(self, agent_config, search_region, init_robot_pose_dist,

@@ -90,7 +90,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the corresponding POMDP agent should be created and
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
-
         zrobotloc = proto_utils.robot_localization_from_proto(request.robot_pose)
         robot_pose = zrobotloc.pose  # world frame robot pose
 
@@ -286,25 +285,12 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 message=f"agent {robot_id} does not exist. Did you create it?")
 
         agent = self._agents[request.robot_id]
-        if request.HasField("object_detections"):
-            observation = proto_utils.pomdp_observation_from_proto(
-                request.robot_pose, request.object_detections, agent)
-
-        elif request.HasField("language"):
-            observation = proto_utils.pomdp_observation_from_proto(
-                request.robot_pose, request.language, agent)
-
-        elif request.HasField("robot_pose"):
-            observation = proto_utils.pomdp_observation_from_proto(
-                request.robot_pose, request.robot_pose, agent)
-
+        action = None
         if request.HasField("action_id"):
             action = self._actions_planned[request.robot_id][request.action_id]
-            aux = agent_utils.update_belief(request, agent, observation, action)
-        else:
-            aux = agent_utils.update_belief(request, agent, observation)
+        observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)
+        aux = agent_utils.update_belief(request, agent, observation, action=action)
         # TODO: update planner
-
         header = proto_utils.make_header(request.header.frame_id)
         return slpb2.ProcessObservationReply(
             header=header,

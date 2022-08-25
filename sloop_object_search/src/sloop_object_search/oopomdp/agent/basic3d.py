@@ -62,7 +62,7 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
-    def update_belief_given_detection(self, observation, debug=False, **kwargs):
+    def update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
         assert isinstance(observation, JointObservation)
         if not self.robot_id in observation:
             raise ValueError("requires knowing robot pose corresponding"\
@@ -110,25 +110,53 @@ class MosAgentBasic3D(MosAgent):
         if return_fov:
             return fovs
 
-    def update_robot_belief(self, observation):
-        zrobot = belief.get_zrobot_for_update(observation)
+
+# def get__for_update(observation, current_robot_belief, objects_found):
+#     """"""
+#     if isinstance(observation, JointObservation):
+#         zrobot = observation.z(self.robot_id)
+#     else:
+#         zrobot = observation
 
 
-    def update_belief(self, observation, action=None, debug=False, **kwargs):
-        """
-        update belief given observation. If the observation is
-        object detections, we expect it to be of type JointObservation,
 
-        kwargs:
-            return_fov: if observation contains object detection, then if
-               True, return a mapping from objid to (visible_volume, obstacles_hit)
-        """
-        if isinstance(observation, JointObservation):
-            return self.update_belief_given_detection(
-                observation, debug=debug, **kwargs)
-        elif isinstance(observation, RobotLocalization):
-            raise NotImplementedError()
-        raise NotImplementedError()
+#     # We need to work with RobotObservation objects
+#     if isinstance(zrobot, RobotLocalization):
+#         robot_state = current_robot_belief.mpe()
+#         zrobot = robot_observation_model.observation_class.from_state(robot_state, pose=zrobot.pose)
+#     else:
+#         assert isinstance(zrobot, RobotObservation),\
+#             f"failed to extract robot observation from given observation of type {type(observation)}"
+#     return zrobot
+
+
+# def update_robot_belief(current_robot_belief, observation, agent):
+#     """Robot belief update accepts only RobotLocalization"""
+
+
+#     """"""
+#     zrobot = get_zrobot_for_update(observation)
+
+
+
+#     if isinstance(zrobot, RobotLocalization):
+#         # change zrobot to be of type compatible with robot_observation_model
+#         robot_state = current_robot_belief.mpe()
+#         zrobot = robot_observation_model.observation_class.from_state(robot_state, pose=zrobot.pose)
+
+#     if isinstance(current_robot_belief, pomdp_py.WeightedParticles):
+#         raise NotImplementedError()
+
+
+
+#     if isinstance(obseration, RobotLocalization):
+#         pass
+
+# def reinvigorate_robot_belief_particles(zrobot, srobot_from_zrobot_func, num_particles=100):
+#     """srobot_from_zrobot_func is a function that takes in a RobotObservation
+#     and returns a RobotState (could be their children classes)"""
+#     raise NotImplementedError()
+
 
 
 def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_octree,
