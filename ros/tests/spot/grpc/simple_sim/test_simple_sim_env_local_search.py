@@ -1,12 +1,13 @@
+#!/usr/bin/env python
 # Test 3D local search in SimpleSimEnv.
 #
-# To run the test:
-# 1. 'roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=lab121_lidar'
-# 2. 'roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
-#    This runs the SimpleSimEnv simulated environment.
-# 3. 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/init_robot_pose'
-# 4. 'python -m sloop_object_search.grpc.server'
-# 5. 'python test_simple_sim_env_local_search.py'
+# To run the test, do the following IN ORDER:
+# 0. run config_simple_sim_lab121_lidar.py to generate the .yaml configuration file
+# 1. run in a terminal 'roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=lab121_lidar'
+# 2. run in a terminal 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/init_robot_pose'
+# 3. run in a terminal 'roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
+# 4. run in a terminal 'python -m sloop_object_search.grpc.server'
+# 5. run in a terminal 'python test_simple_sim_env_local_search.py'
 # ------------------
 #
 # We are testing the local search algorithm. We need to do:
@@ -30,6 +31,7 @@ import geometry_msgs.msg as geometry_msgs
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
+from sloop_mos_ros import ros_utils
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
@@ -57,11 +59,12 @@ class TestSimpleEnvLocalSearch:
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=10, verbose=True).messages
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-        robot_pose_pb = proto_utils.posemsg_to_pose3dproto(pose_stamped_msg.pose)
+        robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=self.robot_id,
                                               is_3d=True,
-                                              robot_pose_3d=robot_pose_pb,
+                                              robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": 0.15,

@@ -16,12 +16,18 @@ def main():
 
     pose_pub = rospy.Publisher("/simple_sim_env/init_robot_pose",
                                PoseStamped, queue_size=10, latch=True)
+
     msg = ros_utils.pose_tuple_to_pose_stamped(
         (x,y,z,qx,qy,qz,qw), world_frame)
     pose_pub.publish(msg)
     print("Published initial pose")
     print(msg)
     rospy.spin()
+
+    # To publish repeatedly
+    # rospy.Timer(rospy.Duration(1/10),
+    #             lambda event: pose_pub.publish(ros_utils.pose_tuple_to_pose_stamped(
+    #                 (x,y,z,qx,qy,qz,qw), world_frame)))
 
 if __name__ == "__main__":
     main()
