@@ -41,7 +41,8 @@ def test():
                           region_origin=region_origin,
                           search_space_resolution=search_space_resolution)
     cov_pomdp = convert_cov(cov_world, Frame.WORLD, Frame.POMDP_SPACE,
-                          search_space_resolution=search_space_resolution)
+                            search_space_resolution=search_space_resolution,
+                            is_3d=False)
     plot_gaussian(list(point_pomdp),
                   cov_pomdp.tolist(), "POMDP Space Gaussian")
 
@@ -50,7 +51,8 @@ def test():
                            region_origin=region_origin,
                            search_space_resolution=search_space_resolution)
     cov_world2 = convert_cov(cov_pomdp, Frame.POMDP_SPACE, Frame.WORLD,
-                          search_space_resolution=search_space_resolution)
+                             search_space_resolution=search_space_resolution,
+                             is_3d=False)
     plot_gaussian(list(point_world2),
                   cov_world2.tolist(), "World Space Gaussian (AGAIN)")
 

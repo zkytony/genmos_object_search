@@ -121,10 +121,39 @@ def _searchspace2region(search_space_point, search_space_resolution):
 
 ### convert covariance ###
 def convert_cov(cov, from_frame, to_frame,
-                search_space_resolution=None):
+                search_space_resolution=None, is_3d=True):
     """given covariance matrix in 'from_frame', return the
     covariance matrix in 'to_frame'. The covariance matrix
-    is given by a 2D array."""
+    is given by a 2D array.
+
+    We assume the covariance matrix is either position-only (2D or 3D), or
+    contains both position and rotation variables. Note that because our frame
+    transformation between world and pomdp only involves translation, the
+    rotation variables are unchanged.
+
+    This means for covariance between a position variable and another position
+    variable, the resulting covariance is scaled by search_space_resolution
+    squared (or its inverse), while the covariance between a position variable
+    and a rotation variable is scaled by search_space_resolution (or its
+    inverse).  This is based on the property of covariance: Cov(aX,bY) =
+    abCov(X,Y)
+    """
+    def scale_factor(from_frame, to_frame, search_space_resolution):
+        """This is the factor due to frame change for a single positional variable"""
+        if from_frame == Frame.WORLD:
+            if to_frame == Frame.REGION:
+                return 1.0
+            else:
+                return 1.0 / search_space_resolution
+        elif from_frame == Frame.REGION:
+            if to_frame == Frame.WORLD:
+                return 1.0
+            else:
+                return 1.0 / search_space_resolution
+        else:
+            assert from_frame == Frame.POMDP_SPACE
+            return search_space_resolution
+
     cov = np.asarray(cov)
     all_frames = {Frame.WORLD, Frame.REGION, Frame.POMDP_SPACE}
     if not (from_frame.lower() in all_frames and to_frame.lower() in all_frames):
@@ -132,28 +161,37 @@ def convert_cov(cov, from_frame, to_frame,
     if from_frame == to_frame:
         return cov
 
-    if from_frame == Frame.WORLD:
-        if to_frame == Frame.REGION:
-            # covariance doesn't change between WORLD and REGION frames because
-            # there is only translation between the two.
-            return cov
-        else:
-            # from WORLD to POMDP: divide covariance by squared search space resolution
-            return cov / (search_space_resolution**2)
-
-    elif from_frame == Frame.REGION:
-        if to_frame == Frame.WORLD:
-            # covariance doesn't change between WORLD and REGION frames because
-            # there is only translation between the two.
-            return cov
-        else:
-            # from REGION to POMDP: divide covariance by squared search space resolution
-            return cov / (search_space_resolution**2)
-
-    elif from_frame == Frame.POMDP_SPACE:
-        if to_frame == Frame.REGION:
-            # scale by covariance squared
-            return cov * (search_space_resolution**2)
-        else:
-            # from REGION to POMDP: divide covariance by squared search space resolution
-            return cov * (search_space_resolution**2)
+    cov_new = np.zeros(cov.shape)
+    for x in range(cov.shape[0]):
+        for y in range(cov.shape[1]):
+            if is_3d:
+                # position variables are at 0, 1, 2
+                if x <= 2:
+                    # x is a position variable
+                    a = scale_factor(from_frame, to_frame, search_space_resolution)
+                else:
+                    # x is a rotation variable - no change.
+                    a = 1.0
+                if y <= 2:
+                    # y is a position variable
+                    b = scale_factor(from_frame, to_frame, search_space_resolution)
+                else:
+                    # x is a rotation variable - no change.
+                    b = 1.0
+                cov_new[x,y] = a*b*cov[x,y]
+            else:
+                # position variables are at 0, 1
+                if x <= 1:
+                    # x is a position variable
+                    a = scale_factor(from_frame, to_frame, search_space_resolution)
+                else:
+                    # x is a rotation variable - no change.
+                    a = 1.0
+                if y <= 1:
+                    # y is a position variable
+                    b = scale_factor(from_frame, to_frame, search_space_resolution)
+                else:
+                    # x is a rotation variable - no change.
+                    b = 1.0
+                cov_new[x,y] = a*b*cov[x,y]
+    return cov_new
