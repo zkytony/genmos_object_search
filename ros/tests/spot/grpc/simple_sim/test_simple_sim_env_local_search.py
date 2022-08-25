@@ -36,9 +36,15 @@ from sloop_mos_ros import ros_utils
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
 
+WORLD_FRAME = "graphnav_map"
+
+
 import yaml
 with open("./config_simple_sim_lab121_lidar.yaml") as f:
-    AGENT_CONFIG = yaml.safe_load(f)["agent_config"]
+    CONFIG = yaml.safe_load(f)
+    AGENT_CONFIG = CONFIG["agent_config"]
+    TASK_CONFIG = CONFIG["task_config"]
+    PLANNER_CONFIG = CONFIG["planner_config"]
 
 
 class TestSimpleEnvLocalSearch:
@@ -48,6 +54,7 @@ class TestSimpleEnvLocalSearch:
         rospy.init_node("test_simple_env_local_search")
         self._sloop_client = SloopObjectSearchClient()
         self.robot_id = AGENT_CONFIG["robot"]["id"]
+        self.world_frame = WORLD_FRAME
 
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
@@ -74,7 +81,20 @@ class TestSimpleEnvLocalSearch:
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
-        # ...
+        # create planner
+        response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
+                                                    header=proto_utils.make_header(),
+                                                    robot_id=self.robot_id)
+        rospy.loginfo("planner created!")
+
+        # Send planning requests
+        for step in range(TASK_CONFIG["max_steps"]):
+            response = self._sloop_client.planAction(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+            print("plan action finished. Action planned:")
+            action = proto_utils.interpret_planned_action(response)
+            print(action)
+
 
 
 def main():

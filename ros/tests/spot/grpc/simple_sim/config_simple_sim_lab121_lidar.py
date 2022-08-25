@@ -32,6 +32,19 @@ CONFIG = {
                              'color': [0.4, 0.7, 0.3, 0.8],
                              'viz_type': 'cube'}},
         'targets': ['book'],
+    },
+
+    "task_config": {
+        "max_steps": 100
+    },
+
+    "planner_config": {
+        "planner": "pomdp_py.POUCT",
+        "planner_params": {
+            "exploration_const": 1000,
+            "max_depth": 10,
+            "num_sims": 100
+        }
     }
 }
 

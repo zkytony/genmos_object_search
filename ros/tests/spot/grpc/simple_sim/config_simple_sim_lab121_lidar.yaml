@@ -49,3 +49,11 @@ object_locations:
   - 5.0
   - 2.0
   - 0.1
+planner_config:
+  planner: pomdp_py.POUCT
+  planner_params:
+    exploration_const: 1000
+    max_depth: 10
+    num_sims: 100
+task_config:
+  max_steps: 100

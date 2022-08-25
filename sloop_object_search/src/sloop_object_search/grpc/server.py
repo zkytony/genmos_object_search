@@ -184,7 +184,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 return slpb2.CreatePlannerReply(
                     header=proto_utils.make_header(),
                     status=Status.FAILED,
-                    message=f"Planner already exists for {robot_id}. Not overwriting.")
+                    message=f"Planner already exists for {request.robot_id}. Not overwriting.")
 
         config_str = request.config.decode("utf_8")
         config = yaml.safe_load(config_str)
