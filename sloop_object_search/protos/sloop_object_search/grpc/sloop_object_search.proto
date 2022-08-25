@@ -260,8 +260,11 @@ message RobotBelief {
   // robot pose (exact or a distribution; see RobotPose message definition)
   RobotPose pose = 2;
 
+  // objects found
+  ObjectsFound objects_found = 3;
+
   // If the robot plans over a topological graph, this returns
   // the id of the topological graph node the robot associates itself
   // with currently.
-  optional string topo_nid = 3;
+  optional string topo_nid = 4;
 }
