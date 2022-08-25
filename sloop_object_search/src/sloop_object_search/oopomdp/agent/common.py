@@ -190,7 +190,7 @@ class MosAgent(pomdp_py.Agent):
             if self.robot_id in observation:
                 robot_observation = observation.z(self.robot_id)
                 self.update_robot_belief(robot_observation, action=action, debug=debug, **kwargs)
-
+            # then update object beliefs
             return self.update_object_beliefs(
                 observation, action=action, debug=debug, **kwargs)
         elif isinstance(observation, RobotObservation):
@@ -224,6 +224,7 @@ class MosAgent(pomdp_py.Agent):
             camera_direction=observation.camera_direction,
             robot_state_class=robot_state_class,
             **kwargs)
+        self.belief.set_object_belief(self.robot_id, new_robot_belief)
 
 class SloopMosAgent(SloopAgent):
     def __init__(self, agent_config, search_region, init_robot_pose_dist,

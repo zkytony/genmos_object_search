@@ -111,54 +111,6 @@ class MosAgentBasic3D(MosAgent):
             return fovs
 
 
-# def get__for_update(observation, current_robot_belief, objects_found):
-#     """"""
-#     if isinstance(observation, JointObservation):
-#         zrobot = observation.z(self.robot_id)
-#     else:
-#         zrobot = observation
-
-
-
-#     # We need to work with RobotObservation objects
-#     if isinstance(zrobot, RobotLocalization):
-#         robot_state = current_robot_belief.mpe()
-#         zrobot = robot_observation_model.observation_class.from_state(robot_state, pose=zrobot.pose)
-#     else:
-#         assert isinstance(zrobot, RobotObservation),\
-#             f"failed to extract robot observation from given observation of type {type(observation)}"
-#     return zrobot
-
-
-# def update_robot_belief(current_robot_belief, observation, agent):
-#     """Robot belief update accepts only RobotLocalization"""
-
-
-#     """"""
-#     zrobot = get_zrobot_for_update(observation)
-
-
-
-#     if isinstance(zrobot, RobotLocalization):
-#         # change zrobot to be of type compatible with robot_observation_model
-#         robot_state = current_robot_belief.mpe()
-#         zrobot = robot_observation_model.observation_class.from_state(robot_state, pose=zrobot.pose)
-
-#     if isinstance(current_robot_belief, pomdp_py.WeightedParticles):
-#         raise NotImplementedError()
-
-
-
-#     if isinstance(obseration, RobotLocalization):
-#         pass
-
-# def reinvigorate_robot_belief_particles(zrobot, srobot_from_zrobot_func, num_particles=100):
-#     """srobot_from_zrobot_func is a function that takes in a RobotObservation
-#     and returns a RobotState (could be their children classes)"""
-#     raise NotImplementedError()
-
-
-
 def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_octree,
                                  **params):
     """Return a FovVoxels object as the representation of volumetric observation,

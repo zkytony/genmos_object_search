@@ -150,10 +150,15 @@ def update_belief(request, agent, observation, action=None):
     """
     _start_time = time.time()
     result = {}
+
+    # Perform the belief update
+    ret = agent.update_belief(observation, action=action, debug=request.debug,
+                              return_fov=request.return_fov)
+
+    # Process auxiliary returning information
     if isinstance(observation, slpo.JointObservation):
         if isinstance(agent, MosAgentBasic3D):
-            fovs = agent.update_belief(observation, debug=request.debug,
-                                       return_fov=request.return_fov)
+            fovs = ret
             if fovs is not None:
                 # serialize fovs as json string
                 fovs_dict = {}
@@ -164,6 +169,7 @@ def update_belief(request, agent, observation, action=None):
                                         "obstacles_hit":  list(map(convert_func, obstacles_hit))}
                 json_str = json.dumps(fovs_dict)
                 result = {"fovs": json_str.encode(encoding='utf-8')}
+
     _total_time = time.time() - _start_time
     logging.info("Belief update took: {:.4f}s".format(_total_time))
     return result
