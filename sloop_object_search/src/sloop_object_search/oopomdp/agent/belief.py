@@ -36,6 +36,13 @@ class RobotPoseDist(pomdp_py.Gaussian):
         else:
             super().__init__(list(pose), covariance)
 
+    @property
+    def mean(self):
+        if self.is_3d:
+            return RobotPoseDist._to_quat_pose(super().mean)
+        else:
+            return self.mean
+
     @staticmethod
     def _to_euler_pose(pose7tup):
         return (*pose7tup[:3], *quat_to_euler(*pose7tup[3:]))
@@ -107,13 +114,6 @@ class RobotStateBelief(pomdp_py.GenerativeDistribution):
 
 
 ##### Belief initialization ####
-def robot_pose_dist_from_localization(robot_localization):
-    """
-    Args:
-        robot_localization (RobotLocalization)
-    """
-    return RobotPoseDist(robot_localization.pose, robot_localization.cov)
-
 def init_robot_belief(robot_config, robot_pose_dist, robot_state_class=RobotState, **state_kwargs):
     """Given a distribution of robot pose, create a belief over
     robot state with the same representation as that distribution."""

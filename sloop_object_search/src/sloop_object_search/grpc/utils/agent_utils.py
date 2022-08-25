@@ -14,7 +14,8 @@ VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "SloopMosAgentTopo2D",
                 "MosAgentBasic3D"}
 
-def create_agent(robot_id, agent_config_world, robot_localization, search_region):
+
+def create_agent(robot_id, agent_config_world, robot_localization_world, search_region):
     """
     Creates a SLOOP POMDP agent named 'robot_id', with the given
     config (dict). The initial pose, in world frame, is given by
@@ -49,7 +50,14 @@ def create_agent(robot_id, agent_config_world, robot_localization, search_region
     agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(
         agent_config_world, search_region)
     agent_class = eval(agent_config_pomdp["agent_class"])
-    init_robot_pose_dist = belief.robot_pose_dist_from_localization(robot_localization)
+
+    # need to convert robot localization from world frame to pomdp frame
+    robot_pose_world = robot_localization_world.pose
+    robot_pose_cov_world = robot_localization_world.cov
+    robot_pose_pomdp, robot_pose_cov_pomdp =\
+        search_region.to_pomdp_pose(robot_pose_world, robot_pose_cov_world)
+    # create initial robot pose dist
+    init_robot_pose_dist = belief.RobotPoseDist(robot_pose_pomdp, robot_pose_cov_pomdp)
     agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist)
     return agent
 

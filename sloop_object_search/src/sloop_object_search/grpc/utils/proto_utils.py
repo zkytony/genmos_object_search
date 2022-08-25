@@ -262,27 +262,34 @@ def to_any_proto(val):
     return val_any
 
 
-def robot_belief_to_proto(robot_belief, header=None):
-    """Given a pomdp_py.WeightedParticles or pomdp_py.Histogram
-    representation of robot belief, return a RobotBelief proto.
-    Uncertainty over the robot belief is possibly in its pose. We
-    assume the robot observes its other attributes such as 'objects_found'."""
+def robot_belief_to_proto(robot_belief, search_region, header=None):
+    """Given a robot belief (in POMDP frame), return a RobotBelief proto
+    (in world frame). Uncertainty over the robot belief is possibly
+    in its pose. The robot observes its other attributes such as 'objects_found'."""
     if not isinstance(robot_belief, RobotStateBelief):
-        raise TypeError("robot_belief should be a pomdp_pyGaussian")
+        raise TypeError("robot_belief should be a RobotStateBelief")
     if header is None:
         header = make_header()
 
     mpe_robot_state = robot_belief.mpe()
     robot_id = mpe_robot_state["id"]
+
+    robot_pose_pomdp = robot_belief.pose_dist.mean
+    robot_pose_cov_pomdp = robot_belief.pose_dist.covariance
+    robot_pose_world, robot_pose_cov_world =\
+        search_region.to_world_pose(robot_pose_pomdp, robot_pose_cov_pomdp)
+
     if mpe_robot_state.is_2d:
-        pose_field = {"pose_2d": posetuple_to_poseproto(mpe_robot_state.pose)}
+        pose_field = {"pose_2d": posetuple_to_poseproto(robot_pose_world)}
     else:
-        pose_field = {"pose_3d": posetuple_to_poseproto(mpe_robot_state.pose)}
-    covariance = np.asarray(robot_belief.pose_dist.covariance).flatten()
+        pose_field = {"pose_3d": posetuple_to_poseproto(robot_pose_world)}
+
+    cov_flat = np.asarray(robot_pose_cov_world).flatten()
     robot_pose_pb = o_pb2.RobotPose(header=header, robot_id=robot_id,
-                                    covariance=covariance, **pose_field)
-    objects_found_pb = o_pb2.ObjectsFound(header=header, robot_id=robot_id,
-                                          object_ids=list(map(str, mpe_robot_state.objects_found)))
+                                    covariance=cov_flat, **pose_field)
+    objects_found_pb = o_pb2.ObjectsFound(
+        header=header, robot_id=robot_id,
+        object_ids=list(map(str, mpe_robot_state.objects_found)))
     return slpb2.RobotBelief(robot_id=robot_id,
                              objects_found=objects_found_pb,
                              pose=robot_pose_pb)

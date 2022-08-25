@@ -72,6 +72,51 @@ class SearchRegion:
                            search_space_resolution=self.search_space_resolution,
                            is_3d=self.__class__.is_3d)
 
+    def to_world_pose(self, pose, cov=None):
+        """Given a pose in POMDP frame, return a pose in the WORLD frame."""
+        if self.__class__.is_3d:
+            pos_len = 3
+        else:
+            pos_len = 2
+        pos_world = self.to_world_pos(pose[:pos_len])
+        rot_world = pose[pos_len:]
+        pose_world = (*pos_world, *rot_world)
+        if cov is not None:
+            cov_world = self.to_world_cov(cov)
+            return pose_world, cov_world
+        else:
+            return pose_world
+
+    def to_region_pose(self, pose, cov=None):
+        """Given a pose in REGION frame, return a pose in the POMDP frame."""
+        if self.__class__.is_3d:
+            pos_len = 3
+        else:
+            pos_len = 2
+        pos_region = self.to_region_pos(pose[:pos_len])
+        rot_region = pose[pos_len:]
+        pose_region = (*pos_region, *rot_region)
+        if cov is not None:
+            cov_region = self.to_region_cov(cov)
+            return pose_region, cov_region
+        else:
+            return pose_region
+
+    def to_pomdp_pose(self, world_pose, cov=None):
+        """Given a pose in WORLD frame, return a pose in the POMDP frame."""
+        if self.__class__.is_3d:
+            pos_len = 3
+        else:
+            pos_len = 2
+        pos_pomdp = self.to_pomdp_pos(world_pose[:pos_len])
+        rot_pomdp = world_pose[pos_len:]
+        pose_pomdp = (*pos_pomdp, *rot_pomdp)
+        if cov is not None:
+            cov_pomdp = self.to_pomdp_cov(cov)
+            return pose_pomdp, cov_pomdp
+        else:
+            return pose_pomdp
+
     def __len__(self):
         # size of the search region
         raise NotImplementedError()
@@ -108,6 +153,8 @@ class SearchRegion2D(SearchRegion):
 
     def __len__(self):
         return len(self.grid_map.free_locations)
+
+
 
 
 class SearchRegion3D(SearchRegion):

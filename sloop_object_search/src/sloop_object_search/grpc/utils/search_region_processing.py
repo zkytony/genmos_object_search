@@ -186,6 +186,8 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     grid map, the flooded area will replace the same area in the given grid
     map. This updates the grid map with new point cloud observation.
 
+    points and robot position are in the world frame.
+
     Args:
         pcd (Open3D point cloud object)
         robot_position (tuple): x, y, z position of the robot (or could be 2D x, y)

@@ -86,17 +86,31 @@ class ObjectDetection(pomdp_py.SimpleObservation):
 class RobotLocalization(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose, cov=None):
         """cov: covariance matrix for the robot pose observation."""
-        self.robot_id = robot_id
-        self.pose = robot_pose
         if cov is None:
-            cov = np.identity(len(robot_pose))
-        self.cov = cov
-        data = (self.robot_id, self.pose)
+            cov = np.zeros((len(robot_pose), len(robot_pose)))
+        self._cov = cov
+        data = (robot_id, robot_pose)
         super().__init__(data)
 
     @property
     def is_2d(self):
         return len(self.pose) == 3  # x, y, th
+
+    @property
+    def cov(self):
+        return self._cov
+
+    @property
+    def covariance(self):
+        return self.cov
+
+    @property
+    def pose(self):
+        return self.data[1]
+
+    @property
+    def robot_id(self):
+        return self.data[0]
 
     @property
     def loc(self):
@@ -105,6 +119,7 @@ class RobotLocalization(pomdp_py.SimpleObservation):
         else:
             # 3d
             return self.pose[:3]
+
 
 class RobotObservation(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose, objects_found, camera_direction, *args):

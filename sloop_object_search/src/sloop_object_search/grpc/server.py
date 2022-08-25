@@ -92,7 +92,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         corresponding agent's search region."""
 
         zrobotloc = proto_utils.robot_localization_from_proto(request.robot_pose)
-        robot_pose = zrobotloc.pose
+        robot_pose = zrobotloc.pose  # world frame robot pose
 
         if request.HasField('occupancy_grid'):
             raise NotImplementedError()
@@ -270,7 +270,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         agent = self._agents[request.robot_id]
         robot_belief = agent.belief.b(request.robot_id)
         header = proto_utils.make_header(request.header.frame_id)
-        robot_belief_pb = proto_utils.robot_belief_to_proto(robot_belief, header)
+        robot_belief_pb = proto_utils.robot_belief_to_proto(robot_belief, agent.search_region, header)
         return slpb2.GetRobotBeliefReply(
             header=header,
             status=Status.SUCCESSFUL,
