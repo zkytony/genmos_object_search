@@ -537,6 +537,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 if not node.leaf:
                     node.remove_children()  # we are overwriting this node
                 assert self.prob_at(*node.pos, node.res) == self.normalized_probability(node.value())
+                assert self._normalizer == self.octree.root.value()
                 node = node.parent
                 if node is None:
                     break
