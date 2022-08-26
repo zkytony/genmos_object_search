@@ -243,8 +243,12 @@ class Octree:
             yr = y // (next_res // res)
             zr = z // (next_res // res)
             if not node.has_child((xr, yr, zr)):
+                # even though node doesn't have child at this pos,
+                # it might have a prior about its value.
+                val = node.get_val((xr, yr, zr))
                 child = OctNode(xr, yr, zr, next_res,
                                 parent=node, default_val=self._default_val)
+                child.set_val(None, val)
                 node.add_child(child)
             node = node.child_at((xr,yr,zr))
             next_res = node.res // 2
