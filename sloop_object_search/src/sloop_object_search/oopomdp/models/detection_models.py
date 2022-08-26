@@ -567,7 +567,7 @@ class FrustumVoxelAlphaBeta(FrustumModel):
             return octree.DEFAULT_VAL
 
     def sample(self, si, srobot, return_event=False):
-        voxel = Voxel(si.loc, Voxel.UNKNOWN)
+        voxel = Voxel((*si.loc, si.res), Voxel.UNKNOWN)
         if srobot.in_range(self.sensor, si):
             if FrustumCamera.sensor_functioning(
                     self.alpha, self.beta):
