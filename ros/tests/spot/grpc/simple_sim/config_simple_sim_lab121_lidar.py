@@ -1,7 +1,7 @@
 CONFIG = {
     "object_locations": {
         "book": [0.0, 2.0, 0.1],
-        "cup": [1.0, 1.0, 0.5]
+        "cup": [0.7, 0.6, 0.5]
     },
 
     "agent_config": {

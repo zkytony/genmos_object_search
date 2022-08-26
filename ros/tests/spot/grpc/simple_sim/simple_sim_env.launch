@@ -18,7 +18,7 @@
         type="simple_sim_init_robot_pose_pub.py"
         output="screen">
     <param name="x" value="1.2"/>
-    <param name="y" value="0.2"/>
+    <param name="y" value="1.0"/>
     <param name="z" value="0.1"/>
     <param name="qx" value="0.0"/>
     <param name="qy" value="0.0"/>
