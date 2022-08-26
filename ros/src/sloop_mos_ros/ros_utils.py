@@ -304,25 +304,10 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 
 ### Visualization ###
 from visualization_msgs.msg import Marker, MarkerArray
-def make_viz_marker_from_object_state(sobj, header, **kwargs):
-    """
-    Args:
-       sobj (ObjectState)
-       viz_type (int): e.g. Marker.CUBE
-       color (std_msgs.ColorRGBA)
-       scale (float or geometry_msgs.Vector3)
-    """
-    marker = Marker(header=header)
-    marker.id = hash16(sobj["id"])
-    loc = sobj.loc
-    marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
-    _fill_viz_marker(marker, **kwargs)
-    return marker
-
 def make_viz_marker_for_object(objid, pose, header, **kwargs):
     """
     Args:
-       pose (x,y,z,qx,qy,qz,qw)
+       pose (x,y,z,qx,qy,qz,qw) or (x,y,z)
        viz_type (int): e.g. Marker.CUBE
        color (std_msgs.ColorRGBA)
        scale (float or geometry_msgs.Vector3)
@@ -333,28 +318,11 @@ def make_viz_marker_for_object(objid, pose, header, **kwargs):
     loc = pose[:3]
     rot = pose[3:]
     marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
-    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=rot[0], y=rot[1], z=rot[2], w=rot[3])
-    _fill_viz_marker(marker, **kwargs)
-    return marker
-
-def tf2msg_from_object_loc(loc, world_frame, object_frame, **kwargs):
-    stamp = kwargs.get("stamp", rospy.Time.now())
-    t = geometry_msgs.msg.TransformStamped(
-        header=std_msgs.msg.Header(stamp=stamp,
-                                   frame_id=world_frame))
-    t.child_frame_id = object_frame
-    t.transform.translation = geometry_msgs.msg.Vector3(x=loc[0], y=loc[1], z=loc[2])
-    t.transform.rotation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
-    return t
-
-
-def make_viz_marker_from_robot_state(srobot, header, **kwargs):
-    marker = Marker(header=header)
-    marker.id = hash16(srobot["id"])
-    x,y,z,qx,qy,qz,qw = srobot.pose
-    marker.pose.position = geometry_msgs.msg.Point(x=x, y=y, z=z)
-    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
-    kwargs["viz_type"] = Marker.ARROW
+    if len(rot) > 0:
+        marker.pose.orientation = geometry_msgs.msg.Quaternion(x=rot[0], y=rot[1], z=rot[2], w=rot[3])
+    elif len(rot) != 0:
+        raise ValueError("rotation in object pose is invalid. "\
+                         "Should be quaternion qx, qy, qz, qw or nothing.")
     _fill_viz_marker(marker, **kwargs)
     return marker
 
@@ -367,6 +335,16 @@ def tf2msg_from_robot_pose(robot_pose, world_frame, robot_frame, **kwargs):
     x,y,z,qx,qy,qz,qw = robot_pose
     t.transform.translation = geometry_msgs.msg.Vector3(x=x, y=y, z=z)
     t.transform.rotation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    return t
+
+def tf2msg_from_object_loc(loc, world_frame, object_frame, **kwargs):
+    stamp = kwargs.get("stamp", rospy.Time.now())
+    t = geometry_msgs.msg.TransformStamped(
+        header=std_msgs.msg.Header(stamp=stamp,
+                                   frame_id=world_frame))
+    t.child_frame_id = object_frame
+    t.transform.translation = geometry_msgs.msg.Vector3(x=loc[0], y=loc[1], z=loc[2])
+    t.transform.rotation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
     return t
 
 def make_viz_marker_from_robot_pose_3d(robot_id, robot_pose, header, **kwargs):
@@ -457,9 +435,9 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
         markers.append(marker)
     return MarkerArray(markers)
 
-def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, stamp=None,
-                                  **kwargs):
-    """Given a robot_pose_proto obtained from sloop grpc server,
+def viz_msgs_for_robot_pose(robot_pose, world_frame, robot_frame, stamp=None,
+                            **kwargs):
+    """Given a robot pose in the world frame obtained from SLOOP,
     return a tuple (marker, tf2msg) for visualization. Note that
     this function accounts for the differences in default look
     direction between ROS and SLOOP."""
@@ -467,8 +445,6 @@ def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, st
         stamp = rospy.Time.now()
     scale = kwargs.pop("scale", geometry_msgs.msg.Vector3(x=0.4, y=0.05, z=0.05))
     lifetime = kwargs.pop("lifetime", 0)
-
-    robot_pose = proto_utils.robot_pose_from_proto(robot_pose_proto)
     # The camera by default looks at -z; Because in ROS, 0 degree means looking
     # at +x, therefore we rotate the marker for robot pose so that it starts out
     # looking at -z. Note this must be specified with respect to the robot frame.
@@ -478,6 +454,16 @@ def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, st
         header=header, scale=scale, lifetime=lifetime, **kwargs)
     tf2msg = tf2msg_from_robot_pose(robot_pose, world_frame, robot_frame)
     return marker, tf2msg
+
+
+def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, stamp=None,
+                                  **kwargs):
+    """Given a robot_pose_proto obtained from sloop grpc server,
+    return a tuple (marker, tf2msg) for visualization. Note that
+    this function accounts for the differences in default look
+    direction between ROS and SLOOP."""
+    robot_pose = proto_utils.robot_pose_from_proto(robot_pose_proto)
+    return viz_msgs_for_robot_pose(robot_pose, world_frame, robot_frame, stamp=stamp, **kwargs)
 
 
 ### Communication ###

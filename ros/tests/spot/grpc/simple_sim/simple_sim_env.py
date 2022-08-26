@@ -29,6 +29,7 @@ from sloop_object_search.oopomdp.agent.common import (init_object_transition_mod
                                                       init_detection_models,
                                                       interpret_localization_model)
 from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import quat_to_euler, euler_to_quat, to_rad, to_deg, euclidean_dist
 
@@ -149,6 +150,7 @@ class SimpleSimEnvROSNode:
         rospy.Timer(rospy.Duration(1/self.observation_pub_rate),
                     lambda event: self.publish_observation())
 
+        print(self.env.state)
         rospy.loginfo("publishing state markers")
         rate = rospy.Rate(self.state_pub_rate)
         while not rospy.is_shutdown():
@@ -222,24 +224,22 @@ class SimpleSimEnvROSNode:
             viz_type_name = self.env.object_spec(objid).get("viz_type", "cube")
             viz_type = eval(f"Marker.{viz_type_name.upper()}")
             color = self.env.object_spec(objid).get("color", [0.0, 0.8, 0.0, 0.8])
-            obj_marker = ros_utils.make_viz_marker_from_object_state(
-                sobj, header, viz_type=viz_type,
+            obj_marker = ros_utils.make_viz_marker_for_object(
+                sobj.id, sobj.loc, header, viz_type=viz_type,
                 color=color, scale=0.12, lifetime=1.0)
             markers.append(obj_marker)
             # get a tf transform from world to object
             tobj = ros_utils.tf2msg_from_object_loc(
-                sobj.loc, self.world_frame, f"{sobj.objclass}_{objid}")
+                sobj.loc, self.world_frame, objid)
             tf2msgs.append(tobj)
 
         srobot = state.s(self.env.robot_id)
-        robot_marker = ros_utils.make_viz_marker_from_robot_state(
-            srobot, header,
+        robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
+            srobot.pose, self.world_frame, self.env.robot_id,
             color=[0.9, 0.1, 0.1, 0.9], lifetime=1.0,
             scale=Vector3(x=0.6, y=0.08, z=0.08))
         markers.append(robot_marker)
         # get a tf transform from world to robot
-        trobot = ros_utils.tf2msg_from_robot_pose(
-            srobot.pose, self.world_frame, f"robot_{srobot['id']}")
         tf2msgs.append(trobot)
         return MarkerArray(markers), tf2msgs
 
