@@ -353,6 +353,9 @@ def update_octree_belief(octree_belief, real_observation,
 
     for voxel_pos in real_observation.voxels:
         # voxel_pos is x, y, z, r
+        if not octree_belief.octree_dist.in_region(voxel_pos):
+            continue  # skip because this voxel is out of bound.
+
         voxel = real_observation.voxels[voxel_pos]
         if len(voxel_pos) == 3:
             voxel_pos = (*voxel_pos, 1)

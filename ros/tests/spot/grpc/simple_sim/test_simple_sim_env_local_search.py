@@ -26,11 +26,15 @@
 #
 # Remember, you are a USER of the sloop_object_search package.
 # Not its developer. You should only need to do basic things.
+import numpy as np
 import time
 import rospy
+import pickle
+import json
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
+from visualization_msgs.msg import Marker, MarkerArray
 from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -40,7 +44,9 @@ from sloop_object_search.utils.open3d_utils import draw_octree_dist
 from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
 from sloop_object_search.grpc import observation_pb2 as o_pb2
 from sloop_object_search.grpc import action_pb2 as a_pb2
-from sloop_object_search.grpc import common_pb2 as common_pb2
+from sloop_object_search.grpc import common_pb2
+from sloop_object_search.grpc.common_pb2 import Status
+from sloop_object_search.utils.colors import lighter
 from test_simple_sim_env_navigation import make_nav_action
 
 
@@ -87,9 +93,9 @@ def observation_msg_to_proto(world_frame, o_msg):
 
     detections = []
     for objid in object_ids:
-        objloc = kv[f"loc_{objid}"]
+        objloc = eval(kv[f"loc_{objid}"])
         objbox = common_pb2.Box3D(center=proto_utils.posetuple_to_poseproto((*objloc, 0, 0, 0, 1)),
-                                  sizes=common_pb2.Vec3(1, 1, 1))
+                                  sizes=common_pb2.Vec3(x=1, y=1, z=1))
         detections.append(o_pb2.Detection3D(label=objid, box=objbox))
     detections_pb = o_pb2.ObjectDetectionArray(header=header,
                                                robot_id=robot_id,
@@ -101,13 +107,13 @@ def observation_msg_to_proto(world_frame, o_msg):
 class TestSimpleEnvLocalSearch:
 
     def visualize_fovs(self, response):
-        header = Header(stamp=rospy.Time.now(),
-                        frame_id=self.world_frame)
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
         fovs = json.loads(response.fovs.decode('utf-8'))
         markers = []
         for objid in fovs:
-            free_color = np.array(self.config["agent_config"]["objects"][objid].get(
-                "color", [200, 100, 200]))/255
+            free_color = np.array(self.agent_config["objects"][objid].get(
+                "color", [0.8, 0.4, 0.8]))[:3]
             hit_color = lighter(free_color*255, -0.25)/255
 
             obstacles_hit = set(map(tuple, fovs[objid]['obstacles_hit']))
@@ -133,8 +139,8 @@ class TestSimpleEnvLocalSearch:
         rospy.loginfo("got belief")
 
         # visualize the belief
-        header = Header(stamp=rospy.Time.now(),
-                        frame_id=self.world_frame)
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
             bobj = pickle.loads(bobj_pb.dist_obj)
@@ -148,16 +154,21 @@ class TestSimpleEnvLocalSearch:
         rospy.loginfo("belief visualized")
 
 
-    def __init__(self):
+    def __init__(self, o3dviz=False):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node("test_simple_env_local_search")
 
         # Initialize ROS stuff
         action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
+        self._octbelief_markers_pub = rospy.Publisher(
+            "~octree_belief", MarkerArray, queue_size=10, latch=True)
+        self._fovs_markers_pub = rospy.Publisher(
+            "~fovs", MarkerArray, queue_size=10, latch=True)
 
         # Initialize grpc client
         self._sloop_client = SloopObjectSearchClient()
+        self.agent_config = AGENT_CONFIG
         self.robot_id = AGENT_CONFIG["robot"]["id"]
         self.world_frame = WORLD_FRAME
 
@@ -180,7 +191,7 @@ class TestSimpleEnvLocalSearch:
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": 0.1,
-                                                                       "debug": True,
+                                                                       "debug": False,
                                                                        "region_size_x": 4.0,
                                                                        "region_size_y": 4.0,
                                                                        "region_size_z": 2.5})
@@ -188,6 +199,9 @@ class TestSimpleEnvLocalSearch:
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
+
+        # visualize initial belief
+        self.get_and_visualize_belief(o3dviz=o3dviz)
 
         # create planner
         response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
@@ -199,9 +213,9 @@ class TestSimpleEnvLocalSearch:
         for step in range(TASK_CONFIG["max_steps"]):
             response_plan = self._sloop_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
-            print("plan action finished. Action planned:")
             action = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
+            print("plan action finished. Action ID:", action_id)
 
             # Now, we need to execute the action, and receive observation
             # from SimpleEnv. First, convert the dest_3d in action to
@@ -213,12 +227,13 @@ class TestSimpleEnvLocalSearch:
                 action_pub.publish(nav_action)
                 print(nav_action)
                 # wait for navigation done
-                ros_utils.WaitForMessages([NAV_DONE_TOPIC], [std_msgs.String], verbose=True)
+                ros_utils.WaitForMessages([NAV_DONE_TOPIC], [std_msgs.String],
+                                          allow_headerless=True, verbose=True)
 
             # Now, wait for observation
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
                                                 [KeyValObservation],
-                                                verbose=True).message
+                                                verbose=True, allow_headerless=True).messages[0]
             detections_pb, robot_pose_pb, objects_found_pb =\
                 observation_msg_to_proto(self.world_frame, obs_msg)
 
@@ -230,21 +245,30 @@ class TestSimpleEnvLocalSearch:
             response_objects_found = self._sloop_client.processObservation(
                 self.robot_id, objects_found_pb, robot_pose_pb,
                 header=header, return_fov=True, action_id=action_id, action_finished=True)
-            self.visualize_fovs(response_detection)
-            self.get_and_visualize_belief(o3dviz=o3dviz)
             response_robot_belief = self._sloop_client.getRobotBelief(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
 
             print(f"Step {step} robot belief:")
-            print(f"  pose: {response_robot_belief.pose.pose_3d}")
-            print(f"  objects found: {response_robot_belief.objects_found.object_ids}")
+            robot_belief_pb = response_robot_belief.robot_belief
+            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+            print(f"  objects found: {robot_belief_pb.objects_found.object_ids}")
             print("-----------")
+
+            # Clear markers
+            header = std_msgs.Header(stamp=rospy.Time.now(),
+                                     frame_id=self.world_frame)
+            clear_msg = ros_utils.clear_markers(header, ns="")
+            self._octbelief_markers_pub.publish(clear_msg)
+
+            # visualize FOV and belief
+            self.visualize_fovs(response_detection)
+            self.get_and_visualize_belief(o3dviz=o3dviz)
             time.sleep(1)
 
 
 
 def main():
-    TestSimpleEnvLocalSearch()
+    TestSimpleEnvLocalSearch(o3dviz=False)
 
 if __name__ == "__main__":
     main()
