@@ -1,10 +1,12 @@
 import os
 import pomdp_py
 import pytest
+import numpy as np
 import random
 from sloop.osm.datasets.map_info_utils import register_map, load_filepaths
 from sloop_object_search.oopomdp.domain.state import RobotState
 from sloop_object_search.oopomdp.agent.basic3d import MosAgentBasic3D
+from sloop_object_search.oopomdp.agent.belief import RobotPoseDist
 from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief, OccupancyOctreeDistribution
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 
@@ -60,7 +62,7 @@ def search_region():
 
 
 def test_basic3d_agent_basics(config, search_region):
-    init_robot_pose_dist =  pomdp_py.Histogram({(0,-1,4,0,0,0,1): 1.0})
+    init_robot_pose_dist = RobotPoseDist((0,-1,4,0,0,0,1), np.zeros((6,6)))
     agent = MosAgentBasic3D(config["agent_config"], search_region, init_robot_pose_dist)
     pouct = pomdp_py.POUCT(planning_time=0.5, rollout_policy=agent.policy_model)
     print(pouct.plan(agent))
