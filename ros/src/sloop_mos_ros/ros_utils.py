@@ -508,15 +508,15 @@ class WaitForMessages:
         rate = rospy.Rate(1.0/sleep)
         while not rospy.is_shutdown():
             if self.messages is not None:
-                rospy.loginfo("Received messages! Done!")
+                rospy.loginfo("WaitForMessages: Received messages! Done!")
                 break
             if self.verbose:
-                rospy.loginfo("waiting for messages from {}".format(topics))
+                rospy.loginfo("WaitForMessages: waiting for messages from {}".format(topics))
             rate.sleep()
 
     def _cb(self, *messages):
         if self.messages is not None:
             return
         if self.verbose:
-            rospy.loginfo("got messages!")
+            rospy.loginfo("WaitForMessages: got messages!")
         self.messages = messages
