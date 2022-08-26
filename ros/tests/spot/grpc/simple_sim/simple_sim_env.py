@@ -22,9 +22,12 @@ from sloop_mos_ros import ros_utils
 from sloop_mos_ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.state import ObjectState, RobotState
 from sloop_object_search.oopomdp.domain.action import MotionAction3D
+from sloop_object_search.oopomdp.domain.observation import Voxel, ObjectDetection
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
+from sloop_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
 from sloop_object_search.oopomdp.agent.common import (init_object_transition_models,
-                                                      init_detection_models)
+                                                      init_detection_models,
+                                                      interpret_localization_model)
 from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import quat_to_euler, euler_to_quat, to_rad, to_deg, euclidean_dist
@@ -70,6 +73,16 @@ class SimpleSimEnv(pomdp_py.Environment):
             **init_object_transition_models(self.agent_config)}
         transition_model = pomdp_py.OOTransitionModel(object_transition_models)
 
+        # Also make an observation model
+        robot = self.agent_config["robot"]
+        self.localization_model = interpret_localization_model(robot)
+        self.robot_observation_model = RobotObservationModel(
+            robot['id'], localization_model=self.localization_model)
+        self.observation_model = GMOSObservationModel(
+            robot["id"], self.detection_models,
+            robot_observation_model=self.robot_observation_model,
+            no_look=self.no_look)
+
         # Reward model
         target_ids = self.agent_config["targets"]
         reward_model = GoalBasedRewardModel(target_ids, robot_id=self.robot_id)
@@ -80,8 +93,9 @@ class SimpleSimEnv(pomdp_py.Environment):
     def reachable(self, pos):
         return True  # the real world has no bound
 
-    def provide_observation(self, observation_model, action):
-        pass
+    def provide_observation(self, action=None):
+        # will use own observation model.
+        return self.observation_model.sample(self.state, action)
 
     def object_spec(self, objid):
         return self.agent_config["objects"][objid]
@@ -93,27 +107,33 @@ class SimpleSimEnvROSNode:
     should be in the world frame.
 
     Subscribes:
-      ~action (KeyValAction)
+      ~pomdp_action (KeyValAction)
     Publishes:
       ~state_markers (MarkerArray)
-      ~observation (KeyValObservation)
+      ~pomdp_observation (KeyValObservation)
     """
     def __init__(self, node_name="simple_sim_env"):
         self.name = "simple_sim_env"
         rospy.init_node(self.name)
         config = rospy.get_param("~config")  # access parameters together as a dictionary
         state_pub_rate = rospy.get_param("~state_pub_rate", 10)
+        observation_pub_rate = rospy.get_param("~observation_pub_rate", 3)
         self.world_frame = rospy.get_param("~world_frame")  # fixed frame of the world
         self.br = TransformBroadcaster()
 
-        action_topic = f"~pomdp_action"
-        state_markers_topic = f"~state_markers"
+        action_topic = "~pomdp_action"
+        state_markers_topic = "~state_markers"
+        observation_topic = "~pomdp_observation"
         self.env = SimpleSimEnv(config)
         self.action_sub = rospy.Subscriber(action_topic, KeyValAction, self._action_cb)
 
         self.state_markers_pub = rospy.Publisher(
             state_markers_topic, MarkerArray, queue_size=10)
-        self.state_pub_rate = rospy.Rate(state_pub_rate)
+        self.state_pub_rate = state_pub_rate
+
+        # observation
+        self.observation_pub = rospy.Publisher(observation_topic, KeyValObservation, queue_size=10)
+        self.observation_pub_rate = observation_pub_rate
 
         # navigation related
         self.nav_step_duration = rospy.get_param("~step_duration", 0.1)  # amount of time to execute one step
@@ -125,13 +145,45 @@ class SimpleSimEnvROSNode:
         self._nav_done_pub = rospy.Publisher("~nav_done", String, queue_size=10, latch=True)  # publishes when nav is done
 
     def run(self):
+        rospy.loginfo("publishing observations")
+        rospy.Timer(rospy.Duration(1/self.observation_pub_rate),
+                    lambda event: self.publish_observation())
+
         rospy.loginfo("publishing state markers")
+        rate = rospy.Rate(self.state_pub_rate)
         while not rospy.is_shutdown():
             state_markers_msg, tf2_msgs = self._make_state_markers_and_tf2msgs(self.env.state)
             self.state_markers_pub.publish(state_markers_msg)
             for t in tf2_msgs:
                 self.br.sendTransform(t)
-            self.state_pub_rate.sleep()
+            rate.sleep()
+
+    def publish_observation(self):
+        observation = self.env.provide_observation()
+        keys = []
+        values = []
+        # First, make robot observation
+        o_robot = observation.z(self.env.robot_id)
+        keys.extend(["robot_id", "robot_pose", "objects_found", "camera_direction"])
+        values.extend([self.env.robot_id,
+                       str(o_robot.pose),
+                       str(o_robot.objects_found),
+                       str(o_robot.camera_direction)])
+
+        for objid in observation:
+            if objid == self.env.robot_id:
+                continue
+            o_obj = observation.z(objid)
+            if isinstance(o_obj, Voxel):
+                # From the client's perspective, they are just receiving object detections.
+                o_obj = ObjectDetection(objid, o_obj.loc, sizes=(o_obj.res, o_obj.res, o_obj.res))
+            keys.extend([f"pose_{objid}", f"sizes_{objid}"])
+            values.extend([str(o_obj.pose), str(o_obj.sizes)])
+        obs_msg = KeyValObservation(stamp=rospy.Time.now(),
+                                    type="joint",
+                                    keys=keys,
+                                    values=values)
+        self.observation_pub.publish(obs_msg)
 
     @property
     def navigating(self):
