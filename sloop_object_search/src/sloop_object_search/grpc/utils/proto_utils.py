@@ -85,6 +85,20 @@ def posetuple_to_poseproto(pose):
     else:
         raise ValueError(f"Invalid pose: {pose}")
 
+def poseproto_to_posetuple(pose_pb):
+    if isinstance(pose_pb, Pose2D):
+        return (pose_pb.x, pose_pb.y, pose_pb.th)
+    elif isinstance(pose_pb, Pose3D):
+        return (pose_pb.position.x,
+                pose_pb.position.y,
+                pose_pb.position.z,
+                pose_pb.rotation.x,
+                pose_pb.rotation.y,
+                pose_pb.rotation.z,
+                pose_pb.rotation.w)
+    else:
+        raise ValueError(f"Invalid pose proto: {pose_pb}")
+
 def quatproto_to_tuple(quat):
     return (quat.x, quat.y, quat.z, quat.w)
 
@@ -170,17 +184,23 @@ def pomdp_action_to_proto(action, agent, header=None):
         elif isinstance(action, slpa.MotionActionTopo):
             raise NotImplementedError()
         elif isinstance(action, slpa.MotionAction3D):
-            dpos_pomdp, drot = action.motion
             # we need to convert the position change from pomdp frame to
             # the world frame.
+            dpos_pomdp, drot = action.motion
             dpos_world = agent.search_region.to_world_pos(dpos_pomdp)
-            # We
             motion_pb = Motion3D(
                 dpos=Vec3(x=dpos_world[0], y=dpos_world[1], z=dpos_world[2]),
                 drot_euler=Vec3(x=to_rad(drot[0]), y=to_rad(drot[1]), z=to_rad(drot[2])))
+            # We will also supply the destination viewpoint's pose based on
+            # the current mpe robot pose and the transition function
+            srobot = agent.belief.b(agent.robot_id).mpe()
+            expected_next_pose_pomdp = agent.robot_transition_model.sample_motion(srobot, action)
+            expected_next_pose_world = agent.search_region.to_world_pose(expected_next_pose_pomdp)
+            expected_next_pose_world_pb = posetuple_to_poseproto(expected_next_pose_world)
             action_pb = MoveViewpoint(header=header,
                                       robot_id=agent.robot_id,
                                       motion_3d=motion_pb,
+                                      dest_3d=expected_next_pose_world_pb,
                                       name=action.name,
                                       expected_cost=action.step_cost)
     elif isinstance(action, slpa.FindAction):
