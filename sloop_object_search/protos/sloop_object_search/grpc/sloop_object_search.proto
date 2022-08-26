@@ -193,6 +193,8 @@ message CreatePlannerReply {
 message PlanActionRequest {
   Header header = 1;
   string robot_id = 2;
+  // debug flag
+  optional bool debug = 3;
 }
 
 message PlanActionReply {
