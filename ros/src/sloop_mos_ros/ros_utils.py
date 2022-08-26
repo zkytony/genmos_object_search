@@ -433,7 +433,7 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
     which is a Histogram, make a MarkerArray message for it."""
     def _compute_alpha(p, vmin, vmax):
         if vmax - vmin > 0.0:
-            return math_utils.remap(p, vmin, vmax, 0.0, 0.8)
+            return math_utils.remap(p, vmin, vmax, 0.001, 0.8)
         else:
             return 0.8
 
@@ -441,6 +441,8 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
     hist_pb = octree_belief_pb.dist
     prob_max = max(hist_pb.probs)
     prob_min = min(hist_pb.probs)
+    if prob_min == prob_max:
+        prob_min -= 0.00001  # avoid nan
     for i in range(hist_pb.length):
         voxel = common_pb2.Voxel3D()
         hist_pb.values[i].Unpack(voxel)
