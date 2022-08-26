@@ -7,7 +7,7 @@
 import rospy
 from sloop_object_search_ros.msg import KeyValAction
 from sloop_object_search.utils.math import euler_to_quat
-g
+
 def make_nav_action(pos, orien, goal_id=100):
     goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]
     goal_values = [*pos, *orien]

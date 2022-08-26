@@ -149,6 +149,10 @@ class MosAgent(pomdp_py.Agent):
                          observation_model,
                          reward_model)
 
+    @property
+    def robot_transition_model(self):
+        return self.policy_model.robot_trans_model
+
     def init_detection_models(self):
         detection_models = init_detection_models(self.agent_config)
         return detection_models

@@ -153,6 +153,8 @@ class SloopObjectSearchClient:
             observation = {"object_detections": observation_pb}
         elif isinstance(observation_pb, o_pb2.Language):
             observation = {"language": observation_pb}
+        elif isinstance(observation_pb, o_pb2.ObjectsFound):
+            observation = {"objects_found": observation_pb}
         else:
             if observation_pb is not None:
                 raise ValueError(f"Unrecognized observation_pb: {type(observation_pb)}")

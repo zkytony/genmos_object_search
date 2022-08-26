@@ -164,11 +164,10 @@ class SimpleSimEnvROSNode:
         values = []
         # First, make robot observation
         o_robot = observation.z(self.env.robot_id)
-        keys.extend(["robot_id", "robot_pose", "objects_found", "camera_direction"])
+        keys.extend(["robot_id", "robot_pose", "objects_found"])
         values.extend([self.env.robot_id,
                        str(o_robot.pose),
-                       str(o_robot.objects_found),
-                       str(o_robot.camera_direction)])
+                       str(o_robot.objects_found)])
 
         for objid in observation:
             if objid == self.env.robot_id:
@@ -177,8 +176,8 @@ class SimpleSimEnvROSNode:
             if isinstance(o_obj, Voxel):
                 # From the client's perspective, they are just receiving object detections.
                 o_obj = ObjectDetection(objid, o_obj.loc, sizes=(o_obj.res, o_obj.res, o_obj.res))
-            keys.extend([f"pose_{objid}", f"sizes_{objid}"])
-            values.extend([str(o_obj.pose), str(o_obj.sizes)])
+            keys.extend([f"loc_{objid}", f"sizes_{objid}"])
+            values.extend([str(o_obj.loc), str(o_obj.sizes)])
         obs_msg = KeyValObservation(stamp=rospy.Time.now(),
                                     type="joint",
                                     keys=keys,
