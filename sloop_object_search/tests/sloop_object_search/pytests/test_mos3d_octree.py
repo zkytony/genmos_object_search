@@ -41,6 +41,12 @@ def octree_belief():
     octree_belief = OctreeBelief(1, "cube", octree_dist)
     return octree_belief
 
+@pytest.fixture
+def octree_belief_zero_prior():
+    octree_dist = OctreeDistribution((16, 16, 16), default_val=0)
+    octree_belief = OctreeBelief(1, "cube", octree_dist)
+    return octree_belief
+
 def test_basics(octree_belief):
     # Test probability; __getitem__
     print("** Testing Basics")
@@ -180,6 +186,20 @@ def test_time(octree_belief):
     print("Avg sample time (res=2): %.3f" % (tot_res2 % 1000))
     print("Avg sample time (res=4): %.3f" % (tot_res4 % 1000))
 
+
+
+def test_abnormal_add(octree_belief_zero_prior):
+    """Test adding a ground node where even though
+    the parent node has no children, the parent node
+    has a prior. So the ground node must respect that"""
+    # First, insert a non-ground node and assign it with some value.
+    octree_belief = octree_belief_zero_prior
+    octree_belief[ObjectState(1, "cube", (1,0,1), res=4)] = TEST_ALPHA
+    assert octree_belief.octree_dist.prob_at(1,0,1,4) == 1.0
+    assert octree_belief.octree_dist._normalizer == octree_belief.octree.root.value()
+    # Now, insert a ground node and assign it with some other value
+    octree_belief[ObjectState(1, "cube", (9,0,10), res=1)] = 2
+    assert octree_belief.octree_dist._normalizer == octree_belief.octree.root.value()
 
 def test_visualize(octree_belief):
     fig = plt.gcf()
