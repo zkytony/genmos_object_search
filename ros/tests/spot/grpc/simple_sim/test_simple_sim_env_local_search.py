@@ -28,13 +28,24 @@
 import rospy
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
+import std_msgs.msg as std_msgs
+from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
 from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_mos_ros import ros_utils
+from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
+from sloop_object_search.grpc import observation_pb2 as o_pb2
+from sloop_object_search.grpc import action_pb2 as a_pb2
+from sloop_object_search.grpc import common_pb2 as common_pb2
+from test_simple_sim_env_navigation import make_nav_action
+
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
+ACTION_TOPIC = "/simple_sim_env/pomdp_action"
+NAV_DONE_TOPIC = "/simple_sim_env/nav_done"
+OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
 WORLD_FRAME = "graphnav_map"
 
@@ -46,12 +57,54 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
     TASK_CONFIG = CONFIG["task_config"]
     PLANNER_CONFIG = CONFIG["planner_config"]
 
+def observation_msg_to_proto(world_frame, o_msg):
+    """returns three observation proto objects: (ObjectDetectionArray, RobotPose,
+    ObjectsFound) This is reasonable because it's not typically the case that
+    you receive all observations as a joint KeyValObservation message.
+    """
+    if o_msg.type != "joint":
+        raise NotImplementedError(f"Cannot handle type {o_msg.type}")
+
+    header = proto_utils.make_header(frame_id=world_frame)
+    kv = {k:v for k,v in zip(o_msg.keys, o_msg.values)}
+
+    robot_id = kv["robot_id"]
+    robot_pose = eval(kv["robot_pose"])
+    objects_found = eval(kv["objects_found"])
+    robot_pose_pb = o_pb2.RobotPose(header=header, robot_id=robot_id,
+                                    pose_3d=proto_utils.posetuple_to_poseproto(robot_pose))
+    objects_found_pb = o_pb2.ObjectsFound(header=header, robot_id=robot_id,
+                                          object_ids=objects_found)
+
+    # figure out what objects there are
+    object_ids = set()
+    for k in kv:
+        if k.startswith("loc"):
+            object_ids.add(k.split("_")[1])
+
+    detections = []
+    for objid in object_ids:
+        objloc = kv[f"loc_{objid}"]
+        objbox = common_pb2.Box3D(center=proto_utils.posetuple_to_poseproto((*objloc, 0, 0, 0, 1)),
+                                  sizes=common_pb2.Vec3(1, 1, 1))
+        detections.append(o_pb2.Detection3D(label=objid, box=objbox))
+    detections_pb = o_pb2.ObjectDetectionArray(header=header,
+                                               robot_id=robot_id,
+                                               detections=detections)
+    return detections_pb, robot_pose_pb, objects_found_pb
+
+
 
 class TestSimpleEnvLocalSearch:
     def __init__(self):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node("test_simple_env_local_search")
+
+        # Initialize ROS stuff
+        action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
+
+        # Initialize grpc client
         self._sloop_client = SloopObjectSearchClient()
         self.robot_id = AGENT_CONFIG["robot"]["id"]
         self.world_frame = WORLD_FRAME
@@ -74,8 +127,11 @@ class TestSimpleEnvLocalSearch:
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
-                                                                       "search_space_resolution": 0.15,
-                                                                       "debug": False})
+                                                                       "search_space_resolution": 0.1,
+                                                                       "debug": False,
+                                                                       "region_size_x": 4.0,
+                                                                       "region_size_y": 4.0,
+                                                                       "region_size_z": 2.5})
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
@@ -89,14 +145,46 @@ class TestSimpleEnvLocalSearch:
 
         # Send planning requests
         for step in range(TASK_CONFIG["max_steps"]):
-            response = self._sloop_client.planAction(
+            response_plan = self._sloop_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
             print("plan action finished. Action planned:")
-            action = proto_utils.interpret_planned_action(response)
+            action = proto_utils.interpret_planned_action(response_plan)
+            action_id = response_plan.action_id
 
             # Now, we need to execute the action, and receive observation
-            # from SimpleEnv.
+            # from SimpleEnv. First, convert the dest_3d in action to
+            # a KeyValAction message
+            if isinstance(action, a_pb2.MoveViewpoint):
+                dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
+                nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
+                print("published action:")
+                action_pub.publish(nav_action)
+                print(nav_action)
+                # wait for navigation done
+                ros_utils.WaitForMessages([NAV_DONE_TOPIC], [std_msgs.String], verbose=True)
 
+            # Now, wait for observation
+            obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                                [KeyValObservation],
+                                                verbose=True).message
+            detections_pb, robot_pose_pb, objects_found_pb =\
+                observation_msg_to_proto(self.world_frame, obs_msg)
+
+            # Now, send obseravtions for belief update
+            header = proto_utils.make_header(frame_id=self.world_frame)
+            response_detection = self._sloop_client.processObservation(
+                self.robot_id, detections_pb, robot_pose_pb,
+                header=header, return_fov=True, action_id=action_id)
+            response_objects_found = self._sloop_client.processObservation(
+                self.robot_id, objects_found_pb, robot_pose_pb,
+                header=header, return_fov=True, action_id=action_id, action_finished=True)
+            response_robot_belief = self._sloop_client.getRobotBelief(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+
+            print("robot belief:")
+            print(f"  pose: {response_robot_belief.pose.pose_3d}")
+            print(f"  objects found: {response_robot_belief.objects_found.object_ids}")
+            print("-----------")
 
 
 
