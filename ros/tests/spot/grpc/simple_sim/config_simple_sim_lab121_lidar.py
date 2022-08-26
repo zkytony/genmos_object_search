@@ -1,6 +1,7 @@
 CONFIG = {
     "object_locations": {
-        "book": [5.0, 2.0, 0.1]
+        "book": [0.0, 2.0, 0.1],
+        "cup": [1.0, 1.0, 0.5]
     },
 
     "agent_config": {
@@ -21,6 +22,9 @@ CONFIG = {
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
+                                              "quality": [1e5, 0.1]}},
+                          'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                                   'params': {"sensor": "camera",
                                               "quality": [1e5, 0.1]}}},
             'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
                        'params': {'step_size': 1.0,
@@ -30,8 +34,12 @@ CONFIG = {
         'objects': {'book': {'class': 'book',
                              'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
                              'color': [0.4, 0.7, 0.3, 0.8],
+                             'viz_type': 'cube'},
+                    'cup': {'class': 'cup',
+                             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                             'color': [0.89, 0.6, 0.05, 0.8],
                              'viz_type': 'cube'}},
-        'targets': ['book'],
+        'targets': ['book', 'cup'],
     },
 
     "task_config": {
