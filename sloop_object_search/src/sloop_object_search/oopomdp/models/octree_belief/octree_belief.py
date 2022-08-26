@@ -450,7 +450,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
             num_samples = kwargs.pop("num_samples", 200)
             self.fill_region_uniform(default_region_val,
                                      num_samples=num_samples)
-            import pdb; pdb.set_trace()
 
     @property
     def region(self):
@@ -525,7 +524,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 continue
 
             while self.in_region((*node.pos, node.res)):
-                print("----")
                 old_value = node.value()
                 node.set_default_val(default_val)
                 # we are essentially adding default value to all children of
@@ -534,27 +532,10 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 # has changed - we need to update all parents' values.
                 new_value = node.value()
                 self.update_normalizer(old_value, new_value)
-                print("A: (ok to differ)", self._normalizer, self.octree.root.value())
-
                 self.backtrack(node)
-                print("B:", self._normalizer, self.octree.root.value())
-                # assert normalizer is correct
-                try:
-                    assert self._normalizer == self.octree.root.value()
-                except AssertionError:
-                    import pdb; pdb.set_trace()
-                    print("HEY")
-
 
                 if not node.leaf:
                     node.remove_children()  # we are overwriting this node
-                print("C:", self._normalizer, self.octree.root.value())
-                try:
-                    assert self._normalizer == self.octree.root.value()
-                except AssertionError:
-                    import pdb; pdb.set_trace()
-                    print("HEY")
-
                 assert self.prob_at(*node.pos, node.res) == self.normalized_probability(node.value())
                 node = node.parent
                 if node is None:
