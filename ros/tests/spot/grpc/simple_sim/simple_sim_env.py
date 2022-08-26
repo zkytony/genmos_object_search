@@ -224,7 +224,7 @@ class SimpleSimEnvROSNode:
             color = self.env.object_spec(objid).get("color", [0.0, 0.8, 0.0, 0.8])
             obj_marker = ros_utils.make_viz_marker_from_object_state(
                 sobj, header, viz_type=viz_type,
-                color=color, scale=0.5, lifetime=1.0)
+                color=color, scale=0.12, lifetime=1.0)
             markers.append(obj_marker)
             # get a tf transform from world to object
             tobj = ros_utils.tf2msg_from_object_loc(
@@ -235,7 +235,7 @@ class SimpleSimEnvROSNode:
         robot_marker = ros_utils.make_viz_marker_from_robot_state(
             srobot, header,
             color=[0.9, 0.1, 0.1, 0.9], lifetime=1.0,
-            scale=Vector3(x=0.8, y=0.1, z=0.1))
+            scale=Vector3(x=0.6, y=0.08, z=0.08))
         markers.append(robot_marker)
         # get a tf transform from world to robot
         trobot = ros_utils.tf2msg_from_robot_pose(
