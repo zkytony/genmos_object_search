@@ -429,16 +429,22 @@ class RegionalOctreeDistribution(OctreeDistribution):
     def __init__(self, dimensions, region=None,
                  default_region_val=DEFAULT_VAL, **kwargs):
         """The origin in 'region' here should be in POMDP frame (NOT world frame).
-        The origin and w, h, l in 'region' can be float-valued."""
+        The origin and w, l, h in 'region' can be float-valued."""
         if region is not None and type(region) != tuple and type(region) != set:
             raise TypeError("region must be either a tuple (center, w, h, l)"
                             "representing a box, or a set of voxels")
         if region is None:
             region = ((0,0,0), dimensions[0], dimensions[1], dimensions[2])
-        self._region = region
+
         # Default value is 0 - it's only non-zero for grids inside the region
         super().__init__(dimensions, default_val=0)
 
+        # If region is larger than dimension, then we have to clip the region (max-clip)
+        w, l, h = region[1:]
+        region = (region[0], min(dimensions[0], w), min(dimensions[1], l), min(dimensions[2], l))
+        self._region = region
+
+        # initialize nodes within region to have a (different) default value.
         self.default_region_val = default_region_val
         if default_region_val is not None and default_region_val != 0:
             num_samples = kwargs.pop("num_samples", 200)
