@@ -47,6 +47,14 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         self._world_origin = None
 
+    def _loginfo(self, text):
+        logging.info(text)
+        return text
+
+    def _logwarn(self, text):
+        logging.warning(text)
+        return text
+
     def CreateAgent(self, request, context):
         """
         creates a SLOOP object search POMDP agent. Note that this agent
@@ -57,7 +65,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.CreateAgentReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"Agent with name {request.robot_id} already exists!")
+                message=self._logwarn("Agent {request.robot_id} already exists!"))
 
         config_str = request.config.decode("utf-8")
         config = yaml.safe_load(config_str)
@@ -73,24 +81,24 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         return slpb2.CreateAgentReply(
             status=Status.PENDING,
-            message="Agent configuration received. Waiting for additional inputs...")
+            message=self._loginfo(f"Agent {request.robot_id} configuration received. Waiting for additional inputs..."))
 
     def GetAgentCreationStatus(self, request, context):
         if request.robot_id in self._pending_agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=proto_utils.make_header(),
                 status=Status.PENDING,
-                status_message="Agent configuration received. Waiting for additional inputs...")
+                status_message=f"Agent {request.robot_id} configuration received. Waiting for additional inputs...")
         elif request.robot_id not in self._agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                status_message="Agent does not exist.")
+                status_message=f"Agent {request.robot_id} does not exist.")
         elif request.robot_id in self._agents:
             return slpb2.GetAgentCreationStatusReply(
                 header=proto_utils.make_header(),
                 status=Status.SUCCESSFUL,
-                status_message="Agent created.")
+                status_message=f"Agent {request.robot_id} created.")
         else:
             raise RuntimeError("Internal error on GetAgentCreationStatus.")
 
@@ -143,14 +151,14 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.UpdateSearchRegionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message="updating existing search region of an agent is not yet implemented")
+                message=self._logwarn("updating existing search region of an agent is not yet implemented"))
 
         else:
             logging.warning(f"Agent {request.robot_id} is not recognized.")
             return slpb2.UpdateSearchRegionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"Agent {request.robot_id} is not recognized.")
+                message=self._logwarn(f"Agent {request.robot_id} is not recognized."))
 
 
     def search_region_for(self, robot_id):
@@ -185,7 +193,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.CreatePlannerReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"agent {request.robot_id} does not exist. Did you create it?")
+                message=self._logwarn(f"agent {request.robot_id} does not exist. Did you create it?"))
 
         if request.robot_id in self._planners:
             # a planner is already created. Change only if 'overwrite'
@@ -193,7 +201,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 return slpb2.CreatePlannerReply(
                     header=proto_utils.make_header(),
                     status=Status.FAILED,
-                    message=f"Planner already exists for {request.robot_id}. Not overwriting.")
+                    message=self._logwarn(f"Planner already exists for {request.robot_id}. Not overwriting."))
 
         config_str = request.config.decode("utf_8")
         config = yaml.safe_load(config_str)
@@ -208,7 +216,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         return slpb2.CreatePlannerReply(
             header=proto_utils.make_header(),
             status=Status.SUCCESSFUL,
-            message="Planner created")
+            message=self._loginfo(f"Planner created for {request.robot_id}"))
 
     def PlanAction(self, request, context):
         """The agent can only plan and execute one action at a time.
@@ -219,7 +227,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.PlanActionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"agent {request.robot_id} does not exist. Did you create it?")
+                message=self._logwarn(f"agent {request.robot_id} does not exist. Did you create it?"))
 
         if request.robot_id not in self._planners:
             # a planner is already created. Change only if 'overwrite'
@@ -227,14 +235,14 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 return slpb2.PlanActionReply(
                     header=proto_utils.make_header(),
                     status=Status.FAILED,
-                    message=f"Planner does not exists for {request.robot_id}. Did you create it?")
+                    message=self._logwarn(f"Planner does not exists for {request.robot_id}. Did you create it?"))
 
         if self._actions_planned.get(request.robot_id) is not None:
             action_id = self._actions_planned[request.robot_id][0]
             return slpb2.PlanActionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"Previously planned action {action_id} is not yet finished for {request.robot_id}.")
+                message=self._logwarn(f"Previously planned action {action_id} is not yet finished for {request.robot_id}."))
 
         agent = self._agents[request.robot_id]
         planner = self._planners[request.robot_id]
@@ -262,7 +270,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.GetObjectBeliefsReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"agent {request.robot_id} does not exist. Did you create it?")
+                message=self._logwarn(f"agent {request.robot_id} does not exist. Did you create it?"))
 
         agent = self._agents[request.robot_id]
         object_beliefs = {}
@@ -289,7 +297,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.GetRobotBeliefReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"agent {request.robot_id} does not exist. Did you create it?")
+                message=self._logwarn(f"agent {request.robot_id} does not exist. Did you create it?"))
 
         agent = self._agents[request.robot_id]
         robot_belief = agent.belief.b(request.robot_id)
@@ -298,7 +306,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         return slpb2.GetRobotBeliefReply(
             header=header,
             status=Status.SUCCESSFUL,
-            message="got robot belief",
+            message=self._loginfo("got robot belief"),
             robot_belief=robot_belief_pb)
 
     def ProcessObservation(self, request, context):
@@ -307,7 +315,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.ProcessObservationReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=f"agent {request.robot_id} does not exist. Did you create it?")
+                message=self._logwarn(f"agent {request.robot_id} does not exist. Did you create it?"))
 
         agent = self._agents[request.robot_id]
         action = None
@@ -319,8 +327,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 return slpb2.ProcessObservationReply(
                     header=proto_utils.make_header(),
                     status=Status.FAILED,
-                    message=f"action id mismatch. Action in request {request.action_id}"\
-                             f" is not the planned action {planned_action_id}")
+                    message=self._logwarn(f"action id mismatch. Action in request {request.action_id}"\
+                                          f" is not the planned action {planned_action_id}"))
             action = self._actions_planned[request.robot_id][1]
 
             if request.HasField("action_finished") and request.action_finished:
@@ -337,7 +345,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         return slpb2.ProcessObservationReply(
             header=header,
             status=Status.SUCCESSFUL,
-            message=f"observation processed. Belief updated.",
+            message=self._loginfo(f"observation processed. Belief updated."),
             **aux)
 
     def _planned_action_id(self, robot_id):
