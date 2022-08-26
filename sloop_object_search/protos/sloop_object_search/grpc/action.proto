@@ -24,14 +24,19 @@ message Motion2D {
 message MoveViewpoint {
   Header header = 1;
   string robot_id = 2;   // the robot that performs this action
-  oneof move {
-    // absolute
+
+  // The pose of the viewpoint
+  oneof pose {
     Pose3D dest_3d = 3;
     Pose2D dest_2d = 4;
-    // relative
+  }
+
+  // The relative motion with respect to current viewpoint
+  oneof motion {
     Motion2D motion_2d = 5;
     Motion3D motion_3d = 6;
   }
+
   string name = 7;  // name of the action
   float expected_cost = 8;
 }

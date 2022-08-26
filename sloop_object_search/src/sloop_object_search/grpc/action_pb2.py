@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from sloop_object_search.grpc import common_pb2 as sloop__object__search_dot_grpc_dot_common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%sloop_object_search/grpc/action.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\"\xb1\x01\n\x08Motion3D\x12,\n\x04\x64pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\x34\n\ndrot_euler\x18\x02 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3H\x00\x12\x39\n\tdrot_quat\x18\x03 \x01(\x0b\x32$.sloop_object_search.grpc.QuaternionH\x00\x42\x06\n\x04\x64rot\"E\n\x08Motion2D\x12,\n\x04\x64pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec2\x12\x0b\n\x03\x64th\x18\x02 \x01(\x01\"\xdc\x02\n\rMoveViewpoint\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x33\n\x07\x64\x65st_3d\x18\x03 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3DH\x00\x12\x33\n\x07\x64\x65st_2d\x18\x04 \x01(\x0b\x32 .sloop_object_search.grpc.Pose2DH\x00\x12\x37\n\tmotion_2d\x18\x05 \x01(\x0b\x32\".sloop_object_search.grpc.Motion2DH\x00\x12\x37\n\tmotion_3d\x18\x06 \x01(\x0b\x32\".sloop_object_search.grpc.Motion3DH\x00\x12\x0c\n\x04name\x18\x07 \x01(\t\x12\x15\n\rexpected_cost\x18\x08 \x01(\x02\x42\x06\n\x04move\"X\n\x04\x46ind\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x05 \x01(\t\"\x94\x01\n\x0eKeyValueAction\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\x12\x12\n\nnum_fields\x18\x04 \x01(\x05\x12\x0c\n\x04keys\x18\x05 \x03(\t\x12\x0e\n\x06values\x18\x06 \x03(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%sloop_object_search/grpc/action.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\"\xb1\x01\n\x08Motion3D\x12,\n\x04\x64pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\x34\n\ndrot_euler\x18\x02 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3H\x00\x12\x39\n\tdrot_quat\x18\x03 \x01(\x0b\x32$.sloop_object_search.grpc.QuaternionH\x00\x42\x06\n\x04\x64rot\"E\n\x08Motion2D\x12,\n\x04\x64pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec2\x12\x0b\n\x03\x64th\x18\x02 \x01(\x01\"\xe6\x02\n\rMoveViewpoint\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x33\n\x07\x64\x65st_3d\x18\x03 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3DH\x00\x12\x33\n\x07\x64\x65st_2d\x18\x04 \x01(\x0b\x32 .sloop_object_search.grpc.Pose2DH\x00\x12\x37\n\tmotion_2d\x18\x05 \x01(\x0b\x32\".sloop_object_search.grpc.Motion2DH\x01\x12\x37\n\tmotion_3d\x18\x06 \x01(\x0b\x32\".sloop_object_search.grpc.Motion3DH\x01\x12\x0c\n\x04name\x18\x07 \x01(\t\x12\x15\n\rexpected_cost\x18\x08 \x01(\x02\x42\x06\n\x04poseB\x08\n\x06motion\"X\n\x04\x46ind\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x05 \x01(\t\"\x94\x01\n\x0eKeyValueAction\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\x12\x12\n\nnum_fields\x18\x04 \x01(\x05\x12\x0c\n\x04keys\x18\x05 \x03(\t\x12\x0e\n\x06values\x18\x06 \x03(\tb\x06proto3')
 
 
 
@@ -67,9 +67,9 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _MOTION2D._serialized_start=286
   _MOTION2D._serialized_end=355
   _MOVEVIEWPOINT._serialized_start=358
-  _MOVEVIEWPOINT._serialized_end=706
-  _FIND._serialized_start=708
-  _FIND._serialized_end=796
-  _KEYVALUEACTION._serialized_start=799
-  _KEYVALUEACTION._serialized_end=947
+  _MOVEVIEWPOINT._serialized_end=716
+  _FIND._serialized_start=718
+  _FIND._serialized_end=806
+  _KEYVALUEACTION._serialized_start=809
+  _KEYVALUEACTION._serialized_end=957
 # @@protoc_insertion_point(module_scope)

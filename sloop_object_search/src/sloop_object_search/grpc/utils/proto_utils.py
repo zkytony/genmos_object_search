@@ -174,6 +174,7 @@ def pomdp_action_to_proto(action, agent, header=None):
             # we need to convert the position change from pomdp frame to
             # the world frame.
             dpos_world = agent.search_region.to_world_pos(dpos_pomdp)
+            # We
             motion_pb = Motion3D(
                 dpos=Vec3(x=dpos_world[0], y=dpos_world[1], z=dpos_world[2]),
                 drot_euler=Vec3(x=to_rad(drot[0]), y=to_rad(drot[1]), z=to_rad(drot[2])))
