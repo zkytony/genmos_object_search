@@ -145,7 +145,7 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
            and "step_size" in agent_config_world["robot"]["action"]["params"]:
             step_size_world = agent_config_world["robot"]["action"]["params"]["step_size"]
             step_size_pomdp = step_size_world / search_region.search_space_resolution
-            agent_config_pomdp["robot"]["action"]["step_size"] = step_size_pomdp
+            agent_config_pomdp["robot"]["action"]["params"]["step_size"] = step_size_pomdp
 
     return agent_config_pomdp
 

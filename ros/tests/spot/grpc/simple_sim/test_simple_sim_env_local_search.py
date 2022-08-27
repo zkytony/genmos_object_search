@@ -150,7 +150,7 @@ class TestSimpleEnvLocalSearch:
                 draw_octree_dist(bobj.octree_dist)
 
             msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=1.0)
+                bobj_pb, header, alpha_scaling=60.0)
             markers.extend(msg.markers)
         self._octbelief_markers_pub.publish(MarkerArray(markers))
 
@@ -232,19 +232,19 @@ class TestSimpleEnvLocalSearch:
                 dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
                 nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
                 action_pub.publish(nav_action)
-                rospy.loginfo("published action:")
-                print(nav_action)
+                rospy.loginfo("published nav action for execution")
                 # wait for navigation done
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
+                rospy.loginfo("nav action done.")
             elif isinstance(action, a_pb2.Find):
                 find_action = KeyValAction(stamp=rospy.Time.now(),
                                            type="find")
                 action_pub.publish(find_action)
-                rospy.loginfo("published action:")
-                print(find_action)
+                rospy.loginfo("published find action for execution")
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
+                rospy.loginfo("find action done")
 
             # Now, wait for observation
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
