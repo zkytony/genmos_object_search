@@ -63,9 +63,9 @@ agent_config:
     sensors:
     - name: camera
       params:
-        far: 20
+        far: 1.75
         fov: 61
-        near: 1
+        near: 0.2
         occlusion_enabled: true
   targets:
   - book
@@ -83,7 +83,8 @@ planner_config:
   planner: pomdp_py.POUCT
   planner_params:
     exploration_const: 1000
-    max_depth: 10
-    num_sims: 100
+    max_depth: 8
+    num_sims: 200
+    show_progress: true
 task_config:
   max_steps: 100

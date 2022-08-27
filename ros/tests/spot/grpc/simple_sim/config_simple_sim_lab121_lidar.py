@@ -16,8 +16,8 @@ CONFIG = {
             'sensors': [{
                 'name': 'camera',
                 'params': {'fov': 61,
-                           'far': 20,
-                           'near': 1,
+                           'far': 1.75,
+                           'near': 0.2,
                            'occlusion_enabled': True}
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
@@ -52,8 +52,9 @@ CONFIG = {
         "planner": "pomdp_py.POUCT",
         "planner_params": {
             "exploration_const": 1000,
-            "max_depth": 10,
-            "num_sims": 100
+            "max_depth": 8,
+            "num_sims": 200,
+            "show_progress": True
         }
     }
 }

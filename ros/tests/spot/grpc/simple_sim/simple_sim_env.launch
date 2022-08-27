@@ -18,12 +18,11 @@
         type="simple_sim_init_robot_pose_pub.py"
         output="screen">
     <param name="x" value="1.2"/>
-    <param name="y" value="1.0"/>
-    <param name="z" value="0.1"/>
-    <param name="qx" value="0.0"/>
-    <param name="qy" value="0.0"/>
-    <param name="qz" value="0.0"/>
-    <param name="qw" value="1.0"/>
+    <param name="y" value="1.3"/>
+    <param name="z" value="0.5"/>
+    <param name="thx" value="-90.0"/>
+    <param name="thy" value="0.0"/>
+    <param name="thz" value="0.0"/>
     <param name="world_frame" value="$(arg world_frame)"/>
   </node>
 </launch>
