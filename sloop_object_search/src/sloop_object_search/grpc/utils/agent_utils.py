@@ -3,6 +3,7 @@ import json
 import logging
 import pomdp_py
 import time
+import copy
 
 from sloop_object_search.oopomdp.agent import\
     SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D
@@ -96,10 +97,7 @@ def _validate_agent_config(agent_config):
 
 def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
     """POMDP agent takes in config in POMDP space. We do this conversion for detector specs."""
-    agent_config_pomdp = dict(agent_config_world)
-    for objid in agent_config_world["robot"]["detectors"]:
-        sensor_params_world = agent_config_world["robot"]["detectors"][objid]["params"]["sensor"]
-        sensor_params_pomdp = agent_config_pomdp["robot"]["detectors"][objid]["params"]["sensor"]
+    def _convert_sensor_params(sensor_params_world, sensor_params_pomdp):
         if "max_range" in sensor_params_world:
             sensor_params_pomdp["max_range"] =\
                 sensor_params_world["max_range"] / search_region.search_space_resolution
@@ -112,6 +110,18 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
         if "far" in sensor_params_world:
             sensor_params_pomdp["far"] =\
                 sensor_params_world["far"] / search_region.search_space_resolution
+
+    agent_config_pomdp = copy.deepcopy(agent_config_world)
+    for objid in agent_config_world["robot"]["detectors"]:
+        sensor_params_world = agent_config_world["robot"]["detectors"][objid]["params"]["sensor"]
+        sensor_params_pomdp = agent_config_pomdp["robot"]["detectors"][objid]["params"]["sensor"]
+        _convert_sensor_params(sensor_params_world, sensor_params_pomdp)
+
+    if len(agent_config_world["robot"]["sensors"]) > 0:
+        for i in range(len(agent_config_world["robot"]["sensors"])):
+            sensor_params_world = agent_config_world["robot"]["sensors"][i]["params"]
+            sensor_params_pomdp = agent_config_pomdp["robot"]["sensors"][i]["params"]
+            _convert_sensor_params(sensor_params_world, sensor_params_pomdp)
 
     # Convert prior
     if "prior" in agent_config_world["belief"]:
