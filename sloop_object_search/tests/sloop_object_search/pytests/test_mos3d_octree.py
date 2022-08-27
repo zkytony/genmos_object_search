@@ -142,6 +142,13 @@ def test_assign_prior3(octree_belief):
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
 
+def test_assign_prior4(octree_belief):
+    """assign absolute normalized probability"""
+    state = ObjectState(1, "cube", (5,6,7), res=2)
+    prob = 0.5
+    octree_belief.octree_dist.assign((5,6,7,2), prob, normalized=True)
+    assert abs(octree_belief.octree_dist.prob_at(5,6,7,2) - prob) < 1e-6
+
 def test_mpe_random(octree_belief, res=1):
     def test_round(octree_belief):
         print("-- Round --")
@@ -187,7 +194,6 @@ def test_time(octree_belief):
     print("Avg sample time (res=4): %.3f" % (tot_res4 % 1000))
 
 
-
 def test_abnormal_add(octree_belief_zero_prior):
     """Test adding a ground node where even though
     the parent node has no children, the parent node
@@ -200,6 +206,7 @@ def test_abnormal_add(octree_belief_zero_prior):
     # Now, insert a ground node and assign it with some other value
     octree_belief[ObjectState(1, "cube", (9,0,10), res=1)] = 2
     assert octree_belief.octree_dist._normalizer == octree_belief.octree.root.value()
+
 
 def test_visualize(octree_belief):
     fig = plt.gcf()
@@ -232,7 +239,6 @@ def test_belief_update(octree_belief):
     octree_belief = update_octree_belief(
         octree_belief, voxels_obz,
         alpha=TEST_ALPHA, beta=TEST_BETA)  # this setting is for log space
-
     test_visualize(octree_belief)
 
 

@@ -127,10 +127,11 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         self.update_normalizer(old_value, value)
         self.backtrack(node)
 
-    def assign(self, voxel, value):
+    def assign(self, voxel, value, normalized=False):
         """
         This can happen for voxels at different resolution levels.
-        The value is unnormalized probability.
+        The value is unnormalized probability, unless normalized is
+        set to True.
 
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
@@ -141,6 +142,11 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         if res >= self._octree.root.res:
             raise ValueError("Resolution too large for assignment (%d>=%d)"
                              % (res, self._octree.root.res))
+        if normalized:
+            prob = value
+            val_voxel = self.prob_at(*voxel) * self._normalizer  # unnormalized prob
+            dv = (prob*self._normalizer - val_voxel) / (1.0 - prob)
+            value = val_voxel + dv
 
         x,y,z = voxel[:3]
         node = self._octree.add_node(x, y, z, res)
@@ -313,10 +319,10 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
         x,y,z = object_state.loc
         self._octree_dist[(x,y,z,object_state.res)] = value
 
-    def assign(self, object_state, value):
+    def assign(self, object_state, value, normalized=False):
         """
         This can happen for object state at different resolution levels.
-        The value is unnormalized probability.
+        The value is unnormalized probability, unless normalized is True.
 
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
@@ -326,7 +332,8 @@ class OctreeBelief(pomdp_py.GenerativeDistribution):
                              % (object_state.res, self._octree.root.res))
 
         x,y,z = object_state.pose
-        self._octree_dist.assign((x,y,z,object_state.res), value)
+        self._octree_dist.assign((x,y,z,object_state.res), value,
+                                 normalized=normalized)
 
     def random(self, res=1):
         voxel_pos = self._octree_dist.random(res=res)
@@ -352,14 +359,18 @@ def update_octree_belief(octree_belief, real_observation,
                        " unfactored observation (type Observation)")
 
     for voxel_pos in real_observation.voxels:
-        # voxel_pos is x, y, z, r
-        if not octree_belief.octree_dist.in_region(voxel_pos):
-            continue  # skip because this voxel is out of bound.
-
         voxel = real_observation.voxels[voxel_pos]
         if len(voxel_pos) == 3:
             voxel_pos = (*voxel_pos, 1)
         res = voxel_pos[-1]
+
+        # voxel_pos is x, y, z, r
+        if isinstance(octree_belief, RegionalOctreeDistribution):
+            if not octree_belief.octree_dist.in_region(voxel_pos):
+                continue  # skip because this voxel is out of bound.
+        else:
+            if not octree_belief.octree.valid_voxel(*voxel_pos):
+                continue  # voxel is out of bound
 
         # add node if not exist
         node = octree_belief.octree.get_node(*voxel_pos)
