@@ -94,8 +94,9 @@ def observation_msg_to_proto(world_frame, o_msg):
     detections = []
     for objid in object_ids:
         objloc = eval(kv[f"loc_{objid}"])
+        objsizes = eval(kv[f"sizes_{objid}"])
         objbox = common_pb2.Box3D(center=proto_utils.posetuple_to_poseproto((*objloc, 0, 0, 0, 1)),
-                                  sizes=common_pb2.Vec3(x=1, y=1, z=1))
+                                  sizes=common_pb2.Vec3(x=objsizes[0], y=objsizes[1], z=objsizes[2]))
         detections.append(o_pb2.Detection3D(label=objid, box=objbox))
     detections_pb = o_pb2.ObjectDetectionArray(header=header,
                                                robot_id=robot_id,
@@ -241,7 +242,7 @@ class TestSimpleEnvLocalSearch:
             header = proto_utils.make_header(frame_id=self.world_frame)
             response_detection = self._sloop_client.processObservation(
                 self.robot_id, detections_pb, robot_pose_pb,
-                header=header, return_fov=True, action_id=action_id)
+                header=header, return_fov=True, action_id=action_id, debug=True)
             response_objects_found = self._sloop_client.processObservation(
                 self.robot_id, objects_found_pb, robot_pose_pb,
                 header=header, return_fov=True, action_id=action_id, action_finished=True)
@@ -264,7 +265,7 @@ class TestSimpleEnvLocalSearch:
             self.visualize_fovs(response_detection)
             self.get_and_visualize_belief(o3dviz=o3dviz)
             time.sleep(1)
-
+            break
 
 
 def main():

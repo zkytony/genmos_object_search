@@ -161,6 +161,7 @@ class SimpleSimEnvROSNode:
             rate.sleep()
 
     def publish_observation(self):
+        print(self.env.state)
         observation = self.env.provide_observation()
         keys = []
         values = []
@@ -175,9 +176,10 @@ class SimpleSimEnvROSNode:
             if objid == self.env.robot_id:
                 continue
             o_obj = observation.z(objid)
+            objsizes = self.env.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
             if isinstance(o_obj, Voxel):
                 # From the client's perspective, they are just receiving object detections.
-                o_obj = ObjectDetection(objid, o_obj.loc, sizes=(o_obj.res, o_obj.res, o_obj.res))
+                o_obj = ObjectDetection(objid, o_obj.loc, sizes=objsizes)
             keys.extend([f"loc_{objid}", f"sizes_{objid}"])
             values.extend([str(o_obj.loc), str(o_obj.sizes)])
         obs_msg = KeyValObservation(stamp=rospy.Time.now(),
@@ -224,9 +226,12 @@ class SimpleSimEnvROSNode:
             viz_type_name = self.env.object_spec(objid).get("viz_type", "cube")
             viz_type = eval(f"Marker.{viz_type_name.upper()}")
             color = self.env.object_spec(objid).get("color", [0.0, 0.8, 0.0, 0.8])
+            objsizes = self.env.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
             obj_marker = ros_utils.make_viz_marker_for_object(
                 sobj.id, sobj.loc, header, viz_type=viz_type,
-                color=color, scale=0.12, lifetime=1.0)
+                color=color, lifetime=1.0, scale=Vector3(x=objsizes[0],
+                                                         y=objsizes[1],
+                                                         z=objsizes[2]))
             markers.append(obj_marker)
             # get a tf transform from world to object
             tobj = ros_utils.tf2msg_from_object_loc(
