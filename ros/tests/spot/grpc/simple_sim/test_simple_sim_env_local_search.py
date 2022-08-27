@@ -65,6 +65,7 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
     AGENT_CONFIG = CONFIG["agent_config"]
     TASK_CONFIG = CONFIG["task_config"]
     PLANNER_CONFIG = CONFIG["planner_config"]
+    OBJECT_LOCATIONS = CONFIG["object_locations"]
 
 def observation_msg_to_proto(world_frame, o_msg):
     """returns three observation proto objects: (ObjectDetectionArray, RobotPose,
@@ -156,7 +157,7 @@ class TestSimpleEnvLocalSearch:
         rospy.loginfo("belief visualized")
 
 
-    def __init__(self, o3dviz=False):
+    def __init__(self, o3dviz=False, prior="uniform"):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node("test_simple_env_local_search")
@@ -173,6 +174,11 @@ class TestSimpleEnvLocalSearch:
         self.agent_config = AGENT_CONFIG
         self.robot_id = AGENT_CONFIG["robot"]["id"]
         self.world_frame = WORLD_FRAME
+
+        if prior == "groundtruth":
+            AGENT_CONFIG["belief"]["prior"] = {}
+            for objid in AGENT_CONFIG["targets"]:
+                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
 
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
@@ -270,7 +276,7 @@ class TestSimpleEnvLocalSearch:
 
 
 def main():
-    TestSimpleEnvLocalSearch(o3dviz=False)
+    TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
 
 if __name__ == "__main__":
     main()

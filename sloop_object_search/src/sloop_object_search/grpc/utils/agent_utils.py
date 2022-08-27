@@ -92,20 +92,6 @@ def _validate_agent_config(agent_config):
     for objid in agent_config["robot"]["detectors"]:
         if objid not in agent_config["objects"]:
             raise ValueError(f"detectable object {objid} is not a defined object.")
-        # If there is 'params', and it is a list of two elements, change it
-        # to be a dict with 'sensor', 'quality'
-        if "params" in agent_config["robot"]["detectors"][objid]:
-            params = agent_config["robot"]["detectors"][objid]["params"]
-            if type(params) == list:
-                assert len(params) == 2,\
-                    "'params' for detector model should be [sensor_params, quality_params]"
-                params_dict = {"sensor": params[0], "quality": params[1]}
-                agent_config["robot"]["detectors"][objid]["params"] = params_dict
-            elif type(params) == dict:
-                assert "sensor" in params,\
-                    "'params' for detector model for {} doesn't have sensor params".format(objid)
-                assert "quality" in params,\
-                    "'params' for detector model for {} doesn't have quality params".format(objid)
 
 
 def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
@@ -130,12 +116,17 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
     # Convert prior
     if "prior" in agent_config_world["belief"]:
         for objid in agent_config_world["belief"]["prior"]:
-            object_prior = agent_config_world["belief"]["prior"].get(objid, [])
-            for voxel_world, prob in object_prior:
+            object_prior_world = agent_config_world["belief"]["prior"].get(objid, [])
+            object_prior_pomdp = []
+            for voxel_world, prob in object_prior_world:
                 voxel_pos_pomdp = search_region.to_pomdp_pos(voxel_world[:3])
-                voxel_res_pomdp = voxel_world[3] / search_region.search_space_resolution
+                if len(voxel_world) == 3:
+                    voxel_res_pomdp = 1
+                else:
+                    voxel_res_pomdp = voxel_world[3] / search_region.search_space_resolution
                 voxel_pomdp = (*voxel_pos_pomdp, voxel_res_pomdp)
-                object_prior[objid].append((voxel_pomdp, prob))
+                object_prior_pomdp.append([voxel_pomdp, prob])
+            agent_config_pomdp["belief"]["prior"][objid] = object_prior_pomdp
 
     return agent_config_pomdp
 

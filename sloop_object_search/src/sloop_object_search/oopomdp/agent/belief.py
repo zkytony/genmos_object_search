@@ -184,7 +184,7 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
             for voxel, prob in prior[objid]:
                 x,y,z,r = voxel
                 state = ObjectState(objid, target["class"], (x,y,z), res=r)
-                octree_belief.assign(state, prob)
+                octree_belief.assign(state, prob, normalized=True)
         object_beliefs[objid] = octree_belief
     return object_beliefs
 
