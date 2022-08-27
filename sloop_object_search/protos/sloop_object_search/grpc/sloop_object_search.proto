@@ -102,15 +102,16 @@ message ProcessObservationRequest {
   Header header = 1;
   string robot_id = 2;
 
-  // Pose of the robot when receiving the observation. This is required
+  // Pose of the robot when receiving the observation.
   RobotPose robot_pose = 3;
+  // Signals new objects are found
+  ObjectsFound objects_found = 6;
 
   // If left out, then the observation is only about
-  // the robot's pose.
+  // the robot itself.
   oneof observation {
     ObjectDetectionArray object_detections  = 4;
     Language language = 5;
-    ObjectsFound objects_found = 6;
   }
 
   // the action that the observation is associated with (e.g. received after

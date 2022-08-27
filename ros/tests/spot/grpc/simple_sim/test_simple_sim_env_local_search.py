@@ -240,12 +240,12 @@ class TestSimpleEnvLocalSearch:
 
             # Now, send obseravtions for belief update
             header = proto_utils.make_header(frame_id=self.world_frame)
-            response_detection = self._sloop_client.processObservation(
-                self.robot_id, detections_pb, robot_pose_pb,
-                header=header, return_fov=True, action_id=action_id, debug=True)
-            response_objects_found = self._sloop_client.processObservation(
-                self.robot_id, objects_found_pb, robot_pose_pb,
-                header=header, return_fov=True, action_id=action_id, action_finished=True)
+            response_observation = self._sloop_client.processObservation(
+                self.robot_id, robot_pose_pb,
+                object_detections=detections_pb,
+                objects_found=objects_found_pb,
+                header=header, return_fov=True,
+                action_id=action_id, action_finished=True, debug=False)
             response_robot_belief = self._sloop_client.getRobotBelief(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
 
@@ -262,7 +262,7 @@ class TestSimpleEnvLocalSearch:
             self._octbelief_markers_pub.publish(clear_msg)
 
             # visualize FOV and belief
-            self.visualize_fovs(response_detection)
+            self.visualize_fovs(response_observation)
             self.get_and_visualize_belief(o3dviz=o3dviz)
             time.sleep(1)
             break
