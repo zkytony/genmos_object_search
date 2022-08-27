@@ -158,7 +158,7 @@ class SimpleSimEnvROSNode:
         assert self.translation_step_size > 0, "translation_step_size must be > 0"
         assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
         self._navigating = False
-        self._action_done_pub = rospy.Publisher("~action_done", String, queue_size=10)  # publishes when action is done
+        self._action_done_pub = rospy.Publisher("~action_done", String, queue_size=10, latch=True)  # publishes when action is done
 
     def run(self):
         rospy.loginfo("publishing observations")
@@ -220,20 +220,14 @@ class SimpleSimEnvROSNode:
                 self._navigating = True
                 self.navigate_to(goal)
                 self._navigating = False
-                rate = rospy.Rate(5)
-                for _ in range(10):
-                    self._action_done_pub.publish(String(data=f"nav to {goal_id} done."))
-                    rate.sleep()
+                self._action_done_pub.publish(String(data=f"nav to {goal_id} done."))
 
             else:
                 rospy.loginfo(f"navigation is in progress. Goal ignored.")
 
         elif action_msg.type == "find":
             self.find()
-            rate = rospy.Rate(5)
-            for _ in range(10):
-                self._action_done_pub.publish(String(data=f"find action is done."))
-                rate.sleep()
+            self._action_done_pub.publish(String(data=f"find action is done."))
 
     def _make_state_markers_and_tf2msgs(self, state):
         markers = []
