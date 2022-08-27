@@ -36,7 +36,6 @@ import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 from visualization_msgs.msg import Marker, MarkerArray
 from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
-from sloop_mos_ros import ros_utils
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_mos_ros import ros_utils
@@ -53,7 +52,7 @@ from test_simple_sim_env_navigation import make_nav_action
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
 ACTION_TOPIC = "/simple_sim_env/pomdp_action"
-NAV_DONE_TOPIC = "/simple_sim_env/nav_done"
+ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
 WORLD_FRAME = "graphnav_map"
@@ -152,7 +151,8 @@ class TestSimpleEnvLocalSearch:
 
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=1.0)
-            self._octbelief_markers_pub.publish(msg)
+            markers.extend(msg.markers)
+        self._octbelief_markers_pub.publish(MarkerArray(markers))
 
         rospy.loginfo("belief visualized")
 
@@ -223,7 +223,7 @@ class TestSimpleEnvLocalSearch:
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
             action = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
-            print("plan action finished. Action ID:", action_id)
+            rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
 
             # Now, we need to execute the action, and receive observation
             # from SimpleEnv. First, convert the dest_3d in action to
@@ -231,14 +231,20 @@ class TestSimpleEnvLocalSearch:
             if isinstance(action, a_pb2.MoveViewpoint):
                 dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
                 nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
-                print("published action:")
                 action_pub.publish(nav_action)
+                rospy.loginfo("published action:")
                 print(nav_action)
                 # wait for navigation done
-                ros_utils.WaitForMessages([NAV_DONE_TOPIC], [std_msgs.String],
+                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
             elif isinstance(action, a_pb2.Find):
-                import pdb; pdb.set_trace()
+                find_action = KeyValAction(stamp=rospy.Time.now(),
+                                           type="find")
+                action_pub.publish(find_action)
+                rospy.loginfo("published action:")
+                print(find_action)
+                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+                                          allow_headerless=True, verbose=True)
 
             # Now, wait for observation
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
@@ -260,8 +266,9 @@ class TestSimpleEnvLocalSearch:
 
             print(f"Step {step} robot belief:")
             robot_belief_pb = response_robot_belief.robot_belief
+            objects_found = set(robot_belief_pb.objects_found.object_ids)
             print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-            print(f"  objects found: {robot_belief_pb.objects_found.object_ids}")
+            print(f"  objects found: {objects_found}")
             print("-----------")
 
             # Clear markers
@@ -274,12 +281,17 @@ class TestSimpleEnvLocalSearch:
             # visualize FOV and belief
             self.visualize_fovs(response_observation)
             self.get_and_visualize_belief(o3dviz=o3dviz)
+
+            # Check if we are done
+            if objects_found == set(AGENT_CONFIG["targets"]):
+                rospy.loginfo("Done!")
+                break
             time.sleep(1)
 
 
 
 def main():
-    TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
+    TestSimpleEnvLocalSearch(o3dviz=False, prior="uniform")
 
 if __name__ == "__main__":
     main()
