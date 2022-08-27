@@ -8,6 +8,7 @@ import copy
 from sloop_object_search.oopomdp.agent import\
     SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D
 import sloop_object_search.oopomdp.domain.observation as slpo
+import sloop_object_search.oopomdp.domain.action as slpa
 from sloop_object_search.oopomdp.agent import belief
 
 VALID_AGENTS = {"SloopMosAgentBasic2D",
@@ -207,5 +208,5 @@ def update_planner(request, planner, agent, observation, action):
         else:
             raise TypeError(f"Unable to handle observation of type {zobj} for planner update")
     planning_observation = slpo.GMOSObservation(planning_zobjs)
-    planner.update(agent, action, observation)
+    planner.update(agent, action, planning_observation)
     logging.info("planner updated")
