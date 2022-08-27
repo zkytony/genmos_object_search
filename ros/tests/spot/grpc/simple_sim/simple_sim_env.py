@@ -21,7 +21,7 @@ from tf2_ros import TransformBroadcaster
 from sloop_mos_ros import ros_utils
 from sloop_mos_ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.state import ObjectState, RobotState
-from sloop_object_search.oopomdp.domain.action import MotionAction3D
+from sloop_object_search.oopomdp.domain.action import MotionAction3D, FindAction
 from sloop_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
 from sloop_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
@@ -158,7 +158,7 @@ class SimpleSimEnvROSNode:
         assert self.translation_step_size > 0, "translation_step_size must be > 0"
         assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
         self._navigating = False
-        self._nav_done_pub = rospy.Publisher("~nav_done", String, queue_size=10, latch=True)  # publishes when nav is done
+        self._action_done_pub = rospy.Publisher("~action_done", String, queue_size=10)  # publishes when action is done
 
     def run(self):
         rospy.loginfo("publishing observations")
@@ -219,10 +219,21 @@ class SimpleSimEnvROSNode:
                 rospy.loginfo(f"navigation to {goal}")
                 self._navigating = True
                 self.navigate_to(goal)
-                self._nav_done_pub.publish(String(data=f"nav to {goal_id} done."))
                 self._navigating = False
+                rate = rospy.Rate(5)
+                for _ in range(10):
+                    self._action_done_pub.publish(String(data=f"nav to {goal_id} done."))
+                    rate.sleep()
+
             else:
                 rospy.loginfo(f"navigation is in progress. Goal ignored.")
+
+        elif action_msg.type == "find":
+            self.find()
+            rate = rospy.Rate(5)
+            for _ in range(10):
+                self._action_done_pub.publish(String(data=f"find action is done."))
+                rate.sleep()
 
     def _make_state_markers_and_tf2msgs(self, state):
         markers = []
@@ -257,6 +268,12 @@ class SimpleSimEnvROSNode:
         # get a tf transform from world to robot
         tf2msgs.append(trobot)
         return MarkerArray(markers), tf2msgs
+
+    def find(self):
+        """calls the find action"""
+        action = FindAction()
+        self.env.state_transition(action, execute=True)
+
 
     def navigate_to(self, goal_pose):
         """Super simple navigation. Will first level the camera,
