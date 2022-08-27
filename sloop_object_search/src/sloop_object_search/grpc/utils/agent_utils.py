@@ -139,6 +139,14 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
                 object_prior_pomdp.append([voxel_pomdp, prob])
             agent_config_pomdp["belief"]["prior"][objid] = object_prior_pomdp
 
+    # Convert step size in action
+    if "action" in agent_config_world["robot"]:
+        if "params" in agent_config_world["robot"]["action"]\
+           and "step_size" in agent_config_world["robot"]["action"]["params"]:
+            step_size_world = agent_config_world["robot"]["action"]["params"]["step_size"]
+            step_size_pomdp = step_size_world / search_region.search_space_resolution
+            agent_config_pomdp["robot"]["action"]["step_size"] = step_size_pomdp
+
     return agent_config_pomdp
 
 def voxel_to_world(v, search_region):

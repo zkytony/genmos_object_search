@@ -42,7 +42,7 @@ agent_config:
       params:
         rotation: 90.0
         scheme: axis
-        step_size: 1.0
+        step_size: 0.25
     detectors:
       book:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta

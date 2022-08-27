@@ -27,7 +27,7 @@ CONFIG = {
                                    'params': {"sensor": "camera",
                                               "quality": [1e5, 0.1]}}},
             'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
-                       'params': {'step_size': 1.0,
+                       'params': {'step_size': 0.25,
                                   'rotation': 90.0,
                                   'scheme': 'axis'}}
         },
