@@ -22,7 +22,7 @@ from sloop_mos_ros import ros_utils
 from sloop_mos_ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.state import ObjectState, RobotState
 from sloop_object_search.oopomdp.domain.action import MotionAction3D
-from sloop_object_search.oopomdp.domain.observation import Voxel, ObjectDetection, GMOSObservation
+from sloop_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
 from sloop_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
 from sloop_object_search.oopomdp.agent.common import (init_object_transition_models,
@@ -102,14 +102,15 @@ class SimpleSimEnv(pomdp_py.Environment):
         for objid in observation:
             if objid == self.robot_id:
                 continue
-            if isinstance(observation.z(objid), Voxel):
+            if isinstance(observation.z(objid), ObjectVoxel):
                 voxel = observation.z(objid)
                 if voxel.label == objid:
                     objsizes = self.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
-                    o_obj = ObjectDetection(objid, voxel.loc, sizes=objsizes)
+                    zobj = ObjectDetection(objid, voxel.loc, sizes=objsizes)
                 else:
-                    o_obj = ObjectDetection(objid, ObjectDetection.NULL)
-            real_zobjs[objid] = o_obj
+                    zobj = ObjectDetection(objid, ObjectDetection.NULL)
+                real_zobjs[objid] = zobj
+
         return GMOSObservation(real_zobjs)
 
     def object_spec(self, objid):
@@ -188,9 +189,9 @@ class SimpleSimEnvROSNode:
         for objid in observation:
             if objid == self.env.robot_id:
                 continue
-            o_obj = observation.z(objid)
+            zobj = observation.z(objid)
             keys.extend([f"loc_{objid}", f"sizes_{objid}"])
-            values.extend([str(o_obj.loc), str(o_obj.sizes)])
+            values.extend([str(zobj.loc), str(zobj.sizes)])
         obs_msg = KeyValObservation(stamp=rospy.Time.now(),
                                     type="joint",
                                     keys=keys,

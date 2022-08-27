@@ -176,4 +176,23 @@ def update_belief(request, agent, observation, action=None):
 
 
 def update_planner(request, planner, agent, observation, action):
-    import pdb; pdb.set_trace()
+    """update planner"""
+    # For 3D agents, the planning observation for an object is a Voxel
+    # at the ground resolution level. So we need to convert ObjectDetection
+    # into a Voxel.
+    planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
+    for objid in observation:
+        if objid == agent.robot_id:
+            continue
+        zobj = observation.z(objid)
+        if isinstance(zobj, slpo.ObjectDetection):
+            if zobj.loc is not None:
+                planning_zobj = slpo.ObjectVoxel(objid, zobj.loc, objid)
+            else:
+                planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE, slpo.Voxel.UNKNOWN)
+            planning_zobjs[objid] = planning_zobj
+        else:
+            raise TypeError(f"Unable to handle observation of type {zobj} for planner update")
+    planning_observation = slpo.GMOSObservation(planning_zobjs)
+    planner.update(agent, action, observation)
+    logging.info("planner updated")
