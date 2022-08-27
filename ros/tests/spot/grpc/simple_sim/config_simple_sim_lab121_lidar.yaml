@@ -15,6 +15,10 @@ agent_config:
       - 0.7
       - 0.3
       - 0.8
+      size:
+      - 0.14
+      - 0.08
+      - 0.1
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
@@ -25,6 +29,10 @@ agent_config:
       - 0.6
       - 0.05
       - 0.8
+      size:
+      - 0.12
+      - 0.12
+      - 0.12
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
@@ -68,8 +76,8 @@ object_locations:
   - 2.0
   - 0.1
   cup:
-  - 0.7
-  - 0.6
+  - 1.2
+  - 0.1
   - 0.5
 planner_config:
   planner: pomdp_py.POUCT
