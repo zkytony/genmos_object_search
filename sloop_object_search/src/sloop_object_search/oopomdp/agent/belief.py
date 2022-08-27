@@ -128,7 +128,7 @@ def init_robot_belief(robot_config, robot_pose_dist, robot_state_class=RobotStat
                             **state_kwargs)
 
 def init_object_beliefs_2d(target_objects, search_region, belief_config={}):
-    """prior: dictionary objid->{loc->prob}"""
+    """prior: dictionary objid->[[loc, prob]]"""
     assert isinstance(search_region, SearchRegion2D),\
         f"search_region should be a SearchRegion2D but its {type(search_region)}"
     prior = belief_config.get("prior", {})
@@ -137,19 +137,25 @@ def init_object_beliefs_2d(target_objects, search_region, belief_config={}):
         prior = {}
     for objid in target_objects:
         target = target_objects[objid]
-        object_prior = prior.get(objid, {})
         object_belief_dist = {}
+
+        object_loc_prior = {}
+        for loc, prob in prior.get(objid, []):
+            object_loc_prior[loc] = prob
+
         for loc in search_region:
             state = ObjectState(objid, target['class'], loc)
-            if object_prior == "uniform":
-                # uniform
-                object_belief_dist[state] = 1.0 / len(search_region)
-            else:
-                if loc in object_prior:
+            # if prior is not empty, then for unspecified location,
+            # the probability is zero
+            if len(object_loc_prior) > 0:
+                if loc in object_loc_prior:
                     object_belief_dist[state] = object_prior_dist[loc]
                 else:
-                    # unspecified, still uniform
-                    object_belief_dist[state] = 1.0 / len(search_region)
+                    object_belief_dist[state] = 0.0
+            else:
+                # No prior specified, uniform.
+                object_belief_dist[state] = 1.0 / len(search_region)
+
         object_beliefs[objid] = pomdp_py.Histogram(object_belief_dist)
     return object_beliefs
 
@@ -158,6 +164,8 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
     SearchRegion3D. As such, it has an RegionalOctreeDistribution
     used for modeling occupancy. The agent's octree belief will be
     based on that.
+
+    prior in belief_config is a dictionary {objid->(loc,prob)}
     """
     assert isinstance(search_region, SearchRegion3D),\
         f"search_region should be a SearchRegion3D but its {type(search_region)}"
@@ -173,9 +181,10 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
             num_samples=init_params.get("num_samples", 200))
         octree_belief = OctreeBelief(objid, target['class'], octree_dist)
         if prior is not None and objid in prior:
-            for x,y,z,r in prior[objid]:
+            for voxel, prob in prior[objid]:
+                x,y,z,r = voxel
                 state = ObjectState(objid, target["class"], (x,y,z), res=r)
-                octree_belief.assign(state, prior[objid][(x,y,z,r)])
+                octree_belief.assign(state, prob)
         object_beliefs[objid] = octree_belief
     return object_beliefs
 

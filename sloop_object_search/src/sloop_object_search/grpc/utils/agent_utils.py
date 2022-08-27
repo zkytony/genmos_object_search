@@ -107,6 +107,7 @@ def _validate_agent_config(agent_config):
                 assert "quality" in params,\
                     "'params' for detector model for {} doesn't have quality params".format(objid)
 
+
 def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
     """POMDP agent takes in config in POMDP space. We do this conversion for detector specs."""
     agent_config_pomdp = dict(agent_config_world)
@@ -125,6 +126,17 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
         if "far" in sensor_params_world:
             sensor_params_pomdp["far"] =\
                 sensor_params_world["far"] / search_region.search_space_resolution
+
+    # Convert prior
+    if "prior" in agent_config_world["belief"]:
+        for objid in agent_config_world["belief"]["prior"]:
+            object_prior = agent_config_world["belief"]["prior"].get(objid, [])
+            for voxel_world, prob in object_prior:
+                voxel_pos_pomdp = search_region.to_pomdp_pos(voxel_world[:3])
+                voxel_res_pomdp = voxel_world[3] / search_region.search_space_resolution
+                voxel_pomdp = (*voxel_pos_pomdp, voxel_res_pomdp)
+                object_prior[objid].append((voxel_pomdp, prob))
+
     return agent_config_pomdp
 
 def voxel_to_world(v, search_region):
