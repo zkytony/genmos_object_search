@@ -9,6 +9,7 @@
 import rospy
 import pomdp_py
 import math
+import time
 
 import actionlib
 from actionlib_msgs.msg import GoalStatus
@@ -227,6 +228,7 @@ class SimpleSimEnvROSNode:
 
         elif action_msg.type == "find":
             self.find()
+            time.sleep(0.1)
             self._action_done_pub.publish(String(data=f"find action is done."))
 
     def _make_state_markers_and_tf2msgs(self, state):
