@@ -250,7 +250,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if hasattr(agent, "tree") and agent.tree is not None:
             # print planning tree
             _dd = pomdp_py.utils.TreeDebugger(agent.tree)
-            _dd.p(1)
+            _dd.p(0)
         header = proto_utils.make_header(request.header.frame_id)
         action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
         action_id = self._make_action_id(agent, action)
