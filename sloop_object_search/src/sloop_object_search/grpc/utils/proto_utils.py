@@ -356,7 +356,7 @@ def pomdp_robot_observation_from_request(request, agent, action=None):
             camera_direction = action.name
     else:
         # agent accepts receiving detections
-        camera_direction = "look"  # set this to make reward model happy.
+        camera_direction = "look"  # reward model expects this to be set in order to reward "Find"
     # Now, create robot localization
     robot_pose_world, robot_pose_world_cov = robot_pose_from_proto(
         request.robot_pose, include_cov=True)

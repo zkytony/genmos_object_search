@@ -173,3 +173,7 @@ def update_belief(request, agent, observation, action=None):
     _total_time = time.time() - _start_time
     logging.info("Belief update took: {:.4f}s".format(_total_time))
     return result
+
+
+def update_planner(request, planner, agent, observation, action):
+    import pdb; pdb.set_trace()
