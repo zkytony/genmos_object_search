@@ -33,7 +33,7 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         return self.data[1]
 
     def __str__(self):
-        return f"{self.objid}({self.objid}, {self.pose}, {self.sizes})"
+        return f"ObjectDetection[{self.objid}]({self.pose}, {self.sizes})"
 
     @property
     def sizes(self):
@@ -215,11 +215,9 @@ class GMOSObservation(pomdp_py.Observation):
         return self._objobzs == other._objobzs
 
     def __str__(self):
-        objzstr = ""
-        for objid in self._objobzs:
-            if self._objobzs[objid].loc is not None:
-                objzstr += str(self._objobzs[objid])
-        return "{}({})".format(self.__class__.__name__, objzstr)
+        objzstrs = [str(self._objobzs[objid]) + "\n"
+                    for objid in self._objobzs]
+        return "{}(\n{})".format(self.__class__.__name__, ", ".join(objzstrs))
 
 
     def __repr__(self):
@@ -277,7 +275,7 @@ class Voxel(pomdp_py.Observation):
     def label(self, val):
         self._label = val
     def __str__(self):
-        return "({}, {})".format(self.pose, self.label)
+        return "Voxel({}, {})".format(self.pose, self.label)
     def __repr__(self):
         return self.__str__()
     def __hash__(self):
