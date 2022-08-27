@@ -338,7 +338,9 @@ def pomdp_detection_from_proto(detection_pb, search_region,
     pomdp_pose = (pomdp_center_pos, center_rot)
     return slpo.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
-def pomdp_robot_observation_from_request(request, agent, action=None):
+def pomdp_robot_observation_from_request(request, agent, action=None,
+                                         pos_precision='int',
+                                         rot_precision=0.001):
     """Create a RobotObservation object from request."""
     # This is a bit tricky so single it out. Basically, need to set
     # 'camera_direction' field properly to respect the 'no_look' attribute
@@ -362,7 +364,17 @@ def pomdp_robot_observation_from_request(request, agent, action=None):
         request.robot_pose, include_cov=True)
     robot_pose_pomdp, robot_pose_pomdp_cov =\
         agent.search_region.to_pomdp_pose(robot_pose_world, robot_pose_world_cov)
-    robot_pose_estimate_pomdp = slpo.RobotLocalization(agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
+    if len(robot_pose_pomdp) == 7:
+        # rounding - eliminate numerical issues for planner update
+        robot_pos_pomdp = fround(pos_precision, robot_pose_pomdp[:3])
+        robot_rot_pomdp = fround(rot_precision, robot_pose_pomdp[3:])
+    else:
+        robot_pos_pomdp = fround(pos_precision, robot_pose_pomdp[:2])
+        robot_rot_pomdp = fround(rot_precision, robot_pose_pomdp[2:])
+    robot_pose_pomdp = (*robot_pos_pomdp, *robot_rot_pomdp)
+
+    robot_pose_estimate_pomdp = slpo.RobotLocalization(
+        agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
 
     # objects found
     objects_found = set(agent.belief.b(agent.robot_id).mpe().objects_found)  # objects already found
@@ -402,21 +414,21 @@ def pomdp_observation_from_request(request, agent, action=None):
         # First collect what we do detect
         detections = {}
         for detection_pb in request.object_detections.detections:
-            objo = pomdp_detection_from_proto(detection_pb, agent.search_region)
-            if objo.id not in detections:
-                detections[objo.id] = objo
+            zobj = pomdp_detection_from_proto(detection_pb, agent.search_region)
+            if zobj.id not in detections:
+                detections[zobj.id] = zobj
             else:
-                logging.warning(f"multiple detections for {objo.id}. Only keeping one.")
+                logging.warning(f"multiple detections for {zobj.id}. Only keeping one.")
 
         # Now go through every detectable object
-        objobzs = {agent.robot_id: robot_observation}
+        zobjs = {agent.robot_id: robot_observation}
         for objid in agent.detection_models:
             if objid not in detections:
-                objo = slpo.ObjectDetection(objid, slpo.ObjectDetection.NULL)
+                zobj = slpo.ObjectDetection(objid, slpo.ObjectDetection.NULL)
             else:
-                objo = detections[objid]
-            objobzs[objid] = objo
-        return slpo.JointObservation(objobzs)
+                zobj = detections[objid]
+            zobjs[objid] = zobj
+        return slpo.JointObservation(zobjs)
 
     elif request.HasField("language"):
         raise NotImplementedError("Not there yet")
