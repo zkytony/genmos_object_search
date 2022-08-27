@@ -83,6 +83,7 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         else:
             return center_bbox
 
+
 class RobotLocalization(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose, cov=None):
         """cov: covariance matrix for the robot pose observation."""
@@ -215,9 +216,9 @@ class GMOSObservation(pomdp_py.Observation):
         return self._objobzs == other._objobzs
 
     def __str__(self):
-        objzstrs = [str(self._objobzs[objid]) + "\n"
+        objzstrs = [str(self._objobzs[objid])
                     for objid in self._objobzs]
-        return "{}(\n{})".format(self.__class__.__name__, ", ".join(objzstrs))
+        return "{}(\n  {})".format(self.__class__.__name__, ",\n  ".join(objzstrs))
 
 
     def __repr__(self):
@@ -256,30 +257,39 @@ class Voxel(pomdp_py.Observation):
         at resolution r"""
         self._pose = pose
         self._label = label
+
     @property
     def pose(self):
         return self._pose
+
     @property
     def loc(self):
         return self.pose[:3]
+
     @property
     def res(self):
         if len(self.pose) == 3:
             return 1
         else:
             return self.pose[-1]
+
     @property
     def label(self):
         return self._label
+
     @label.setter
     def label(self, val):
         self._label = val
+
     def __str__(self):
         return "Voxel({}, {})".format(self.pose, self.label)
+
     def __repr__(self):
         return self.__str__()
+
     def __hash__(self):
         return hash((*self._pose, self._label))
+
     def __eq__(self, other):
         if not isinstance(other, Voxel):
             return False
