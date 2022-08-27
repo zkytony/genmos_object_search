@@ -237,6 +237,8 @@ class TestSimpleEnvLocalSearch:
                 # wait for navigation done
                 ros_utils.WaitForMessages([NAV_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
+            elif isinstance(action, a_pb2.Find):
+                import pdb; pdb.set_trace()
 
             # Now, wait for observation
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
@@ -267,12 +269,13 @@ class TestSimpleEnvLocalSearch:
                                      frame_id=self.world_frame)
             clear_msg = ros_utils.clear_markers(header, ns="")
             self._octbelief_markers_pub.publish(clear_msg)
+            self._fovs_markers_pub.publish(clear_msg)
 
             # visualize FOV and belief
             self.visualize_fovs(response_observation)
             self.get_and_visualize_belief(o3dviz=o3dviz)
             time.sleep(1)
-            break
+
 
 
 def main():
