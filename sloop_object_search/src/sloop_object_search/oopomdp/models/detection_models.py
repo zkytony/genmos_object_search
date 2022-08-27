@@ -2,7 +2,7 @@ import math
 import random
 from pomdp_py import Gaussian
 from sloop_object_search.utils.math import fround, euclidean_dist
-from ..domain.observation import ObjectDetection, Voxel
+from ..domain.observation import ObjectDetection, Voxel, ObjectVoxel
 from .observation_model import ObjectDetectionModel
 from .sensors import FanSensor, FrustumCamera
 from .octree_belief import octree
@@ -536,8 +536,12 @@ class FrustumModel(ObjectDetectionModel):
 class FrustumVoxelAlphaBeta(FrustumModel):
     """The alpha-beta model in MOS 3D
 
-    This observation model is designed for planning. This
-    basically corresponds to VoxelObservationModel in 3D-MOS."""
+    This models Pr(o_i | s_i', a) where o_i is {(v,d(v)) for v in V_i}.
+
+    This observation model is designed for planning, and makes the assumption
+    that the object is contained within one voxel. This basically corresponds to
+    VoxelObservationModel in 3D-MOS.
+    """
     def __init__(self, objid, frustum_params, quality_params):
         """
         Args:
@@ -567,8 +571,9 @@ class FrustumVoxelAlphaBeta(FrustumModel):
             return octree.DEFAULT_VAL
 
     def sample(self, si, srobot, return_event=False):
-        voxel = Voxel((*si.loc, si.res), Voxel.UNKNOWN)
+        voxel = ObjectVoxel(self.objid, Voxel.NO_POSE, Voxel.UNKNOWN)
         if srobot.in_range(self.sensor, si):
+            voxel = ObjectVoxel(self.objid, si.loc, Voxel.UNKNOWN)
             if FrustumCamera.sensor_functioning(
                     self.alpha, self.beta):
                 voxel.label = si.id

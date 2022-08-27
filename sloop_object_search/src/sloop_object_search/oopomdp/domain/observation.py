@@ -121,6 +121,9 @@ class RobotLocalization(pomdp_py.SimpleObservation):
             # 3d
             return self.pose[:3]
 
+    def __str__(self):
+        return f"RobotLocalization[{self.robot_id}]({self.pose}, {self.cov})"
+
 
 class RobotObservation(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose_est, objects_found, camera_direction, *args):
@@ -136,7 +139,7 @@ class RobotObservation(pomdp_py.SimpleObservation):
         super().__init__(data)
 
     def __str__(self):
-        return f"{self.robot_id}({self.pose, self.camera_direction, self.objects_found})"
+        return f"{self.__class__.__name__}[self.robot_id]({self.pose, self.camera_direction, self.objects_found})"
 
     @property
     def is_2d(self):
@@ -251,10 +254,12 @@ class Voxel(pomdp_py.Observation):
     FREE = "free"
     OTHER = "other" #i.e. not i (same as FREE but for object observation)
     UNKNOWN = "unknown"
+    # a dummy voxel pose used to indicate no detection is made
+    NO_POSE = (float('inf'), float('inf'), float('inf'))
     def __init__(self, pose, label):
         """voxel pose could be (x,y,z), which is assumed to be
         at ground resolution level, or (x,y,z,r) which is a location
-        at resolution r"""
+        at resolution r."""
         self._pose = pose
         self._label = label
 
@@ -296,6 +301,49 @@ class Voxel(pomdp_py.Observation):
         else:
             return self._pose == other.pose\
                 and self._label == other.label
+
+
+class ObjectVoxel(pomdp_py.SimpleObservation):
+    """Optionally, if objid is provided, then this Voxel can
+    be thought of as coming from the FOV for the specific
+    object, V_objid."""
+    def __init__(self, objid, pose, label):
+        super().__init__((objid, Voxel(pose, label)))
+
+    @property
+    def id(self):
+        return self.data[0]
+
+    @property
+    def objid(self):
+        return self.id
+
+    @property
+    def voxel(self):
+        return self.data[1]
+
+    @property
+    def pose(self):
+        return self.voxel.pose
+
+    @property
+    def loc(self):
+        return self.voxel.loc
+
+    @property
+    def label(self):
+        return self.voxel.label
+
+    @label.setter
+    def label(self, val):
+        self.voxel.label = val
+
+    @property
+    def res(self):
+        return self.voxel.res
+
+    def __str__(self):
+        return f"ObjectVoxel[{self.objid}]({self.pose}, {self.label})"
 
 
 class FovVoxels(pomdp_py.Observation):
