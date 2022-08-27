@@ -108,7 +108,7 @@ def _region2world(region_point, region_origin):
     return world_point
 
 def _region2searchspace(region_point, search_space_resolution):
-    """Convert region point to a cube's coordinate in the search space.
+    """Convert region point to a cube's coordinate (integer) in the search space.
     Assume that the search space's origin is at the region coordinate frame's
     origin. The `search_space_resolution` has unit m/cell."""
     return tuple(int(math.floor(region_point[i] / search_space_resolution))
