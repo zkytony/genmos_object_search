@@ -95,9 +95,10 @@ def observation_msg_to_proto(world_frame, o_msg):
     for objid in object_ids:
         objloc = eval(kv[f"loc_{objid}"])
         objsizes = eval(kv[f"sizes_{objid}"])
-        objbox = common_pb2.Box3D(center=proto_utils.posetuple_to_poseproto((*objloc, 0, 0, 0, 1)),
-                                  sizes=common_pb2.Vec3(x=objsizes[0], y=objsizes[1], z=objsizes[2]))
-        detections.append(o_pb2.Detection3D(label=objid, box=objbox))
+        if objloc is not None:
+            objbox = common_pb2.Box3D(center=proto_utils.posetuple_to_poseproto((*objloc, 0, 0, 0, 1)),
+                                      sizes=common_pb2.Vec3(x=objsizes[0], y=objsizes[1], z=objsizes[2]))
+            detections.append(o_pb2.Detection3D(label=objid, box=objbox))
     detections_pb = o_pb2.ObjectDetectionArray(header=header,
                                                robot_id=robot_id,
                                                detections=detections)

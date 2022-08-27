@@ -22,7 +22,7 @@ from sloop_mos_ros import ros_utils
 from sloop_mos_ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.state import ObjectState, RobotState
 from sloop_object_search.oopomdp.domain.action import MotionAction3D
-from sloop_object_search.oopomdp.domain.observation import Voxel, ObjectDetection
+from sloop_object_search.oopomdp.domain.observation import Voxel, ObjectDetection, GMOSObservation
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
 from sloop_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
 from sloop_object_search.oopomdp.agent.common import (init_object_transition_models,
@@ -96,7 +96,21 @@ class SimpleSimEnv(pomdp_py.Environment):
 
     def provide_observation(self, action=None):
         # will use own observation model.
-        return self.observation_model.sample(self.state, action)
+        observation = self.observation_model.sample(self.state, action)
+        # convert voxels into object detections -- what a robot would receive
+        real_zobjs = {self.robot_id: observation.z(self.robot_id)}
+        for objid in observation:
+            if objid == self.robot_id:
+                continue
+            if isinstance(observation.z(objid), Voxel):
+                voxel = observation.z(objid)
+                if voxel.label == objid:
+                    objsizes = self.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
+                    o_obj = ObjectDetection(objid, voxel.loc, sizes=objsizes)
+                else:
+                    o_obj = ObjectDetection(objid, ObjectDetection.NULL)
+            real_zobjs[objid] = o_obj
+        return GMOSObservation(real_zobjs)
 
     def object_spec(self, objid):
         return self.agent_config["objects"][objid]
@@ -161,7 +175,6 @@ class SimpleSimEnvROSNode:
             rate.sleep()
 
     def publish_observation(self):
-        print(self.env.state)
         observation = self.env.provide_observation()
         keys = []
         values = []
@@ -176,10 +189,6 @@ class SimpleSimEnvROSNode:
             if objid == self.env.robot_id:
                 continue
             o_obj = observation.z(objid)
-            objsizes = self.env.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
-            if isinstance(o_obj, Voxel):
-                # From the client's perspective, they are just receiving object detections.
-                o_obj = ObjectDetection(objid, o_obj.loc, sizes=objsizes)
             keys.extend([f"loc_{objid}", f"sizes_{objid}"])
             values.extend([str(o_obj.loc), str(o_obj.sizes)])
         obs_msg = KeyValObservation(stamp=rospy.Time.now(),
