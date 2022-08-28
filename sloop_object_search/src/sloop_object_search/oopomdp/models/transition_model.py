@@ -25,6 +25,7 @@ from .sensors import yaw_facing, get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_D
 from sloop_object_search.utils.math import (fround,
                                             to_rad,
                                             R_quat,
+                                            quat_multiply,
                                             euler_to_quat,
                                             proj)
 
@@ -319,8 +320,8 @@ class RobotTransBasic3D(RobotTransitionModel):
             rot_precision ('int' or float): precision of rotation
 
         """
-        x, y, z, qx, qy, qz, qw = pose
-        R = R_quat(qx, qy, qz, qw)
+        x, y, z = pose[:3]
+        q = pose[3:]
         dpos, dth = motion
 
         # if len(dth) == 3:
@@ -332,11 +333,10 @@ class RobotTransBasic3D(RobotTransitionModel):
                 return pose
 
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
-            R_prev = R
-            R_change = R_quat(*euler_to_quat(*dth))
-            R = R_change * R_prev
-        new_qrot = R.as_quat()
-        return (*new_pos, *fround(rot_precision, new_qrot))
+            q_change = euler_to_quat(*dth)
+            q_new = quat_multiply(q_change, q)
+            q = q_new
+        return (*new_pos, *fround(rot_precision, q))
 
     @classmethod
     def _transform_pose_forward(cls, pose, motion,

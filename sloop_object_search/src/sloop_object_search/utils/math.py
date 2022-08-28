@@ -200,13 +200,14 @@ def quat_multiply(quaternion1, quaternion0):
     >>> numpy.allclose(q, [-44, -14, 48, 28])
     True
     """
+    # reference: https://github.com/davheld/tf/blob/master/src/tf/transformations.py
     x0, y0, z0, w0 = quaternion0
     x1, y1, z1, w1 = quaternion1
-    return numpy.array((
+    return np.array((
          x1*w0 + y1*z0 - z1*y0 + w1*x0,
         -x1*z0 + y1*w0 + z1*x0 + w1*y0,
          x1*y0 - y1*x0 + z1*w0 + w1*z0,
-        -x1*x0 - y1*y0 - z1*z0 + w1*w0), dtype=numpy.float64)
+        -x1*x0 - y1*y0 - z1*z0 + w1*w0), dtype=np.float64)
 
 def quat_diff(q1, q2):
     """returns the quaternion space difference between two
