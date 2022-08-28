@@ -46,6 +46,7 @@ from sloop_object_search.grpc import action_pb2 as a_pb2
 from sloop_object_search.grpc import common_pb2
 from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
+from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
 
 
@@ -104,7 +105,13 @@ def observation_msg_to_proto(world_frame, o_msg):
                                                detections=detections)
     return detections_pb, robot_pose_pb, objects_found_pb
 
-
+def wait_for_robot_pose():
+    obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                        [KeyValObservation],
+                                        verbose=True, allow_headerless=True).messages[0]
+    kv = {k:v for k,v in zip(obs_msg.keys, obs_msg.values)}
+    robot_pose = eval(kv["robot_pose"])
+    return robot_pose
 
 class TestSimpleEnvLocalSearch:
 
@@ -229,7 +236,21 @@ class TestSimpleEnvLocalSearch:
             # from SimpleEnv. First, convert the dest_3d in action to
             # a KeyValAction message
             if isinstance(action, a_pb2.MoveViewpoint):
-                dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
+                if action.HasField("dest_3d"):
+                    dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
+                else:
+                    robot_pose = np.asarray(wait_for_robot_pose())
+                    robot_pose[0] += action.motion_3d.dpos.x
+                    robot_pose[1] += action.motion_3d.dpos.y
+                    robot_pose[2] += action.motion_3d.dpos.z
+
+                    thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
+                    dthx = action.motion_3d.drot_euler.x
+                    dthy = action.motion_3d.drot_euler.y
+                    dthz = action.motion_3d.drot_euler.z
+                    robot_pose[3:] = np.asarray(math_utils.euler_to_quat(
+                        thx + dthx, thy + dthy, thz + dthz))
+                    dest = robot_pose
                 nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
                 action_pub.publish(nav_action)
                 rospy.loginfo("published nav action for execution")

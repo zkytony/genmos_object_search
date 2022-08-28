@@ -11,7 +11,7 @@ import "sloop_object_search/grpc/common.proto";
 message Motion3D {
   Vec3 dpos = 1;
   oneof drot {
-    Vec3 drot_euler = 2;  // in radians
+    Vec3 drot_euler = 2;  // in degrees
     Quaternion drot_quat = 3;
   }
 }
