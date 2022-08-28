@@ -86,9 +86,6 @@ class RobotTransitionModel(ObjectTransitionModel):
         if isinstance(action, MotionAction):
             next_robot_pose = self.sample_motion(state, action)
 
-        elif isinstance(action, ChangePoseAction):
-            raise NotImplementedError("Transform by destination pose is not yet implemented")
-
         elif isinstance(action, LookAction):
             next_camera_direction = action.name
 

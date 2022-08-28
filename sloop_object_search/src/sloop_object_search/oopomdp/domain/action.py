@@ -15,12 +15,6 @@ class MotionAction(pomdp_py.SimpleAction):
     def __repr__(self):
         return str(self)
 
-class ChangePoseAction(pomdp_py.SimpleAction):
-    """Moves the robot directly to a given pose.
-    The specific definition is domain-dependent"""
-    def __repr__(self):
-        return str(self)
-
 class FindAction(pomdp_py.SimpleAction):
     def __init__(self):
         super().__init__("find")
@@ -56,16 +50,6 @@ class MotionAction2D(MotionAction):
     @property
     def dyaw(self):
         return self.motion[1]
-
-class ChangePoseAction2D(ChangePoseAction):
-    """directly changes the robot pose to the given pose;
-    Action cost should be computed using current robot pose"""
-    def __init__(self, goal_pose, goal_name=None):
-        self.goal_pose = goal_pose
-        if goal_name is None:
-            goal_name = str(goal_pose)
-        self.goal_name = goal_name
-        super().__init__("chgp2d-{}".format(goal_name))
 
 def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False):
     """returns mapping from action name to Action"""
@@ -122,16 +106,6 @@ class MotionAction3D(MotionAction):
             motion_name = str(motion)
         self.motion_name = motion_name
         super().__init__("move3d-{}".format(motion_name))
-
-class ChangePoseAction3D(ChangePoseAction):
-    """directly changes the robot pose to the given pose;
-    Action cost should be computed using current robot pose"""
-    def __init__(self, goal_pose, goal_name=None):
-        self.goal_pose = goal_pose
-        if goal_name is None:
-            goal_name = str(goal_pose)
-        self.goal_name = goal_name
-        super().__init__("chgp3d-{}".format(goal_name))
 
 def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
     """returns mapping from action name to Action"""
