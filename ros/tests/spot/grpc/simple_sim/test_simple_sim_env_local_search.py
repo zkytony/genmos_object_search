@@ -157,7 +157,7 @@ class TestSimpleEnvLocalSearch:
                 draw_octree_dist(bobj.octree_dist)
 
             msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=60.0)
+                bobj_pb, header, alpha_scaling=20.0)
             markers.extend(msg.markers)
         self._octbelief_markers_pub.publish(MarkerArray(markers))
 
