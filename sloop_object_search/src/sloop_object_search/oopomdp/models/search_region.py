@@ -1,4 +1,4 @@
-from sloop_object_search.utils.conversion import Frame, convert, convert_cov
+from sloop_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
 from .octree_belief import OccupancyOctreeDistribution
 
 class SearchRegion:
@@ -53,6 +53,22 @@ class SearchRegion:
         """converts a pomdp position to a world frame position"""
         return convert(p, Frame.POMDP_SPACE, Frame.REGION,
                        search_space_resolution=self.search_space_resolution)
+
+    def to_world_dpos(self, p):
+        """converts a change in pomdp position to a world frame position"""
+        return convert_d(p, Frame.POMDP_SPACE, Frame.WORLD,
+                         search_space_resolution=self.search_space_resolution)
+
+    def to_pomdp_dpos(self, world_point):
+        """converts a change in pomdp position to a world frame position"""
+        return convert_d(world_point, Frame.WORLD, Frame.POMDP_SPACE,
+                         search_space_resolution=self.search_space_resolution)
+
+    def to_region_dpos(self, p):
+        """converts a change in pomdp position to a world frame position"""
+        return convert_d(p, Frame.POMDP_SPACE, Frame.REGION,
+                         search_space_resolution=self.search_space_resolution)
+
 
     def to_world_cov(self, cov):
         """given a covariance for the pomdp frame to the world frame"""

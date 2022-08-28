@@ -119,6 +119,26 @@ def _searchspace2region(search_space_point, search_space_resolution):
                  for i in range(len(search_space_point)))
 
 
+### conversion of change
+def convert_d(dpoint, from_frame, to_frame,
+              search_space_resolution=None):
+    if from_frame == Frame.WORLD:
+        if to_frame == Frame.REGION:
+            return dpoint
+        else:
+            return tuple(int(round(dpoint[i] / search_space_resolution))
+                         for i in range(len(dpoint)))
+    elif from_frame == Frame.REGION:
+        if to_frame == Frame.WORLD:
+            return dpoint
+        else:
+            return tuple(int(round(dpoint[i] / search_space_resolution))
+                         for i in range(len(dpoint)))
+    else:
+        assert from_frame == Frame.POMDP_SPACE
+        return tuple(dpoint[i] * search_space_resolution
+                     for i in range(len(dpoint)))
+
 ### convert covariance ###
 def convert_cov(cov, from_frame, to_frame,
                 search_space_resolution=None, is_3d=True):

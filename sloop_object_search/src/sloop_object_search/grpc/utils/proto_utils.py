@@ -187,20 +187,13 @@ def pomdp_action_to_proto(action, agent, header=None):
             # we need to convert the position change from pomdp frame to
             # the world frame.
             dpos_pomdp, drot = action.motion
-            dpos_world = agent.search_region.to_world_pos(dpos_pomdp)
+            dpos_world = agent.search_region.to_world_dpos(dpos_pomdp)
             motion_pb = Motion3D(
                 dpos=Vec3(x=dpos_world[0], y=dpos_world[1], z=dpos_world[2]),
-                drot_euler=Vec3(x=to_rad(drot[0]), y=to_rad(drot[1]), z=to_rad(drot[2])))
-            # We will also supply the destination viewpoint's pose based on
-            # the current mpe robot pose and the transition function
-            srobot = agent.belief.b(agent.robot_id).mpe()
-            expected_next_pose_pomdp = agent.robot_transition_model.sample_motion(srobot, action)
-            expected_next_pose_world = agent.search_region.to_world_pose(expected_next_pose_pomdp)
-            expected_next_pose_world_pb = posetuple_to_poseproto(expected_next_pose_world)
+                drot_euler=Vec3(x=drot[0], y=drot[1], z=drot[2]))
             action_pb = MoveViewpoint(header=header,
                                       robot_id=agent.robot_id,
                                       motion_3d=motion_pb,
-                                      dest_3d=expected_next_pose_world_pb,
                                       name=action.name,
                                       expected_cost=action.step_cost)
     elif isinstance(action, slpa.FindAction):
