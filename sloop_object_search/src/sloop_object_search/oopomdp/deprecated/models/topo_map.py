@@ -43,6 +43,10 @@ class TopoEdge(Edge):
             return len(self.grid_path)
 
     @property
+    def nav_length(self):
+        return self.grid_dist
+
+    @property
     def attrs(self):
         return {"grid_path": self.grid_path,
                 "grid_path_length": len(self.grid_path)}
