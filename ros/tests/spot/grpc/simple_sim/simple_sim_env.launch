@@ -10,7 +10,6 @@
     <param name="world_frame" value="$(arg world_frame)"/>
     <param name="step_duration" value="0.1"/>
     <param name="translation_step_size" value="0.1"/>
-    <param name="rotation_step_size" value="5"/>
   </node>
 
   <node pkg="sloop_object_search_ros"

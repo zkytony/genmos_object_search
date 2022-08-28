@@ -10,6 +10,8 @@ import rospy
 import pomdp_py
 import math
 import time
+import numpy as np
+import copy
 
 import actionlib
 from actionlib_msgs.msg import GoalStatus
@@ -32,7 +34,7 @@ from sloop_object_search.oopomdp.agent.common import (init_object_transition_mod
 from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.utils.misc import hash16
-from sloop_object_search.utils.math import quat_to_euler, euler_to_quat, to_rad, to_deg, euclidean_dist
+from sloop_object_search.utils import math as math_utils
 
 
 class SimpleSimEnv(pomdp_py.Environment):
@@ -276,24 +278,23 @@ class SimpleSimEnvROSNode:
         then rotate the camera in yaw towards the goal, and then
         go in a straightline, and finally rotate it to the goal rotation."""
         current_pose = self.env.state.s(self.env.robot_id).pose
-        current_orientation = quat_to_euler(*current_pose[3:])
-        goal_orientation = quat_to_euler(*goal_pose[3:])
 
-        # rotate thx
-        dthx_actions = self._axis_actions_towards(current_orientation[0], goal_orientation[0], "dthx", 0)
-        # rotate thy
-        dthy_actions = self._axis_actions_towards(current_orientation[1], goal_orientation[1], "dthy", 1)
-        # rotate thz
-        dthz_actions = self._axis_actions_towards(current_orientation[2], goal_orientation[2], "dthz", 2)
-
-        # move forward in a straight line over x-y plane.
-        dxy_actions = self._xyplane_forward_actions_towards(current_pose[:2], goal_pose[:2], goal_orientation[2])
-
-        # adjust height
-        dz_actions = self._axis_actions_towards(current_pose[2], goal_pose[2], "dz", 2)
-        all_actions = dthx_actions + dthy_actions + dthz_actions + dxy_actions + dz_actions
-
+        # First rotate, then translate. We will not animate rotation, but do so for translation.
+        next_robot_state = RobotState(self.env.robot_id,
+                                      (*current_pose[:3], *goal_pose[3:]),
+                                      self.env.state.s(self.env.robot_id).objects_found,
+                                      self.env.state.s(self.env.robot_id).camera_direction)
+        next_object_states = copy.deepcopy(self.env.state.object_states)
+        next_object_states[self.env.robot_id] = next_robot_state
+        self.env.apply_transition(pomdp_py.OOState(next_object_states))
         rate = rospy.Rate(1./self.nav_step_duration)
+        # dx
+        dx_actions = self._axis_actions_towards(current_pose[0], goal_pose[0], "dx", 0)
+        # dy
+        dy_actions = self._axis_actions_towards(current_pose[1], goal_pose[1], "dy", 1)
+        # dz
+        dz_actions = self._axis_actions_towards(current_pose[2], goal_pose[2], "dz", 2)
+        all_actions = dx_actions + dy_actions + dz_actions
         for action in all_actions:
             self.env.state_transition(action, execute=True)
             rospy.loginfo(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
@@ -305,7 +306,7 @@ class SimpleSimEnvROSNode:
         by certain step size"""
         actions = []
         diffval = desval - curval
-        if diffval < 1e-9:
+        if abs(diffval) < 1e-2:  # 0.01
             diffval = 0  # avoid numerical instability
         if dtype in {"dx", "dy", "dz"}:
             step_size = self.translation_step_size
@@ -327,6 +328,8 @@ class SimpleSimEnvROSNode:
 
         # there may be remaining bit, will add one more if needed
         remain_diff = abs(diffval) - num_dsteps*step_size
+        if abs(remain_diff) < 1e-2:
+            remain_diff = 0
         if remain_diff > 0:
             dstep_last = [0,0,0]
             if diffval > 0:
@@ -336,28 +339,6 @@ class SimpleSimEnvROSNode:
             dmotion_last = [(0, 0, 0), (0, 0, 0)]
             dmotion_last[dapply_index] = tuple(dstep_last)
             dstep_action_last = MotionAction3D(tuple(dmotion_last), motion_name=f"move-{dtype}")
-            actions.append(dstep_action_last)
-        return actions
-
-    def _xyplane_forward_actions_towards(self, current_xy_pos, goal_xy_pos, goal_yaw):
-        """Assume that the agent has finished rotating; Just need to move in the
-        goal_yaw direction. 'goal_yaw' should be in degrees"""
-        actions = []
-
-        dx = self.translation_step_size*math.cos(to_rad(goal_yaw))
-        dy = self.translation_step_size*math.sin(to_rad(goal_yaw))
-        distance = euclidean_dist(current_xy_pos, goal_xy_pos)
-        num_dsteps = int(distance // self.translation_step_size)
-        dmotion = ((dx, dy, 0), (0, 0, 0))
-        dstep_action = MotionAction3D(dmotion, motion_name=f"move-forward")
-        actions.extend([dstep_action]*num_dsteps)
-
-        remaining = distance - self.translation_step_size*num_dsteps
-        if remaining > 0:
-            dx_last = remaining*math.cos(to_rad(goal_yaw))
-            dy_last = remaining*math.sin(to_rad(goal_yaw))
-            dmotion_last = ((dx_last, dy_last, 0), (0, 0, 0))
-            dstep_action_last = MotionAction3D(dmotion_last, motion_name=f"move-forward")
             actions.append(dstep_action_last)
         return actions
 
