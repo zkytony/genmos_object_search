@@ -18,7 +18,7 @@ TEST_CONFIG = {
             'sensors': [{
                 'name': 'camera',
                 'params': {'fov': 61,
-                           'far': 20,
+                           'far': 1.5,
                            'near': 1,
                            'occlusion_enabled': True}
             }],
@@ -27,7 +27,7 @@ TEST_CONFIG = {
                                               "quality": [1e5, 0.1]}}},
                   'id': 'robot0',
                   'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
-                             'params': {'step_size': 1.0,
+                             'params': {'step_size': 0.2,
                                         'rotation': 90.0,
                                         'scheme': 'axis'}}},
         'spacy_model': 'en_core_web_lg',
