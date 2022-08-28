@@ -194,6 +194,44 @@ def euler_to_quat(thx, thy, thz, order='xyz'):
 def quat_to_euler(x, y, z, w, order='xyz'):
     return scipyR.from_quat([x,y,z,w]).as_euler(order, degrees=True)
 
+def quat_multiply(quaternion1, quaternion0):
+    """Return multiplication of two quaternions.
+    >>> q = quaternion_multiply([1, -2, 3, 4], [-5, 6, 7, 8])
+    >>> numpy.allclose(q, [-44, -14, 48, 28])
+    True
+    """
+    x0, y0, z0, w0 = quaternion0
+    x1, y1, z1, w1 = quaternion1
+    return numpy.array((
+         x1*w0 + y1*z0 - z1*y0 + w1*x0,
+        -x1*z0 + y1*w0 + z1*x0 + w1*y0,
+         x1*y0 - y1*x0 + z1*w0 + w1*z0,
+        -x1*x0 - y1*y0 - z1*z0 + w1*w0), dtype=numpy.float64)
+
+def quat_diff(q1, q2):
+    """returns the quaternion space difference between two
+    quaternion q1 and q2"""
+    # reference: https://stackoverflow.com/a/22167097/2893053
+    # reference: http://wiki.ros.org/tf2/Tutorials/Quaternions#Relative_rotations
+    x1, y1, z1, w1 = q1
+    q1_inv = (x1, y1, z1, -w1)
+    qd = quat_multiply(q2, q1_inv)
+    return qd
+
+def quat_diff_angle(q1, q2):
+    """returns the angle (radians) between q1 and q2; signed"""
+    qd = quat_diff(q1, q2)
+    return 2*math.atan2(math_utils.vec_norm(qd[:3]), qd[3])
+
+def quat_diff_angle_relative(q1, q2):
+    """returns the angle (radians) between q1 and q2;
+    The angle will be the smallest one between the two
+    vectors. It is the "intuitive" angular difference.
+    Unsigned."""
+    ad = quat_diff_angle(q1, q2)
+    return min(2*math.pi - ad, ad)
+
+
 def T(dx, dy, dz):
     return np.array([
         1, 0, 0, dx,
