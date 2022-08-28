@@ -305,6 +305,8 @@ class SimpleSimEnvROSNode:
         by certain step size"""
         actions = []
         diffval = desval - curval
+        if diffval < 1e-9:
+            diffval = 0  # avoid numerical instability
         if dtype in {"dx", "dy", "dz"}:
             step_size = self.translation_step_size
             dapply_index = 0
