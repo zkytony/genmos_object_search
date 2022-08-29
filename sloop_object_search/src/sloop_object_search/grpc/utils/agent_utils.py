@@ -118,7 +118,7 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
         sensor_params_pomdp = agent_config_pomdp["robot"]["detectors"][objid]["params"]["sensor"]
         _convert_sensor_params(sensor_params_world, sensor_params_pomdp)
 
-    if len(agent_config_world["robot"]["sensors"]) > 0:
+    if len(agent_config_world["robot"].get("sensors", [])) > 0:
         for i in range(len(agent_config_world["robot"]["sensors"])):
             sensor_params_world = agent_config_world["robot"]["sensors"][i]["params"]
             sensor_params_pomdp = agent_config_pomdp["robot"]["sensors"][i]["params"]
@@ -129,14 +129,15 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
         for objid in agent_config_world["belief"]["prior"]:
             object_prior_world = agent_config_world["belief"]["prior"].get(objid, [])
             object_prior_pomdp = []
-            for voxel_world, prob in object_prior_world:
-                voxel_pos_pomdp = search_region.to_pomdp_pos(voxel_world[:3])
-                if len(voxel_world) == 3:
-                    voxel_res_pomdp = 1
-                else:
-                    voxel_res_pomdp = voxel_world[3] / search_region.search_space_resolution
-                voxel_pomdp = (*voxel_pos_pomdp, voxel_res_pomdp)
-                object_prior_pomdp.append([voxel_pomdp, prob])
+            if agent_config_world["agent_class"] == "MosAgentBasic3d":
+                for voxel_world, prob in object_prior_world:
+                    voxel_pos_pomdp = search_region.to_pomdp_pos(voxel_world[:3])
+                    if len(voxel_world) == 3:
+                        voxel_res_pomdp = 1
+                    else:
+                        voxel_res_pomdp = voxel_world[3] / search_region.search_space_resolution
+                    voxel_pomdp = (*voxel_pos_pomdp, voxel_res_pomdp)
+                    object_prior_pomdp.append([voxel_pomdp, prob])
             agent_config_pomdp["belief"]["prior"][objid] = object_prior_pomdp
 
     # Convert step size in action
