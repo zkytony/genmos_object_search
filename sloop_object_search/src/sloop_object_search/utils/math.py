@@ -569,6 +569,57 @@ def sample_in_box3d_origin(box):
             origin[1] + dy,
             origin[2] + dz)
 
+## Poses
+def loc_eq_approx(loc1, loc2, tol=1e-3):
+    return euclidean_dist(loc1, loc2) <= tol
+
+def get_pos_rot(pose, is_3d=True):
+    """Given a pose that could pose1, pose2 could each be either a single tuple, or
+    a 2-tuple (position, orientation) where the orientation, return
+    a tuple position, orientation. The pose may not contain orientation (i.e. None).
+    If 3D, the rotation should be a quaternion tuple qx, qy, qz, qw."""
+    if len(pose) == 2 and type(self.pose[0]) == tuple:
+        # pose = (position_orientation). Just directly return
+        return pose
+    else:
+        # pose is a single tuple
+        if is_3d:
+            if len(pose) == 7:
+                return pose[:3], pose[3:]
+            elif len(pose) == 3:
+                return pose, None
+            else:
+                raise ValueError(f"Invalid dimension of 3D pose: {len(pose)}")
+        else:
+            if len(pose) == 3:
+                return pose[:2], pose[2]
+            elif len(pose) == 2:
+                return pose, None
+            else:
+                raise ValueError(f"Invalid dimension of 2D pose: {len(pose)}")
+
+def pose_eq_approx(pose1, pose2, tol_pos=1e-3, tol_rot=1e-3, is_3d=True):
+    """
+    It's ok for pose1 and/or pose2 to be None. They are equal
+    if both are None.
+    """
+    if pose1 is None:
+        return pose2 is None
+    if pose2 is None:
+        return pose1 is None
+    pos1, rot1 = get_pos_rot(pose1, is_3d)
+    pos2, rot2 = get_pos_rot(pose1, is_3d)
+    pos_eq = loc_eq_approx(pos1, pos2, tol_pos)
+    if not pos_eq:
+        return False
+    if is_3d:
+        qdiff_angle_rad = quat_diff_angle_relative(pose1[3:], pose2[3:])
+        rot_eq = to_deg(qdiff_angle_rad) <= tol_rot
+        return rot_eq
+    else:
+        return angle_diff_relative(pose1[2], pose2[2]) <= tol_rot
+
+
 
 ## Statistics
 # confidence interval
