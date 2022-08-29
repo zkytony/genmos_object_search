@@ -101,7 +101,7 @@ class RobotState(pomdp_py.ObjectState):
         return "{}({}, {})".format(type(self).__name__, self.pose, self.objects_found)
 
     def __hash__(self):
-        return hash(self.pose)
+        return hash((self.id, self.pose))
 
     @property
     def pose(self):
@@ -139,17 +139,22 @@ class RobotState(pomdp_py.ObjectState):
 
 
 class RobotStateTopo(RobotState):
+    """Represents a robot state on a topological graph. Note
+    that when comparing two RobotStateTopo objects, we ignore
+    their pose but pay attention to their topo_nid and topo_hashcode."""
     def __init__(self,
                  robot_id,
                  pose,
                  objects_found,
                  camera_direction,
-                 topo_nid):
+                 topo_nid,
+                 topo_map_hashcode):
         super().__init__(robot_id,
                          pose,
                          objects_found,
                          camera_direction,
-                         topo_nid=topo_nid)
+                         topo_nid=topo_nid,
+                         topo_map_hashcode=topo_map_hashcode)
 
     @property
     def nid(self):
@@ -159,5 +164,22 @@ class RobotStateTopo(RobotState):
     def topo_nid(self):
         return self['topo_nid']
 
+    @property
+    def topo_map_hashcode(self):
+        return self['topo_map_hashcode']
+
     def __str__(self):
         return "{}({}, {}, nid={})".format(type(self).__name__, self.pose, self.objects_found, self.topo_nid)
+
+    def __hash__(self):
+        return hash((self.robot_id, self.topo_nid, self.topo_map_hashcode))
+
+    def __eq__(self, other):
+        if isinstance(other, RobotStateTopo):
+            return other.id == self.id\
+                and other.topo_map_hashcode == self.topo_map_hashcode\
+                and other.topo_nid == self.topo_nid\
+                and other.objects_found == self.objects_found\
+                and other.camera_direction == self.camera_direction
+        else:
+            return False
