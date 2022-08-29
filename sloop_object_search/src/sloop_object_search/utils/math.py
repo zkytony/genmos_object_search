@@ -220,18 +220,27 @@ def quat_diff(q1, q2):
     return qd
 
 def quat_diff_angle(q1, q2):
-    """returns the angle (radians) between q1 and q2; signed"""
+    """returns the angle (radians) between q1 and q2; signed, radians."""
     qd = quat_diff(q1, q2)
-    return 2*math.atan2(math_utils.vec_norm(qd[:3]), qd[3])
+    return 2*math.atan2(vec_norm(qd[:3]), qd[3])
 
 def quat_diff_angle_relative(q1, q2):
     """returns the angle (radians) between q1 and q2;
     The angle will be the smallest one between the two
     vectors. It is the "intuitive" angular difference.
-    Unsigned."""
+    Unsigned. Result in Radians."""
     ad = quat_diff_angle(q1, q2)
     return min(2*math.pi - ad, ad)
 
+def angle_diff_relative(a1, a2, degrees=True):
+    """given two angles, return the intuitive
+    angular difference between the two, that is,
+    the smaller one. Unsigned"""
+    ad = abs(a1 - a2)
+    if degrees:
+        return min(360 - ad, ad)
+    else:
+        return min(2*math.pi - ad, ad)
 
 def T(dx, dy, dz):
     return np.array([

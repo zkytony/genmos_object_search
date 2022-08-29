@@ -2,11 +2,74 @@
 GMOS observation breaks down to:
 - object detection
 - robot observation about itself
+
+Note that for all observations that contain
 """
 import pomdp_py
 import numpy as np
 from sloop_object_search.utils.misc import det_dict_hash
 from sloop_object_search.utils import math as math_utils
+
+# tolerance of position in object detection / robot localization
+# to regard two object detections to be equal. POMDP frame scale.
+# Used for planning.
+ROBOT_POS_TOL = 2.5
+OBJECT_POS_TOL = 2.5
+# tolerance of rotation angle in robot localization
+# to regard two object detections to be equal.
+# Used for planning. Degrees.
+ROBOT_ROT_TOL = 15
+OBJECT_ROT_TOL = 15
+
+def loc_eq_approx(loc1, loc2, tol=1e-3):
+    return math_utils.euclidean_dist(loc1, loc2) <= tol
+
+def get_pos_rot(pose, is_3d=True):
+    """Given a pose that could pose1, pose2 could each be either a single tuple, or
+    a 2-tuple (position, orientation) where the orientation, return
+    a tuple position, orientation. The pose may not contain orientation (i.e. None).
+    If 3D, the rotation should be a quaternion tuple qx, qy, qz, qw."""
+    if len(pose) == 2 and type(self.pose[0]) == tuple:
+        # pose = (position_orientation). Just directly return
+        return pose
+    else:
+        # pose is a single tuple
+        if is_3d:
+            if len(pose) == 7:
+                return pose[:3], pose[3:]
+            elif len(pose) == 3:
+                return pose, None
+            else:
+                raise ValueError(f"Invalid dimension of 3D pose: {len(pose)}")
+        else:
+            if len(pose) == 3:
+                return pose[:2], pose[2]
+            elif len(pose) == 2:
+                return pose, None
+            else:
+                raise ValueError(f"Invalid dimension of 2D pose: {len(pose)}")
+
+def pose_eq_approx(pose1, pose2, tol_pos=1e-3, tol_rot=1e-3, is_3d=True):
+    """
+    It's ok for pose1 and/or pose2 to be None. They are equal
+    if both are None.
+    """
+    if pose1 is None:
+        return pose2 is None
+    if pose2 is None:
+        return pose1 is None
+    pos1, rot1 = get_pos_rot(pose1, is_3d)
+    pos2, rot2 = get_pos_rot(pose1, is_3d)
+    pos_eq = loc_eq_approx(pos1, pos2, tol_pos)
+    if not pos_eq:
+        return False
+    if is_3d:
+        qdiff_angle_rad = math_utils.quat_diff_angle_relative(pose1[3:], pose2[3:])
+        rot_eq = math_utils.to_deg(qdiff_angle_rad) <= tol_rot
+        return rot_eq
+    else:
+        return math_utils.angle_diff_relative(pose1[2], pose2[2]) <= tol_rot
+
 
 class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
@@ -35,6 +98,20 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     def __str__(self):
         return f"ObjectDetection[{self.objid}]({self.pose}, {self.sizes})"
 
+    def __hash__(self):
+        if self.loc is None:
+            loc_hash = hash(None)
+        else:
+            loc_hash = hash(self.loc[i] // OBJECT_POS_TOL for i in self.loc)
+        return hash((self.objid, loc_hash))
+
+    def __eq__(self, other):
+        if isinstance(other, ObjectDetection):
+            return self.objid == other.objid\
+                and pose_eq_approx(self.pose, other.pose,
+                                   OBJECT_POS_TOL, OBJECT_ROT_TOL,
+                                   is_3d=self.is_3d)
+
     @property
     def sizes(self):
         return self._sizes
@@ -54,6 +131,10 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     @property
     def is_2d(self):
         return len(self.loc) == 2
+
+    @property
+    def is_3d(self):
+        return not self.is_2d
 
     @property
     def loc(self):
@@ -85,6 +166,7 @@ class ObjectDetection(pomdp_py.SimpleObservation):
 
 
 class RobotLocalization(pomdp_py.SimpleObservation):
+    """This is equal to a pose tuple if it is equal to the mean"""
     def __init__(self, robot_id, robot_pose, cov=None):
         """cov: covariance matrix for the robot pose observation."""
         if cov is None:
@@ -96,6 +178,10 @@ class RobotLocalization(pomdp_py.SimpleObservation):
     @property
     def is_2d(self):
         return len(self.pose) == 3  # x, y, th
+
+    @property
+    def is_3d(self):
+        return not self.is_2d
 
     @property
     def cov(self):
@@ -121,25 +207,74 @@ class RobotLocalization(pomdp_py.SimpleObservation):
             # 3d
             return self.pose[:3]
 
+    def __hash__(self):
+        return hash((self.robot_id,
+                     (self.loc[i] // POS_TOL
+                      for i in self.loc)))
+
+    def __eq__(self, other):
+        """This comparison is based on pose approximate equality,
+        intended to decrease observation space during planning"""
+        if isinstance(other, RobotLocalization):
+            return self.robot_id == other.robot_id\
+                and pose_eq_approx(self.pose, other.mean,
+                                   ROBOT_POS_TOL, ROBOT_ROT_TOL,
+                                   is_3d=self.is_3d)
+        elif isinstance(other, tuple):
+            return pose_eq_approx(self.pose, other,
+                                  ROBOT_POS_TOL, ROBOT_ROT_TOL,
+                                  is_3d=self.is_3d)
+        else:
+            return False
+
     def __str__(self):
         return f"RobotLocalization[{self.robot_id}]({self.pose}, {self.cov})"
+
+    def __repr__(self):
+        return str(self)
+
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose_est, objects_found, camera_direction, *args):
         """
-        'robot_pose_est' could be a single pose tuple, or a RobotLocalization
-        object. The latter models uncertainty around the estimation, while
-        the assumes perfect observation."""
-        self.robot_id = robot_id
-        self._pose_est = robot_pose_est
-        self.objects_found = objects_found
-        self.camera_direction = camera_direction
-        data = (self.robot_id, self._pose_est, self.objects_found, self.camera_direction, *args)
+        'robot_pose_est' should be a RobotLocalization, if this observation
+        is created based on real robot observation. It should be a tuple if
+        this observation is generated during planning based on a robot state.
+        """
+        data = (robot_id, robot_pose_est, objects_found,
+                camera_direction, *args)
         super().__init__(data)
 
     def __str__(self):
-        return f"{self.__class__.__name__}[self.robot_id]({self.pose, self.camera_direction, self.objects_found})"
+        return f"{self.__class__.__name__}[self.robot_id]({self.pose_estimate, self.camera_direction, self.objects_found})"
+
+    def __repr__(self):
+        return str(self)
+
+    @property
+    def robot_id(self):
+        return self.data[0]
+
+    @property
+    def pose(self):
+        """Returns the most likely robot pose - will return the pose tuple."""
+        if isinstance(self.pose_estimate, RobotLocalization):
+            return self.pose_estimate.pose
+        else:
+            return self.pose_estimate
+
+    @property
+    def pose_estimate(self):
+        return self.data[1]
+
+    @property
+    def objects_found(self):
+        return self.data[2]
+
+    @property
+    def camera_direction(self):
+        return self.data[3]
 
     @property
     def is_2d(self):
@@ -160,18 +295,6 @@ class RobotObservation(pomdp_py.SimpleObservation):
                                 pose if pose is not None else srobot['pose'],
                                 srobot['objects_found'],
                                 srobot['camera_direction'])
-
-    @property
-    def pose(self):
-        """Returns the most likely robot pose - will return the pose tuple."""
-        if isinstance(self._pose_est, RobotLocalization):
-            return self._pose_est.pose
-        else:
-            return self._pose_est
-
-    @property
-    def pose_estimate(self):
-        return self._pose_est
 
 
 class RobotObservationTopo(RobotObservation):
