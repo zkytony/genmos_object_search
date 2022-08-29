@@ -1,4 +1,5 @@
 import numpy as np
+import uuid
 from collections import deque
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils.math import euclidean_dist
@@ -60,6 +61,21 @@ class TopoMap(Graph):
         super().__init__(*args, **kwargs)
         self._cache_closest = {}
         self._cache_shortest_path = {}
+        # A topo map will be uniquely identified by this hashcode
+        self._hashcode = uuid.uuid4().hex
+
+    @property
+    def hashcode(self):
+        return self._hashcode
+
+    def __hash__(self):
+        return hash(self._hashcode)
+
+    def __eq__(self, other):
+        if isinstance(other, TopoMap):
+            return self.hashcode == other.hashcode
+        else:
+            return False
 
     def closest_node(self, point):
         """Given a point find the node that is closest to this point.
