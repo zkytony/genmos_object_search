@@ -2,7 +2,7 @@ TEST_CONFIG = {
     'agent_config': {
         'action': {'h_rotation': 45.0},
         'agent_class': 'MosAgentBasic2D',
-        'belief': {'prior': {'book': 'uniform'}},
+        'belief': {},
         'detectable_objects': ['book'],
         'foref_model_map_name': 'honolulu',
         'foref_models_dir': '/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/models',

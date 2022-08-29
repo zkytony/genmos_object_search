@@ -6,7 +6,7 @@ from sloop_object_search.utils import math as math_utils
 from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
 
-def cube_unfilled(scale=1, color=[1,0,0]):
+def cube_unfilled(scale=1):
     # http://www.open3d.org/docs/0.9.0/tutorial/Basic/visualization.html
     if hasattr(scale, "__len__"):
         scale_x, scale_y, scale_z = scale
@@ -37,7 +37,35 @@ def cube_unfilled(scale=1, color=[1,0,0]):
         [2, 6],
         [3, 7],
     ]
-    colors = [color for i in range(len(lines))]
+    line_set = o3d.geometry.LineSet(
+        points=o3d.utility.Vector3dVector(points),
+        lines=o3d.utility.Vector2iVector(lines),
+    )
+    return line_set
+
+# def _align_vector_to_another(a=np.array([0, 0, 1]), b=np.array([1, 0, 0])):
+#     """
+#     Aligns vector a to vector b with axis angle rotation
+
+#     https://github.com/isl-org/Open3D/pull/738#issuecomment-564785941
+#     """
+#     if np.array_equal(a, b):
+#         return None, None
+#     axis_ = np.cross(a, b)
+#     axis_ = axis_ / np.linalg.norm(axis_)
+#     angle = np.arccos(np.dot(a, b))
+
+#     return axis_, angle
+
+# def line_between_thick(pos1, pos2, radius=0.15):
+#     length = euclidean_dist(pos1, pos2)
+#     cylinder = o3d.geometry.TriangleMesh.create_cylinder(radius, length)
+#     cylinder.translate()
+
+
+def line_between(pos1, pos2):
+    points = [pos1, pos2]
+    lines = [[0, 1]]
     line_set = o3d.geometry.LineSet(
         points=o3d.utility.Vector3dVector(points),
         lines=o3d.utility.Vector2iVector(lines),
@@ -221,4 +249,42 @@ def draw_fov(visible_volume, obstacles_hit=None):
             box.translate(np.asarray([x*r,y*r,z*r]))
             box.paint_uniform_color([0.0, 0.05, 0.75])
             geometries.append(box)
+    return geometries
+
+
+def draw_topo_graph3d(topo_map,
+                      search_region,
+                      object_beliefs=None,
+                      node_color=[0.99, 0.6, 0.2],
+                      edge_color=[0.05, 0.04, 0.7],
+                      viz=True):
+    occupancy_octree = search_region.octree_dist
+    geometries = []
+    # geometries = draw_octree_dist(occupancy_octree, viz=False)
+
+    if object_beliefs is not None:
+        for objid in object_beliefs:
+            geometries.extend(draw_octree_dist(object_beliefs[objid].octree_dist, viz=False,
+                                               cmap=cmaps.COLOR_MAP_GRAYS))
+
+    for nid in topo_map.nodes:
+        node = topo_map.nodes[nid]
+        x, y, z = node.pos
+        r = 1
+        box = o3d.geometry.TriangleMesh.create_box(width=r, height=r, depth=r)
+        box.translate(np.asarray([x*r,y*r,z*r]))
+        box.paint_uniform_color(node_color)
+        geometries.append(box)
+
+    for eid in topo_map.edges:
+        edge = topo_map.edges[eid]
+        if not edge.degenerate:
+            node1, node2 = edge.nodes
+            pos1 = math_utils.originbox_to_centerbox((node1.pos, 1, 1, 1))[0]
+            pos2 = math_utils.originbox_to_centerbox((node2.pos, 1, 1, 1))[0]
+            line = line_between(pos1, pos2)
+            line.paint_uniform_color(edge_color)
+            geometries.append(line)
+    if viz:
+        o3d.visualization.draw_geometries(geometries)
     return geometries

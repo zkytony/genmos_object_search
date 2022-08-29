@@ -10,6 +10,7 @@ from sloop_object_search.oopomdp.agent import\
 import sloop_object_search.oopomdp.domain.observation as slpo
 import sloop_object_search.oopomdp.domain.action as slpa
 from sloop_object_search.oopomdp.agent import belief
+from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
 
 VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "MosAgentBasic2D",
@@ -130,7 +131,7 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
         for objid in agent_config_world["belief"]["prior"]:
             object_prior_world = agent_config_world["belief"]["prior"].get(objid, [])
             object_prior_pomdp = []
-            if agent_config_world["agent_class"] == "MosAgentBasic3d":
+            if isinstance(search_region, SearchRegion3D):
                 for voxel_world, prob in object_prior_world:
                     voxel_pos_pomdp = search_region.to_pomdp_pos(voxel_world[:3])
                     if len(voxel_world) == 3:

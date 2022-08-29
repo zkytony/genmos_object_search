@@ -7,6 +7,7 @@ from ..models.octree_belief import OctreeDistribution, OctreeBelief, Octree
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue
+from sloop_object_search.utils import open3d_utils
 
 class MosAgentTopo3D(MosAgentBasic3D):
     """A 3D MosAgent whose action space is not basic axis-based
@@ -19,11 +20,12 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 self.target_objects, self.search_region,
                 belief_config=self.agent_config["belief"])
         robot_pose = init_robot_pose_dist.mean
-        import pdb; pdb.set_trace()
         topo_map = _sample_topo_graph3d(init_object_beliefs,
                                         robot_pose,
                                         self.search_region,
                                         self.reachable)
+        open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
+                                       object_beliefs=init_object_beliefs)
         raise NotImplementedError("good for now")
 
     def reachable(self, pos):
@@ -46,7 +48,8 @@ def _sample_topo_graph3d(init_object_beliefs,
                          degree=(3,5),
                          sep=4.0,
                          rnd=random,
-                         score_res=8):
+                         score_res=8,
+                         score_thres=0.3):
     """
     The algorithm: sample uniformly from search region
     candidate robot positions. Obtain cumulative object
@@ -57,6 +60,9 @@ def _sample_topo_graph3d(init_object_beliefs,
 
     score_res: The resolution level where the object
     belief is used for scoring.
+
+    score_thres: nodes kept must have normalized score
+    in the top X% where X is score_thres.
     """
     if type(degree) == int:
         degree_range = (degree, degree)
@@ -69,11 +75,15 @@ def _sample_topo_graph3d(init_object_beliefs,
     if isinstance(init_object_beliefs, pomdp_py.OOBelief):
         init_object_beliefs = init_object_beliefs.object_beliefs
 
+    # The overall idea: sample robot positions from within the search region,
+    # and rank them based on object beliefs, and only keep <= X number of nodes
+    # that have normalized scores above some threshold
     region = search_region.octree_dist.region
     origin, w, l, h = region
     candidate_positions = set([init_robot_pose[:3]])
-    candidates_pq = PriorityQueue()
-    candidates_pq.push(init_robot_pose[:3], float('-inf'))  # will always include current robot pose
+    candidate_scores = []  # list of (pos, score) tuples
+    min_score = float("inf")
+    max_score = float("-inf")
     for i in range(num_node_samples):
         # uniformly sample candidate positions
         x = random.uniform(origin[0], origin[0]+w)
@@ -100,9 +110,21 @@ def _sample_topo_graph3d(init_object_beliefs,
                 b_obj = init_object_beliefs[objid]
                 priority_score += b_obj.octree_dist.prob_at(
                     *Octree.increase_res(pos, 1, score_res), score_res)
-                # because PriorityQueue ranks small values first
-            candidates_pq.push(pos, -priority_score)
-    positions = [candidates_pq.pop() for i in range(num_nodes)]
+            candidate_scores.append((pos, priority_score))
+            min_score = min(min_score, priority_score)
+            max_score = max(max_score, priority_score)
+
+    # Now, we make a priority queue, supply it with normalized scores
+    candidates_pq = PriorityQueue()
+    candidates_pq.push(init_robot_pose[:3], float('-inf'))  # will always include current robot pose
+    for pos, score in candidate_scores:
+        norm_score = (score - min_score) / (max_score - min_score)
+        if norm_score < score_thres:
+            continue
+        candidates_pq.push(pos, -norm_score)  # because smaller value has larger priority
+    positions = []
+    while not candidates_pq.isEmpty() and len(positions) < num_nodes:
+        positions.append(candidates_pq.pop())
 
     # The following is modified based on _sample_topo_map in topo2d
     # Create nodes
