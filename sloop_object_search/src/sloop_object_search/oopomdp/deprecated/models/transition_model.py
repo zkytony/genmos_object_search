@@ -1,11 +1,89 @@
 import math
+
+from ...models.sensors import yaw_facing, get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
+from sloop_object_search.oopomdp.domain.action import MotionAction, LookAction, FindAction, MotionActionTopo
 from sloop_object_search.oopomdp.models.transition_model import RobotTransitionModel
 from sloop_object_search.oopomdp.models.sensors import get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
+from sloop_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
 from sloop_object_search.utils.math import (fround,
                                             to_rad,
                                             R_quat,
                                             euler_to_quat,
                                             proj)
+
+
+##################### Robot Transition (Topo) ##############################
+class RobotTransTopo(RobotTransitionModel):
+    def __init__(self, robot_id, target_ids, topo_map,
+                 detection_models, h_angle_res=45.0, no_look=False):
+        """
+        h_angle_res (float): resolution of horizontal rotation
+            angle (in degrees) considered at the low level. It
+            is used to create the set of rotation angles, which is used
+            to sample a rotation angle facing the target as a
+            result of a topo movement action.
+        """
+        super().__init__(robot_id, detection_models, no_look=no_look)
+        self.topo_map = topo_map
+        self._target_ids = target_ids
+        self._h_angles = [i*h_angle_res
+                          for i in range(int(360/h_angle_res))]
+
+    def sample_motion(self, state, action):
+        srobot = state.s(self.robot_id)
+        if srobot.nid == action.src_nid:
+            next_robot_pos = self.topo_map.nodes[action.dst_nid].pos
+            next_topo_nid = action.dst_nid
+            for target_id in self._target_ids:
+                if target_id not in srobot.objects_found:
+                    starget = state.s(target_id)
+                    # will sample a yaw facing the target object
+                    yaw = yaw_facing(next_robot_pos, starget.loc, self._h_angles)
+                    next_robot_pose = (*next_robot_pos, yaw)
+
+                    return (next_robot_pose, next_topo_nid)
+
+            # If no more target to find, then just keep the current yaw
+            next_robot_pose = (*next_robot_pos, srobot['pose'][2])
+            return (next_robot_pose, next_topo_nid)
+        else:
+            import traceback
+            for line in traceback.format_stack():
+                print(line.strip())
+            print(":::::WARNING::::: Unexpected action {} for robot state {}. Ignoring action".format(action, srobot))
+            return srobot['pose'], srobot['topo_nid']
+
+    def argmax(self, state, action):
+        srobot = state.s(self.robot_id)
+        current_robot_pose = srobot["pose"]
+        next_robot_pose = current_robot_pose
+        next_objects_found = srobot.objects_found
+        next_camera_direction = srobot.camera_direction
+        next_topo_nid = srobot.topo_nid
+        if self._no_look:
+            next_camera_direction = action.name
+
+        if isinstance(action, MotionAction):
+            next_robot_pose, next_topo_nid = self.sample_motion(state, action)
+
+        elif isinstance(action, LookAction):
+            next_camera_direction = action.name
+
+        elif isinstance(action, FindAction):
+            next_objects_found = tuple(
+                set(next_objects_found)
+                | set(self.objects_in_range(current_robot_pose, state)))
+
+        return RobotStateTopo(self.robot_id,
+                              next_robot_pose,
+                              next_objects_found,
+                              next_camera_direction,
+                              next_topo_nid)
+
+
+    def update(self, topo_map):
+        self.topo_map = topo_map
+
 
 ##################### Robot Transition (2D) ##############################
 class RobotTransBasic2D(RobotTransitionModel):

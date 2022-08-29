@@ -1,7 +1,8 @@
 from collections import deque
 import pomdp_py
 from ...domain.action import FindAction
-from ...domain.state import RobotState, RobotStateTopo
+from ...domain.state import RobotState
+from ..domain.state import RobotStateTopo # deprecated
 from ..models.transition_model import RobotTransBasic2D
 from ..models.belief import BeliefBasic2D
 from sloop_object_search.utils.misc import import_class

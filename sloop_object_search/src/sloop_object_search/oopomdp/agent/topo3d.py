@@ -20,20 +20,37 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 self.target_objects, self.search_region,
                 belief_config=self.agent_config["belief"])
         robot_pose = init_robot_pose_dist.mean
-        topo_map = _sample_topo_graph3d(init_object_beliefs,
+        self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose)
+
+
+
+        raise NotImplementedError("good for now")
+
+    def generate_topo_map(self, object_beliefs, robot_pose):
+        """object_beliefs: objid->OctreeBelief.
+        robot_pose: a 7-tuple"""
+        topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
                                         self.search_region,
-                                        self.reachable)
-        open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
-                                       object_beliefs=init_object_beliefs)
-        raise NotImplementedError("good for now")
+                                        self.reachable,
+                                        **self.topo_config.get("sampling", {}))
+        # open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
+        #                                object_beliefs=init_object_beliefs)
+        return topo_map
+
+
+    @property
+    def topo_config(self):
+        return self.agent_config.get("topo", {})
 
     def reachable(self, pos):
         """A position is reachable if it is a valid
         voxel and it is not occupied. Assume 'pos' is a
         position at the ground resolution level"""
-        # todo: temporary; have some buffer zone to occupancy
-        res = 2
+        # res_buf: blows up the voxel at pos to keep some distance to obstacles
+        # It will affect where the topological graph nodes are placed with respect
+        # to obstacles.
+        res = self.topo_config.get("res_buf", 4)
         pos = Octree.increase_res(pos, 1, res)
         return self.search_region.octree_dist.octree.valid_voxel(*pos, res)\
             and not self.search_region.occupied_at(pos, res=res)
