@@ -10,6 +10,7 @@ from sloop_object_search.utils.math import (remap, euclidean_dist,
 from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.utils import open3d_utils
+from sloop_object_search.utils import vedo_utils
 from sloop_object_search.oopomdp.models.grid_map import GridMap
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
@@ -288,8 +289,8 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
 
     ## Debugging
     if debug:
-        open3d_utils.draw_search_region2d(return_search_region,
-                                          grid_robot_position=grid_robot_position,
-                                          points=points)
+        vedo_utils.draw_search_region2d(return_search_region,
+                                        grid_robot_position=grid_robot_position,
+                                        points=points)
 
     return return_search_region

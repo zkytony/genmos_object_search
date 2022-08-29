@@ -1,5 +1,6 @@
 import open3d as o3d
 import numpy as np
+import random
 from sloop_object_search.utils.colors import color_map, cmaps
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
@@ -42,6 +43,21 @@ def cube_unfilled(scale=1, color=[1,0,0]):
         lines=o3d.utility.Vector2iVector(lines),
     )
     return line_set
+
+
+def cube_filled(scale=1, color=[1,0,0], alpha=1.0, name=None, with_border=False):
+    """Note : This doesn't return a regular TriangleMesh. To
+    draw this, need to call open3d.visualization.draw. May not
+    be compatible with other draws"""
+    box = o3d.geometry.TriangleMesh.create_box()
+    box.scale(scale, center=box.get_center())
+    box.paint_uniform_color(color)
+    mat = o3d.visualization.rendering.MaterialRecord()
+    mat.shader = "defaultLitTransparency"
+    mat.base_color = np.array([1, 1, 1, alpha])
+    if name is None:
+        name = "cube{}".format(random.randint(1000, 200000))#"cubefilled-{}".format(color + [alpha])
+    return {'name': name, 'geometry': box, 'material': mat}
 
 
 def draw_search_region3d(search_region, octree_dist=None, points=None,
@@ -112,14 +128,16 @@ def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
         *Octree.increase_res(v[:3], 1, v[3]), v[3])
              for v in voxels]
     for i in range(len(vp)):
+        if color_by_prob:
+            color = color_map(probs[i], [min(probs), max(probs)], cmap)
+            alpha = math_utils.remap(probs[i], min(probs)-0.00001, max(probs), 0.001, 0.8)
+        else:
+            color = [0.9, 0.1, 0.1]
+            alpha = 0.6
         pos = vp[i]
         size = vr[i]  # cube size in meters
         mesh_box = cube_unfilled(scale=size)
         mesh_box.translate(np.asarray(pos))
-        if color_by_prob:
-            color = color_map(probs[i], [min(probs), max(probs)], cmap)
-        else:
-            color = [0.9, 0.1, 0.1]
         mesh_box.paint_uniform_color(color)
         geometries.append(mesh_box)
     if viz:
@@ -132,7 +150,6 @@ def draw_octree_dist_in_search_region(octree_dist, search_region, points=None):
 
 
 def draw_search_region2d(search_region, grid_robot_position=None, points=None):
-
     if not isinstance(search_region, SearchRegion2D):
         raise TypeError("search region must be SearchRegion2D")
 
