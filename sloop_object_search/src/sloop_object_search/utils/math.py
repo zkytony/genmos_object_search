@@ -194,6 +194,18 @@ def euler_to_quat(thx, thy, thz, order='xyz'):
 def quat_to_euler(x, y, z, w, order='xyz'):
     return scipyR.from_quat([x,y,z,w]).as_euler(order, degrees=True)
 
+def quat_between(v1, v2):
+    """
+    Given two 3D vectors, returns the rotation from v1 to v2
+    in quaternion.
+    https://stackoverflow.com/a/1171995/2893053"""
+    if len(v1) != 3 or len(v2) != 3:
+        raise ValueError("Only applicable to 3D vectors!")
+    qx, qy, qz = np.cross(v1, v2)
+    qw = np.sqrt(np.linalg.norm(v1)**2 * np.linalg.norm(v2)**2) + np.dot(v1, v2)
+    q = np.array([qx, qy, qz, qw])
+    return q / np.linalg.norm(q)
+
 def quat_multiply(quaternion1, quaternion0):
     """Return multiplication of two quaternions.
     >>> q = quaternion_multiply([1, -2, 3, 4], [-5, 6, 7, 8])
