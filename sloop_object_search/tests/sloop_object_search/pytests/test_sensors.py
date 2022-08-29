@@ -26,7 +26,7 @@ from sloop_object_search.oopomdp.models.sensors import (FanSensor,
 from sloop_object_search.utils.math import to_rad, euler_to_quat, quat_to_euler, R_euler
 from sloop_object_search.utils.plotting import plot_pose
 from sloop_object_search.utils.colors import lighter, rgb_to_hex
-from sloop_object_search.utils.open3d_utils import draw_octree_dist, cube_unfilled
+from sloop_object_search.utils import open3d_utils
 from sloop_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
 
 @pytest.fixture
@@ -230,20 +230,31 @@ def camera_far():
 def test_visible_volume(camera_far, occupancy_octree):
     # for debugging, visualize the occupancy octree
     camera = camera_far
-    geometries = open3d_utils.draw_octree_dist(occupancy_octree, viz=True)
+    geometries = open3d_utils.draw_octree_dist(occupancy_octree, viz=False)
 
     # The robot by default looks at -z direction. So, it will
     # have a rotation around x by default
     default_o3d_rotation = [180,0,0]  # don't change this
 
-    rotation = [90,0,0]
-    position = [15, 5, 5]
-    sensor_pose = (*position, *euler_to_quat(*rotation))
+    # To run the default test, uncomment below
+    # rotation = [90,0,0]
+    # position = [15, 5, 5]
+    # sensor_pose = (*position, *euler_to_quat(*rotation))
+    # _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
+
+    # To run test for custom robot pose and object position, uncomment below
+    # object box -- used to test if FOV covers an object
+    obj_pos = (8,27,6)
+    sensor_pose = (20, 20, 10, -0.5, 0.5, -0.5, 0.5)
+    _o3d_rotation = np.array(default_o3d_rotation) + np.array(quat_to_euler(*sensor_pose[3:]))
+
+    obj = o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=1)
+    obj.translate(np.asarray(obj_pos))
+    obj.paint_uniform_color([0.95, 0.5, 0.24])
+    geometries.append(obj)
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
-
-    _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
     arrow.rotate(R_euler(*_o3d_rotation).as_matrix())
     arrow.translate(np.asarray(sensor_pose[:3]))
     arrow.paint_uniform_color([0.4, 0.4, 0.4])
