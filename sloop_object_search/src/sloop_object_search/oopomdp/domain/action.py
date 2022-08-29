@@ -67,27 +67,6 @@ def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False):
     else:
         return [MoveForward, TurnLeft, TurnRight]
 
-################## Topological movement ###########################
-class MotionActionTopo(MotionAction):
-    def __init__(self, src_nid, dst_nid, distance=None,
-                 cost_scaling_factor=1.0, atype="move"):
-        """distance: distance between source and destination nodes.
-                     (ideally, geodesic distance)"""
-        self.src_nid = src_nid
-        self.dst_nid = dst_nid
-        self.distance = distance
-        self._cost_scaling_factor = cost_scaling_factor
-        super().__init__("{}({}->{})".format(atype, self.src_nid, self.dst_nid))
-
-    @property
-    def step_cost(self):
-        return min(-(self.distance * self._cost_scaling_factor), -1)
-
-class StayAction(MotionActionTopo):
-    def __init__(self, nid, cost_scaling_factor=1.0):
-        super().__init__(nid, nid, distance=0.0, cost_scaling_factor=1.0, atype="stay")
-
-
 ##################### 3D Motion Action ##############################
 class MotionAction3D(MotionAction):
     """The motion tuple for 3D is (dx, dy, dz), (dthx, dthy, dthz)
@@ -143,3 +122,24 @@ def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
         action = MotionAction3D(motion, motion_name=f"{scheme}({name})")
         actions.append(action)
     return actions
+
+
+################## Topological movement (General for 2D/3D) ###########################
+class MotionActionTopo(MotionAction):
+    def __init__(self, src_nid, dst_nid, distance=None,
+                 cost_scaling_factor=1.0, atype="move"):
+        """distance: distance between source and destination nodes.
+                     (ideally, geodesic distance)"""
+        self.src_nid = src_nid
+        self.dst_nid = dst_nid
+        self.distance = distance
+        self._cost_scaling_factor = cost_scaling_factor
+        super().__init__("{}({}->{})".format(atype, self.src_nid, self.dst_nid))
+
+    @property
+    def step_cost(self):
+        return min(-(self.distance * self._cost_scaling_factor), -1)
+
+class StayAction(MotionActionTopo):
+    def __init__(self, nid, cost_scaling_factor=1.0):
+        super().__init__(nid, nid, distance=0.0, cost_scaling_factor=1.0, atype="stay")

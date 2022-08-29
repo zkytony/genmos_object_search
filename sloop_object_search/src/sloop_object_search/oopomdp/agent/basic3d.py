@@ -148,8 +148,7 @@ def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_
     return FovVoxels(voxels), visible_volume, obstacles_hit
 
 
-
-#### useful debugging method
+#### useful debugging methods
 import open3d as o3d
 from sloop_object_search.utils.colors import cmaps
 from sloop_object_search.utils.open3d_utils\
