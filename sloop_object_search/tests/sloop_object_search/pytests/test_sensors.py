@@ -230,7 +230,7 @@ def camera_far():
 def test_visible_volume(camera_far, occupancy_octree):
     # for debugging, visualize the occupancy octree
     camera = camera_far
-    geometries = draw_octree_dist(occupancy_octree, viz=False)
+    geometries = open3d_utils.draw_octree_dist(occupancy_octree, viz=True)
 
     # The robot by default looks at -z direction. So, it will
     # have a rotation around x by default
