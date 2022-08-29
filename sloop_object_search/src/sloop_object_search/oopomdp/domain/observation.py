@@ -75,7 +75,9 @@ class ObjectDetection(pomdp_py.SimpleObservation):
     """Observation of a target object's location"""
     NULL = None  # empty
     NO_POSE = "no_pose"
-    def __init__(self, objid, pose, sizes=None):
+    def __init__(self, objid, pose, sizes=None,
+                 pos_tol=OBJECT_POS_TOL,
+                 rot_tol=OBJECT_ROT_TOL):
         """
         pose: Either a single tuple for position-only,
                 or a tuple (position, orientation).
@@ -89,6 +91,8 @@ class ObjectDetection(pomdp_py.SimpleObservation):
             if pose != ObjectDetection.NULL:
                 sizes = (1, 1, 1)
         self._sizes = sizes
+        self.pos_tol = pos_tol
+        self.rot_tol = rot_tol
         super().__init__((objid, pose))
 
     @property
@@ -102,14 +106,14 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         if self.loc is None:
             loc_hash = hash(None)
         else:
-            loc_hash = hash(self.loc[i] // OBJECT_POS_TOL for i in self.loc)
+            loc_hash = hash(self.loc[i] // self.pos_tol for i in self.loc)
         return hash((self.objid, loc_hash))
 
     def __eq__(self, other):
         if isinstance(other, ObjectDetection):
             return self.objid == other.objid\
                 and pose_eq_approx(self.pose, other.pose,
-                                   OBJECT_POS_TOL, OBJECT_ROT_TOL,
+                                   self.pos_tol, self.rot_tol,
                                    is_3d=self.is_3d)
 
     @property
@@ -167,11 +171,14 @@ class ObjectDetection(pomdp_py.SimpleObservation):
 
 class RobotLocalization(pomdp_py.SimpleObservation):
     """This is equal to a pose tuple if it is equal to the mean"""
-    def __init__(self, robot_id, robot_pose, cov=None):
+    def __init__(self, robot_id, robot_pose, cov=None,
+                 pos_tol=ROBOT_POS_TOL, rot_tol=ROBOT_ROT_TOL):
         """cov: covariance matrix for the robot pose observation."""
         if cov is None:
             cov = np.zeros((len(robot_pose), len(robot_pose)))
         self._cov = cov
+        self.pos_tol = pos_tol
+        self.rot_tol = rot_tol
         data = (robot_id, robot_pose)
         super().__init__(data)
 
@@ -209,7 +216,7 @@ class RobotLocalization(pomdp_py.SimpleObservation):
 
     def __hash__(self):
         return hash((self.robot_id,
-                     (self.loc[i] // POS_TOL
+                     (self.loc[i] // self.pos_tol
                       for i in self.loc)))
 
     def __eq__(self, other):
@@ -218,11 +225,11 @@ class RobotLocalization(pomdp_py.SimpleObservation):
         if isinstance(other, RobotLocalization):
             return self.robot_id == other.robot_id\
                 and pose_eq_approx(self.pose, other.mean,
-                                   ROBOT_POS_TOL, ROBOT_ROT_TOL,
+                                   self.pos_tol, self.rot_tol,
                                    is_3d=self.is_3d)
         elif isinstance(other, tuple):
             return pose_eq_approx(self.pose, other,
-                                  ROBOT_POS_TOL, ROBOT_ROT_TOL,
+                                  self.pos_tol, self.rot_tol,
                                   is_3d=self.is_3d)
         else:
             return False
@@ -236,7 +243,8 @@ class RobotLocalization(pomdp_py.SimpleObservation):
 
 
 class RobotObservation(pomdp_py.SimpleObservation):
-    def __init__(self, robot_id, robot_pose_est, objects_found, camera_direction, *args):
+    def __init__(self, robot_id, robot_pose_est, objects_found,
+                 camera_direction, *args):
         """
         'robot_pose_est' should be a RobotLocalization, if this observation
         is created based on real robot observation. It should be a tuple if
@@ -298,15 +306,21 @@ class RobotObservation(pomdp_py.SimpleObservation):
 
 
 class RobotObservationTopo(RobotObservation):
-    def __init__(self, robot_id, robot_pose_est, objects_found, camera_direction, topo_nid):
+    def __init__(self, robot_id, robot_pose_est, objects_found,
+                 camera_direction, topo_nid, topo_map_hashcode):
         super().__init__(robot_id,
                          robot_pose_est,
                          objects_found,
                          camera_direction,
-                         topo_nid)
+                         topo_nid,
+                         topo_map_hashcode)
 
     @property
     def topo_nid(self):
+        return self.data[-2]
+
+    @property
+    def topo_map_hashcode(self):
         return self.data[-1]
 
     @staticmethod
@@ -316,6 +330,10 @@ class RobotObservationTopo(RobotObservation):
                                     srobot['objects_found'],
                                     srobot['camera_direction'],
                                     srobot['topo_nid'])
+
+    def __hash__(self):
+        return hash((self.robot_id, self.topo_nid, self.topo_map_hashcode,
+                     self.objects_found))
 
 
 class GMOSObservation(pomdp_py.Observation):
