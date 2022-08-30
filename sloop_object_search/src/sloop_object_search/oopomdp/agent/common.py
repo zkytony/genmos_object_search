@@ -115,11 +115,10 @@ class MosAgent(pomdp_py.Agent):
 
         self.agent_config = agent_config
         self.search_region = search_region
-        robot = agent_config["robot"]
-        objects = agent_config["objects"]
+        robot_config = agent_config["robot"]
         self.no_look = agent_config.get("no_look", True)
-        self.robot_id = robot['id']
-        self.target_objects = {target_id: objects[target_id]
+        self.robot_id = robot_config['id']
+        self.target_objects = {target_id: agent_config["objects"][target_id]
                                for target_id in self.agent_config["targets"]}
 
         # Belief
@@ -128,17 +127,16 @@ class MosAgent(pomdp_py.Agent):
 
         # Observation Model (Mos)
         self.detection_models = self.init_detection_models()
-        self.localization_model = interpret_localization_model(robot)
-        self.robot_observation_model = RobotObservationModel(
-            robot['id'], localization_model=self.localization_model)
+        localization_model = interpret_localization_model(robot_config)
+        self.robot_observation_model = self.init_robot_observation_model(localization_model)
         observation_model = GMOSObservationModel(
-            robot["id"], self.detection_models,
+            self.robot_id, self.detection_models,
             robot_observation_model=self.robot_observation_model,
             no_look=self.no_look)
 
         # Reward model
         target_ids = self.agent_config["targets"]
-        reward_model = GoalBasedRewardModel(target_ids, robot_id=robot["id"])
+        reward_model = GoalBasedRewardModel(target_ids, robot_id=self.robot_id)
 
         # Transition and policy models
         transition_model, policy_model = self.init_transition_and_policy_models()
@@ -152,6 +150,11 @@ class MosAgent(pomdp_py.Agent):
     @property
     def robot_transition_model(self):
         return self.policy_model.robot_trans_model
+
+    def init_robot_observation_model(self, localization_model):
+        robot_observation_model = RobotObservationModel(
+            self.robot_id, localization_model=localization_model)
+        return robot_observation_model
 
     def init_detection_models(self):
         detection_models = init_detection_models(self.agent_config)

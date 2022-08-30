@@ -8,6 +8,7 @@ from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from ..domain.state import RobotStateTopo
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo3D
+from ..models.observation_model import RobotObservationModelTopo
 from .common import MosAgent, SloopMosAgent, init_object_transition_models
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue
@@ -35,6 +36,11 @@ class MosAgentTopo3D(MosAgentBasic3D):
         init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
                                          **init_object_beliefs})
         return init_belief
+
+    def init_robot_observation_model(self, localization_model):
+        robot_observation_model = RobotObservationModelTopo(
+            self.robot_id, localization_model=localization_model)
+        return robot_observation_model
 
     def init_transition_and_policy_models(self):
         target_ids = self.agent_config["targets"]
@@ -82,6 +88,13 @@ class MosAgentTopo3D(MosAgentBasic3D):
         pos = Octree.increase_res(pos, 1, res)
         return self.search_region.octree_dist.octree.valid_voxel(*pos, res)\
             and not self.search_region.occupied_at(pos, res=res)
+
+    def update_robot_belief(self, observation, action=None, **kwargs):
+        current_srobot_mpe = self.belief.mpe().s(self.robot_id)
+        super().update_robot_belief(observation, action=action,
+                                    robot_state_class=RobotStateTopo,
+                                    topo_nid=current_srobot_mpe.topo_nid,
+                                    topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
 
 
 def _sample_topo_graph3d(init_object_beliefs,

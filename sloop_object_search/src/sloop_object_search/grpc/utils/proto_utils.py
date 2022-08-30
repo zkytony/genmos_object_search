@@ -182,7 +182,21 @@ def pomdp_action_to_proto(action, agent, header=None):
         if isinstance(action, slpa.MotionAction2D):
             raise NotImplementedError()
         elif isinstance(action, slpa.MotionActionTopo):
-            raise NotImplementedError()
+            # then sample a random state from agent's belief, then
+            # use the resulting pose as the goal viewpoint -> this
+            # results in a rotation that faces the target while respecting
+            # the agent's current belief.
+            rnd_state = agent.belief.random()
+            robot_trans_model = agent.transition_model[agent.robot_id]
+            goal_pose_pomdp = robot_trans_model.sample(rnd_state, action).pose
+            goal_pose_world = agent.search_region.to_world_pose(goal_pose_pomdp)
+            goal_pose_world_pb = posetuple_to_poseproto(goal_pose_world)
+            action_pb = MoveViewpoint(header=header,
+                                      robot_id=agent.robot_id,
+                                      dest_3d=goal_pose_world_pb,
+                                      name=action.name,
+                                      expected_cost=action.step_cost)
+
         elif isinstance(action, slpa.MotionAction3D):
             # we need to convert the position change from pomdp frame to
             # the world frame.
@@ -375,15 +389,14 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
         objects_found |= set(request.objects_found.object_ids)
     objects_found = tuple(sorted(objects_found))
 
-    # Now create the robot observation object
-    robot_observation_class = agent.robot_observation_model.observation_class
-    if isinstance(robot_observation_class, slpo.RobotObservationTopo):
-        raise NotImplementedError("Not considering topo yet")
-    else:
-        robot_observation = slpo.RobotObservation(agent.robot_id,
-                                                  robot_pose_estimate_pomdp,
-                                                  objects_found,
-                                                  camera_direction)
+    # Now create the robot observation object; Note that even for
+    # topo agents, they will only receive RobotObservation instead
+    # of RobotObservationTopo because the client has no obligation
+    # to maintain the topo map or node ids.
+    robot_observation = slpo.RobotObservation(agent.robot_id,
+                                              robot_pose_estimate_pomdp,
+                                              objects_found,
+                                              camera_direction)
     return robot_observation
 
 def pomdp_observation_from_request(request, agent, action=None):

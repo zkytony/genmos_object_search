@@ -6,8 +6,10 @@ from sloop_object_search.utils.math import euclidean_dist, normalize
 from ..domain.state import RobotStateTopo
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo2D
+from ..models.observation_model import RobotObservationModelTopo
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
-from .common import MosAgent, SloopMosAgent, init_object_transition_models
+from .common import (MosAgent, SloopMosAgent, init_object_transition_models,
+                     interpret_localization_model)
 from . import belief
 
 class MosAgentTopo2D(MosAgent):
@@ -35,6 +37,11 @@ class MosAgentTopo2D(MosAgent):
         init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
                                          **init_object_beliefs})
         return init_belief
+
+    def init_robot_observation_model(self, localization_model):
+        robot_observation_model = RobotObservationModelTopo(
+            self.robot_id, localization_model=localization_model)
+        return robot_observation_model
 
     def init_transition_and_policy_models(self):
         target_ids = self.agent_config["targets"]
