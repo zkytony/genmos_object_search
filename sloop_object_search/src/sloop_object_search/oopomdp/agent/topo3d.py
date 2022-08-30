@@ -97,10 +97,12 @@ class MosAgentTopo3D(MosAgentBasic3D):
                                     topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
 
     def update_belief(self, observation, action=None, debug=False, **kwargs):
-        super().update_belief(observation, action=action, debug=debug, **kwargs)
+        """returns auxiliary info generated from belief update (for
+        debugging or visualization purposes"""
+        _aux = super().update_belief(observation, action=action, debug=debug, **kwargs)
         if isinstance(observation, RobotObservation):
             # The observation doesn't lead to object belief change. We are done.
-            return
+            return _aux
 
         robot_observation = observation.z(self.robot_id)
 
@@ -109,10 +111,13 @@ class MosAgentTopo3D(MosAgentBasic3D):
                           for objid in self.belief.object_beliefs
                           if objid != self.robot_id\
                           and objid not in robot_observation.objects_found}
-        if self.should_resample_topo_map(object_beliefs):
-            robot_pose = robot_observation.pose
-            topo_map = self.generate_topo_map(
-                object_beliefs, robot_pose, debug=debug)
+        if len(object_beliefs) > 0:
+            # there exist unfound objects
+            if self.should_resample_topo_map(object_beliefs):
+                robot_pose = robot_observation.pose
+                topo_map = self.generate_topo_map(
+                    object_beliefs, robot_pose, debug=debug)
+        return _aux
 
     def update_topo_map(self, topo_map, robot_observation):
         """
