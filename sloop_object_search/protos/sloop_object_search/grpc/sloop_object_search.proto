@@ -7,7 +7,6 @@ package sloop_object_search.grpc;
 import "sloop_object_search/grpc/common.proto";
 import "sloop_object_search/grpc/observation.proto";
 import "sloop_object_search/grpc/action.proto";
-import "google/protobuf/any.proto";
 
 
 service SloopObjectSearch {
@@ -268,32 +267,6 @@ message RobotBelief {
   // objects found
   ObjectsFound objects_found = 3;
 
-  // The following are useful if the robot plans over a topological graph
-  optional string topo_nid = 4;
-  optional string topo_map_hash = 5;
-  optional TopoMap topo_map = 6;
-
   // local or global scope
-  Scope scope = 7;
-}
-
-
-message TopoMap {
-  repeated TopoEdge edges = 1;
-}
-
-message TopoEdge {
-  string id = 1;
-  TopoNode node1 = 2;
-  TopoNode node2 = 3;
-  google.protobuf.Any data = 4;
-}
-
-message TopoNode {
-  string id = 1;
-  oneof pos {
-    Vec3 pos_3d = 2;
-    Vec2 pos_2d = 3;
-  }
-  google.protobuf.Any data = 4;
+  Scope scope = 4;
 }

@@ -16,10 +16,9 @@ _sym_db = _symbol_database.Default()
 from sloop_object_search.grpc import common_pb2 as sloop__object__search_dot_grpc_dot_common__pb2
 from sloop_object_search.grpc import observation_pb2 as sloop__object__search_dot_grpc_dot_observation__pb2
 from sloop_object_search.grpc import action_pb2 as sloop__object__search_dot_grpc_dot_action__pb2
-from google.protobuf import any_pb2 as google_dot_protobuf_dot_any__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2sloop_object_search/grpc/sloop_object_search.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\x1a*sloop_object_search/grpc/observation.proto\x1a%sloop_object_search/grpc/action.proto\x1a\x19google/protobuf/any.proto\"h\n\x12\x43reateAgentRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x03 \x01(\x0c\"\x87\x01\n\x10\x43reateAgentReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"c\n\x1dGetAgentCreationStatusRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\"\x99\x01\n\x1bGetAgentCreationStatusReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x16\n\x0estatus_message\x18\x03 \x01(\t\"\xf6\x03\n\x19UpdateSearchRegionRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\r\n\x05is_3d\x18\x03 \x01(\x08\x12\x37\n\nrobot_pose\x18\x04 \x01(\x0b\x32#.sloop_object_search.grpc.RobotPose\x12\x41\n\x0eoccupancy_grid\x18\x05 \x01(\x0b\x32\'.sloop_object_search.grpc.OccupancyGridH\x00\x12;\n\x0bpoint_cloud\x18\x06 \x01(\x0b\x32$.sloop_object_search.grpc.PointCloudH\x00\x12Q\n\x17search_region_params_2d\x18\x07 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams2DH\x01\x12Q\n\x17search_region_params_3d\x18\x08 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams3DH\x01\x42\x0f\n\rsearch_regionB\x16\n\x14search_region_params\"\x8e\x01\n\x17UpdateSearchRegionReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x89\x04\n\x19ProcessObservationRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x37\n\nrobot_pose\x18\x03 \x01(\x0b\x32#.sloop_object_search.grpc.RobotPose\x12=\n\robjects_found\x18\x06 \x01(\x0b\x32&.sloop_object_search.grpc.ObjectsFound\x12K\n\x11object_detections\x18\x04 \x01(\x0b\x32..sloop_object_search.grpc.ObjectDetectionArrayH\x00\x12\x36\n\x08language\x18\x05 \x01(\x0b\x32\".sloop_object_search.grpc.LanguageH\x00\x12\x16\n\taction_id\x18\x07 \x01(\tH\x01\x88\x01\x01\x12\x1c\n\x0f\x61\x63tion_finished\x18\x08 \x01(\x08H\x02\x88\x01\x01\x12\x17\n\nreturn_fov\x18\t \x01(\x08H\x03\x88\x01\x01\x12\x12\n\x05\x64\x65\x62ug\x18\n \x01(\x08H\x04\x88\x01\x01\x42\r\n\x0bobservationB\x0c\n\n_action_idB\x12\n\x10_action_finishedB\r\n\x0b_return_fovB\x08\n\x06_debug\"\x9c\x01\n\x17ProcessObservationReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\x0c\n\x04\x66ovs\x18\x04 \x01(\x0c\"\xa1\x01\n\x17GetObjectBeliefsRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x12\n\nobject_ids\x18\x03 \x03(\t\x12.\n\x05scope\x18\x04 \x01(\x0e\x32\x1f.sloop_object_search.grpc.Scope\"\xcc\x01\n\x15GetObjectBeliefsReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12>\n\x0eobject_beliefs\x18\x04 \x03(\x0b\x32&.sloop_object_search.grpc.ObjectBelief\"\x8b\x01\n\x15GetRobotBeliefRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12.\n\x05scope\x18\x03 \x01(\x0e\x32\x1f.sloop_object_search.grpc.Scope\"\xc7\x01\n\x13GetRobotBeliefReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12;\n\x0crobot_belief\x18\x04 \x01(\x0b\x32%.sloop_object_search.grpc.RobotBelief\"}\n\x14\x43reatePlannerRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x04 \x01(\x0c\x12\x11\n\toverwrite\x18\x05 \x01(\x08\"\x89\x01\n\x12\x43reatePlannerReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"u\n\x11PlanActionRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x12\n\x05\x64\x65\x62ug\x18\x03 \x01(\x08H\x00\x88\x01\x01\x42\x08\n\x06_debug\"\xd9\x02\n\x0fPlanActionReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12>\n\x0bmove_action\x18\x04 \x01(\x0b\x32\'.sloop_object_search.grpc.MoveViewpointH\x00\x12\x35\n\x0b\x66ind_action\x18\x05 \x01(\x0b\x32\x1e.sloop_object_search.grpc.FindH\x00\x12=\n\tkv_action\x18\x06 \x01(\x0b\x32(.sloop_object_search.grpc.KeyValueActionH\x00\x12\x11\n\taction_id\x18\x07 \x01(\tB\x08\n\x06\x61\x63tion\"\xfa\x01\n\x14SearchRegionParams2D\x12\x17\n\nlayout_cut\x18\x01 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\tfloor_cut\x18\x02 \x01(\x01H\x01\x88\x01\x01\x12\x16\n\tgrid_size\x18\x03 \x01(\x01H\x02\x88\x01\x01\x12\x17\n\nbrush_size\x18\x04 \x01(\x01H\x03\x88\x01\x01\x12\x18\n\x0bregion_size\x18\x05 \x01(\x01H\x04\x88\x01\x01\x12\x12\n\x05\x64\x65\x62ug\x18\x06 \x01(\x08H\x05\x88\x01\x01\x42\r\n\x0b_layout_cutB\x0c\n\n_floor_cutB\x0c\n\n_grid_sizeB\r\n\x0b_brush_sizeB\x0e\n\x0c_region_sizeB\x08\n\x06_debug\"\xaa\x02\n\x14SearchRegionParams3D\x12\x18\n\x0boctree_size\x18\x01 \x01(\x05H\x00\x88\x01\x01\x12$\n\x17search_space_resolution\x18\x02 \x01(\x01H\x01\x88\x01\x01\x12\x12\n\x05\x64\x65\x62ug\x18\x03 \x01(\x08H\x02\x88\x01\x01\x12\x1a\n\rregion_size_x\x18\x04 \x01(\x01H\x03\x88\x01\x01\x12\x1a\n\rregion_size_y\x18\x05 \x01(\x01H\x04\x88\x01\x01\x12\x1a\n\rregion_size_z\x18\x06 \x01(\x01H\x05\x88\x01\x01\x42\x0e\n\x0c_octree_sizeB\x1a\n\x18_search_space_resolutionB\x08\n\x06_debugB\x10\n\x0e_region_size_xB\x10\n\x0e_region_size_yB\x10\n\x0e_region_size_z\"\xa8\x01\n\x0cObjectBelief\x12\x11\n\tobject_id\x18\x01 \x01(\t\x12\x31\n\x04\x64ist\x18\x02 \x01(\x0b\x32#.sloop_object_search.grpc.Histogram\x12\x15\n\x08\x64ist_obj\x18\x03 \x01(\x0cH\x00\x88\x01\x01\x12.\n\x05scope\x18\x04 \x01(\x0e\x32\x1f.sloop_object_search.grpc.ScopeB\x0b\n\t_dist_obj\"\xda\x02\n\x0bRobotBelief\x12\x10\n\x08robot_id\x18\x01 \x01(\t\x12\x31\n\x04pose\x18\x02 \x01(\x0b\x32#.sloop_object_search.grpc.RobotPose\x12=\n\robjects_found\x18\x03 \x01(\x0b\x32&.sloop_object_search.grpc.ObjectsFound\x12\x15\n\x08topo_nid\x18\x04 \x01(\tH\x00\x88\x01\x01\x12\x1a\n\rtopo_map_hash\x18\x05 \x01(\tH\x01\x88\x01\x01\x12\x38\n\x08topo_map\x18\x06 \x01(\x0b\x32!.sloop_object_search.grpc.TopoMapH\x02\x88\x01\x01\x12.\n\x05scope\x18\x07 \x01(\x0e\x32\x1f.sloop_object_search.grpc.ScopeB\x0b\n\t_topo_nidB\x10\n\x0e_topo_map_hashB\x0b\n\t_topo_map\"<\n\x07TopoMap\x12\x31\n\x05\x65\x64ges\x18\x01 \x03(\x0b\x32\".sloop_object_search.grpc.TopoEdge\"\xa0\x01\n\x08TopoEdge\x12\n\n\x02id\x18\x01 \x01(\t\x12\x31\n\x05node1\x18\x02 \x01(\x0b\x32\".sloop_object_search.grpc.TopoNode\x12\x31\n\x05node2\x18\x03 \x01(\x0b\x32\".sloop_object_search.grpc.TopoNode\x12\"\n\x04\x64\x61ta\x18\x04 \x01(\x0b\x32\x14.google.protobuf.Any\"\xa5\x01\n\x08TopoNode\x12\n\n\x02id\x18\x01 \x01(\t\x12\x30\n\x06pos_3d\x18\x02 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3H\x00\x12\x30\n\x06pos_2d\x18\x03 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec2H\x00\x12\"\n\x04\x64\x61ta\x18\x04 \x01(\x0b\x32\x14.google.protobuf.AnyB\x05\n\x03pos*\x1e\n\x05Scope\x12\t\n\x05LOCAL\x10\x00\x12\n\n\x06GLOBAL\x10\x01\x32\xd2\x07\n\x11SloopObjectSearch\x12i\n\x0b\x43reateAgent\x12,.sloop_object_search.grpc.CreateAgentRequest\x1a*.sloop_object_search.grpc.CreateAgentReply\"\x00\x12\x8a\x01\n\x16GetAgentCreationStatus\x12\x37.sloop_object_search.grpc.GetAgentCreationStatusRequest\x1a\x35.sloop_object_search.grpc.GetAgentCreationStatusReply\"\x00\x12~\n\x12UpdateSearchRegion\x12\x33.sloop_object_search.grpc.UpdateSearchRegionRequest\x1a\x31.sloop_object_search.grpc.UpdateSearchRegionReply\"\x00\x12~\n\x12ProcessObservation\x12\x33.sloop_object_search.grpc.ProcessObservationRequest\x1a\x31.sloop_object_search.grpc.ProcessObservationReply\"\x00\x12x\n\x10GetObjectBeliefs\x12\x31.sloop_object_search.grpc.GetObjectBeliefsRequest\x1a/.sloop_object_search.grpc.GetObjectBeliefsReply\"\x00\x12r\n\x0eGetRobotBelief\x12/.sloop_object_search.grpc.GetRobotBeliefRequest\x1a-.sloop_object_search.grpc.GetRobotBeliefReply\"\x00\x12o\n\rCreatePlanner\x12..sloop_object_search.grpc.CreatePlannerRequest\x1a,.sloop_object_search.grpc.CreatePlannerReply\"\x00\x12\x66\n\nPlanAction\x12+.sloop_object_search.grpc.PlanActionRequest\x1a).sloop_object_search.grpc.PlanActionReply\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2sloop_object_search/grpc/sloop_object_search.proto\x12\x18sloop_object_search.grpc\x1a%sloop_object_search/grpc/common.proto\x1a*sloop_object_search/grpc/observation.proto\x1a%sloop_object_search/grpc/action.proto\"h\n\x12\x43reateAgentRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x03 \x01(\x0c\"\x87\x01\n\x10\x43reateAgentReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"c\n\x1dGetAgentCreationStatusRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\"\x99\x01\n\x1bGetAgentCreationStatusReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x16\n\x0estatus_message\x18\x03 \x01(\t\"\xf6\x03\n\x19UpdateSearchRegionRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\r\n\x05is_3d\x18\x03 \x01(\x08\x12\x37\n\nrobot_pose\x18\x04 \x01(\x0b\x32#.sloop_object_search.grpc.RobotPose\x12\x41\n\x0eoccupancy_grid\x18\x05 \x01(\x0b\x32\'.sloop_object_search.grpc.OccupancyGridH\x00\x12;\n\x0bpoint_cloud\x18\x06 \x01(\x0b\x32$.sloop_object_search.grpc.PointCloudH\x00\x12Q\n\x17search_region_params_2d\x18\x07 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams2DH\x01\x12Q\n\x17search_region_params_3d\x18\x08 \x01(\x0b\x32..sloop_object_search.grpc.SearchRegionParams3DH\x01\x42\x0f\n\rsearch_regionB\x16\n\x14search_region_params\"\x8e\x01\n\x17UpdateSearchRegionReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"\x89\x04\n\x19ProcessObservationRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x37\n\nrobot_pose\x18\x03 \x01(\x0b\x32#.sloop_object_search.grpc.RobotPose\x12=\n\robjects_found\x18\x06 \x01(\x0b\x32&.sloop_object_search.grpc.ObjectsFound\x12K\n\x11object_detections\x18\x04 \x01(\x0b\x32..sloop_object_search.grpc.ObjectDetectionArrayH\x00\x12\x36\n\x08language\x18\x05 \x01(\x0b\x32\".sloop_object_search.grpc.LanguageH\x00\x12\x16\n\taction_id\x18\x07 \x01(\tH\x01\x88\x01\x01\x12\x1c\n\x0f\x61\x63tion_finished\x18\x08 \x01(\x08H\x02\x88\x01\x01\x12\x17\n\nreturn_fov\x18\t \x01(\x08H\x03\x88\x01\x01\x12\x12\n\x05\x64\x65\x62ug\x18\n \x01(\x08H\x04\x88\x01\x01\x42\r\n\x0bobservationB\x0c\n\n_action_idB\x12\n\x10_action_finishedB\r\n\x0b_return_fovB\x08\n\x06_debug\"\x9c\x01\n\x17ProcessObservationReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\x0c\n\x04\x66ovs\x18\x04 \x01(\x0c\"\xa1\x01\n\x17GetObjectBeliefsRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x12\n\nobject_ids\x18\x03 \x03(\t\x12.\n\x05scope\x18\x04 \x01(\x0e\x32\x1f.sloop_object_search.grpc.Scope\"\xcc\x01\n\x15GetObjectBeliefsReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12>\n\x0eobject_beliefs\x18\x04 \x03(\x0b\x32&.sloop_object_search.grpc.ObjectBelief\"\x8b\x01\n\x15GetRobotBeliefRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12.\n\x05scope\x18\x03 \x01(\x0e\x32\x1f.sloop_object_search.grpc.Scope\"\xc7\x01\n\x13GetRobotBeliefReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12;\n\x0crobot_belief\x18\x04 \x01(\x0b\x32%.sloop_object_search.grpc.RobotBelief\"}\n\x14\x43reatePlannerRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x0e\n\x06\x63onfig\x18\x04 \x01(\x0c\x12\x11\n\toverwrite\x18\x05 \x01(\x08\"\x89\x01\n\x12\x43reatePlannerReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\"u\n\x11PlanActionRequest\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x10\n\x08robot_id\x18\x02 \x01(\t\x12\x12\n\x05\x64\x65\x62ug\x18\x03 \x01(\x08H\x00\x88\x01\x01\x42\x08\n\x06_debug\"\xd9\x02\n\x0fPlanActionReply\x12\x30\n\x06header\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Header\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .sloop_object_search.grpc.Status\x12\x0f\n\x07message\x18\x03 \x01(\t\x12>\n\x0bmove_action\x18\x04 \x01(\x0b\x32\'.sloop_object_search.grpc.MoveViewpointH\x00\x12\x35\n\x0b\x66ind_action\x18\x05 \x01(\x0b\x32\x1e.sloop_object_search.grpc.FindH\x00\x12=\n\tkv_action\x18\x06 \x01(\x0b\x32(.sloop_object_search.grpc.KeyValueActionH\x00\x12\x11\n\taction_id\x18\x07 \x01(\tB\x08\n\x06\x61\x63tion\"\xfa\x01\n\x14SearchRegionParams2D\x12\x17\n\nlayout_cut\x18\x01 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\tfloor_cut\x18\x02 \x01(\x01H\x01\x88\x01\x01\x12\x16\n\tgrid_size\x18\x03 \x01(\x01H\x02\x88\x01\x01\x12\x17\n\nbrush_size\x18\x04 \x01(\x01H\x03\x88\x01\x01\x12\x18\n\x0bregion_size\x18\x05 \x01(\x01H\x04\x88\x01\x01\x12\x12\n\x05\x64\x65\x62ug\x18\x06 \x01(\x08H\x05\x88\x01\x01\x42\r\n\x0b_layout_cutB\x0c\n\n_floor_cutB\x0c\n\n_grid_sizeB\r\n\x0b_brush_sizeB\x0e\n\x0c_region_sizeB\x08\n\x06_debug\"\xaa\x02\n\x14SearchRegionParams3D\x12\x18\n\x0boctree_size\x18\x01 \x01(\x05H\x00\x88\x01\x01\x12$\n\x17search_space_resolution\x18\x02 \x01(\x01H\x01\x88\x01\x01\x12\x12\n\x05\x64\x65\x62ug\x18\x03 \x01(\x08H\x02\x88\x01\x01\x12\x1a\n\rregion_size_x\x18\x04 \x01(\x01H\x03\x88\x01\x01\x12\x1a\n\rregion_size_y\x18\x05 \x01(\x01H\x04\x88\x01\x01\x12\x1a\n\rregion_size_z\x18\x06 \x01(\x01H\x05\x88\x01\x01\x42\x0e\n\x0c_octree_sizeB\x1a\n\x18_search_space_resolutionB\x08\n\x06_debugB\x10\n\x0e_region_size_xB\x10\n\x0e_region_size_yB\x10\n\x0e_region_size_z\"\xa8\x01\n\x0cObjectBelief\x12\x11\n\tobject_id\x18\x01 \x01(\t\x12\x31\n\x04\x64ist\x18\x02 \x01(\x0b\x32#.sloop_object_search.grpc.Histogram\x12\x15\n\x08\x64ist_obj\x18\x03 \x01(\x0cH\x00\x88\x01\x01\x12.\n\x05scope\x18\x04 \x01(\x0e\x32\x1f.sloop_object_search.grpc.ScopeB\x0b\n\t_dist_obj\"\xc1\x01\n\x0bRobotBelief\x12\x10\n\x08robot_id\x18\x01 \x01(\t\x12\x31\n\x04pose\x18\x02 \x01(\x0b\x32#.sloop_object_search.grpc.RobotPose\x12=\n\robjects_found\x18\x03 \x01(\x0b\x32&.sloop_object_search.grpc.ObjectsFound\x12.\n\x05scope\x18\x04 \x01(\x0e\x32\x1f.sloop_object_search.grpc.Scope*\x1e\n\x05Scope\x12\t\n\x05LOCAL\x10\x00\x12\n\n\x06GLOBAL\x10\x01\x32\xd2\x07\n\x11SloopObjectSearch\x12i\n\x0b\x43reateAgent\x12,.sloop_object_search.grpc.CreateAgentRequest\x1a*.sloop_object_search.grpc.CreateAgentReply\"\x00\x12\x8a\x01\n\x16GetAgentCreationStatus\x12\x37.sloop_object_search.grpc.GetAgentCreationStatusRequest\x1a\x35.sloop_object_search.grpc.GetAgentCreationStatusReply\"\x00\x12~\n\x12UpdateSearchRegion\x12\x33.sloop_object_search.grpc.UpdateSearchRegionRequest\x1a\x31.sloop_object_search.grpc.UpdateSearchRegionReply\"\x00\x12~\n\x12ProcessObservation\x12\x33.sloop_object_search.grpc.ProcessObservationRequest\x1a\x31.sloop_object_search.grpc.ProcessObservationReply\"\x00\x12x\n\x10GetObjectBeliefs\x12\x31.sloop_object_search.grpc.GetObjectBeliefsRequest\x1a/.sloop_object_search.grpc.GetObjectBeliefsReply\"\x00\x12r\n\x0eGetRobotBelief\x12/.sloop_object_search.grpc.GetRobotBeliefRequest\x1a-.sloop_object_search.grpc.GetRobotBeliefReply\"\x00\x12o\n\rCreatePlanner\x12..sloop_object_search.grpc.CreatePlannerRequest\x1a,.sloop_object_search.grpc.CreatePlannerReply\"\x00\x12\x66\n\nPlanAction\x12+.sloop_object_search.grpc.PlanActionRequest\x1a).sloop_object_search.grpc.PlanActionReply\"\x00\x62\x06proto3')
 
 _SCOPE = DESCRIPTOR.enum_types_by_name['Scope']
 Scope = enum_type_wrapper.EnumTypeWrapper(_SCOPE)
@@ -47,9 +46,6 @@ _SEARCHREGIONPARAMS2D = DESCRIPTOR.message_types_by_name['SearchRegionParams2D']
 _SEARCHREGIONPARAMS3D = DESCRIPTOR.message_types_by_name['SearchRegionParams3D']
 _OBJECTBELIEF = DESCRIPTOR.message_types_by_name['ObjectBelief']
 _ROBOTBELIEF = DESCRIPTOR.message_types_by_name['RobotBelief']
-_TOPOMAP = DESCRIPTOR.message_types_by_name['TopoMap']
-_TOPOEDGE = DESCRIPTOR.message_types_by_name['TopoEdge']
-_TOPONODE = DESCRIPTOR.message_types_by_name['TopoNode']
 CreateAgentRequest = _reflection.GeneratedProtocolMessageType('CreateAgentRequest', (_message.Message,), {
   'DESCRIPTOR' : _CREATEAGENTREQUEST,
   '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
@@ -190,79 +186,52 @@ RobotBelief = _reflection.GeneratedProtocolMessageType('RobotBelief', (_message.
   })
 _sym_db.RegisterMessage(RobotBelief)
 
-TopoMap = _reflection.GeneratedProtocolMessageType('TopoMap', (_message.Message,), {
-  'DESCRIPTOR' : _TOPOMAP,
-  '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.TopoMap)
-  })
-_sym_db.RegisterMessage(TopoMap)
-
-TopoEdge = _reflection.GeneratedProtocolMessageType('TopoEdge', (_message.Message,), {
-  'DESCRIPTOR' : _TOPOEDGE,
-  '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.TopoEdge)
-  })
-_sym_db.RegisterMessage(TopoEdge)
-
-TopoNode = _reflection.GeneratedProtocolMessageType('TopoNode', (_message.Message,), {
-  'DESCRIPTOR' : _TOPONODE,
-  '__module__' : 'sloop_object_search.grpc.sloop_object_search_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.TopoNode)
-  })
-_sym_db.RegisterMessage(TopoNode)
-
 _SLOOPOBJECTSEARCH = DESCRIPTOR.services_by_name['SloopObjectSearch']
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _SCOPE._serialized_start=4979
-  _SCOPE._serialized_end=5009
-  _CREATEAGENTREQUEST._serialized_start=229
-  _CREATEAGENTREQUEST._serialized_end=333
-  _CREATEAGENTREPLY._serialized_start=336
-  _CREATEAGENTREPLY._serialized_end=471
-  _GETAGENTCREATIONSTATUSREQUEST._serialized_start=473
-  _GETAGENTCREATIONSTATUSREQUEST._serialized_end=572
-  _GETAGENTCREATIONSTATUSREPLY._serialized_start=575
-  _GETAGENTCREATIONSTATUSREPLY._serialized_end=728
-  _UPDATESEARCHREGIONREQUEST._serialized_start=731
-  _UPDATESEARCHREGIONREQUEST._serialized_end=1233
-  _UPDATESEARCHREGIONREPLY._serialized_start=1236
-  _UPDATESEARCHREGIONREPLY._serialized_end=1378
-  _PROCESSOBSERVATIONREQUEST._serialized_start=1381
-  _PROCESSOBSERVATIONREQUEST._serialized_end=1902
-  _PROCESSOBSERVATIONREPLY._serialized_start=1905
-  _PROCESSOBSERVATIONREPLY._serialized_end=2061
-  _GETOBJECTBELIEFSREQUEST._serialized_start=2064
-  _GETOBJECTBELIEFSREQUEST._serialized_end=2225
-  _GETOBJECTBELIEFSREPLY._serialized_start=2228
-  _GETOBJECTBELIEFSREPLY._serialized_end=2432
-  _GETROBOTBELIEFREQUEST._serialized_start=2435
-  _GETROBOTBELIEFREQUEST._serialized_end=2574
-  _GETROBOTBELIEFREPLY._serialized_start=2577
-  _GETROBOTBELIEFREPLY._serialized_end=2776
-  _CREATEPLANNERREQUEST._serialized_start=2778
-  _CREATEPLANNERREQUEST._serialized_end=2903
-  _CREATEPLANNERREPLY._serialized_start=2906
-  _CREATEPLANNERREPLY._serialized_end=3043
-  _PLANACTIONREQUEST._serialized_start=3045
-  _PLANACTIONREQUEST._serialized_end=3162
-  _PLANACTIONREPLY._serialized_start=3165
-  _PLANACTIONREPLY._serialized_end=3510
-  _SEARCHREGIONPARAMS2D._serialized_start=3513
-  _SEARCHREGIONPARAMS2D._serialized_end=3763
-  _SEARCHREGIONPARAMS3D._serialized_start=3766
-  _SEARCHREGIONPARAMS3D._serialized_end=4064
-  _OBJECTBELIEF._serialized_start=4067
-  _OBJECTBELIEF._serialized_end=4235
-  _ROBOTBELIEF._serialized_start=4238
-  _ROBOTBELIEF._serialized_end=4584
-  _TOPOMAP._serialized_start=4586
-  _TOPOMAP._serialized_end=4646
-  _TOPOEDGE._serialized_start=4649
-  _TOPOEDGE._serialized_end=4809
-  _TOPONODE._serialized_start=4812
-  _TOPONODE._serialized_end=4977
-  _SLOOPOBJECTSEARCH._serialized_start=5012
-  _SLOOPOBJECTSEARCH._serialized_end=5990
+  _SCOPE._serialized_start=4406
+  _SCOPE._serialized_end=4436
+  _CREATEAGENTREQUEST._serialized_start=202
+  _CREATEAGENTREQUEST._serialized_end=306
+  _CREATEAGENTREPLY._serialized_start=309
+  _CREATEAGENTREPLY._serialized_end=444
+  _GETAGENTCREATIONSTATUSREQUEST._serialized_start=446
+  _GETAGENTCREATIONSTATUSREQUEST._serialized_end=545
+  _GETAGENTCREATIONSTATUSREPLY._serialized_start=548
+  _GETAGENTCREATIONSTATUSREPLY._serialized_end=701
+  _UPDATESEARCHREGIONREQUEST._serialized_start=704
+  _UPDATESEARCHREGIONREQUEST._serialized_end=1206
+  _UPDATESEARCHREGIONREPLY._serialized_start=1209
+  _UPDATESEARCHREGIONREPLY._serialized_end=1351
+  _PROCESSOBSERVATIONREQUEST._serialized_start=1354
+  _PROCESSOBSERVATIONREQUEST._serialized_end=1875
+  _PROCESSOBSERVATIONREPLY._serialized_start=1878
+  _PROCESSOBSERVATIONREPLY._serialized_end=2034
+  _GETOBJECTBELIEFSREQUEST._serialized_start=2037
+  _GETOBJECTBELIEFSREQUEST._serialized_end=2198
+  _GETOBJECTBELIEFSREPLY._serialized_start=2201
+  _GETOBJECTBELIEFSREPLY._serialized_end=2405
+  _GETROBOTBELIEFREQUEST._serialized_start=2408
+  _GETROBOTBELIEFREQUEST._serialized_end=2547
+  _GETROBOTBELIEFREPLY._serialized_start=2550
+  _GETROBOTBELIEFREPLY._serialized_end=2749
+  _CREATEPLANNERREQUEST._serialized_start=2751
+  _CREATEPLANNERREQUEST._serialized_end=2876
+  _CREATEPLANNERREPLY._serialized_start=2879
+  _CREATEPLANNERREPLY._serialized_end=3016
+  _PLANACTIONREQUEST._serialized_start=3018
+  _PLANACTIONREQUEST._serialized_end=3135
+  _PLANACTIONREPLY._serialized_start=3138
+  _PLANACTIONREPLY._serialized_end=3483
+  _SEARCHREGIONPARAMS2D._serialized_start=3486
+  _SEARCHREGIONPARAMS2D._serialized_end=3736
+  _SEARCHREGIONPARAMS3D._serialized_start=3739
+  _SEARCHREGIONPARAMS3D._serialized_end=4037
+  _OBJECTBELIEF._serialized_start=4040
+  _OBJECTBELIEF._serialized_end=4208
+  _ROBOTBELIEF._serialized_start=4211
+  _ROBOTBELIEF._serialized_end=4404
+  _SLOOPOBJECTSEARCH._serialized_start=4439
+  _SLOOPOBJECTSEARCH._serialized_end=5417
 # @@protoc_insertion_point(module_scope)
