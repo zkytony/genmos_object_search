@@ -204,6 +204,10 @@ class RobotObservation(pomdp_py.SimpleObservation):
 
 
 class RobotObservationTopo(RobotObservation):
+    """The equality comparison of RobotObseravtionTopo does not consider
+    the robot pose -- comparing the node id and topo map hashcode is
+    sufficient. The pose estimation is still useful as a grounding
+    of a viewpoint at the node."""
     def __init__(self, robot_id, robot_pose_est, objects_found,
                  camera_direction, topo_nid, topo_map_hashcode):
         super().__init__(robot_id,
@@ -227,11 +231,22 @@ class RobotObservationTopo(RobotObservation):
                                     pose if pose is None else srobot['pose'],
                                     srobot['objects_found'],
                                     srobot['camera_direction'],
-                                    srobot['topo_nid'])
+                                    srobot['topo_nid'],
+                                    srobot['topo_map_hashcode'])
 
     def __hash__(self):
         return hash((self.robot_id, self.topo_nid, self.topo_map_hashcode,
                      self.objects_found))
+
+    def __eq__(self, other):
+        if isinstance(other, RobotObservationTopo):
+            return self.robot_id == other.robot_id\
+                and self.objects_found == other.objects_found\
+                and self.camera_direction == other.camera_direction\
+                and self.topo_nid == other.topo_nid\
+                and self.topo_map_hashcode == other.topo_map_hashcode
+        else:
+            return False
 
 
 class GMOSObservation(pomdp_py.Observation):
