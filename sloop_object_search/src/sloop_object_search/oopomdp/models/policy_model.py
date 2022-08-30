@@ -138,6 +138,7 @@ class PolicyModelTopo(PolicyModel):
     def __init__(self, target_ids,
                  robot_trans_model,
                  no_look=True,
+                 can_stay=True,
                  num_visits_init=10,
                  val_init=100):
         assert no_look is True,\
@@ -147,6 +148,7 @@ class PolicyModelTopo(PolicyModel):
         super().__init__(robot_trans_model, no_look=no_look,
                          num_visits_init=10, val_init=100)
         self.target_ids = target_ids
+        self.can_stay = can_stay
         self._legal_moves = {}
         self.action_prior = PolicyModelTopo.ActionPriorTopo(
             num_visits_init, val_init, self)
@@ -161,7 +163,9 @@ class PolicyModelTopo(PolicyModel):
             return self._legal_moves[srobot]
         else:
             robot_pose = srobot["pose"]
-            valid_moves = {action.StayAction(srobot.nid)}  # stay is always a valid 'move'
+            valid_moves = set()
+            if self.can_stay:
+                valid_moves.add(action.StayAction(srobot.nid))  # stay is always a valid 'move'
             for nb_id in self.topo_map.neighbors(srobot.nid):
                 eid = self.topo_map.edge_between(srobot.nid, nb_id)
                 valid_moves.add(
