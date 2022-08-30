@@ -3,9 +3,10 @@ import pomdp_py
 
 from . import belief
 from .basic3d import MosAgentBasic3D
+from ..domain.state import RobotStateTopo
+from ..domain.observation import RobotObservation, RobotObservationTopo
 from ..models.octree_belief import OctreeDistribution, OctreeBelief, Octree
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
-from ..domain.state import RobotStateTopo
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo3D
 from ..models.observation_model import RobotObservationModelTopo
@@ -60,16 +61,17 @@ class MosAgentTopo3D(MosAgentBasic3D):
                                        no_look=self.no_look)
         return transition_model, policy_model
 
-    def generate_topo_map(self, object_beliefs, robot_pose):
+    def generate_topo_map(self, object_beliefs, robot_pose, debug=False):
         """object_beliefs: objid->OctreeBelief.
         robot_pose: a 7-tuple"""
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
                                         self.search_region,
                                         self.reachable,
-                                        **self.topo_config.get("sampling", {}))
-        open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
-                                       object_beliefs=object_beliefs)
+                                        self.topo_config)
+        if debug:
+            open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
+                                           object_beliefs=object_beliefs)
         return topo_map
 
 
@@ -98,12 +100,48 @@ class MosAgentTopo3D(MosAgentBasic3D):
 
     def update_belief(self, observation, action=None, debug=False, **kwargs):
         super().update_belief(observation, action=action, debug=debug, **kwargs)
-        # Check if we need to resample
+        if isinstance(observation, RobotObservation):
+            # The observation doesn't lead to object belief change. We are done.
+            return
 
-    def should_resample_topo_map():
+        # Check if we need to resample topo map
+        object_beliefs = {objid: self.belief.b(objid)
+                          for objid in self.belief.object_beliefs
+                          if objid != self.robot_id}
+        if self.should_resample_topo_map(object_beliefs):
+            robot_observation = observation.z(self.robot_id)
+            robot_pose = robot_observation.pose
+            topo_map = self.generate_topo_map(
+                object_beliefs, robot_pose, debug=debug)
+
+    def update_topo_map(self, topo_map, robot_observation):
+        """
+        we expect robot_observation to be RobotObservation which
+        contains a RobotLocalization; This is checked by update_robot_belief
+        """
+        self.topo_map = topo_map
+        self.policy_model.update(topo_map)
+        # Now, we need to update the robot belief because new topo map leads
+        # to new topo nid and hash
+        topo_nid = self.topo_map.closest_node(*robot_observation.loc)
+        super().update_robot_belief(observation, action=action,
+                                    robot_state_class=RobotStateTopo,
+                                    topo_nid=topo_nid,
+                                    topo_map_hashcode=self.topo_map.hashcode)
+
+    def should_resample_topo_map(self, object_beliefs):
         # Get an estimate of total belief captured by the current topological nodes
-        # Compute combined normalize
-        pass
+        zone_res = self.topo_config.get("sampling", {}).get("zone_res", 8)
+        resample_prob_thres = self.topo_config.get("sampling", {}).get("zone_res", 0.4)
+        total_prob = 0
+        for nid in self.topo_map.nodes:
+            pos = self.topo_map.nodes[nid].pos
+            prob = self._compute_combined_prob_around(pos, object_beliefs, zone_res)
+            total_prob += prob
+        # total_prob should be a normalized probability
+        assert 0 <= total_prob <= 1
+        return total_prob < resample_prob_thres
+
 
 def _compute_combined_prob_around(pos, object_beliefs, zone_res=8):
     """Given a position 'pos', and object beliefs, and a resolution level for the
@@ -126,13 +164,7 @@ def _sample_topo_graph3d(init_object_beliefs,
                          init_robot_pose,
                          search_region,
                          reachable_func,
-                         num_nodes=10,
-                         num_node_samples=1000,
-                         degree=(3,5),
-                         sep=4.0,
-                         rnd=random,
-                         zone_res=8,
-                         score_thres=0.3):
+                         topo_config={}):
     """
     The algorithm: sample uniformly from search region
     candidate robot positions. Obtain cumulative object
@@ -147,6 +179,22 @@ def _sample_topo_graph3d(init_object_beliefs,
     score_thres: nodes kept must have normalized score
     in the top X% where X is score_thres.
     """
+    # parameters
+    num_nodes = topo_config.get("num_nodes", 10)
+    # number of samples when sampling topo graph nodes.
+    num_node_samples = topo_config.get("num_node_samples", 1000)
+    # Minimum and maximum out degrees at each node
+    degree = topo_config.get("degree", (3,5))
+    # Minimum separation between nodes (in POMDP scale)
+    sep = topo_config.get("sep", 4.0)
+    rnd = topo_config.get("random", random)
+    # Determins the size of the area around a position to be considered
+    # for estimating score at that position.
+    zone_res = topo_config.get("zone_res", 8)
+    # Threshold of the probability estimated at a position for accepting that
+    # position as a topo graph node position candidate.
+    prob_pos_thres = topo_config.get("prob_pos_thres", 0.3)
+
     if type(degree) == int:
         degree_range = (degree, degree)
     else:
@@ -184,14 +232,14 @@ def _sample_topo_graph3d(init_object_beliefs,
                     added = True
 
         if added:
-            priority_score =\
+            prob_pos =\
                 _compute_combined_prob_around(pos, init_object_beliefs, zone_res=zone_res)
-            candidate_scores.append((pos, priority_score))
+            candidate_scores.append((pos, prob_pos))
 
     positions = [init_robot_pose[:3]]
     positions.extend(list(c[0] for c in
                           reversed(sorted(candidate_scores, key=lambda c: c[1]))
-                          if c[1] > score_thres))
+                          if c[1] > prob_pos_thres))
     if num_nodes > len(positions):
         positions = positions[:num_nodes]
 

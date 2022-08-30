@@ -216,7 +216,7 @@ class MosAgent(pomdp_py.Agent):
         used for creating robot state objects."""
         if not isinstance(observation, RobotObservation):
             raise TypeError("updating robot belief requires observation"\
-                            " to be of type RobotLocalization")
+                            " to be of type RobotObservation")
 
         if not isinstance(observation.pose_estimate, RobotLocalization):
             raise ValueError("For robot belief update, expect pose in observation"\
