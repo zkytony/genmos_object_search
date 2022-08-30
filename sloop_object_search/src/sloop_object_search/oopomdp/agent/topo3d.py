@@ -26,7 +26,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 self.target_objects, self.search_region,
                 belief_config=self.agent_config["belief"])
         robot_pose = init_robot_pose_dist.mean
-        self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose)
+        self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose, debug=True)
 
         init_topo_nid = self.topo_map.closest_node(robot_pose[:3])
         init_robot_belief = belief.init_robot_belief(
@@ -116,7 +116,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
             if self.should_resample_topo_map(object_beliefs):
                 robot_pose = robot_observation.pose
                 topo_map = self.generate_topo_map(
-                    object_beliefs, robot_pose, debug=debug)
+                    object_beliefs, robot_pose, debug=True)
         return _aux
 
     def update_topo_map(self, topo_map, robot_observation):
@@ -150,6 +150,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
             zones_covered.add(zone_pos)
         # total_prob should be a normalized probability
         assert 0 <= total_prob <= 1
+        print("total prob covered by existing topo map nodes:", total_prob)
         return total_prob < resample_prob_thres
 
 
@@ -201,9 +202,11 @@ def _sample_topo_graph3d(init_object_beliefs,
     # Determins the size of the area around a position to be considered
     # for estimating score at that position.
     zone_res = topo_config.get("zone_res", 8)
-    # Threshold of the probability estimated at a position for accepting that
-    # position as a topo graph node position candidate.
-    prob_pos_thres = topo_config.get("prob_pos_thres", 0.3)
+    # Determines if a position sample is important enough. Example: if
+    # set to 0.3, that means a sample is discarded if the probability
+    # estimated at that position is lies within 30% from the the maximum
+    # probability (obtained over all sampled positions).
+    pos_importance_thres = topo_config.get("pos_importance_thres", 0.3)
 
     if type(degree) == int:
         degree_range = (degree, degree)
@@ -223,6 +226,8 @@ def _sample_topo_graph3d(init_object_beliefs,
     origin, w, l, h = region
     candidate_positions = set([init_robot_pose[:3]])
     candidate_scores = []  # list of (pos, score) tuples
+    min_prob = float("inf")
+    max_prob = float("-inf")
     for i in range(num_node_samples):
         # uniformly sample candidate positions
         x = random.uniform(origin[0], origin[0]+w)
@@ -245,13 +250,17 @@ def _sample_topo_graph3d(init_object_beliefs,
             prob_pos =\
                 _compute_combined_prob_around(pos, init_object_beliefs, zone_res=zone_res)
             candidate_scores.append((pos, prob_pos))
+            min_prob = min(min_prob, prob_pos)
+            max_prob = max(max_prob, prob_pos)
 
+    pq = PriorityQueue()
     positions = [init_robot_pose[:3]]
-    positions.extend(list(c[0] for c in
-                          reversed(sorted(candidate_scores, key=lambda c: c[1]))
-                          if c[1] > prob_pos_thres))
-    if num_nodes > len(positions):
-        positions = positions[:num_nodes]
+    for pos, prob_pos in candidate_scores:
+        norm_score = (prob_pos - min_prob) / (max_prob - min_prob)
+        if norm_score > pos_importance_thres:
+            pq.push(pos, -norm_score)
+    while not pq.isEmpty() and len(positions) < num_nodes:
+        positions.append(pq.pop())
 
     # The following is modified based on _sample_topo_map in topo2d
     # Create nodes
