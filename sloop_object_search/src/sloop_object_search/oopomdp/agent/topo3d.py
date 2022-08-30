@@ -46,7 +46,6 @@ class MosAgentTopo3D(MosAgentBasic3D):
     def init_transition_and_policy_models(self):
         target_ids = self.agent_config["targets"]
         trans_args = self.agent_config["robot"].get("transition", {})
-        h_angle_res = trans_args.get("h_angle_res", 45.0)
         robot_trans_model = RobotTransTopo3D(self.robot_id, target_ids,
                                              self.topo_map, self.detection_models,
                                              no_look=self.no_look,
@@ -73,7 +72,6 @@ class MosAgentTopo3D(MosAgentBasic3D):
             open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
                                            object_beliefs=object_beliefs)
         return topo_map
-
 
     @property
     def topo_config(self):
@@ -104,12 +102,14 @@ class MosAgentTopo3D(MosAgentBasic3D):
             # The observation doesn't lead to object belief change. We are done.
             return
 
-        # Check if we need to resample topo map
+        robot_observation = observation.z(self.robot_id)
+
+        # Check if we need to resample topo map - check with objects not yet found
         object_beliefs = {objid: self.belief.b(objid)
                           for objid in self.belief.object_beliefs
-                          if objid != self.robot_id}
+                          if objid != self.robot_id\
+                          and objid not in robot_observation.objects_found}
         if self.should_resample_topo_map(object_beliefs):
-            robot_observation = observation.z(self.robot_id)
             robot_pose = robot_observation.pose
             topo_map = self.generate_topo_map(
                 object_beliefs, robot_pose, debug=debug)
@@ -134,10 +134,15 @@ class MosAgentTopo3D(MosAgentBasic3D):
         zone_res = self.topo_config.get("sampling", {}).get("zone_res", 8)
         resample_prob_thres = self.topo_config.get("sampling", {}).get("zone_res", 0.4)
         total_prob = 0
+        zones_covered = set()  # set of zones whose area's probability has been considered
         for nid in self.topo_map.nodes:
             pos = self.topo_map.nodes[nid].pos
-            prob = self._compute_combined_prob_around(pos, object_beliefs, zone_res)
+            zone_pos = Octree.increase_res(pos, 1, zone_res)
+            if zone_pos in zones_covered:
+                continue
+            prob = _compute_combined_prob_around(pos, object_beliefs, zone_res)
             total_prob += prob
+            zones_covered.add(zone_pos)
         # total_prob should be a normalized probability
         assert 0 <= total_prob <= 1
         return total_prob < resample_prob_thres
