@@ -328,19 +328,18 @@ class RobotTransTopo(RobotTransitionModel):
         if srobot.nid == action.src_nid:
             next_robot_pos = self.topo_map.nodes[action.dst_nid].pos
             next_topo_nid = action.dst_nid
+            next_robot_rot = srobot.rot
             for target_id in self._target_ids:
                 if target_id not in srobot.objects_found:
                     starget = state.s(target_id)
-                    facing_rot = self.target_facing_rotation(
+                    next_robot_rot = self.target_facing_rotation(
                         next_robot_pos, starget.loc)
-                    if hasattr(facing_rot, '__len__'):
-                        next_robot_pose = (*next_robot_pos, *facing_rot)
-                    else:
-                        next_robot_pose = (*next_robot_pos, facing_rot)
-                    return (next_robot_pose, next_topo_nid)
-
-            # If no more target to find, then just keep the current yaw
-            next_robot_pose = (*next_robot_pos, srobot['pose'][2])
+                    break
+            # If no more target to find, then just keep the current rotation
+            if hasattr(next_robot_rot, '__len__'):
+                next_robot_pose = (*next_robot_pos, *next_robot_rot)
+            else:
+                next_robot_pose = (*next_robot_pos, next_robot_rot)
             return (next_robot_pose, next_topo_nid)
         else:
             import traceback
