@@ -19,7 +19,7 @@ from .server import MAX_MESSAGE_LENGTH
 from .utils import proto_utils
 
 
-DEFAULT_RPC_TIMEOUT = 30
+DEFAULT_RPC_TIMEOUT = 60
 
 
 class SloopObjectSearchClient:
