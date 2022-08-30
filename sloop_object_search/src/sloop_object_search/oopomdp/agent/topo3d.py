@@ -68,8 +68,8 @@ class MosAgentTopo3D(MosAgentBasic3D):
                                         self.search_region,
                                         self.reachable,
                                         **self.topo_config.get("sampling", {}))
-        # open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
-        #                                object_beliefs=init_object_beliefs)
+        open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
+                                       object_beliefs=object_beliefs)
         return topo_map
 
 
@@ -96,6 +96,31 @@ class MosAgentTopo3D(MosAgentBasic3D):
                                     topo_nid=current_srobot_mpe.topo_nid,
                                     topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
 
+    def update_belief(self, observation, action=None, debug=False, **kwargs):
+        super().update_belief(observation, action=action, debug=debug, **kwargs)
+        # Check if we need to resample
+
+    def should_resample_topo_map():
+        # Get an estimate of total belief captured by the current topological nodes
+        # Compute combined normalize
+        pass
+
+def _compute_combined_prob_around(pos, object_beliefs, zone_res=8):
+    """Given a position 'pos', and object beliefs, and a resolution level for the
+    zone which the belief around the position is considered, return a normalized
+    probability that combines the beliefs over all objects within that zone.
+    """
+    comb_prob = 0
+    for objid in object_beliefs:
+        if not isinstance(object_beliefs[objid], OctreeBelief):
+            raise ValueError("topo graph3d requires object beliefs to be OctreeBelief")
+        b_obj = object_beliefs[objid]
+        comb_prob += b_obj.octree_dist.prob_at(
+            *Octree.increase_res(pos, 1, zone_res), zone_res)
+    # because 'prob_at' returns normalized prob for each object, the normalizer
+    # of the combinations is just the number of objects.
+    return comb_prob / len(object_beliefs)
+
 
 def _sample_topo_graph3d(init_object_beliefs,
                          init_robot_pose,
@@ -106,7 +131,7 @@ def _sample_topo_graph3d(init_object_beliefs,
                          degree=(3,5),
                          sep=4.0,
                          rnd=random,
-                         score_res=8,
+                         zone_res=8,
                          score_thres=0.3):
     """
     The algorithm: sample uniformly from search region
@@ -116,7 +141,7 @@ def _sample_topo_graph3d(init_object_beliefs,
     Finally, retain N number of samples according to
     this priority.
 
-    score_res: The resolution level where the object
+    zone_res: The resolution level where the object
     belief is used for scoring.
 
     score_thres: nodes kept must have normalized score
@@ -140,8 +165,6 @@ def _sample_topo_graph3d(init_object_beliefs,
     origin, w, l, h = region
     candidate_positions = set([init_robot_pose[:3]])
     candidate_scores = []  # list of (pos, score) tuples
-    min_score = float("inf")
-    max_score = float("-inf")
     for i in range(num_node_samples):
         # uniformly sample candidate positions
         x = random.uniform(origin[0], origin[0]+w)
@@ -161,28 +184,16 @@ def _sample_topo_graph3d(init_object_beliefs,
                     added = True
 
         if added:
-            priority_score = 0
-            for objid in init_object_beliefs:
-                if not isinstance(init_object_beliefs[objid], OctreeBelief):
-                    raise ValueError("topo graph3d requires object beliefs to be OctreeBelief")
-                b_obj = init_object_beliefs[objid]
-                priority_score += b_obj.octree_dist.prob_at(
-                    *Octree.increase_res(pos, 1, score_res), score_res)
+            priority_score =\
+                _compute_combined_prob_around(pos, init_object_beliefs, zone_res=zone_res)
             candidate_scores.append((pos, priority_score))
-            min_score = min(min_score, priority_score)
-            max_score = max(max_score, priority_score)
 
-    # Now, we make a priority queue, supply it with normalized scores
-    candidates_pq = PriorityQueue()
-    candidates_pq.push(init_robot_pose[:3], float('-inf'))  # will always include current robot pose
-    for pos, score in candidate_scores:
-        norm_score = (score - min_score) / (max_score - min_score)
-        if norm_score < score_thres:
-            continue
-        candidates_pq.push(pos, -norm_score)  # because smaller value has larger priority
-    positions = []
-    while not candidates_pq.isEmpty() and len(positions) < num_nodes:
-        positions.append(candidates_pq.pop())
+    positions = [init_robot_pose[:3]]
+    positions.extend(list(c[0] for c in
+                          reversed(sorted(candidate_scores, key=lambda c: c[1]))
+                          if c[1] > score_thres))
+    if num_nodes > len(positions):
+        positions = positions[:num_nodes]
 
     # The following is modified based on _sample_topo_map in topo2d
     # Create nodes
