@@ -116,7 +116,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
             if self.should_resample_topo_map(object_beliefs):
                 robot_pose = robot_observation.pose
                 topo_map = self.generate_topo_map(
-                    object_beliefs, robot_pose, debug=True)
+                    object_beliefs, robot_pose, debug=debug)
         return _aux
 
     def update_topo_map(self, topo_map, robot_observation):
@@ -198,7 +198,7 @@ def _sample_topo_graph3d(init_object_beliefs,
     degree = topo_config.get("degree", (3,5))
     # Minimum separation between nodes (in POMDP scale)
     sep = topo_config.get("sep", 4.0)
-    rnd = topo_config.get("random", random)
+    rnd = random.Random(topo_config.get("seed", 1000))
     # Determins the size of the area around a position to be considered
     # for estimating score at that position.
     zone_res = topo_config.get("zone_res", 8)
@@ -304,8 +304,19 @@ def _sample_topo_graph3d(init_object_beliefs,
         edges[0] = TopoEdge(0, nodes[next(iter(nodes))], None, [])
 
     topo_map = TopoMap(edges)
+
     # Verification
     for nid in topo_map.nodes:
         assert len(topo_map.edges_from(nid)) <= degree_range[1]
 
-    return topo_map
+    # Make sure there is only one connected component
+    components = topo_map.connected_components()
+    if len(components) > 1:
+        # pick the component where the robot position is contained
+        for topo_comp in components:
+            for nid in topo_comp.nodes:
+                if topo_comp.nodes[nid].pos == init_robot_pose[:3]:
+                    return topo_comp
+        raise ValueError("Unexpected. Robot position not contained in topo map.")
+    else:
+        return topo_map
