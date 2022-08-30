@@ -131,6 +131,14 @@ class RobotState(pomdp_py.ObjectState):
             # 3d
             return self.pose[:3]
 
+    @property
+    def rot(self):
+        if self.is_2d:
+            return self.pose[2]
+        else:
+            # 3d
+            return self.pose[3:]
+
     def in_range(self, sensor, sobj, **kwargs):
         return sensor.in_range(sobj.loc, self["pose"], **kwargs)
 
@@ -169,4 +177,4 @@ class RobotStateTopo(RobotState):
         return "{}({}, {}, nid={})".format(type(self).__name__, self.pose, self.objects_found, self.topo_nid)
 
     def __hash__(self):
-        return hash((self.robot_id, self.topo_nid, self.topo_map_hashcode))
+        return hash((self.id, self.topo_nid, self.topo_map_hashcode))

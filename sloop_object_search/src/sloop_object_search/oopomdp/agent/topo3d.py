@@ -52,7 +52,6 @@ class MosAgentTopo3D(MosAgentBasic3D):
         policy_model = PolicyModelTopo(target_ids,
                                        robot_trans_model,
                                        no_look=self.no_look)
-        import pdb; pdb.set_trace()
         return transition_model, policy_model
 
     def generate_topo_map(self, object_beliefs, robot_pose):
