@@ -286,5 +286,5 @@ def draw_topo_graph3d(topo_map,
             line.paint_uniform_color(edge_color)
             geometries.append(line)
     if viz:
-        o3d.visualization.draw_geometries(geometries)
+        o3d.visualization.draw_geometries(geometries, width=760, height=480)
     return geometries

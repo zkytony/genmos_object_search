@@ -421,4 +421,6 @@ class RobotTransTopo3D(RobotTransTopo):
         """
         q = math_utils.quat_between(
             self.default_camera_direction, math_utils.vec(robot_pos, target_pos))
+        if any(np.isnan(q)):
+            import pdb; pdb.set_trace()
         return q
