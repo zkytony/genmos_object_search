@@ -14,7 +14,8 @@ class RobotStateTopo(RobotState):
                          pose,
                          objects_found,
                          camera_direction,
-                         topo_nid=topo_nid)
+                         topo_nid=topo_nid,
+                         topo_map_hashcode=None)   # to make system test pass
 
     @property
     def nid(self):
