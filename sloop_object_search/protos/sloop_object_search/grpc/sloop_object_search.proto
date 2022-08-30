@@ -7,6 +7,7 @@ package sloop_object_search.grpc;
 import "sloop_object_search/grpc/common.proto";
 import "sloop_object_search/grpc/observation.proto";
 import "sloop_object_search/grpc/action.proto";
+import "google/protobuf/any.proto";
 
 
 service SloopObjectSearch {
@@ -148,6 +149,8 @@ message GetObjectBeliefsRequest {
   Header header = 1;
   string robot_id = 2;
   repeated string object_ids = 3;
+  // scope: global or local
+  Scope scope = 4;
 }
 
 message GetObjectBeliefsReply {
@@ -162,6 +165,7 @@ message GetObjectBeliefsReply {
 message GetRobotBeliefRequest {
   Header header = 1;
   string robot_id = 2;
+  Scope scope = 3;
 }
 
 message GetRobotBeliefReply {
@@ -236,12 +240,22 @@ message SearchRegionParams3D {
   optional double region_size_z = 6;
 }
 
+// Used to indicate whether a message pertains to
+// local search or global search.
+enum Scope {
+  LOCAL = 0;
+  GLOBAL = 1;
+}
+
 message ObjectBelief {
   string object_id = 1;
   Histogram dist = 2;
-  // the pickled python belief object; For debugging;
+  // the pickled Python belief object; For debugging;
   // the positions may be in POMDP frame
   optional bytes dist_obj = 3;
+
+  // local or global scope
+  Scope scope = 4;
 }
 
 
@@ -254,8 +268,32 @@ message RobotBelief {
   // objects found
   ObjectsFound objects_found = 3;
 
-  // If the robot plans over a topological graph, this returns
-  // the id of the topological graph node the robot associates itself
-  // with currently.
+  // The following are useful if the robot plans over a topological graph
   optional string topo_nid = 4;
+  optional string topo_map_hash = 5;
+  optional TopoMap topo_map = 6;
+
+  // local or global scope
+  Scope scope = 7;
+}
+
+
+message TopoMap {
+  repeated TopoEdge edges = 1;
+}
+
+message TopoEdge {
+  string id = 1;
+  TopoNode node1 = 2;
+  TopoNode node2 = 3;
+  google.protobuf.Any data = 4;
+}
+
+message TopoNode {
+  string id = 1;
+  oneof pos {
+    Vec3 pos_3d = 2;
+    Vec2 pos_2d = 3;
+  }
+  google.protobuf.Any data = 4;
 }
