@@ -197,12 +197,27 @@ def quat_to_euler(x, y, z, w, order='xyz'):
 def quat_between(v1, v2):
     """
     Given two 3D vectors, returns the rotation from v1 to v2
-    in quaternion.
+    in quaternion. If the two vectors point in the same direction,
+    then will return the identity quaternion. If two vectors are
+    opposite to each other, will return the quaternion of 180
+    degree with respect to the x axis (theoretically, any axis is fine).
     https://stackoverflow.com/a/1171995/2893053"""
     if len(v1) != 3 or len(v2) != 3:
         raise ValueError("Only applicable to 3D vectors!")
+    # if vectors point in opposite directions, return
+    norm_v1 = np.linalg.norm(v1)
+    norm_v2 = np.linalg.norm(v2)
+    v1 = np.asarray(v1) / norm_v1
+    v2 = np.asarray(v2) / norm_v2
+    dot_v1v2 = np.dot(v1, v2)
+    if np.isclose(dot_v1v2, 1):
+        # the two vectors point in the same direction
+        return np.array([0., 0., 0., 1.])
+    elif np.isclose(dot_v1v2, -1):
+        return quat_multiply(quat_between([1, 0, 0], [0, 0, 1]),
+                             quat_between([0, 0, 1], [-1, 0, 0]))
     qx, qy, qz = np.cross(v1, v2)
-    qw = np.sqrt(np.linalg.norm(v1)**2 * np.linalg.norm(v2)**2) + np.dot(v1, v2)
+    qw = np.sqrt(np.linalg.norm(v1)**2 * np.linalg.norm(v2)**2) + dot_v1v2
     q = np.array([qx, qy, qz, qw])
     return q / np.linalg.norm(q)
 
