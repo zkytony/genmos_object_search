@@ -21,13 +21,8 @@ from ..domain.state import (ObjectState,
 from ..domain.observation import *
 from ..domain.action import *
 from .sensors import yaw_facing, get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
+from sloop_object_search.utils import math as math_utils
 
-from sloop_object_search.utils.math import (fround,
-                                            to_rad,
-                                            R_quat,
-                                            quat_multiply,
-                                            euler_to_quat,
-                                            proj)
 
 ##################### Object Transition ##############################
 class ObjectTransitionModel(pomdp_py.TransitionModel):
@@ -158,10 +153,10 @@ class RobotTransBasic2D(RobotTransitionModel):
         else:
             forward, angle = action.motion
         rth = (rth + angle) % 360
-        rx = rx + forward*math.cos(to_rad(rth))
-        ry = ry + forward*math.sin(to_rad(rth))
-        rx, ry, rth = (*fround(pos_precision, (rx, ry)),
-                       fround(rot_precision, rth))
+        rx = rx + forward*math.cos(math_utils.to_rad(rth))
+        ry = ry + forward*math.sin(math_utils.to_rad(rth))
+        rx, ry, rth = (*math_utils.fround(pos_precision, (rx, ry)),
+                       math_utils.fround(rot_precision, rth))
         if reachability_func is not None:
             if reachability_func((rx, ry)):
                 return (rx, ry, rth)
@@ -255,16 +250,16 @@ class RobotTransBasic3D(RobotTransitionModel):
         # if len(dth) == 3:
         #     raise ValueError("Rotation motion should be specified by quaternion.")
 
-        new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
+        new_pos = math_utils.fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
         if reachability_func is not None:
             if not reachability_func(new_pos):
                 return pose
 
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
-            q_change = euler_to_quat(*dth)
-            q_new = quat_multiply(q_change, q)
+            q_change = math_utils.euler_to_quat(*dth)
+            q_new = math_utils.quat_multiply(q_change, q)
             q = q_new
-        return (*new_pos, *fround(rot_precision, q))
+        return (*new_pos, *math_utils.fround(rot_precision, q))
 
     @classmethod
     def _transform_pose_forward(cls, pose, motion,
@@ -290,26 +285,26 @@ class RobotTransBasic3D(RobotTransitionModel):
 
         # project this vector to xy plane, then obtain the "shadow" on xy plane
         forward_vec = robot_facing*forward
-        xy_shadow = forward_vec - proj(forward_vec, np.array([0,0,1]))
-        dy = proj(xy_shadow[:2], np.array([0,1]), scalar=True)
-        dx = proj(xy_shadow[:2], np.array([1,0]), scalar=True)
-        yz_shadow = forward_vec - proj(forward_vec, np.array([1,0,0]))
-        dz = proj(yz_shadow[1:], np.array([0,1]), scalar=True)
+        xy_shadow = forward_vec - math_utils.proj(forward_vec, np.array([0,0,1]))
+        dy = math_utils.proj(xy_shadow[:2], np.array([0,1]), scalar=True)
+        dx = math_utils.proj(xy_shadow[:2], np.array([1,0]), scalar=True)
+        yz_shadow = forward_vec - math_utils.proj(forward_vec, np.array([1,0,0]))
+        dz = math_utils.proj(yz_shadow[1:], np.array([0,1]), scalar=True)
 
         dpos = (dx, dy, dz)
         x, y, z, qx, qy, qz, qw = pose
-        new_pos = fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
+        new_pos = math_utils.fround(pos_precision, (x+dpos[0], y+dpos[1], z+dpos[2]))
         if reachability_func is not None:
             if not reachability_func(new_pos):
                 return pose
 
-        R = R_quat(qx, qy, qz, qw)
+        R = math_utils.R_quat(qx, qy, qz, qw)
         if dth[0] != 0 or dth[1] != 0 or dth[2] != 0:
             R_prev = R
-            R_change = R_quat(*euler_to_quat(dth[0], dth[1], dth[2]))
+            R_change = math_utils.R_quat(*math_utils.euler_to_quat(dth[0], dth[1], dth[2]))
             R = R_change * R_prev
         new_qrot = R.as_quat()
-        return (*new_pos, *fround(rot_precision, new_qrot))
+        return (*new_pos, *math_utils.fround(rot_precision, new_qrot))
 
 
 ##################### Robot Transition (Topo) ##############################
@@ -404,9 +399,7 @@ class RobotTransTopo2D(RobotTransTopo):
                           for i in range(int(360/h_angle_res))]
 
     def target_facing_rotation(self, robot_pos, target_pos):
-        """returns an orientation (domain-specific representation)
-        which makes the robot face the target if the robot is
-        at 'robot_pos' while the target is at 'target_pos'"""
+        """returns a yaw angle"""
         # will sample a yaw facing the target object
         yaw = yaw_facing(next_robot_pos, starget.loc, self._h_angles)
         return yaw
@@ -418,30 +411,15 @@ class RobotTransTopo3D(RobotTransTopo):
                  **kwargs):
         super().__init__(robot_id, target_ids, topo_map,
                          detection_models, no_look=no_look)
-        h_angle_res = kwargs.pop(h_angle_res, 45.0)
-        self._h_angles = [i*h_angle_res
-                          for i in range(int(360/h_angle_res))]
+        # This default camera direction is the camera's look direction
+        # when quaternion is 0,0,0,1 (i.e. no rotation).
+        self.default_camera_direction = kwargs.get("default_camera_direction",
+                                                   DEFAULT_3DCAMERA_LOOK_DIRECTION)
 
-    def sample_motion(self, state, action):
-        srobot = state.s(self.robot_id)
-        if srobot.nid == action.src_nid:
-            next_robot_pos = self.topo_map.nodes[action.dst_nid].pos
-            next_topo_nid = action.dst_nid
-            for target_id in self._target_ids:
-                if target_id not in srobot.objects_found:
-                    starget = state.s(target_id)
-                    # will sample a yaw facing the target object
-                    yaw = yaw_facing(next_robot_pos, starget.loc, self._h_angles)
-                    next_robot_pose = (*next_robot_pos, yaw)
-
-                    return (next_robot_pose, next_topo_nid)
-
-            # If no more target to find, then just keep the current yaw
-            next_robot_pose = (*next_robot_pos, srobot['pose'][2])
-            return (next_robot_pose, next_topo_nid)
-        else:
-            import traceback
-            for line in traceback.format_stack():
-                print(line.strip())
-            print(":::::WARNING::::: Unexpected action {} for robot state {}. Ignoring action".format(action, srobot))
-            return srobot['pose'], srobot['topo_nid']
+    def target_facing_rotation(self, robot_pos, target_pos, rot_precision=0.001):
+        """Return a quaternion that represents the rotation of the default camera
+        direction vector to the vector robot_pos, target_pos
+        """
+        q = math_utils.quat_between(
+            self.default_camera_direction, math_utils.vec(robot_pos, target_pos))
+        return q

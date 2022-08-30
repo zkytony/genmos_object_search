@@ -5,6 +5,10 @@ from . import belief
 from .basic3d import MosAgentBasic3D
 from ..models.octree_belief import OctreeDistribution, OctreeBelief, Octree
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
+from ..domain.state import RobotStateTopo
+from ..models.policy_model import PolicyModelTopo
+from ..models.transition_model import RobotTransTopo3D
+from .common import MosAgent, SloopMosAgent, init_object_transition_models
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue
 from sloop_object_search.utils import open3d_utils
@@ -22,9 +26,34 @@ class MosAgentTopo3D(MosAgentBasic3D):
         robot_pose = init_robot_pose_dist.mean
         self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose)
 
+        init_topo_nid = self.topo_map.closest_node(robot_pose[:3])
+        init_robot_belief = belief.init_robot_belief(
+            self.agent_config["robot"], init_robot_pose_dist,
+            robot_state_class=RobotStateTopo,
+            topo_nid=init_topo_nid,
+            topo_map_hashcode=self.topo_map.hashcode)
+        init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
+                                         **init_object_beliefs})
+        return init_belief
 
+    def init_transition_and_policy_models(self):
+        target_ids = self.agent_config["targets"]
+        trans_args = self.agent_config["robot"].get("transition", {})
+        h_angle_res = trans_args.get("h_angle_res", 45.0)
+        robot_trans_model = RobotTransTopo3D(self.robot_id, target_ids,
+                                             self.topo_map, self.detection_models,
+                                             no_look=self.no_look,
+                                             default_camera_direction=self.default_forward_direction)
+        object_transition_models = {
+            self.robot_id: robot_trans_model,
+            **init_object_transition_models(self.agent_config)}
+        transition_model = pomdp_py.OOTransitionModel(object_transition_models)
 
-        raise NotImplementedError("good for now")
+        policy_model = PolicyModelTopo(target_ids,
+                                       robot_trans_model,
+                                       no_look=self.no_look)
+        import pdb; pdb.set_trace()
+        return transition_model, policy_model
 
     def generate_topo_map(self, object_beliefs, robot_pose):
         """object_beliefs: objid->OctreeBelief.

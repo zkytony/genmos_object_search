@@ -17,7 +17,7 @@ for i in range(5):
 
     v = math_utils.vec((x1,y1,z1), (x2,y2,z2))
 
-    z = np.array([0, 0, 1])
+    z = np.array([1, 0, 1])
 
     _s = time.time()
     q = math_utils.quat_between(z, v)
