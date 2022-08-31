@@ -91,8 +91,9 @@ class MosAgentTopo2D(MosAgent):
                                     res=self.visual_config.get("res", 10))
             img = viz.render(topo_map, object_beliefs,
                              self.robot_id, robot_pose)
-            viz.show_img(img)
-            time.sleep(3)
+            # flip horizotnally is necessary so that +x is right, +y is up.
+            viz.show_img(img, flip_horizontally=True)
+            time.sleep(5)
             viz.on_cleanup()
         return topo_map
 

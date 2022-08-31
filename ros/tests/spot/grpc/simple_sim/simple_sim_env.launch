@@ -21,7 +21,7 @@
     <param name="z" value="0.5"/>
     <param name="thx" value="0.0"/>
     <param name="thy" value="0.0"/>
-    <param name="thz" value="0.0"/>
+    <param name="thz" value="90.0"/>
     <param name="world_frame" value="$(arg world_frame)"/>
   </node>
 </launch>

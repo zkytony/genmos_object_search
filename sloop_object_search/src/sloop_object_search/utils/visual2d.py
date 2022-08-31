@@ -403,6 +403,9 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
         if robot_pose is not None:
             img = self.draw_robot(img, *robot_pose,
                                   color=self.get_color(robot_id, self._colors, alpha=None))
+        img = self.highlight(img,
+                             [self._grid_map2.shift_back_pos(0,1)],
+                             color=[255, 0, 255])
         return img
 
     def draw_topo_map(self, img, topo_map,
@@ -458,6 +461,7 @@ def mark_cell(img, pos, nid, r, linewidth=1, unmark=False,
         if show_img_flip_horizontally:
             # do this if show_img has flip_horizontally=True
             imgtxt = cv2.flip(imgtxt, 0)
+            imgtxt = cv2.flip(imgtxt, 1)
         else:
             # do this if show_img has flip_horizontally=False
             imgtxt = cv2.flip(imgtxt, 1) # flip horizontally
