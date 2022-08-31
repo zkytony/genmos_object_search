@@ -65,7 +65,8 @@ def test_robot_trans3d_without_detection_models(
         positions, init_robot_state, target_states):
 
     trobot = RobotTransBasic3D("robot",
-                               lambda x: x in positions, {})
+                               lambda x: x in positions, {},
+                               default_camera_direction=(0,0,-1))
     state = pomdp_py.OOState({"robot": init_robot_state,
                               **target_states})
     action_axis = {a.motion_name: a

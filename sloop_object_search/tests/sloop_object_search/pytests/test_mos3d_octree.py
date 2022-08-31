@@ -227,12 +227,13 @@ def test_belief_update(octree_belief):
     print("** Testing belief update")
 
     # We will make a camera, and place it at a pose.
-    camera = FrustumCamera(fov=60, aspect_ratio=0.85, near=1, far=5)
+    camera = FrustumCamera(fov=60, aspect_ratio=0.85, near=1, far=5,
+                           default_look=(0,0,-1))
     robot_pose = (3, 4, 5, 90, 0, 0)
 
     objid = octree_belief.objid
     voxels = {(x,y,z): Voxel((x,y,z), Voxel.FREE)
-              for (x,y,z) in camera.get_volume(robot_pose)}
+              for (x,y,z,_) in camera.visible_volume(robot_pose)}
     voxels[(2, 2, 2)] = Voxel((2,2,2), objid)
     voxels_obz = FovVoxels(voxels)
 
@@ -246,12 +247,13 @@ def test_belief_update_big_voxel(octree_belief):
     print("** Testing belief update with big voxel")
 
     # We will make a camera, and place it at a pose.
-    camera = FrustumCamera(fov=60, aspect_ratio=0.85, near=1, far=5)
+    camera = FrustumCamera(fov=60, aspect_ratio=0.85, near=1, far=5,
+                           default_look=(0,0,-1))
     robot_pose = (3, 4, 5, 90, 0, 0)
 
     objid = octree_belief.objid
     voxels = {(x//2,y//2,z//2,2): Voxel((x//2,y//2,z//2,2), Voxel.FREE)
-              for (x,y,z) in camera.get_volume(robot_pose)}
+              for (x,y,z,_) in camera.visible_volume(robot_pose)}
     voxels[(1, 4, 1, 2)] = Voxel((1,4,1,2), objid)
     voxels_obz = FovVoxels(voxels)
 

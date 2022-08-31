@@ -166,20 +166,7 @@ def test_frustum_camera(camera, show_plots):
     for i, th in enumerate([0, 45, 90, 135, 180, 225, 270, 315]):
         pose = (15, 15, 15, *euler_to_quat(0, th, 0))
 
-        # First, plot the FOV using get_volume
-        points_in_volume = camera.get_volume(pose)
-        valid_points = []
-        for p in points_in_volume:
-            if camera.in_range(p, pose):
-                valid_points.append(p)
-        valid_points = np.array(valid_points)
-        if show_plots:
-            px = valid_points[:, 0]
-            py = valid_points[:, 1]
-            pz = valid_points[:, 2]
-            ax.scatter(px, py, pz)
-
-        # Then, plot FOV based on sampled continuous points in the space
+        # Plot, plot FOV based on sampled continuous points in the space
         if show_plots:
             plot_camera_fov(camera, pose, (w,l,h), points, ax)
             ax.set_xlabel("X")

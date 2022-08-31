@@ -20,7 +20,8 @@ def test_frustum_alpha_beta_model(init_robot_state):
     # Reliable camera -------------------------------------------
     ALPHA=1e5
     BETA=0.1
-    frustum_params = dict(fov=60, aspect_ratio=1.0, near=1, far=5)
+    frustum_params = dict(fov=60, aspect_ratio=1.0, near=1, far=5,
+                          default_look=(0,0,-1))
     quality_params = (ALPHA, BETA)
     model = FrustumVoxelAlphaBeta(objid, frustum_params, quality_params)
 
@@ -34,7 +35,8 @@ def test_frustum_alpha_beta_model(init_robot_state):
     ALPHA=0.1
     BETA=1000
     objid = "green_car"
-    frustum_params = dict(fov=60, aspect_ratio=1.0, near=1, far=5)
+    frustum_params = dict(fov=60, aspect_ratio=1.0, near=1, far=5,
+                          default_look=(0,0,-1))
     quality_params = (ALPHA, BETA)
     model = FrustumVoxelAlphaBeta(objid, frustum_params, quality_params)
 

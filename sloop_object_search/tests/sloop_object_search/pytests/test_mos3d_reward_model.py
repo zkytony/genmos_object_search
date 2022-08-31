@@ -34,7 +34,8 @@ def test_reward_model(init_robot_state, positions):
     # Reliable camera -------------------------------------------
     ALPHA=1e5
     BETA=0.1
-    frustum_params = dict(fov=60, aspect_ratio=1.0, near=1, far=5)
+    frustum_params = dict(fov=60, aspect_ratio=1.0, near=1, far=5,
+                          default_look=(0,0,-1))
     quality_params = (ALPHA, BETA)
     detection_model = FrustumVoxelAlphaBeta(objid, frustum_params, quality_params)
 

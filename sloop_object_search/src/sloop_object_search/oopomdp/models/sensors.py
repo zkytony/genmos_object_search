@@ -23,7 +23,8 @@ from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
                                             vec, R_quat, R_euler, T, R_y,
                                             in_range_inclusive, closest,
                                             law_of_cos, inverse_law_of_cos,
-                                            angle_between, in_box3d_origin)
+                                            angle_between, in_box3d_origin,
+                                            quat_between)
 from sloop_object_search.utils.algo import PriorityQueue
 from sloop_object_search.oopomdp.models.octree_belief import OctNode, Octree
 
@@ -284,9 +285,10 @@ def pitch_facing(robot_pos3d, target_pos3d, angles=None):
 
 
 ###################### 3D Frustum Sensor ########################
-# By default, the camera is always at (0,0,0), looking at direction (0,0,-1).
+# By default, the camera is always at (0,0,0), looking at direction (1,0,0), a.k.a +x.
+# This is to be consistent with the 2D fan sensor's default look direction.
 # Direction of camera's look vector in camera's own frame
-DEFAULT_3DCAMERA_LOOK_DIRECTION = (0, 0, -1)
+DEFAULT_3DCAMERA_LOOK_DIRECTION = (1, 0, 0)
 
 class FrustumCamera(SensorModel):
 
@@ -307,26 +309,24 @@ class FrustumCamera(SensorModel):
     def aspect_ratio(self):
         return self._params[1]
 
-    @property
-    def volume(self):
-        return self._volume
-
     def print_info(self):
         print("         FOV: " + str(self.fov))
         print("aspect_ratio: " + str(self.aspect_ratio))
         print("        near: " + str(self.near))
         print("         far: " + str(self.far))
-        print(" volume size: " + str(len(self.volume)))
 
     def __init__(self, fov=90, aspect_ratio=1, near=1,
-                 far=5, occlusion_enabled=True):
+                 far=5, occlusion_enabled=True,
+                 default_look=DEFAULT_3DCAMERA_LOOK_DIRECTION):
         """
         fov: angle (degree), how wide the viewing angle is.
         near: near-plane's distance to the camera
         far: far-plane's distance to the camera
         """
-        # Initially, the camera is always at (0,0,0), looking at direction (0,0,-1)
-        # This is the configuration when the camera pose is (0,0,0,0,0,0,1)
+        # By default, the camera is always at (0,0,0), looking at direction (0,0,-1)
+        # This is the configuration when the camera pose is (0,0,0,0,0,0,1).
+        # If 'default_look' is not (0,0,-1), then we will transform the camera's
+        # configuration accordingly.
         #
         # 6 planes:
         #     3
@@ -391,17 +391,11 @@ class FrustumCamera(SensorModel):
         self._p = p
         self._r = r
 
-        self._look = DEFAULT_3DCAMERA_LOOK_DIRECTION
+        self._look = tuple(np.asarray(default_look)/np.linalg.norm(default_look))
+        if self._look != (0, 0, -1):
+            quat = quat_between((0, 0, -1), self._look)
+            self.transform_camera((0,0,0,*quat), permanent=True)
 
-        # compute the volume inside the frustum
-        volume = []
-        count = 0
-        for z in range(-int(round(far)), -int(round(near))):
-            for y in range(-int(round(h2/2))-1, int(round(h2/2))+1):
-                for x in range(-int(round(w2/2))-1, int(round(w2/2))+1):
-                    if self.within_range((self._p, self._r), (x,y,z,1)):
-                        volume.append([x,y,z,1])
-        self._volume = np.array(volume, dtype=int)
         self._occlusion_enabled = occlusion_enabled
         self._observation_cache = {}
 
@@ -415,7 +409,7 @@ class FrustumCamera(SensorModel):
     def look(self):
         return self._look
 
-    def transform_camera(self, pose):
+    def transform_camera(self, pose, permanent=False):
         """Transformation relative to current pose; Affects where the sensor's field of view.
         thx, thy, thz are in degrees. Returns the configuration after the transform is applied.
         In other words, this is saying `set up the camera at the given pose`."""
@@ -428,6 +422,9 @@ class FrustumCamera(SensorModel):
         r_moved = np.transpose(np.matmul(T(x, y, z),
                                          np.matmul(R, np.transpose(self._r))))
         p_moved =  np.transpose(np.matmul(R, np.transpose(self._p)))
+        if permanent:
+            self._p = p_moved
+            self._r = r_moved
         return p_moved, r_moved
 
     def in_range(self, point, sensor_pose):
@@ -461,28 +458,6 @@ class FrustumCamera(SensorModel):
     def config(self):
         return self._p, self._r
 
-    # We need the notion of free space. The simplest thing to do
-    # is for the sensor to directly inform the robot what the free
-    # spaces are.
-    def get_volume(self, sensor_pose, volume=None):
-        """Return the volume inside the frustum as a list of 3D coordinates."""
-        if volume is None:
-            volume = self._volume
-        if len(sensor_pose) == 7:
-            x, y, z, qx, qy, qz, qw = sensor_pose
-            R = R_quat(qx, qy, qz, qw, affine=True)
-        elif len(sensor_pose) == 6:
-            x, y, z, thx, thy, thz = sensor_pose
-            R = R_euler(thx, thy, thz, affine=True)
-        volume_moved = np.transpose(np.matmul(T(x, y, z),
-                                              np.matmul(R, np.transpose(volume))))
-        # Get x,y,z only
-        volume_moved = volume_moved[:,:3]
-        return np.round(volume_moved).astype(int)
-
-    def field_of_view_size(self):
-        return len(self._volume)
-
     def get_direction(self, p=None):
         if p is None:
             return -self._p[0][:3]
@@ -503,7 +478,7 @@ class FrustumCamera(SensorModel):
         return observed
 
 
-    def visible_volume(self, sensor_pose, occupancy_octree,
+    def visible_volume(self, sensor_pose, occupancy_octree=None,
                        num_rays=20, step_size=0.1,
                        return_obstacles_hit=False,
                        obstacle_res=1,
@@ -530,6 +505,8 @@ class FrustumCamera(SensorModel):
 
         voxel_res: The resolution of a voxel in the volume.
         If larger, then more coarse, but results in fewer voxels.
+
+        If occupancy_octree is None, then there is no obstacles considered.
         """
         # We shoot rays from the sensor out, and collect voxels
         # in the volume along the way, until the ray hits an obstacle.
@@ -537,8 +514,10 @@ class FrustumCamera(SensorModel):
 
         # obstacles are at the leaf. Each obstacle is a voxel. We represent
         # them as origin-based boxes
-        obstacles = [leaf for leaf in occupancy_octree.octree.get_leaves()
-                     if leaf.value() > 0]
+        obstacles = []
+        if occupancy_octree is not None:
+            obstacles = [leaf for leaf in occupancy_octree.octree.get_leaves()
+                         if leaf.value() > 0]
         # will use a priority queue, where higher priority means closer the distance to sensor pose
         obstacles_pq = PriorityQueue()
         for obstacle in obstacles:
