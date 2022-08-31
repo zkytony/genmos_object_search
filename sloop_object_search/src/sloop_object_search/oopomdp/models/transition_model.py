@@ -393,7 +393,7 @@ class RobotTransTopo2D(RobotTransTopo):
                  **kwargs):
         super().__init__(robot_id, target_ids, topo_map,
                          detection_models, no_look=no_look)
-        h_angle_res = kwargs.pop(h_angle_res, 45.0)
+        h_angle_res = kwargs.pop("h_angle_res", 45.0)
         self._h_angles = [i*h_angle_res
                           for i in range(int(360/h_angle_res))]
 

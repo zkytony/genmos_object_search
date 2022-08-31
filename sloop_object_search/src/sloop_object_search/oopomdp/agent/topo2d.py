@@ -1,3 +1,5 @@
+"""This represents the global, 2D search agent that plans
+over an action space based on a topological graph."""
 import pomdp_py
 import random
 from collections import deque
@@ -20,12 +22,12 @@ class MosAgentTopo2D(MosAgent):
         if init_object_beliefs is None:
             init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
-                prior=self.agent_config["belief"].get("prior", {}))
+                belief_config=self.agent_config["belief"])
 
         # now, generate topological map
         combined_dist = belief.accumulate_object_beliefs(
             self.search_region, init_object_beliefs)
-        mpe_robot_pose = init_robot_pose_dist.mpe()
+        mpe_robot_pose = tuple(init_robot_pose_dist.mean)
         self.topo_map = self.generate_topo_map(combined_dist, mpe_robot_pose)
 
         # now, generate initial robot belief
@@ -67,7 +69,7 @@ class MosAgentTopo2D(MosAgent):
         the current 'robot_pose', sample a topological graph
         based on this distribution.
         """
-        position_candidates = self.search_region.grid_map.filter_by_label("topo_position_candidate")
+        position_candidates = self.search_region.grid_map.free_locations
         if len(position_candidates) == 0:
             raise ValueError("No position candidates for topo map sampling.")
         topo_map_args = self.agent_config.get("topo_map_args", {})

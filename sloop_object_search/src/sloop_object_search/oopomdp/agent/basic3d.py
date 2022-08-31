@@ -1,3 +1,6 @@
+"""This represents a local 3D search agent with a primitive action
+space such as moving / rotating with respect to an axis.
+"""
 import pomdp_py
 import numpy as np
 from . import belief

@@ -39,13 +39,19 @@ def search_region_2d_from_point_cloud(point_cloud, robot_position, existing_sear
         points_array, robot_position,
         existing_search_region=existing_search_region,
         **kwargs)
+
     if existing_search_region is not None:
         # search_region should be the same as existing
         assert existing_search_region.grid_map == search_region.grid_map
-        return existing_search_region
+        return_search_region = existing_search_region
     else:
         print("grid map created!")
-        return search_region
+        return_search_region = search_region
+
+    # Labeling grid cells as reachable / reachable for topo / potential object locations
+    # TODO: is this necessary?
+
+    return return_search_region
 
 
 ########### 3D search region ##############

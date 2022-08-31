@@ -1,3 +1,6 @@
+"""This represents a local 3D search agent with a viewpoint
+topo graph-based action space.
+"""
 import random
 import pomdp_py
 

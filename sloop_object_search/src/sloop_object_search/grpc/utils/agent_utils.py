@@ -6,7 +6,8 @@ import time
 import copy
 
 from sloop_object_search.oopomdp.agent import\
-    SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentBasic3D, MosAgentTopo3D
+    (SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentTopo2D,
+     MosAgentBasic3D, MosAgentTopo3D)
 import sloop_object_search.oopomdp.domain.observation as slpo
 import sloop_object_search.oopomdp.domain.action as slpa
 from sloop_object_search.oopomdp.agent import belief
@@ -15,6 +16,7 @@ from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, Sea
 VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "MosAgentBasic2D",
                 "SloopMosAgentTopo2D",
+                "MosAgentTopo2D",
                 "MosAgentBasic3D",
                 "MosAgentTopo3D"}
 
@@ -62,6 +64,8 @@ def create_agent(robot_id, agent_config_world, robot_localization_world, search_
         search_region.to_pomdp_pose(robot_pose_world, robot_pose_cov_world)
     # create initial robot pose dist
     init_robot_pose_dist = belief.RobotPoseDist(robot_pose_pomdp, robot_pose_cov_pomdp)
+    if isinstance(search_region, SearchRegion2D):
+        init_robot_pose_dist = init_robot_pose_dist.to_2d()
     agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist)
     return agent
 

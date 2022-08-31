@@ -16,10 +16,12 @@ class RobotPoseDist(pomdp_py.Gaussian):
     matrix is about the rotations around the axes. THis
     wrapper handles the conversion."""
     def __init__(self, pose, covariance):
-        """
-        covariance (array or list): covariance matrix.
+        """covariance (array or list): covariance matrix.
             For 3D pose, the variables are [x y z thx thy thz]
             For 2D pose, the variables are [x y yaw]
+
+        note that for 3D pose, the input argument 'pose' should contain
+        quaternion.
         """
         if len(pose) == 7:
             self.is_3d = True
@@ -41,7 +43,7 @@ class RobotPoseDist(pomdp_py.Gaussian):
         if self.is_3d:
             return RobotPoseDist._to_quat_pose(super().mean)
         else:
-            return self.mean
+            return super().mean
 
     @staticmethod
     def _to_euler_pose(pose7tup):
@@ -70,6 +72,14 @@ class RobotPoseDist(pomdp_py.Gaussian):
             return RobotPoseDist._to_quat_pose(pose)
         else:
             return pose
+
+    def to_2d(self):
+        if self.is_3d:
+            x, y, _ = self.mean[:3]
+            _, _, yaw = quat_to_euler(*self.mean[3:])
+            cov = np.asarray(self.cov)[np.ix_((0,1,2,-1), (0,1,2,-1))]  # get covariance matrix
+            return RobotPoseDist((x,y,yaw), cov)
+        raise ValueError("is already 2D.")
 
 
 class RobotStateBelief(pomdp_py.GenerativeDistribution):

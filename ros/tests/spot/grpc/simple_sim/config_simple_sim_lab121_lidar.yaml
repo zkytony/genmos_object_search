@@ -1,5 +1,5 @@
 agent_config:
-  agent_class: MosAgentTopo3D
+  agent_class: MosAgentTopo2D
   belief:
     init_params:
       num_samples: 3000

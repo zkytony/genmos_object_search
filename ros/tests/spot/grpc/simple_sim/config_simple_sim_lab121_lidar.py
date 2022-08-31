@@ -70,7 +70,7 @@ CONFIG_HIER = {
     },
 
     "agent_config": {
-        "agent_class": "MosAgentTopo3D", #"MosAgentBasic3D",
+        "agent_class": "MosAgentTopo2D", #MosAgentTopo3D "MosAgentBasic3D",
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
