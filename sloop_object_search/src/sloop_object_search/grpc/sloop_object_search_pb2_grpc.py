@@ -54,6 +54,11 @@ class SloopObjectSearchStub(object):
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
                 )
+        self.Communicate = channel.stream_stream(
+                '/sloop_object_search.grpc.SloopObjectSearch/Communicate',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.BidiNote.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.BidiNote.FromString,
+                )
 
 
 class SloopObjectSearchServicer(object):
@@ -115,6 +120,13 @@ class SloopObjectSearchServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Communicate(self, request_iterator, context):
+        """This is bidirectional stream to enable server talking to the client
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SloopObjectSearchServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -157,6 +169,11 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
                     servicer.PlanAction,
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.SerializeToString,
+            ),
+            'Communicate': grpc.stream_stream_rpc_method_handler(
+                    servicer.Communicate,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.BidiNote.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.BidiNote.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -301,5 +318,22 @@ class SloopObjectSearch(object):
         return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Communicate(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_stream(request_iterator, target, '/sloop_object_search.grpc.SloopObjectSearch/Communicate',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.BidiNote.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.BidiNote.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
