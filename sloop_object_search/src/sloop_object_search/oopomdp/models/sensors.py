@@ -535,19 +535,23 @@ class FrustumCamera(SensorModel):
         visible_volume = set()
         obstacles_hit = set()
         w1, h1 = self._dim[:2]
-        near = self._params[2]
-        far = self._params[3]
+
+        # vectorize the computation of rays
+        ray_np_xs = np.random.uniform(-w1/2, w1/2, num_rays)
+        ray_np_ys = np.random.uniform(-h1/2, h1/2, num_rays)
+        ray_np_zs = np.full((num_rays,), -self.near)
+        ray_up_angles = np.arctan2(ray_np_ys, ray_np_zs)
+
+        # transform ray points to respect the default look direction
+        # quat = quat_between((0, 0, -1), self._look)
         quat = quat_between((0, 0, -1), self._look)
+        ray_np_points = np.column_stack((ray_np_xs, ray_np_ys, ray_np_zs))
+        ray_np_points = np.matmul(R_quat(*quat).as_matrix(), ray_np_points.transpose()).transpose()
+
         for i in tqdm(range(num_rays)):
             # sample a ray which goes through a point on the near plane; this assumes -z look direction
-            ray_np_x = random.uniform(-w1/2, w1/2)
-            ray_np_y = random.uniform(-h1/2, h1/2)
-            ray_np_z = -self.near
-            ray_up_angle = math.atan2(ray_np_y, ray_np_z)
-
-            # first we need to transform the ray point to respect the default look direction
-            ray_np_x, ray_np_y, ray_np_z = np.matmul(R_quat(*quat).as_matrix(),
-                                                     np.array([ray_np_x, ray_np_y, ray_np_z]))
+            ray_np_x, ray_np_y, ray_np_z = ray_np_points[i]
+            ray_up_angle = ray_up_angles[i]
 
             # transform the ray to (pomdp) world frame
             ray_np_world = self.camera_to_world((ray_np_x, ray_np_y, ray_np_z), sensor_pose)
@@ -593,9 +597,9 @@ class FrustumCamera(SensorModel):
                                 visible_volume.add(voxel_on_ray)
                                 _obstacle_hitting_cache[voxel_on_ray] = False
                 t = t + 1
-                # project the ray onto the z axis
+                # project the ray onto the principal axis
                 z_proj_ray = euclidean_dist(point_on_ray, sensor_pose[:3])*math.cos(ray_up_angle)
-                if z_proj_ray < -far:
+                if z_proj_ray < -self.far:
                     out_of_bound = True
 
             if hit_obstacle:
