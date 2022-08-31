@@ -407,7 +407,6 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
 
     def draw_topo_map(self, img, topo_map,
                       edge_thickness=2, edge_color=(200, 40, 20), **mark_cell_kwargs):
-
         for eid in topo_map.edges:
             edge = topo_map.edges[eid]
             if not edge.degenerate:
@@ -420,31 +419,6 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
             pos = self._grid_map2.shift_pos(*topo_map.nodes[nid].pos)
             img = mark_cell(img, pos, int(nid), self._res, **mark_cell_kwargs)
         return img
-
-
-    # def render_old(self, agent, objlocs={}, colors={},
-    #                robot_state=None, draw_fov=None,
-    #                draw_belief=True, img=None, draw_topo=True, **mark_cell_kwargs):
-    #     """render image"""
-    #     if img is None:
-    #         img = self._make_gridworld_image(self._res)
-
-    #     img = super().render(agent, objlocs=objlocs, colors=colors,
-    #                           robot_state=robot_state, draw_fov=draw_fov,
-    #                           draw_belief=draw_belief, img=img)
-
-    #     # Draw topo map
-    #     if draw_topo:
-    #         img = draw_topo_func(img, agent.topo_map, self._res,
-    #                              draw_grid_path=self._draw_topo_grid_path,
-    #                              **mark_cell_kwargs)
-
-    #     # redraw robot on top of topo map
-    #     if robot_state is None:
-    #         robot_state = agent.belief.mpe().s(agent.robot_id)
-    #     x, y, th = robot_state["pose"]
-    #     img = self.draw_robot(img, x, y, th, (255, 20, 20))
-    #     return img
 
 
 #------ Visualization for topo map -----#
