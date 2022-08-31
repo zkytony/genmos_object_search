@@ -93,7 +93,7 @@ class MosAgentTopo2D(MosAgent):
                              self.robot_id, robot_pose)
             # flip horizotnally is necessary so that +x is right, +y is up.
             viz.show_img(img, flip_horizontally=True)
-            time.sleep(5)
+            time.sleep(10)
             viz.on_cleanup()
         return topo_map
 

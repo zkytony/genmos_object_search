@@ -35,6 +35,7 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
+from test_simple_sim_env_local_search import wait_for_robot_pose
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
@@ -120,42 +121,50 @@ class TestSimpleEnvHierSearch:
             action = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
             rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+
+            # Now, we need to execute the action, and receive observation
+            # from SimpleEnv. First, convert the dest_3d in action to
+            # a KeyValAction message
+            if isinstance(action, a_pb2.MoveViewpoint):
+                if action.HasField("dest_3d"):
+                    dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
+                elif action.HasField("dest_2d"):
+                    robot_pose = np.asarray(wait_for_robot_pose())
+                    dest_2d = proto_utils.poseproto_to_posetuple(action.dest_2d)
+                    x, y, thz = dest_2d
+                    z = robot_pose[2]
+                    thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
+                    dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
+                else:
+                    robot_pose = np.asarray(wait_for_robot_pose())
+                    robot_pose[0] += action.motion_3d.dpos.x
+                    robot_pose[1] += action.motion_3d.dpos.y
+                    robot_pose[2] += action.motion_3d.dpos.z
+
+                    thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
+                    dthx = action.motion_3d.drot_euler.x
+                    dthy = action.motion_3d.drot_euler.y
+                    dthz = action.motion_3d.drot_euler.z
+                    robot_pose[3:] = np.asarray(math_utils.euler_to_quat(
+                        thx + dthx, thy + dthy, thz + dthz))
+                    dest = robot_pose
+
+                nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
+                action_pub.publish(nav_action)
+                rospy.loginfo("published nav action for execution")
+                # wait for navigation done
+                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+                                          allow_headerless=True, verbose=True)
+                rospy.loginfo("nav action done.")
+            elif isinstance(action, a_pb2.Find):
+                find_action = KeyValAction(stamp=rospy.Time.now(),
+                                           type="find")
+                action_pub.publish(find_action)
+                rospy.loginfo("published find action for execution")
+                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+                                          allow_headerless=True, verbose=True)
+                rospy.loginfo("find action done")
             break
-
-        #     # Now, we need to execute the action, and receive observation
-        #     # from SimpleEnv. First, convert the dest_3d in action to
-        #     # a KeyValAction message
-        #     if isinstance(action, a_pb2.MoveViewpoint):
-        #         if action.HasField("dest_3d"):
-        #             dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
-        #         else:
-        #             robot_pose = np.asarray(wait_for_robot_pose())
-        #             robot_pose[0] += action.motion_3d.dpos.x
-        #             robot_pose[1] += action.motion_3d.dpos.y
-        #             robot_pose[2] += action.motion_3d.dpos.z
-
-        #             thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
-        #             dthx = action.motion_3d.drot_euler.x
-        #             dthy = action.motion_3d.drot_euler.y
-        #             dthz = action.motion_3d.drot_euler.z
-        #             robot_pose[3:] = np.asarray(math_utils.euler_to_quat(
-        #                 thx + dthx, thy + dthy, thz + dthz))
-        #             dest = robot_pose
-        #         nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
-        #         action_pub.publish(nav_action)
-        #         rospy.loginfo("published nav action for execution")
-        #         # wait for navigation done
-        #         ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
-        #                                   allow_headerless=True, verbose=True)
-        #         rospy.loginfo("nav action done.")
-        #     elif isinstance(action, a_pb2.Find):
-        #         find_action = KeyValAction(stamp=rospy.Time.now(),
-        #                                    type="find")
-        #         action_pub.publish(find_action)
-        #         rospy.loginfo("published find action for execution")
-        #         ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
-        #                                   allow_headerless=True, verbose=True)
-        #         rospy.loginfo("find action done")
 
         #     # Now, wait for observation
         #     obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
