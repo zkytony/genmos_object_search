@@ -323,10 +323,10 @@ class FrustumCamera(SensorModel):
         near: near-plane's distance to the camera
         far: far-plane's distance to the camera
         """
-        # By default, the camera is always at (0,0,0), looking at direction (0,0,-1)
-        # This is the configuration when the camera pose is (0,0,0,0,0,0,1).
-        # If 'default_look' is not (0,0,-1), then we will transform the camera's
-        # configuration accordingly.
+        # In the variable definitions below, the camera is always at (0,0,0),
+        # looking at direction (0,0,-1) This is the configuration when the
+        # camera pose is (0,0,0,0,0,0,1).  If 'default_look' is not (0,0,-1),
+        # then we will transform the camera's configuration accordingly.
         #
         # 6 planes:
         #     3
@@ -537,12 +537,17 @@ class FrustumCamera(SensorModel):
         w1, h1 = self._dim[:2]
         near = self._params[2]
         far = self._params[3]
+        quat = quat_between((0, 0, -1), self._look)
         for i in tqdm(range(num_rays)):
-            # sample a ray which goes through a point on the near plane
+            # sample a ray which goes through a point on the near plane; this assumes -z look direction
             ray_np_x = random.uniform(-w1/2, w1/2)
             ray_np_y = random.uniform(-h1/2, h1/2)
             ray_np_z = -self.near
             ray_up_angle = math.atan2(ray_np_y, ray_np_z)
+
+            # first we need to transform the ray point to respect the default look direction
+            ray_np_x, ray_np_y, ray_np_z = np.matmul(R_quat(*quat).as_matrix(),
+                                                     np.array([ray_np_x, ray_np_y, ray_np_z]))
 
             # transform the ray to (pomdp) world frame
             ray_np_world = self.camera_to_world((ray_np_x, ray_np_y, ray_np_z), sensor_pose)

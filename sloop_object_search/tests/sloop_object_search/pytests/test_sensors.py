@@ -15,6 +15,7 @@
 import pytest
 import random
 import math
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -219,26 +220,27 @@ def test_visible_volume(camera_far, occupancy_octree):
     camera = camera_far
     geometries = open3d_utils.draw_octree_dist(occupancy_octree, viz=False)
 
-    # The robot by default looks at -z direction. So, it will
-    # have a rotation around x by default
-    default_o3d_rotation = [180,0,0]  # don't change this
+    # The robot by default looks at +x direction with zero quaternion
+    # but the arrow points to +z with zero quaternion. So, we will
+    # have to do the following to align the two
+    default_o3d_rotation = [0,90,0]  # don't change this
 
-    # To run the default test, uncomment below
-    # rotation = [90,0,0]
-    # position = [15, 5, 5]
-    # sensor_pose = (*position, *euler_to_quat(*rotation))
-    # _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
+    # # To run the default test, uncomment below
+    rotation = [0,0,0]
+    position = [15, 5, 5]
+    sensor_pose = (*position, *euler_to_quat(*rotation))
+    _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
 
     # To run test for custom robot pose and object position, uncomment below
     # object box -- used to test if FOV covers an object
-    obj_pos = (8,27,6)
-    sensor_pose = (20, 20, 10, -0.5, 0.5, -0.5, 0.5)
-    _o3d_rotation = np.array(default_o3d_rotation) + np.array(quat_to_euler(*sensor_pose[3:]))
+    # obj_pos = (8,27,6)
+    # sensor_pose = (20, 20, 10, -0.5, 0.5, -0.5, 0.5)
+    # _o3d_rotation = np.array(default_o3d_rotation) + np.array(quat_to_euler(*sensor_pose[3:]))
+    # obj = o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=1)
+    # obj.translate(np.asarray(obj_pos))
+    # obj.paint_uniform_color([0.95, 0.5, 0.24])
+    # geometries.append(obj)
 
-    obj = o3d.geometry.TriangleMesh.create_box(width=1, height=1, depth=1)
-    obj.translate(np.asarray(obj_pos))
-    obj.paint_uniform_color([0.95, 0.5, 0.24])
-    geometries.append(obj)
     arrow = o3d.geometry.TriangleMesh.create_arrow(
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
@@ -248,10 +250,12 @@ def test_visible_volume(camera_far, occupancy_octree):
     geometries.append(arrow)
 
     print("computing visible volume")
+    _t = time.time()
     volume, obstacles_hit = camera.visible_volume(
         sensor_pose, occupancy_octree, num_rays=150, step_size=0.6,
         obstacle_res=1, voxel_res=2,
         return_obstacles_hit=True)
+    print("computation took: {:.3}s".format(time.time()-_t))
 
     # Draw
     for voxel in volume:
