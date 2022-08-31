@@ -191,11 +191,15 @@ def pomdp_action_to_proto(action, agent, header=None):
             goal_pose_pomdp = robot_trans_model.sample(rnd_state, action).pose
             goal_pose_world = agent.search_region.to_world_pose(goal_pose_pomdp)
             goal_pose_world_pb = posetuple_to_poseproto(goal_pose_world)
+            if isinstance(goal_pose_world_pb, Pose2D):
+                dest = {"dest_2d": goal_pose_world_pb}
+            else:
+                dest = {"dest_3d": goal_pose_world_pb}
             action_pb = MoveViewpoint(header=header,
                                       robot_id=agent.robot_id,
-                                      dest_3d=goal_pose_world_pb,
                                       name=action.name,
-                                      expected_cost=action.step_cost)
+                                      expected_cost=action.step_cost,
+                                      **dest)
 
         elif isinstance(action, slpa.MotionAction3D):
             # we need to convert the position change from pomdp frame to

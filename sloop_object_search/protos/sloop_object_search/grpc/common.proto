@@ -22,7 +22,7 @@ message Header {
 message Pose2D {
   double x = 1;
   double y = 2;
-  double th = 3;
+  double th = 3;   // typically degrees
 }
 
 message Pose3D {

@@ -21,7 +21,7 @@ class SearchRegion:
         self._region_origin = region_origin
         self._search_space_resolution = search_space_resolution
 
-    @classmethod
+    @property
     def is_3d(cls):
         raise NotImplementedError
 
@@ -74,23 +74,23 @@ class SearchRegion:
         """given a covariance for the pomdp frame to the world frame"""
         return convert_cov(cov, Frame.POMDP_SPACE, Frame.WORLD,
                            search_space_resolution=self.search_space_resolution,
-                           is_3d=self.__class__.is_3d)
+                           is_3d=self.is_3d)
 
     def to_pomdp_cov(self, world_cov):
         """given a covariance for the world frame to the pomdp frame"""
         return convert_cov(world_cov, Frame.WORLD, Frame.POMDP_SPACE,
                            search_space_resolution=self.search_space_resolution,
-                           is_3d=self.__class__.is_3d)
+                           is_3d=self.is_3d)
 
     def to_region_cov(self, cov):
         """given a covariance for the POMDP frame to the region frame"""
         return convert_cov(cov, Frame.POMDP_SPACE, Frame.REGION,
                            search_space_resolution=self.search_space_resolution,
-                           is_3d=self.__class__.is_3d)
+                           is_3d=self.is_3d)
 
     def to_world_pose(self, pose, cov=None):
         """Given a pose in POMDP frame, return a pose in the WORLD frame."""
-        if self.__class__.is_3d:
+        if self.is_3d:
             pos_len = 3
         else:
             pos_len = 2
@@ -105,7 +105,7 @@ class SearchRegion:
 
     def to_region_pose(self, pose, cov=None):
         """Given a pose in REGION frame, return a pose in the POMDP frame."""
-        if self.__class__.is_3d:
+        if self.is_3d:
             pos_len = 3
         else:
             pos_len = 2
@@ -120,7 +120,7 @@ class SearchRegion:
 
     def to_pomdp_pose(self, world_pose, cov=None):
         """Given a pose in WORLD frame, return a pose in the POMDP frame."""
-        if self.__class__.is_3d:
+        if self.is_3d:
             pos_len = 3
         else:
             pos_len = 2
@@ -149,7 +149,7 @@ class SearchRegion2D(SearchRegion):
                          region_origin=region_origin,
                          search_space_resolution=grid_size)
 
-    @classmethod
+    @property
     def is_3d(cls):
         return False
 
@@ -186,7 +186,7 @@ class SearchRegion3D(SearchRegion):
             "octree_dist must be OccupancyOctreeDistribution."
         super().__init__(octree_dist, **kwargs)
 
-    @classmethod
+    @property
     def is_3d(cls):
         return True
 
