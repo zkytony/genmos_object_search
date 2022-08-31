@@ -30,7 +30,7 @@ agent_config:
     - 0.1
     - 0.1
     - 0.9
-    detectors2d:
+    detectors:
       book:
         class: sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly
         params:

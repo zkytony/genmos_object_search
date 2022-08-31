@@ -107,19 +107,20 @@ class TestSimpleEnvHierSearch:
         # # visualize initial belief
         # self.get_and_visualize_belief(o3dviz=o3dviz)
 
-        # # create planner
-        # response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
-        #                                             header=proto_utils.make_header(),
-        #                                             robot_id=self.robot_id)
-        # rospy.loginfo("planner created!")
+        # create planner
+        response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
+                                                    header=proto_utils.make_header(),
+                                                    robot_id=self.robot_id)
+        rospy.loginfo("planner created!")
 
-        # # Send planning requests
-        # for step in range(TASK_CONFIG["max_steps"]):
-        #     response_plan = self._sloop_client.planAction(
-        #         self.robot_id, header=proto_utils.make_header(self.world_frame))
-        #     action = proto_utils.interpret_planned_action(response_plan)
-        #     action_id = response_plan.action_id
-        #     rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+        # Send planning requests
+        for step in range(TASK_CONFIG["max_steps"]):
+            response_plan = self._sloop_client.planAction(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+            action = proto_utils.interpret_planned_action(response_plan)
+            action_id = response_plan.action_id
+            rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+            break
 
         #     # Now, we need to execute the action, and receive observation
         #     # from SimpleEnv. First, convert the dest_3d in action to

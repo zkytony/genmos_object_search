@@ -77,7 +77,7 @@ class RobotPoseDist(pomdp_py.Gaussian):
         if self.is_3d:
             x, y, _ = self.mean[:3]
             _, _, yaw = quat_to_euler(*self.mean[3:])
-            cov = np.asarray(self.cov)[np.ix_((0,1,2,-1), (0,1,2,-1))]  # get covariance matrix
+            cov = np.asarray(self.cov)[np.ix_((0,1,-1), (0,1,-1))]  # get covariance matrix
             return RobotPoseDist((x,y,yaw), cov)
         raise ValueError("is already 2D.")
 

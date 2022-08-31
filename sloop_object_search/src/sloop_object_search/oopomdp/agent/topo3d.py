@@ -78,7 +78,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
 
     @property
     def topo_config(self):
-        return self.agent_config.get("topo", {})
+        return self.agent_config["robot"]["action"].get("topo", {})
 
     def reachable(self, pos):
         """A position is reachable if it is a valid

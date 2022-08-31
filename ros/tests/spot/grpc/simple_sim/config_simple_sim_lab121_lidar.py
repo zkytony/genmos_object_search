@@ -80,9 +80,9 @@ CONFIG_HIER = {
                          'params': {'fov': 61,
                                     'min_range': 0.2,
                                     'max_range': 1.75}}],
-            'detectors2d': {'book': {'class': 'sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly',
-                                     'params': {"sensor": "fan",
-                                                "quality": [0.9, 0.05]}}},
+            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly',
+                                   'params': {"sensor": "fan",
+                                              "quality": [0.9, 0.05]}}},
             "action": {"topo": {}},
             'color': [0.9, 0.1, 0.1, 0.9],
             #### Below are specific to hierarchical type agents ####

@@ -36,7 +36,8 @@ class MosAgentTopo2D(MosAgent):
         init_robot_belief = belief.init_robot_belief(
             self.agent_config["robot"], init_robot_pose_dist,
             robot_state_class=RobotStateTopo,
-            topo_nid=init_topo_nid)
+            topo_nid=init_topo_nid,
+            topo_map_hashcode=self.topo_map.hashcode)
         init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,
                                          **init_object_beliefs})
         return init_belief
@@ -85,14 +86,13 @@ class MosAgentTopo2D(MosAgent):
                                     rnd=random.Random(topo_map_args.get("seed", 1001)),
                                     robot_pos=robot_pose[:2])
         if debug:
-            viz = init_visualizer2d(visual2d.VizSloopMosTopo,
-                                    self.agent_config,
+            viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
                                     grid_map=self.search_region.grid_map,
                                     res=self.visual_config.get("res", 10))
             img = viz.render(topo_map, object_beliefs,
                              self.robot_id, robot_pose)
             viz.show_img(img)
-            time.sleep(1)
+            time.sleep(3)
             viz.on_cleanup()
         return topo_map
 

@@ -375,12 +375,12 @@ class VizSloopMosBasic2D(GridMap2Visualizer):
                         objid, colors, alpha=None)))
         return img
 
-    def draw_object_beliefs(self, img, object_beliefs):
+    def draw_object_beliefs(self, img, object_beliefs, alpha_max=0.8):
         for objid in object_beliefs:
             color = self.get_color(objid, self._colors, alpha=None)
             belief_obj = object_beliefs[objid]
             img = self.draw_object_belief(img, belief_obj,
-                                          list(color) + [250])
+                                          list(color) + [255*alpha_max])
         return img
 
 
@@ -399,7 +399,7 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
             img = self.draw_topo_map(img, topo_map,
                                      **self._mark_cell_kwargs)
         if object_beliefs is not None:
-            img = self.draw_object_beliefs(img, object_beliefs)
+            img = self.draw_object_beliefs(img, object_beliefs, alpha_max=0.7)
         if robot_pose is not None:
             img = self.draw_robot(img, *robot_pose,
                                   color=self.get_color(robot_id, self._colors, alpha=None))
@@ -417,6 +417,7 @@ class VizSloopMosTopo(VizSloopMosBasic2D):
 
         for nid in topo_map.nodes:
             pos = self._grid_map2.shift_pos(*topo_map.nodes[nid].pos)
+            mark_cell_kwargs["show_img_flip_horizontally"] = True
             img = mark_cell(img, pos, int(nid), self._res, **mark_cell_kwargs)
         return img
 
@@ -457,7 +458,6 @@ def mark_cell(img, pos, nid, r, linewidth=1, unmark=False,
         if show_img_flip_horizontally:
             # do this if show_img has flip_horizontally=True
             imgtxt = cv2.flip(imgtxt, 0)
-            imgtxt = cv2.flip(imgtxt, 1)
         else:
             # do this if show_img has flip_horizontally=False
             imgtxt = cv2.flip(imgtxt, 1) # flip horizontally
