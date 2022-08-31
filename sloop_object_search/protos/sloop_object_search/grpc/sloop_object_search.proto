@@ -72,6 +72,12 @@ message GetAgentCreationStatusReply {
 }
 
 //// For UpdateSearchRegion rpc ////
+// Note: for hierarchical search, the global search agent may need to spawn
+// local search agents, whose creation requires search region information
+// through the robot's observations (e.g. point cloud). When that happens, the
+// client should receive a message from the Communicate stream that requests
+// this and that contains the robot id for the local search agent, and the
+// client should send over an UpdateSearchRegionRequest
 message UpdateSearchRegionRequest {
   Header header = 1;
   string robot_id = 2;
@@ -114,14 +120,6 @@ message ProcessObservationRequest {
   oneof observation {
     ObjectDetectionArray object_detections  = 4;
     Language language = 5;
-    // For hierarchical search, the global search agent may need to
-    // spawn local search agents, whose creation requires search
-    // region information through the robot's observations (e.g. point cloud)
-    // Therefore, one could pass in an UpdateSearchRegion request that
-    // contains those information, and use this to update the local search
-    // agent's request -- note: local search agent should have a 'robot_id'
-    // that is '<global_robot_id>-local'
-    UpdateSearchRegionRequest update_search_region = 11;
   }
 
   // the action that the observation is associated with (e.g. received after
