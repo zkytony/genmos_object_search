@@ -70,32 +70,35 @@ CONFIG_HIER = {
     },
 
     "agent_config": {
-        "agent_class": "MosAgentTopo2D", #MosAgentTopo3D "MosAgentBasic3D",
-        'belief': {"visible_volume_params": {"num_rays": 150,
-                                             "step_size": 0.4,
-                                             "voxel_res": 2},
-                   "init_params": {"num_samples": 3000}},
-        'robot': {
-            'id': 'robot0',
-            'no_look': True,
-            'sensors': [{
-                'name': 'camera',
-                'params': {'fov': 61,
-                           'far': 1.75,
-                           'near': 0.2,
-                           'occlusion_enabled': True}
-            }],
-            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
-                                   'params': {"sensor": "camera",
-                                              "quality": [1e5, 0.1]}}},
-                          # 'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
-                          #          'params': {"sensor": "camera",
-                          #                     "quality": [1e5, 0.1]}}},
-            'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
-                       'params': {'step_size': 0.2,
-                                  'rotation': 90.0,
-                                  'scheme': 'axis'}},
-            'color': [0.9, 0.1, 0.1, 0.9]
+        "agent_class": "MosAgentTopo2D",
+        "agent_type": "hierarchical",  # 'hierarchical' or 'local'
+        "belief": {},
+        "robot": {
+            "id": "robot0",
+            "no_look": True,
+            "sensors": [{"name": 'fan',
+                         'params': {'fov': 61,
+                                    'min_range': 0.2,
+                                    'max_range': 1.75}}],
+            'detectors2d': {'book': {'class': 'sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly',
+                                     'params': {"sensor": "fan",
+                                                "quality": [0.9, 0.05]}}},
+            "action": {"topo": {}},
+            'color': [0.9, 0.1, 0.1, 0.9],
+            #### Below are specific to hierarchical type agents ####
+            "sensors_local": [{'name': 'camera',
+                               'params': {'fov': 61,
+                                          'far': 1.75,
+                                          'near': 0.2,
+                                          'occlusion_enabled': True}}],
+            "detectors_local": {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                                         'params': {"sensor": "camera",
+                                                    "quality": [1e5, 0.1]}},
+                                # 'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                                #          'params': {"sensor": "camera",
+                                #                     "quality": [1e5, 0.1]}}},
+                                },
+            "action_local": {"topo": {}}
         },
         'objects': {'book': {'class': 'book',
                              'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
@@ -109,7 +112,7 @@ CONFIG_HIER = {
                     #         'viz_type': 'cube'}},
         'targets': ['book'],
         'misc': {
-            'visual': {'res': 15},
+            'visual': {'res': 25},
         }
     },
 
