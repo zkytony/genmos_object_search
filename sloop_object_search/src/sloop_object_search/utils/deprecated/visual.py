@@ -1,4 +1,3 @@
-"""image-based 2D visualization of beliefs, grid maps, etc."""
 import math
 import random
 import cv2
@@ -8,13 +7,11 @@ from tqdm import tqdm
 
 from .images import overlay, cv2shape
 from .colors import lighter, lighter_with_alpha, inverse_color_rgb, random_unique_color
-from .math import to_rad, to_deg
+from .math import to_rad
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 
 __all__ = ['Visualizer2D']
 
-
-########### Parent class ############
 class Visualizer2D:
 
     def __init__(self, **config):
@@ -250,7 +247,6 @@ class Visualizer2D:
         return pos
 
 
-########### GridMap visualizer ###############
 class GridMapVisualizer(Visualizer2D):
     """
     Visualizer for a given grid map (GridMap).
@@ -262,7 +258,6 @@ class GridMapVisualizer(Visualizer2D):
         config entries:
             grid_map: GridMap
         """
-        print("Deprecated. You should be using GridMap2!")
         self._grid_map = config.get("grid_map", None)
         super().__init__(**config)
         self._region = self._grid_map
@@ -283,11 +278,7 @@ class GridMapVisualizer(Visualizer2D):
         return img
 
 
-########### GridMap2 visualizer ###############
 class GridMap2Visualizer(Visualizer2D):
-    """
-    Visualizer for a given grid map (GridMap2).
-    """
     def __init__(self, **config):
         self._grid_map2 = config.get("grid_map", None)
         assert isinstance(self._grid_map2, GridMap2),\
@@ -307,13 +298,13 @@ class GridMap2Visualizer(Visualizer2D):
         when visualizing, we need to shift them to nonnegative coordinates."""
         shifted_locations = [self._grid_map2.shift_pos(*loc)
                              for loc in locations]
-        return super().highlight(img, shifted_locations, color=color,
-                                 shape=shape, alpha=alpha, show_progress=show_progress,
-                                 scale=scale)
+        super().highlight(img, shifted_locations, color=color,
+                          shape=shape, alpha=alpha, show_progress=show_progress,
+                          scale=scale)
 
     def draw_robot(self, img, x, y, th, color=(255, 150, 0), thickness=2):
         shifted_x, shifted_y = self._grid_map2.shift_pos(x, y)
-        return super().draw_robot(img, shifted_x, shifted_y, th, color=(255, 150, 0), thickness=2)
+        super().draw_robot(img, shifted_x, shifted_y, th, color=(255, 150, 0), thickness=2)
 
     def _get_viz_pos(self, pos):
         return self._grid_map2.shift_pos(*pos)
@@ -332,160 +323,3 @@ class GridMap2Visualizer(Visualizer2D):
                                    (y*self._res+shift, x*self._res+shift),
                                    radius, color, thickness=-1, alpha=0.7)
         return img
-
-
-########### VizSloopMos*Basic2D* visualizer ###############
-class VizSloopMosBasic2D(GridMap2Visualizer):
-    def __init__(self, grid_map, **config):
-        super().__init__(grid_map=grid_map, **config)
-
-    def render(self, agent, objlocs={}, colors={}, robot_state=None, draw_fov=None,
-               draw_belief=True, img=None, **kwargs):
-        """
-        Args:
-            agent (CosAgent)
-            robot_state (RobotState): 2d robot state
-            target_belief (Histogram) target belief
-            objlocs (dict): maps from object id to true object (x,y) location tuple
-            colors (dict): maps from objid to [R,G,B]
-            draw_fov (list): draw the FOV for the detectors for this objects
-        """
-        if robot_state is None:
-            robot_state = agent.belief.mpe().s(agent.robot_id)
-
-        assert robot_state.is_2d, "2D visualizer expects 2D robot state"
-
-        if img is None:
-            img = self._make_gridworld_image(self._res)
-        x, y, th = robot_state["pose"]
-        for objid in sorted(objlocs):
-            img = self.highlight(img,
-                                 [objlocs[objid]],
-                                 color=self.get_color(objid, colors, alpha=None))
-        if draw_belief:
-            img = self.draw_object_beliefs(agent.beleif.object_beliefs)
-
-        img = self.draw_robot(img, x, y, th, (255, 20, 20))
-        if draw_fov is not None:
-            for objid in sorted(draw_fov):
-                img = VizSloopMosBasic2D.draw_fov(
-                    self, img, agent.sensor(objid),
-                    robot_state,
-                    inverse_color_rgb(self.get_color(
-                        objid, colors, alpha=None)))
-        return img
-
-    def draw_object_beliefs(self, img, object_beliefs):
-        for objid in object_beliefs:
-            color = self.get_color(objid, self._colors, alpha=None)
-            belief_obj = object_beliefs[objid]
-            img = self.draw_object_belief(img, belief_obj,
-                                          list(color) + [250])
-        return img
-
-
-########### VizSloopMos*Topo* visualizer ###############
-class VizSloopMosTopo(VizSloopMosBasic2D):
-    def __init__(self, grid_map, **config):
-        super().__init__(grid_map=grid_map, **config)
-        self._draw_topo_grid_path = config.get("draw_topo_grid_path", False)
-        self._mark_cell_kwargs = config.get("topo_mark_cell", {})
-
-    def render(self, topo_map=None, object_beliefs=None,
-               robot_id=None, robot_pose=None, img=None):
-        if img is None:
-            img = self._make_gridworld_image(self._res)
-        if topo_map is not None:
-            img = self.draw_topo_map(img, topo_map,
-                                     **self._mark_cell_kwargs)
-        if object_beliefs is not None:
-            img = self.draw_object_beliefs(img, object_beliefs)
-        if robot_pose is not None:
-            img = self.draw_robot(img, *robot_pose,
-                                  color=self.get_color(robot_id, self._colors, alpha=None))
-        return img
-
-    def draw_topo_map(self, img, topo_map,
-                      edge_thickness=2, edge_color=(200, 40, 20), **mark_cell_kwargs):
-
-        for eid in topo_map.edges:
-            edge = topo_map.edges[eid]
-            if not edge.degenerate:
-                node1, node2 = edge.nodes
-                pos1 = self._grid_map2.shift_pos(*node1.pos)
-                pos2 = self._grid_map2.shift_pos(*node2.pos)
-                img = draw_edge(img, pos1, pos2, self._res, edge_thickness, color=edge_color)
-
-        for nid in topo_map.nodes:
-            pos = self._grid_map2.shift_pos(*topo_map.nodes[nid].pos)
-            img = mark_cell(img, pos, int(nid), self._res, **mark_cell_kwargs)
-        return img
-
-
-    # def render_old(self, agent, objlocs={}, colors={},
-    #                robot_state=None, draw_fov=None,
-    #                draw_belief=True, img=None, draw_topo=True, **mark_cell_kwargs):
-    #     """render image"""
-    #     if img is None:
-    #         img = self._make_gridworld_image(self._res)
-
-    #     img = super().render(agent, objlocs=objlocs, colors=colors,
-    #                           robot_state=robot_state, draw_fov=draw_fov,
-    #                           draw_belief=draw_belief, img=img)
-
-    #     # Draw topo map
-    #     if draw_topo:
-    #         img = draw_topo_func(img, agent.topo_map, self._res,
-    #                              draw_grid_path=self._draw_topo_grid_path,
-    #                              **mark_cell_kwargs)
-
-    #     # redraw robot on top of topo map
-    #     if robot_state is None:
-    #         robot_state = agent.belief.mpe().s(agent.robot_id)
-    #     x, y, th = robot_state["pose"]
-    #     img = self.draw_robot(img, x, y, th, (255, 20, 20))
-    #     return img
-
-
-#------ Visualization for topo map -----#
-# In all fucntions, r means resolution, in pygmae visualziation
-def draw_edge(img, pos1, pos2, r, thickness=2, color=(0, 0, 0)):
-    x1, y1 = pos1
-    x2, y2 = pos2
-    cv2.line(img, (y1*r+r//2, x1*r+r//2), (y2*r+r//2, x2*r+r//2),
-             color, thickness=thickness)
-    return img
-
-def mark_cell(img, pos, nid, r, linewidth=1, unmark=False,
-              show_img_flip_horizontally=False):
-    """show_img_flip_horizontally: True if show_img flips image horizontally; """
-    if unmark:
-        color = (255, 255, 255, 255)
-    else:
-        color = (242, 227, 15, 255)
-    x, y = pos
-    cv2.rectangle(img, (y*r, x*r), (y*r+r, x*r+r),
-                  color, -1)
-    # Draw boundary
-    cv2.rectangle(img, (y*r, x*r), (y*r+r, x*r+r),
-                  (0, 0, 0), linewidth)
-
-    if not unmark:
-        font                   = cv2.FONT_HERSHEY_COMPLEX_SMALL
-        fontScale              = 0.72
-        fontColor              = (43, 13, 4)
-        lineType               = 1
-        imgtxt = np.full((r, r, 4), color, dtype=np.uint8)
-        text_loc = (int(round(r/4)), int(round(r/1.5)))
-        cv2.putText(imgtxt, str(nid), text_loc, #(y*r+r//4, x*r+r//2),
-                    font, fontScale, fontColor, lineType)
-        imgtxt = cv2.rotate(imgtxt, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        if show_img_flip_horizontally:
-            # do this if show_img has flip_horizontally=True
-            imgtxt = cv2.flip(imgtxt, 0)
-            imgtxt = cv2.flip(imgtxt, 1)
-        else:
-            # do this if show_img has flip_horizontally=False
-            imgtxt = cv2.flip(imgtxt, 1) # flip horizontally
-        img[x*r:x*r+r, y*r:y*r+r] = imgtxt
-    return img

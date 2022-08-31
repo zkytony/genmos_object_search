@@ -92,7 +92,8 @@ class MosAgentTopo2D(MosAgent):
             img = viz.render(topo_map, object_beliefs,
                              self.robot_id, robot_pose)
             viz.show_img(img)
-            time.sleep(5)
+            time.sleep(1)
+            viz.on_cleanup()
         return topo_map
 
 
