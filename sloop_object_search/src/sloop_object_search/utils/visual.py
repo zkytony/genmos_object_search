@@ -298,13 +298,13 @@ class GridMap2Visualizer(Visualizer2D):
         when visualizing, we need to shift them to nonnegative coordinates."""
         shifted_locations = [self._grid_map2.shift_pos(*loc)
                              for loc in locations]
-        super().highlight(img, shifted_locations, color=color,
-                          shape=shape, alpha=alpha, show_progress=show_progress,
-                          scale=scale)
+        return super().highlight(img, shifted_locations, color=color,
+                                 shape=shape, alpha=alpha, show_progress=show_progress,
+                                 scale=scale)
 
     def draw_robot(self, img, x, y, th, color=(255, 150, 0), thickness=2):
         shifted_x, shifted_y = self._grid_map2.shift_pos(x, y)
-        super().draw_robot(img, shifted_x, shifted_y, th, color=(255, 150, 0), thickness=2)
+        return super().draw_robot(img, shifted_x, shifted_y, th, color=(255, 150, 0), thickness=2)
 
     def _get_viz_pos(self, pos):
         return self._grid_map2.shift_pos(*pos)
