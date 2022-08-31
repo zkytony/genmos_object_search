@@ -445,12 +445,14 @@ def viz_msgs_for_robot_pose(robot_pose, world_frame, robot_frame, stamp=None,
         stamp = rospy.Time.now()
     scale = kwargs.pop("scale", geometry_msgs.msg.Vector3(x=0.4, y=0.05, z=0.05))
     lifetime = kwargs.pop("lifetime", 0)
-    # The camera by default looks at -z; Because in ROS, 0 degree means looking
-    # at +x, therefore we rotate the marker for robot pose so that it starts out
-    # looking at -z. Note this must be specified with respect to the robot frame.
+
+    # The camera in POMDP by default looks at +x (see
+    # DEFAULT_3DCAMERA_LOOK_DIRECTION) which matches the default forward
+    # direction of arrow marker in RVIZ. That is, in both frames, 0 degree means
+    # looking at +x. Therefore, we don't need to rotate the marker.
     header = std_msgs.msg.Header(stamp=stamp, frame_id=robot_frame)
     marker = make_viz_marker_from_robot_pose_3d(
-        robot_frame, (0,0,0,*math_utils.euler_to_quat(0, 90, 0)),
+        robot_frame, (0,0,0,*math_utils.euler_to_quat(0, 0, 0)),
         header=header, scale=scale, lifetime=lifetime, **kwargs)
     tf2msg = tf2msg_from_robot_pose(robot_pose, world_frame, robot_frame)
     return marker, tf2msg

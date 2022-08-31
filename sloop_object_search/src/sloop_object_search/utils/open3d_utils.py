@@ -214,10 +214,10 @@ def draw_search_region2d(search_region, grid_robot_position=None, points=None):
 
 
 def draw_robot_pose(robot_pose):
-    # The robot by default looks at -z direction in the pomdp model,
-    # but in open3d, the 0-degree direction is +x. So, it will
-    # have a rotation around x by default
-    default_o3d_rotation = [180,0,0]  # don't change this
+    # The robot by default looks at +x direction with zero quaternion
+    # but the arrow points to +z with zero quaternion. So, we will
+    # have to do the following to align the two
+    default_o3d_rotation = [0,90,0]  # don't change this
 
     rotation = math_utils.quat_to_euler(*robot_pose[3:])
     position = robot_pose[:3]

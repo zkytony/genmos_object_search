@@ -312,7 +312,7 @@ class TestSimpleEnvLocalSearch:
 
 
 def main():
-    TestSimpleEnvLocalSearch(o3dviz=False, prior="uniform")
+    TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
 
 if __name__ == "__main__":
     main()
