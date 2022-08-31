@@ -7,7 +7,6 @@ from tqdm import tqdm
 from .proto_utils import pointcloudproto_to_array
 from sloop_object_search.utils.math import (remap, euclidean_dist,
                                             eucdist_multi, in_square, in_square_multi)
-from sloop_object_search.utils.visual import GridMapVisualizer
 from sloop_object_search.utils.conversion import Frame, convert
 from sloop_object_search.utils import open3d_utils
 from sloop_object_search.oopomdp.models.grid_map import GridMap

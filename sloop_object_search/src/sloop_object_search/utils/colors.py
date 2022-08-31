@@ -109,10 +109,12 @@ def inverse_color_hex(hx):
 def random_unique_color(colors, ctype=1, rnd=random, fmt="rgb"):
     colors_hex = []
     for c in colors:
-        if not c.startswith("#"):
-            colors_hex.append(rgb_to_hex(c))
-        else:
+        if type(c) == str and c.startswith("#"):
             colors_hex.append(c)
+        else:
+            assert len(c) == 3
+            colors_hex.append(rgb_to_hex(c))
+
     color = _random_unique_color_hex(colors, ctype=ctype, rnd=rnd)
     if fmt == "rgb":
         return hex_to_rgb(color)

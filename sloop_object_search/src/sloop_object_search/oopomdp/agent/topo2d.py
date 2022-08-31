@@ -2,16 +2,18 @@
 over an action space based on a topological graph."""
 import pomdp_py
 import random
+import time
 from collections import deque
 from tqdm import tqdm
 from sloop_object_search.utils.math import euclidean_dist, normalize
+from sloop_object_search.utils import visual2d
 from ..domain.state import RobotStateTopo
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo2D
 from ..models.observation_model import RobotObservationModelTopo
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from .common import (MosAgent, SloopMosAgent, init_object_transition_models,
-                     interpret_localization_model)
+                     interpret_localization_model, init_visualizer2d)
 from . import belief
 
 class MosAgentTopo2D(MosAgent):
@@ -25,10 +27,9 @@ class MosAgentTopo2D(MosAgent):
                 belief_config=self.agent_config["belief"])
 
         # now, generate topological map
-        combined_dist = belief.accumulate_object_beliefs(
-            self.search_region, init_object_beliefs)
         mpe_robot_pose = tuple(init_robot_pose_dist.mean)
-        self.topo_map = self.generate_topo_map(combined_dist, mpe_robot_pose)
+        self.topo_map = self.generate_topo_map(
+            init_object_beliefs, mpe_robot_pose)
 
         # now, generate initial robot belief
         init_topo_nid = self.topo_map.closest_node(mpe_robot_pose[:2])
@@ -63,12 +64,14 @@ class MosAgentTopo2D(MosAgent):
                                        no_look=self.no_look)
         return transition_model, policy_model
 
-    def generate_topo_map(self, combined_dist, robot_pose):
+    def generate_topo_map(self, object_beliefs, robot_pose, debug=True):
         """Given 'combined_dist', a distribution that maps
         location to the sum of prob over all objects, and
         the current 'robot_pose', sample a topological graph
         based on this distribution.
         """
+        combined_dist = belief.accumulate_object_beliefs(
+            self.search_region, object_beliefs)
         position_candidates = self.search_region.grid_map.free_locations
         if len(position_candidates) == 0:
             raise ValueError("No position candidates for topo map sampling.")
@@ -81,6 +84,15 @@ class MosAgentTopo2D(MosAgent):
                                     sep=topo_map_args.get("sep", 4.0),
                                     rnd=random.Random(topo_map_args.get("seed", 1001)),
                                     robot_pos=robot_pose[:2])
+        if debug:
+            viz = init_visualizer2d(visual2d.VizSloopMosTopo,
+                                    self.agent_config,
+                                    grid_map=self.search_region.grid_map,
+                                    res=self.visual_config.get("res", 10))
+            img = viz.render(topo_map, object_beliefs,
+                             self.robot_id, robot_pose)
+            viz.show_img(img)
+            time.sleep(5)
         return topo_map
 
 

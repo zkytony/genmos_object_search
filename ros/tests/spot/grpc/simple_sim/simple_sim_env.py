@@ -258,9 +258,10 @@ class SimpleSimEnvROSNode:
             tf2msgs.append(tobj)
 
         srobot = state.s(self.env.robot_id)
+        color = self.env.agent_config["robot"].get("color", [0.9, 0.1, 0.1, 0.9])
         robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
             srobot.pose, self.world_frame, self.env.robot_id,
-            color=[0.9, 0.1, 0.1, 0.9], lifetime=1.0,
+            color=color, lifetime=1.0,
             scale=Vector3(x=0.6, y=0.08, z=0.08))
         markers.append(robot_marker)
         # get a tf transform from world to robot

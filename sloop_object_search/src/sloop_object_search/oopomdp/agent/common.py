@@ -1,4 +1,5 @@
 import pomdp_py
+import numpy as np
 from sloop.agent import SloopAgent
 from sloop_object_search.utils.misc import import_class, import_func
 from ..domain.observation import RobotLocalization, RobotObservation, JointObservation
@@ -95,6 +96,27 @@ def init_primitive_movements(action_config):
         actions = import_func(action_config["func"])(
             **action_config["params"])
     return actions
+
+
+def init_visualizer2d(visualizer_class, agent_config, colors=None, **kwargs):
+    """initialize 2D visualizer. See utils.visual2d;
+    'colors' is mapping from object id (including robot id) to
+    an (r, g, b), values ranging 0-255. Since 'agent_config'
+    specifies the configuration for one agent, 'colors' could
+    store the colors of other agents, which could support visualizing
+    multiple agents."""
+    # get colors
+    if colors is None:
+        colors = {}
+    for objid in agent_config["objects"]:
+        objspec = agent_config["objects"][objid]
+        if "color" in objspec:
+            colors[objid] = np.asarray(objspec["color"][:3]) * 255
+    robot_id = agent_config["robot"]["id"]
+    if "color" in agent_config["robot"]:
+        colors[robot_id] = np.asarray(agent_config["robot"]["color"][:3]) * 255
+    kwargs["colors"] = colors
+    return visualizer_class(**kwargs)
 
 
 class MosAgent(pomdp_py.Agent):
@@ -232,6 +254,11 @@ class MosAgent(pomdp_py.Agent):
             robot_state_class=robot_state_class,
             **kwargs)
         self.belief.set_object_belief(self.robot_id, new_robot_belief)
+
+    @property
+    def visual_config(self):
+        return self.agent_config.get("misc", {}).get("visual", {})
+
 
 class SloopMosAgent(SloopAgent):
     def __init__(self, agent_config, search_region, init_robot_pose_dist,

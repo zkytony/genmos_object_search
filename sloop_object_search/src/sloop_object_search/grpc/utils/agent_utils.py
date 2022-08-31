@@ -40,6 +40,9 @@ def create_agent(robot_id, agent_config_world, robot_localization_world, search_
         "targets": [<objid>]
         "no_look": (bool)
 
+      object_config
+          'color': r, g, b, a (values range 0-1)
+
       Topo planning related:
         "topo_map_args" (optional):  refer to agents/topo2d.py
         "topo_trans_args" (optional):   refer to agents/topo2d.py

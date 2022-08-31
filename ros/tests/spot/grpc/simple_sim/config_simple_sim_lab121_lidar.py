@@ -95,6 +95,7 @@ CONFIG_HIER = {
                        'params': {'step_size': 0.2,
                                   'rotation': 90.0,
                                   'scheme': 'axis'}},
+            'color': [0.9, 0.1, 0.1, 0.9]
         },
         'objects': {'book': {'class': 'book',
                              'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
@@ -107,6 +108,9 @@ CONFIG_HIER = {
                     #         'sizes': [0.12, 0.12, 0.12],
                     #         'viz_type': 'cube'}},
         'targets': ['book'],
+        'misc': {
+            'visual': {'res': 15},
+        }
     },
 
     "task_config": {

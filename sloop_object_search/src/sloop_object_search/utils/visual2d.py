@@ -338,30 +338,7 @@ class VizSloopMosBasic2D(GridMap2Visualizer):
     def __init__(self, grid_map, **config):
         super().__init__(grid_map=grid_map, **config)
 
-    def draw_fov(self, img, sensor, robot_state,
-                 color=[233, 233, 8]):
-        # We will draw what's in mean range differently from the max range.
-        size = self._res // 2
-        radius = int(round(size / 2))
-        shift = int(round(self._res / 2))
-        for x in range(self._region.width):
-            for y in range(self._region.length):
-                if hasattr(self._region, "unknown") and (x, y) in self._region.unknown:
-                    continue  # occluded (don't draw; the model doesn't care about this though but it is ok for now)
-
-                if robot_state.loc_in_range(sensor, (x,y), use_mean=False):
-                    img = cv2shape(img, cv2.circle,
-                                   (y*self._res+shift, x*self._res+shift),
-                                   radius, color, thickness=-1, alpha=0.4)
-
-                if robot_state.loc_in_range(sensor, (x,y), use_mean=True):
-                    img = cv2shape(img, cv2.circle,
-                                   (y*self._res+shift, x*self._res+shift),
-                                   radius, color, thickness=-1, alpha=0.7)
-        return img
-
-
-    def render(self, agent, objlocs, colors={}, robot_state=None, draw_fov=None,
+    def render(self, agent, objlocs={}, colors={}, robot_state=None, draw_fov=None,
                draw_belief=True, img=None, **kwargs):
         """
         Args:
@@ -385,11 +362,8 @@ class VizSloopMosBasic2D(GridMap2Visualizer):
                                  [objlocs[objid]],
                                  color=self.get_color(objid, colors, alpha=None))
         if draw_belief:
-            for objid in agent.belief.object_beliefs:
-                color = self.get_color(objid, colors, alpha=None)
-                belief_obj = agent.belief.b(objid)
-                img = self.draw_object_belief(img, belief_obj,
-                                              list(color) + [250])
+            img = self.draw_object_beliefs(agent.beleif.object_beliefs)
+
         img = self.draw_robot(img, x, y, th, (255, 20, 20))
         if draw_fov is not None:
             for objid in sorted(draw_fov):
@@ -400,36 +374,60 @@ class VizSloopMosBasic2D(GridMap2Visualizer):
                         objid, colors, alpha=None)))
         return img
 
+    def draw_object_beliefs(self, img, object_beliefs):
+        for objid in object_beliefs:
+            color = self.get_color(objid, self._colors, alpha=None)
+            belief_obj = object_beliefs[objid]
+            img = self.draw_object_belief(img, belief_obj,
+                                          list(color) + [250])
+        return img
+
 
 ########### VizSloopMos*Topo* visualizer ###############
 class VizSloopMosTopo(VizSloopMosBasic2D):
     def __init__(self, grid_map, **config):
         super().__init__(grid_map=grid_map, **config)
         self._draw_topo_grid_path = config.get("draw_topo_grid_path", False)
+        self._mark_cell_kwargs = config.get("topo_mark_cell", {})
 
-    def render(self, agent, objlocs, colors={},
-               robot_state=None, draw_fov=None,
-               draw_belief=True, img=None, draw_topo=True, **mark_cell_kwargs):
-        """render image"""
+    def render(self, topo_map=None, object_beliefs=None,
+               robot_id=None, robot_pose=None, img=None):
         if img is None:
             img = self._make_gridworld_image(self._res)
-
-        img = super().render(agent, objlocs, colors=colors,
-                              robot_state=robot_state, draw_fov=draw_fov,
-                              draw_belief=draw_belief, img=img)
-
-        # Draw topo map
-        if draw_topo:
-            img = draw_topo_func(img, agent.topo_map, self._res,
-                                 draw_grid_path=self._draw_topo_grid_path,
-                                 **mark_cell_kwargs)
-
-        # redraw robot on top of topo map
-        if robot_state is None:
-            robot_state = agent.belief.mpe().s(agent.robot_id)
-        x, y, th = robot_state["pose"]
-        img = self.draw_robot(img, x, y, th, (255, 20, 20))
+        # if topo_map is not None:
+        #     img = draw_topo_func(img, topo_map, self._res,
+        #                          draw_grid_path=self._draw_topo_grid_path,
+        #                          **self._mark_cell_kwargs)
+        if object_beliefs is not None:
+            img = self.draw_object_beliefs(img, object_beliefs)
+        if robot_pose is not None:
+            img = self.draw_robot(img, *robot_pose,
+                                  color=self.get_color(robot_id, self._colors, alpha=None))
         return img
+
+    # def render_old(self, agent, objlocs={}, colors={},
+    #                robot_state=None, draw_fov=None,
+    #                draw_belief=True, img=None, draw_topo=True, **mark_cell_kwargs):
+    #     """render image"""
+    #     if img is None:
+    #         img = self._make_gridworld_image(self._res)
+
+    #     img = super().render(agent, objlocs=objlocs, colors=colors,
+    #                           robot_state=robot_state, draw_fov=draw_fov,
+    #                           draw_belief=draw_belief, img=img)
+
+    #     # Draw topo map
+    #     if draw_topo:
+    #         img = draw_topo_func(img, agent.topo_map, self._res,
+    #                              draw_grid_path=self._draw_topo_grid_path,
+    #                              **mark_cell_kwargs)
+
+    #     # redraw robot on top of topo map
+    #     if robot_state is None:
+    #         robot_state = agent.belief.mpe().s(agent.robot_id)
+    #     x, y, th = robot_state["pose"]
+    #     img = self.draw_robot(img, x, y, th, (255, 20, 20))
+    #     return img
 
 
 #------ Visualization for topo map -----#
