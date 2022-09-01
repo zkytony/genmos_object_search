@@ -84,25 +84,3 @@ message Histogram {
   repeated google.protobuf.Any values = 2;
   repeated double probs = 3;
 }
-
-
-//////////// World Model ////////////////
-message TopoMap {
-  repeated TopoEdge edges = 1;
-}
-
-message TopoEdge {
-  string id = 1;
-  TopoNode node1 = 2;
-  TopoNode node2 = 3;
-  google.protobuf.Any data = 4;
-}
-
-message TopoNode {
-  string id = 1;
-  oneof pos {
-    Vec3 pos_3d = 2;
-    Vec2 pos_2d = 3;
-  }
-  google.protobuf.Any data = 4;
-}

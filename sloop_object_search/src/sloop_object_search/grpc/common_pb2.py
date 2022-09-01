@@ -17,7 +17,7 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 from google.protobuf import any_pb2 as google_dot_protobuf_dot_any__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%sloop_object_search/grpc/common.proto\x12\x18sloop_object_search.grpc\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\"V\n\x06Header\x12)\n\x05stamp\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x10\n\x08\x66rame_id\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\"*\n\x06Pose2D\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\n\n\x02th\x18\x03 \x01(\x01\"r\n\x06Pose3D\x12\x30\n\x08position\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\x36\n\x08rotation\x18\x02 \x01(\x0b\x32$.sloop_object_search.grpc.Quaternion\"\'\n\x04Vec3\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\t\n\x01z\x18\x03 \x01(\x01\"\x1c\n\x04Vec2\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\"8\n\nQuaternion\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\t\n\x01z\x18\x03 \x01(\x01\x12\t\n\x01w\x18\x04 \x01(\x01\"h\n\x05\x42ox3D\x12\x30\n\x06\x63\x65nter\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3D\x12-\n\x05sizes\x18\x02 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\"P\n\x07Voxel3D\x12+\n\x03pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\x10\n\x03res\x18\x03 \x01(\x01H\x00\x88\x01\x01\x42\x06\n\x04_res\"\x99\x01\n\x11WeightedParticles\x12G\n\tparticles\x18\x01 \x03(\x0b\x32\x34.sloop_object_search.grpc.WeightedParticles.Particle\x1a;\n\x08Particle\x12\x1f\n\x01x\x18\x01 \x01(\x0b\x32\x14.google.protobuf.Any\x12\x0e\n\x06weight\x18\x02 \x01(\x01\"P\n\tHistogram\x12\x0e\n\x06length\x18\x01 \x01(\x03\x12$\n\x06values\x18\x02 \x03(\x0b\x32\x14.google.protobuf.Any\x12\r\n\x05probs\x18\x03 \x03(\x01\"<\n\x07TopoMap\x12\x31\n\x05\x65\x64ges\x18\x01 \x03(\x0b\x32\".sloop_object_search.grpc.TopoEdge\"\xa0\x01\n\x08TopoEdge\x12\n\n\x02id\x18\x01 \x01(\t\x12\x31\n\x05node1\x18\x02 \x01(\x0b\x32\".sloop_object_search.grpc.TopoNode\x12\x31\n\x05node2\x18\x03 \x01(\x0b\x32\".sloop_object_search.grpc.TopoNode\x12\"\n\x04\x64\x61ta\x18\x04 \x01(\x0b\x32\x14.google.protobuf.Any\"\xa5\x01\n\x08TopoNode\x12\n\n\x02id\x18\x01 \x01(\t\x12\x30\n\x06pos_3d\x18\x02 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3H\x00\x12\x30\n\x06pos_2d\x18\x03 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec2H\x00\x12\"\n\x04\x64\x61ta\x18\x04 \x01(\x0b\x32\x14.google.protobuf.AnyB\x05\n\x03pos*1\n\x06Status\x12\x0e\n\nSUCCESSFUL\x10\x00\x12\n\n\x06\x46\x41ILED\x10\x01\x12\x0b\n\x07PENDING\x10\x02\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%sloop_object_search/grpc/common.proto\x12\x18sloop_object_search.grpc\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\"V\n\x06Header\x12)\n\x05stamp\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x10\n\x08\x66rame_id\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\"*\n\x06Pose2D\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\n\n\x02th\x18\x03 \x01(\x01\"r\n\x06Pose3D\x12\x30\n\x08position\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\x36\n\x08rotation\x18\x02 \x01(\x0b\x32$.sloop_object_search.grpc.Quaternion\"\'\n\x04Vec3\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\t\n\x01z\x18\x03 \x01(\x01\"\x1c\n\x04Vec2\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\"8\n\nQuaternion\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\t\n\x01z\x18\x03 \x01(\x01\x12\t\n\x01w\x18\x04 \x01(\x01\"h\n\x05\x42ox3D\x12\x30\n\x06\x63\x65nter\x18\x01 \x01(\x0b\x32 .sloop_object_search.grpc.Pose3D\x12-\n\x05sizes\x18\x02 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\"P\n\x07Voxel3D\x12+\n\x03pos\x18\x01 \x01(\x0b\x32\x1e.sloop_object_search.grpc.Vec3\x12\x10\n\x03res\x18\x03 \x01(\x01H\x00\x88\x01\x01\x42\x06\n\x04_res\"\x99\x01\n\x11WeightedParticles\x12G\n\tparticles\x18\x01 \x03(\x0b\x32\x34.sloop_object_search.grpc.WeightedParticles.Particle\x1a;\n\x08Particle\x12\x1f\n\x01x\x18\x01 \x01(\x0b\x32\x14.google.protobuf.Any\x12\x0e\n\x06weight\x18\x02 \x01(\x01\"P\n\tHistogram\x12\x0e\n\x06length\x18\x01 \x01(\x03\x12$\n\x06values\x18\x02 \x03(\x0b\x32\x14.google.protobuf.Any\x12\r\n\x05probs\x18\x03 \x03(\x01*1\n\x06Status\x12\x0e\n\nSUCCESSFUL\x10\x00\x12\n\n\x06\x46\x41ILED\x10\x01\x12\x0b\n\x07PENDING\x10\x02\x62\x06proto3')
 
 _STATUS = DESCRIPTOR.enum_types_by_name['Status']
 Status = enum_type_wrapper.EnumTypeWrapper(_STATUS)
@@ -37,9 +37,6 @@ _VOXEL3D = DESCRIPTOR.message_types_by_name['Voxel3D']
 _WEIGHTEDPARTICLES = DESCRIPTOR.message_types_by_name['WeightedParticles']
 _WEIGHTEDPARTICLES_PARTICLE = _WEIGHTEDPARTICLES.nested_types_by_name['Particle']
 _HISTOGRAM = DESCRIPTOR.message_types_by_name['Histogram']
-_TOPOMAP = DESCRIPTOR.message_types_by_name['TopoMap']
-_TOPOEDGE = DESCRIPTOR.message_types_by_name['TopoEdge']
-_TOPONODE = DESCRIPTOR.message_types_by_name['TopoNode']
 Header = _reflection.GeneratedProtocolMessageType('Header', (_message.Message,), {
   'DESCRIPTOR' : _HEADER,
   '__module__' : 'sloop_object_search.grpc.common_pb2'
@@ -118,32 +115,11 @@ Histogram = _reflection.GeneratedProtocolMessageType('Histogram', (_message.Mess
   })
 _sym_db.RegisterMessage(Histogram)
 
-TopoMap = _reflection.GeneratedProtocolMessageType('TopoMap', (_message.Message,), {
-  'DESCRIPTOR' : _TOPOMAP,
-  '__module__' : 'sloop_object_search.grpc.common_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.TopoMap)
-  })
-_sym_db.RegisterMessage(TopoMap)
-
-TopoEdge = _reflection.GeneratedProtocolMessageType('TopoEdge', (_message.Message,), {
-  'DESCRIPTOR' : _TOPOEDGE,
-  '__module__' : 'sloop_object_search.grpc.common_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.TopoEdge)
-  })
-_sym_db.RegisterMessage(TopoEdge)
-
-TopoNode = _reflection.GeneratedProtocolMessageType('TopoNode', (_message.Message,), {
-  'DESCRIPTOR' : _TOPONODE,
-  '__module__' : 'sloop_object_search.grpc.common_pb2'
-  # @@protoc_insertion_point(class_scope:sloop_object_search.grpc.TopoNode)
-  })
-_sym_db.RegisterMessage(TopoNode)
-
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _STATUS._serialized_start=1323
-  _STATUS._serialized_end=1372
+  _STATUS._serialized_start=930
+  _STATUS._serialized_end=979
   _HEADER._serialized_start=127
   _HEADER._serialized_end=213
   _POSE2D._serialized_start=215
@@ -166,10 +142,4 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _WEIGHTEDPARTICLES_PARTICLE._serialized_end=846
   _HISTOGRAM._serialized_start=848
   _HISTOGRAM._serialized_end=928
-  _TOPOMAP._serialized_start=930
-  _TOPOMAP._serialized_end=990
-  _TOPOEDGE._serialized_start=993
-  _TOPOEDGE._serialized_end=1153
-  _TOPONODE._serialized_start=1156
-  _TOPONODE._serialized_end=1321
 # @@protoc_insertion_point(module_scope)

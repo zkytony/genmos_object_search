@@ -270,7 +270,6 @@ message ObjectBelief {
   Scope scope = 4;
 }
 
-
 message RobotBelief {
   string robot_id = 1;
 
@@ -282,4 +281,26 @@ message RobotBelief {
 
   // local or global scope
   Scope scope = 4;
+
+  // topo map, if the robot has one. Note that both
+  // local or global searcher may have a topo map
+  TopoMap topo_map = 5;
+}
+
+message TopoMap {
+  repeated TopoEdge edges = 1;
+}
+
+message TopoEdge {
+  string id = 1;
+  TopoNode node1 = 2;
+  TopoNode node2 = 3;
+}
+
+message TopoNode {
+  string id = 1;
+  oneof pos {
+    Vec3 pos_3d = 2;
+    Vec2 pos_2d = 3;
+  }
 }

@@ -295,7 +295,7 @@ def to_any_proto(val):
     return val_any
 
 
-def robot_belief_to_proto(robot_belief, search_region, header=None):
+def robot_belief_to_proto(robot_belief, search_region, header=None, **other_fields):
     """Given a robot belief (in POMDP frame), return a RobotBelief proto
     (in world frame). Uncertainty over the robot belief is possibly
     in its pose. The robot observes its other attributes such as 'objects_found'."""
@@ -307,25 +307,26 @@ def robot_belief_to_proto(robot_belief, search_region, header=None):
     mpe_robot_state = robot_belief.mpe()
     robot_id = mpe_robot_state["id"]
 
+    # get robot pose in world frame
     robot_pose_pomdp = robot_belief.pose_dist.mean
     robot_pose_cov_pomdp = robot_belief.pose_dist.covariance
     robot_pose_world, robot_pose_cov_world =\
         search_region.to_world_pose(robot_pose_pomdp, robot_pose_cov_pomdp)
-
     if mpe_robot_state.is_2d:
         pose_field = {"pose_2d": posetuple_to_poseproto(robot_pose_world)}
     else:
         pose_field = {"pose_3d": posetuple_to_poseproto(robot_pose_world)}
-
     cov_flat = np.asarray(robot_pose_cov_world).flatten()
     robot_pose_pb = o_pb2.RobotPose(header=header, robot_id=robot_id,
                                     covariance=cov_flat, **pose_field)
+    # objects found
     objects_found_pb = o_pb2.ObjectsFound(
         header=header, robot_id=robot_id,
         object_ids=list(map(str, mpe_robot_state.objects_found)))
     return slpb2.RobotBelief(robot_id=robot_id,
                              objects_found=objects_found_pb,
-                             pose=robot_pose_pb)
+                             pose=robot_pose_pb,
+                             **other_fields)
 
 def pomdp_detection_from_proto(detection_pb, search_region,
                                pos_precision='int',
@@ -443,3 +444,28 @@ def pomdp_observation_from_request(request, agent, action=None):
         raise NotImplementedError("Not there yet")
 
     return robot_observation
+
+def topo_map_to_proto(topo_map, search_region):
+    # list of TopoEdge protos
+    edges_pb = []
+    for eid in topo_map.edges:
+        edge = topo_map.edges[eid]
+        if not edge.degenerate:
+            node1, node2 = edge.nodes
+            node1_pb = topo_node_to_proto(node1, search_region)
+            node2_pb = topo_node_to_proto(node2, search_region)
+            edge_pb = slpb2.TopoEdge(id=eid,
+                                     node1=node1_pb,
+                                     node2=node2_pb)
+            edges_pb.append(edge_pb)
+    return slpb2.TopoMap(edges=edges_pb)
+
+
+def topo_node_to_proto(node, search_region):
+    pos_world = search_region.to_world_pos(node.pos)
+    if len(pos1_world) == 2:
+        pos = {"pos_2d": Vec2(x=pos_world[0], y=pos_world[1])}
+    else:
+        pos = {"pos_3d": Vec3(x=pos_world[0], y=pos_world[1], z=pos_world[2])}
+    node_pb = slpb2.TopoNode(id=node.id, **pos)
+    return node_pb
