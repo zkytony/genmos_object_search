@@ -6,9 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /PointCloud21
         - /MarkerArray2
-        - /octree belief1
+        - /MarkerArray2/Status1
+        - /fov1
       Splitter Ratio: 0.5
     Tree Height: 882
   - Class: rviz/Selection
@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -67,7 +67,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -82,7 +82,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /graphnav_waypoints_markers
@@ -130,15 +130,31 @@ Visualization Manager:
       Marker Topic: /test_simple_env_local_search/octree_belief
       Name: octree belief
       Namespaces:
-        octnode: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /test_simple_env_local_search/fovs
+      Name: fov
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /test_simple_env_hier_search/topo_map_2d
+      Name: topo_map_2d
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /test_simple_env_hier_search/belief_2d
       Name: MarkerArray
       Namespaces:
-        fov: true
+        object: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -169,7 +185,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 17.348129272460938
+      Distance: 6.157619476318359
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -177,17 +193,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.7149941921234131
-        Y: 1.0168344974517822
-        Z: 0.23268310725688934
+        X: 1.4525550603866577
+        Y: 1.08945894241333
+        Z: -0.056716952472925186
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7947961688041687
+      Pitch: 1.1847962141036987
       Target Frame: <Fixed Frame>
-      Yaw: 1.5054010152816772
+      Yaw: 4.508519649505615
     Saved: ~
 Window Geometry:
   Displays:
