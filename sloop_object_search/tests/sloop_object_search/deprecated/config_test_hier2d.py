@@ -68,7 +68,7 @@ config = {
             "id": "robot0",
             "detectors": {
                 "G": {
-                    "class": "sloop_object_search.oopomdp.FanModelSimpleFP",
+                    "class": "sloop_object_search.oopomdp.deprecated.FanModelSimpleFP",
                     "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1, 0.25))
                 },
             },

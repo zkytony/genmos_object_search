@@ -1,0 +1,1 @@
+from .models.detection_models import FanModelSimpleFP, FanModelSimpleFPLabelOnly
