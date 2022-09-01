@@ -144,6 +144,13 @@ class TestSimpleEnvHierSearch:
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._belief_2d_markers_pub.publish(clear_msg)
+        self._topo_map_2d_markers_pub.publish(clear_msg)
+
         # visualize initial belief
         self.get_and_visualize_belief()
 
