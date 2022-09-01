@@ -419,8 +419,10 @@ class RobotTransTopo3D(RobotTransTopo):
         """Return a quaternion that represents the rotation of the default camera
         direction vector to the vector robot_pos, target_pos
         """
+        if robot_pos == target_pos:
+            # no rotation needed
+            return np.array([0., 0., 0., 1.])
+
         q = math_utils.quat_between(
             self.default_camera_direction, math_utils.vec(robot_pos, target_pos))
-        if any(np.isnan(q)):
-            import pdb; pdb.set_trace()
         return q

@@ -93,11 +93,12 @@ class MosAgentTopo3D(MosAgentBasic3D):
             and not self.search_region.occupied_at(pos, res=res)
 
     def _update_robot_belief(self, observation, action=None, **kwargs):
+        """observation should be RobotObservation"""
         current_srobot_mpe = self.belief.mpe().s(self.robot_id)
-        super().update_robot_belief(observation, action=action,
-                                    robot_state_class=RobotStateTopo,
-                                    topo_nid=current_srobot_mpe.topo_nid,
-                                    topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
+        super()._update_robot_belief(observation, action=action,
+                                     robot_state_class=RobotStateTopo,
+                                     topo_nid=current_srobot_mpe.topo_nid,
+                                     topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
 
     def update_belief(self, observation, action=None, debug=False, **kwargs):
         """returns auxiliary info generated from belief update (for
@@ -120,10 +121,10 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 robot_pose = robot_observation.pose
                 topo_map = self.generate_topo_map(
                     object_beliefs, robot_pose, debug=debug)
-                self._update_topo_map(topo_map, robot_observation)
+                self._update_topo_map(topo_map, robot_observation, action=action)
         return _aux
 
-    def _update_topo_map(self, topo_map, robot_observation):
+    def _update_topo_map(self, topo_map, robot_observation, action=None):
         """
         we expect robot_observation to be RobotObservation which
         contains a RobotLocalization; This is checked by update_robot_belief
@@ -132,11 +133,11 @@ class MosAgentTopo3D(MosAgentBasic3D):
         self.policy_model.update(topo_map)
         # Now, we need to update the robot belief because new topo map leads
         # to new topo nid and hash
-        topo_nid = self.topo_map.closest_node(*robot_observation.loc)
-        super().update_robot_belief(observation, action=action,
-                                    robot_state_class=RobotStateTopo,
-                                    topo_nid=topo_nid,
-                                    topo_map_hashcode=self.topo_map.hashcode)
+        topo_nid = self.topo_map.closest_node(robot_observation.loc)
+        super()._update_robot_belief(robot_observation, action=action,
+                                     robot_state_class=RobotStateTopo,
+                                     topo_nid=topo_nid,
+                                     topo_map_hashcode=self.topo_map.hashcode)
 
     def should_resample_topo_map(self, object_beliefs):
         # Get an estimate of total belief captured by the current topological nodes

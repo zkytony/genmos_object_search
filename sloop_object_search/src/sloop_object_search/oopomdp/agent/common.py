@@ -232,15 +232,15 @@ class MosAgent(pomdp_py.Agent):
             # update robot belief
             if self.robot_id in observation:
                 robot_observation = observation.z(self.robot_id)
-                self.update_robot_belief(robot_observation, action=action, debug=debug, **kwargs)
+                self._update_robot_belief(robot_observation, action=action, debug=debug, **kwargs)
             # then update object beliefs
-            return self.update_object_beliefs(
+            return self._update_object_beliefs(
                 observation, action=action, debug=debug, **kwargs)
         elif isinstance(observation, RobotObservation):
             if not isinstance(observation.pose_estimate, RobotLocalization):
                 raise ValueError("For robot belief update, expect pose in observation"\
                                  " to be a RobotLocalization which captures uncertainty")
-            return self.update_robot_belief(observation, action=action, **kwargs)
+            return self._update_robot_belief(observation, action=action, **kwargs)
         raise NotImplementedError()
 
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
