@@ -65,7 +65,7 @@ class MosAgentBasic3D(MosAgent):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
             and not self.search_region.occupied_at(pos, res=1)
 
-    def update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
+    def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
         assert isinstance(observation, JointObservation)
         if not self.robot_id in observation:
             raise ValueError("requires knowing robot pose corresponding"\

@@ -92,7 +92,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
         return self.search_region.octree_dist.octree.valid_voxel(*pos, res)\
             and not self.search_region.occupied_at(pos, res=res)
 
-    def update_robot_belief(self, observation, action=None, **kwargs):
+    def _update_robot_belief(self, observation, action=None, **kwargs):
         current_srobot_mpe = self.belief.mpe().s(self.robot_id)
         super().update_robot_belief(observation, action=action,
                                     robot_state_class=RobotStateTopo,
@@ -120,9 +120,10 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 robot_pose = robot_observation.pose
                 topo_map = self.generate_topo_map(
                     object_beliefs, robot_pose, debug=debug)
+                self._update_topo_map(topo_map, robot_observation)
         return _aux
 
-    def update_topo_map(self, topo_map, robot_observation):
+    def _update_topo_map(self, topo_map, robot_observation):
         """
         we expect robot_observation to be RobotObservation which
         contains a RobotLocalization; This is checked by update_robot_belief
