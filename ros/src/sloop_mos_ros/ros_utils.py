@@ -314,7 +314,8 @@ def make_viz_marker_for_object(objid, pose, header, **kwargs):
     """
     marker = Marker(header=header)
     marker.ns = "object"
-    marker.id = hash16(objid)
+    _id = kwargs.pop("id", hash16(objid))
+    marker.id = _id
     loc = pose[:3]
     rot = pose[3:]
     marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
@@ -405,16 +406,16 @@ def clear_markers(header, ns):
     marker.action = Marker.DELETEALL
     return MarkerArray([marker])
 
+def _compute_alpha(p, vmin, vmax):
+    if vmax - vmin > 0.0:
+        return math_utils.remap(p, vmin, vmax, 0.001, 0.8)
+    else:
+        return 0.8
+
 def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.COLOR_MAP_JET,
                                          alpha_scaling=1.0):
     """given an octree belief's protobuf representation,
     which is a Histogram, make a MarkerArray message for it."""
-    def _compute_alpha(p, vmin, vmax):
-        if vmax - vmin > 0.0:
-            return math_utils.remap(p, vmin, vmax, 0.001, 0.8)
-        else:
-            return 0.8
-
     markers = []
     hist_pb = octree_belief_pb.dist
     prob_max = max(hist_pb.probs)
@@ -434,6 +435,33 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
             color=color, alpha=alpha)
         markers.append(marker)
     return MarkerArray(markers)
+
+def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
+                                           search_space_resolution,
+                                           color=[0.2, 0.7, 0.2], alpha_scaling=1.0, pos_z=0):
+    """search_space_resolution: should be the size of a grid cell"""
+    markers = []
+    object_id = object_belief2d_pb.object_id
+    hist_pb = object_belief2d_pb.dist
+    prob_max = max(hist_pb.probs)
+    prob_min = min(hist_pb.probs)
+    for i in range(hist_pb.length):
+        pos_pb = common_pb2.Vec2()
+        hist_pb.values[i].Unpack(pos_pb)
+
+        pos = [pos_pb.x, pos_pb.y, pos_z]
+        prob = hist_pb.probs[i]
+        alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
+        color = [*color, alpha]
+        marker = make_viz_marker_for_object(object_id, (*pos, 0, 0, 0, 1),
+                                            header, id=hash16((object_id, pos)),
+                                            lifetime=0, color=color,
+                                            viz_type=Marker.CYLINDER,
+                                            scale=geometry_msgs.msg.Vector3(x=search_space_resolution,
+                                                                            y=search_space_resolution, z=0.05))
+        markers.append(marker)
+    return MarkerArray(markers)
+
 
 def viz_msgs_for_robot_pose(robot_pose, world_frame, robot_frame, stamp=None,
                             **kwargs):

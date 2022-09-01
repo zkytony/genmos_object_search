@@ -45,6 +45,8 @@ OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
 WORLD_FRAME = "graphnav_map"
 
+SEARCH_SPACE_RESOLUTION = 0.15
+
 
 import yaml
 with open("./config_simple_sim_lab121_lidar.yaml") as f:
@@ -56,15 +58,38 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
 
 
 class TestSimpleEnvHierSearch:
-    def __init__(self, o3dviz=False, prior="uniform"):
+
+    def get_and_visualize_belief(self):
+        response = self._sloop_client.getObjectBeliefs(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        assert response.status == Status.SUCCESSFUL
+        rospy.loginfo("got belief")
+
+        # visualize the belief
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        markers = []
+        for bobj_pb in response.object_beliefs:
+            color = AGENT_CONFIG["objects"][bobj_pb.object_id].get(
+                "color", [0.2, 0.7, 0.2])[:3]
+            msg = ros_utils.make_object_belief2d_proto_markers_msg(
+                bobj_pb, header, SEARCH_SPACE_RESOLUTION,
+                color=color)
+            markers.extend(msg.markers)
+        self._belief2d_markers_pub.publish(MarkerArray(markers))
+
+        rospy.loginfo("belief visualized")
+
+
+    def __init__(self, prior="uniform"):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node("test_simple_env_hier_search")
 
         # Initialize ROS stuff
         action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
-        self._octbelief_markers_pub = rospy.Publisher(
-            "~octree_belief", MarkerArray, queue_size=10, latch=True)
+        self._belief2d_markers_pub = rospy.Publisher(
+            "~belief2d", MarkerArray, queue_size=10, latch=True)
         self._fovs_markers_pub = rospy.Publisher(
             "~fovs", MarkerArray, queue_size=10, latch=True)
 
@@ -99,14 +124,15 @@ class TestSimpleEnvHierSearch:
                                               search_region_params_2d={"layout_cut": 0.6,
                                                                        "region_size": 5.0,
                                                                        "brush_size": 0.5,
+                                                                       "grid_size": SEARCH_SPACE_RESOLUTION,
                                                                        "debug": False})
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
-        # # visualize initial belief
-        # self.get_and_visualize_belief(o3dviz=o3dviz)
+        # visualize initial belief
+        self.get_and_visualize_belief()
 
         # create planner
         response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
@@ -211,7 +237,7 @@ class TestSimpleEnvHierSearch:
 
 
 def main():
-    TestSimpleEnvHierSearch(o3dviz=False, prior="uniform")
+    TestSimpleEnvHierSearch(prior="uniform")
 
 if __name__ == "__main__":
     main()

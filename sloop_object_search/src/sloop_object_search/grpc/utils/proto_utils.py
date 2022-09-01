@@ -258,7 +258,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
             for s_obj in b_obj:
                 assert s_obj.is_2d, "expecting object state to be 2d."
                 x, y = search_region.to_world_pos(s_obj.loc)
-                hist_values.append(Vec2(x=x, y=y))
+                hist_values.append(to_any_proto(Vec2(x=x, y=y)))
                 hist_probs.append(b_obj[s_obj])
 
         else:
