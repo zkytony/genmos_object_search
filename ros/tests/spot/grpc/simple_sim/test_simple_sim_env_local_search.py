@@ -152,10 +152,6 @@ class TestSimpleEnvLocalSearch:
                                  frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
-            bobj = pickle.loads(bobj_pb.dist_obj)
-            if o3dviz:
-                draw_octree_dist(bobj.octree_dist)
-
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=20.0)
             markers.extend(msg.markers)

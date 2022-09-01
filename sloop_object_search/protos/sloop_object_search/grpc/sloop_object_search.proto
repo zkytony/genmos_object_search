@@ -265,9 +265,6 @@ enum Scope {
 message ObjectBelief {
   string object_id = 1;
   Histogram dist = 2;
-  // the pickled Python belief object; For debugging;
-  // the positions may be in POMDP frame
-  optional bytes dist_obj = 3;
 
   // local or global scope
   Scope scope = 4;

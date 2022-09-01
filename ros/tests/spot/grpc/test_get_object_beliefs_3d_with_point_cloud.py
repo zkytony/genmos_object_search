@@ -45,9 +45,6 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
                         frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
-            bobj = pickle.loads(bobj_pb.dist_obj)
-            if o3dviz:
-                draw_octree_dist(bobj.octree_dist, cmap=cmaps.COLOR_MAP_GRAYS2)
             msg = ros_utils.make_octree_belief_proto_markers_msg(bobj_pb, header)
             self._octbelief_markers_pub.publish(msg)
             print(f"Visualized belief for object {bobj_pb.object_id}")

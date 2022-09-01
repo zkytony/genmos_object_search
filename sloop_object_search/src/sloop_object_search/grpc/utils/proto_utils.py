@@ -285,8 +285,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                          probs=hist_probs)
         object_beliefs_proto.append(
             slpb2.ObjectBelief(object_id=objid,
-                               dist=dist,
-                               dist_obj=pickle.dumps(b_obj)))
+                               dist=dist))
     return object_beliefs_proto
 
 
