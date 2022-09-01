@@ -488,7 +488,7 @@ def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
         alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
         color = [*color, alpha]
         marker = make_viz_marker_for_object(object_id, (*pos, 0, 0, 0, 1),
-                                            header, id=hash16((object_id, pos)),
+                                            header, id=i,
                                             lifetime=0, color=color,
                                             viz_type=Marker.CYLINDER,
                                             scale=geometry_msgs.msg.Vector3(x=search_space_resolution,
@@ -511,7 +511,7 @@ def make_topo_map_proto_markers_msg(topo_map_pb, header,
         nid1 = edge_pb.node1.id
         if nid1 not in node_pbs:
             node_pbs[nid1] = edge_pb.node1
-        nid2 = edge_pb.node1.id
+        nid2 = edge_pb.node2.id
         if nid2 not in node_pbs:
             node_pbs[nid2] = edge_pb.node2
         # add marker for edge as a Line Strip
