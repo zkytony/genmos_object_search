@@ -152,7 +152,7 @@ Visualization Manager:
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /test_simple_env_hier_search/belief_2d
-      Name: MarkerArray
+      Name: belief2d
       Namespaces:
         object: true
       Queue Size: 100
@@ -185,7 +185,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.157619476318359
+      Distance: 8.843753814697266
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -201,9 +201,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1847962141036987
+      Pitch: 0.8797965049743652
       Target Frame: <Fixed Frame>
-      Yaw: 4.508519649505615
+      Yaw: 5.078526496887207
     Saved: ~
 Window Geometry:
   Displays:
