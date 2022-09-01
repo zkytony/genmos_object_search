@@ -454,7 +454,7 @@ def topo_map_to_proto(topo_map, search_region):
             node1, node2 = edge.nodes
             node1_pb = topo_node_to_proto(node1, search_region)
             node2_pb = topo_node_to_proto(node2, search_region)
-            edge_pb = slpb2.TopoEdge(id=eid,
+            edge_pb = slpb2.TopoEdge(id=str(eid),
                                      node1=node1_pb,
                                      node2=node2_pb)
             edges_pb.append(edge_pb)
@@ -463,9 +463,19 @@ def topo_map_to_proto(topo_map, search_region):
 
 def topo_node_to_proto(node, search_region):
     pos_world = search_region.to_world_pos(node.pos)
-    if len(pos1_world) == 2:
+    if len(pos_world) == 2:
         pos = {"pos_2d": Vec2(x=pos_world[0], y=pos_world[1])}
     else:
         pos = {"pos_3d": Vec3(x=pos_world[0], y=pos_world[1], z=pos_world[2])}
-    node_pb = slpb2.TopoNode(id=node.id, **pos)
+    node_pb = slpb2.TopoNode(id=str(node.id), **pos)
     return node_pb
+
+def pos_from_topo_node(node_pb):
+    """given TopoNode, return a tuple for its pos"""
+    if node_pb.HasField("pos_3d"):
+        return (node_pb.pos_3d.x,
+                node_pb.pos_3d.y,
+                node_pb.pos_3d.z)
+    else:
+        return (node_pb.pos_2d.x,
+                node_pb.pos_2d.y)

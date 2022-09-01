@@ -65,7 +65,7 @@ class TestSimpleEnvHierSearch:
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got belief")
 
-        # visualize the belief
+        # visualize object belief
         header = std_msgs.Header(stamp=rospy.Time.now(),
                                  frame_id=self.world_frame)
         markers = []
@@ -76,8 +76,19 @@ class TestSimpleEnvHierSearch:
                 bobj_pb, header, SEARCH_SPACE_RESOLUTION,
                 color=color)
             markers.extend(msg.markers)
-        self._belief2d_markers_pub.publish(MarkerArray(markers))
+        self._belief_2d_markers_pub.publish(MarkerArray(markers))
 
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, SEARCH_SPACE_RESOLUTION)
+            markers.extend(msg.markers)
+        self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
         rospy.loginfo("belief visualized")
 
 
@@ -88,8 +99,10 @@ class TestSimpleEnvHierSearch:
 
         # Initialize ROS stuff
         action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
-        self._belief2d_markers_pub = rospy.Publisher(
-            "~belief2d", MarkerArray, queue_size=10, latch=True)
+        self._topo_map_2d_markers_pub = rospy.Publisher(
+            "~topo_map_2d", MarkerArray, queue_size=10, latch=True)
+        self._belief_2d_markers_pub = rospy.Publisher(
+            "~belief_2d", MarkerArray, queue_size=10, latch=True)
         self._fovs_markers_pub = rospy.Publisher(
             "~fovs", MarkerArray, queue_size=10, latch=True)
 
@@ -191,6 +204,7 @@ class TestSimpleEnvHierSearch:
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("find action done")
             break
+        rospy.spin()
 
         #     # Now, wait for observation
         #     obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],

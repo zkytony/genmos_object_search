@@ -303,7 +303,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         robot_belief = agent.belief.b(request.robot_id)
         header = proto_utils.make_header(request.header.frame_id)
         _other_fields = {}
-        if hasattr(agent, topo_map):
+        if hasattr(agent, "topo_map"):
             topo_map_pb = proto_utils.topo_map_to_proto(
                 agent.topo_map, agent.search_region)
             _other_fields["topo_map"] = topo_map_pb

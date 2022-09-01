@@ -358,6 +358,40 @@ def make_viz_marker_from_robot_pose_3d(robot_id, robot_pose, header, **kwargs):
     _fill_viz_marker(marker, **kwargs)
     return marker
 
+def make_viz_marker_for_line_segment(start_point, end_point, header, **kwargs):
+    marker = Marker(header=header)
+    _id = kwargs.pop("id", hash16((start_point, end_point)))
+    marker.id = _id
+    marker.points = [geometry_msgs.msg.Point(*start_point),
+                     geometry_msgs.msg.Point(*end_point)]
+    marker.pose.position = geometry_msgs.msg.Point(0, 0, 0)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
+    kwargs["viz_type"] = Marker.LINE_STRIP
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
+def make_viz_marker_cylinder(_id, pose, header, **kwargs):
+    """generic method for cylinder; note that pose should be a 7-d tuple"""
+    marker = Marker(header=header)
+    marker.id = _id
+    x, y, z, qx ,qy ,qz, qw = pose
+    marker.pose.position = geometry_msgs.msg.Point(x,y,z)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    kwargs["viz_type"] = Marker.CYLINDER
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
+def make_viz_marker_cube(_id, pose, header, **kwargs):
+    """generic method for cylinder; note that pose should be a 7-d tuple"""
+    marker = Marker(header=header)
+    marker.id = _id
+    x, y, z, qx ,qy ,qz, qw = pose
+    marker.pose.position = geometry_msgs.msg.Point(x,y,z)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    kwargs["viz_type"] = Marker.CUBE
+    _fill_viz_marker(marker, **kwargs)
+    return marker
+
 def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
                      color=[0.0, 0.8, 0.0, 0.8], scale=1.0, lifetime=1.0):
     marker.type = viz_type
@@ -460,6 +494,53 @@ def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
                                             scale=geometry_msgs.msg.Vector3(x=search_space_resolution,
                                                                             y=search_space_resolution, z=0.05))
         markers.append(marker)
+    return MarkerArray(markers)
+
+def make_topo_map_proto_markers_msg(topo_map_pb, header,
+                                    search_space_resolution,
+                                    node_color=[0.93, 0.85, 0.1, 0.8],
+                                    edge_color=[0.05, 0.65, 0.81, 0.8],
+                                    edge_thickness=0.05,
+                                    pos_z=0.1):
+    """If positions of topo map nodes are 2D, then the z coordinate
+    of the marker will be set to 'pos_z'."""
+    # First, add edge markers and collect nodes
+    markers = []
+    node_pbs = {}
+    for edge_pb in topo_map_pb.edges:
+        nid1 = edge_pb.node1.id
+        if nid1 not in node_pbs:
+            node_pbs[nid1] = edge_pb.node1
+        nid2 = edge_pb.node1.id
+        if nid2 not in node_pbs:
+            node_pbs[nid2] = edge_pb.node2
+        # add marker for edge as a Line Strip
+        pos1 = proto_utils.pos_from_topo_node(edge_pb.node1)
+        pos2 = proto_utils.pos_from_topo_node(edge_pb.node2)
+        if len(pos1) == 2:
+            pos1 = (*pos1, pos_z)
+        if len(pos2) == 2:
+            pos2 = (*pos2, pos_z)
+        edge_scale = geometry_msgs.msg.Vector3(x=edge_thickness)
+        edge_marker = make_viz_marker_for_line_segment(
+            pos1, pos2, header, color=edge_color, scale=edge_thickness,
+            lifetime=0)
+        markers.append(edge_marker)
+
+    for nid in node_pbs:
+        node_pb = node_pbs[nid]
+        pos = proto_utils.pos_from_topo_node(node_pb)
+        if len(pos) == 2:
+            pos = (*pos, pos_z)
+        pose = (*pos, 0, 0, 0, 1)
+        node_scale = geometry_msgs.msg.Vector3(
+            x=search_space_resolution*1.5,
+            y=search_space_resolution*1.5,
+            z=0.05)
+        node_marker = make_viz_marker_cylinder(
+            int(nid), pose, header, color=node_color,
+            lifetime=0, scale=node_scale)
+        markers.append(node_marker)
     return MarkerArray(markers)
 
 
