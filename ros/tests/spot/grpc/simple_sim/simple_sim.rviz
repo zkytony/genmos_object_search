@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /MarkerArray2
-        - /MarkerArray2/Status1
         - /fov1
       Splitter Ratio: 0.5
     Tree Height: 882
@@ -126,13 +125,13 @@ Visualization Manager:
       Update Interval: 0
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /test_simple_env_local_search/octree_belief
       Name: octree belief
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /test_simple_env_local_search/fovs
@@ -146,7 +145,7 @@ Visualization Manager:
       Marker Topic: /test_simple_env_hier_search/topo_map_2d
       Name: topo_map_2d
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -154,7 +153,15 @@ Visualization Manager:
       Marker Topic: /test_simple_env_hier_search/belief_2d
       Name: belief2d
       Namespaces:
-        object: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /test_simple_env_local_search/topo_map_3d
+      Name: topo_map_3d
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -185,7 +192,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.843753814697266
+      Distance: 9.735963821411133
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -201,9 +208,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8797965049743652
+      Pitch: 0.7597957849502563
       Target Frame: <Fixed Frame>
-      Yaw: 5.078526496887207
+      Yaw: 5.5553460121154785
     Saved: ~
 Window Geometry:
   Displays:

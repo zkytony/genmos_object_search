@@ -58,6 +58,8 @@ OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
 WORLD_FRAME = "graphnav_map"
 
+SEARCH_SPACE_RESOLUTION = 0.1
+
 
 import yaml
 with open("./config_simple_sim_lab121_lidar.yaml") as f:
@@ -116,6 +118,12 @@ def wait_for_robot_pose():
 class TestSimpleEnvLocalSearch:
 
     def visualize_fovs(self, response):
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._fovs_markers_pub.publish(clear_msg)
+
         header = std_msgs.Header(stamp=rospy.Time.now(),
                                  frame_id=self.world_frame)
         fovs = json.loads(response.fovs.decode('utf-8'))
@@ -142,6 +150,13 @@ class TestSimpleEnvLocalSearch:
         self._fovs_markers_pub.publish(MarkerArray(markers))
 
     def get_and_visualize_belief(self, o3dviz=True):
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._octbelief_markers_pub.publish(clear_msg)
+        self._topo_map_3d_markers_pub.publish(clear_msg)
+
         response = self._sloop_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
@@ -159,6 +174,23 @@ class TestSimpleEnvLocalSearch:
 
         rospy.loginfo("belief visualized")
 
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, SEARCH_SPACE_RESOLUTION,
+                node_color=[0.82, 0.01, 0.08, 0.8],
+                edge_color=[0.24, 0.82, 0.01, 0.8],
+                node_thickness=SEARCH_SPACE_RESOLUTION)
+            markers.extend(msg.markers)
+        self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
+        rospy.loginfo("belief visualized")
+
+
 
     def __init__(self, o3dviz=False, prior="uniform"):
         # This is an example of how to get started with using the
@@ -171,6 +203,8 @@ class TestSimpleEnvLocalSearch:
             "~octree_belief", MarkerArray, queue_size=10, latch=True)
         self._fovs_markers_pub = rospy.Publisher(
             "~fovs", MarkerArray, queue_size=10, latch=True)
+        self._topo_map_3d_markers_pub = rospy.Publisher(
+            "~topo_map_3d", MarkerArray, queue_size=10, latch=True)
 
         # Initialize grpc client
         self._sloop_client = SloopObjectSearchClient()
@@ -201,7 +235,7 @@ class TestSimpleEnvLocalSearch:
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
-                                                                       "search_space_resolution": 0.1,
+                                                                       "search_space_resolution": SEARCH_SPACE_RESOLUTION,
                                                                        "debug": False,
                                                                        "region_size_x": 4.0,
                                                                        "region_size_y": 4.0,
@@ -288,13 +322,6 @@ class TestSimpleEnvLocalSearch:
             print(f"  objects found: {objects_found}")
             print("-----------")
 
-            # Clear markers
-            header = std_msgs.Header(stamp=rospy.Time.now(),
-                                     frame_id=self.world_frame)
-            clear_msg = ros_utils.clear_markers(header, ns="")
-            self._octbelief_markers_pub.publish(clear_msg)
-            self._fovs_markers_pub.publish(clear_msg)
-
             # visualize FOV and belief
             self.visualize_fovs(response_observation)
             self.get_and_visualize_belief(o3dviz=o3dviz)
@@ -308,7 +335,7 @@ class TestSimpleEnvLocalSearch:
 
 
 def main():
-    TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
+    TestSimpleEnvLocalSearch(o3dviz=False, prior="uniform")
 
 if __name__ == "__main__":
     main()

@@ -472,7 +472,8 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
 
 def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
                                            search_space_resolution,
-                                           color=[0.2, 0.7, 0.2], alpha_scaling=1.0, pos_z=0):
+                                           color=[0.2, 0.7, 0.2],
+                                           alpha_scaling=1.0, pos_z=0):
     """search_space_resolution: should be the size of a grid cell"""
     markers = []
     object_id = object_belief2d_pb.object_id
@@ -492,7 +493,8 @@ def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
                                             lifetime=0, color=color,
                                             viz_type=Marker.CYLINDER,
                                             scale=geometry_msgs.msg.Vector3(x=search_space_resolution,
-                                                                            y=search_space_resolution, z=0.05))
+                                                                            y=search_space_resolution,
+                                                                            z=0.05))
         markers.append(marker)
     return MarkerArray(markers)
 
@@ -501,7 +503,8 @@ def make_topo_map_proto_markers_msg(topo_map_pb, header,
                                     node_color=[0.93, 0.85, 0.1, 0.8],
                                     edge_color=[0.05, 0.65, 0.81, 0.8],
                                     edge_thickness=0.05,
-                                    pos_z=0.1):
+                                    pos_z=0.1,
+                                    node_thickness=0.05):
     """If positions of topo map nodes are 2D, then the z coordinate
     of the marker will be set to 'pos_z'."""
     # First, add edge markers and collect nodes
@@ -536,7 +539,7 @@ def make_topo_map_proto_markers_msg(topo_map_pb, header,
         node_scale = geometry_msgs.msg.Vector3(
             x=search_space_resolution*1.5,
             y=search_space_resolution*1.5,
-            z=0.05)
+            z=node_thickness)
         node_marker = make_viz_marker_cylinder(
             int(nid), pose, header, color=node_color,
             lifetime=0, scale=node_scale)
