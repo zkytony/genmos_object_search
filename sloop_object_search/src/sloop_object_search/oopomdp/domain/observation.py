@@ -91,39 +91,48 @@ class ObjectDetection(pomdp_py.SimpleObservation):
             return center_bbox
 
 
-class RobotLocalization(pomdp_py.SimpleObservation):
-    """This is equal to a pose tuple if it is equal to the mean"""
-    def __init__(self, robot_id, robot_pose, cov=None):
-        """cov: covariance matrix for the robot pose observation."""
-        if cov is None:
-            cov = np.zeros((len(robot_pose), len(robot_pose)))
-        self._cov = cov
-        data = (robot_id, robot_pose)
-        super().__init__(data)
+class RobotLocalization(pomdp_py.Gaussian):
+    """This wraps pomdp_py Gaussian as the belief over robot pose - could be
+    regarded as an observation of the result of localization. Note that we
+    represent robot pose in 3D as (x, y, z, qx, qy, qz, qw), while its
+    covariance matrix is about the rotations around the axes. This wrapper
+    handles the conversion. That is, the mean and the samples will be 7-tuples.
+    """
+    def __init__(self, robot_id, pose, covariance=None):
+        """covariance (array or list): covariance matrix.
+            For 3D pose, the variables are [x y z thx thy thz]
+            For 2D pose, the variables are [x y yaw]
+
+        note that for 3D pose, the input argument 'pose' should contain
+        quaternion.
+        """
+        self.robot_id = robot_id
+        if len(pose) == 7:
+            self.is_3d = True
+        elif len(pose) == 3:
+            self.is_3d = False
+        else:
+            raise ValueError("Invalid dimension of robot pose estimate. "\
+                             f"Expected 3 or 7, but got {len(pose)}")
+        if covariance is None:
+            covariance = np.zeros((len(robot_pose), len(robot_pose)))
+        if isinstance(covariance, np.ndarray):
+            covariance = covariance.tolist()
+        if self.is_3d:
+            super().__init__(list(RobotLocalization._to_euler_pose(pose)), covariance)
+        else:
+            super().__init__(list(pose), covariance)
 
     @property
-    def is_2d(self):
-        return len(self.pose) == 3  # x, y, th
-
-    @property
-    def is_3d(self):
-        return not self.is_2d
-
-    @property
-    def cov(self):
-        return self._cov
-
-    @property
-    def covariance(self):
-        return self.cov
+    def mean(self):
+        if self.is_3d:
+            return RobotLocalization._to_quat_pose(super().mean)
+        else:
+            return super().mean
 
     @property
     def pose(self):
-        return self.data[1]
-
-    @property
-    def robot_id(self):
-        return self.data[0]
+        return self.mean
 
     @property
     def loc(self):
@@ -132,6 +141,42 @@ class RobotLocalization(pomdp_py.SimpleObservation):
         else:
             # 3d
             return self.pose[:3]
+
+    @staticmethod
+    def _to_euler_pose(pose7tup):
+        return (*pose7tup[:3], *math_utils.quat_to_euler(*pose7tup[3:]))
+
+    @staticmethod
+    def _to_quat_pose(pose6tup):
+        return (*pose6tup[:3], *math_utils.euler_to_quat(*pose6tup[3:]))
+
+    def __getitem__(self, pose):
+        if self.is_3d:
+            return super().__getitem__(RobotLocalization._to_euler_pose(pose))
+        else:
+            return super().__getitem__(pose)
+
+    def __mpe__(self):
+        pose = super().mpe()
+        if self.is_3d:
+            return RobotLocalization._to_quat_pose(pose)
+        else:
+            return pose
+
+    def random(self):
+        pose = super().random()
+        if self.is_3d:
+            return RobotLocalization._to_quat_pose(pose)
+        else:
+            return pose
+
+    def to_2d(self):
+        if self.is_3d:
+            x, y, _ = self.mean[:3]
+            _, _, yaw = quat_to_euler(*self.mean[3:])
+            cov = np.asarray(self.cov)[np.ix_((0,1,-1), (0,1,-1))]  # get covariance matrix
+            return RobotLocalization(self.robot_id, (x,y,yaw), cov)
+        raise ValueError("is already 2D.")
 
     def __str__(self):
         return f"RobotLocalization[{self.robot_id}]({self.pose}, {self.cov})"
@@ -143,9 +188,8 @@ class RobotLocalization(pomdp_py.SimpleObservation):
 class RobotObservation(pomdp_py.SimpleObservation):
     def __init__(self, robot_id, robot_pose_est, objects_found,
                  camera_direction, *args):
-        """
-        'robot_pose_est' should be a RobotLocalization, if this observation
-        is created based on real robot observation. It should be a tuple if
+        """If this observation is created based on real robot observation,
+        'robot_pose_est' should be a RobotLocalization, It should be a tuple if
         this observation is generated during planning based on a robot state.
         """
         data = (robot_id, robot_pose_est, objects_found,
@@ -173,6 +217,10 @@ class RobotObservation(pomdp_py.SimpleObservation):
     @property
     def pose_estimate(self):
         return self.data[1]
+
+    @property
+    def pose_est(self):
+        return self.pose_estimate
 
     @property
     def objects_found(self):

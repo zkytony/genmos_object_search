@@ -5,7 +5,7 @@ import pomdp_py
 import numpy as np
 from . import belief
 from ..domain.observation\
-    import JointObservation, ObjectDetection, Voxel, FovVoxels, RobotLocalization
+    import JointObservation, ObjectDetection, Voxel, FovVoxels
 from ..models.transition_model import RobotTransBasic3D
 from ..models.sensors import FrustumCamera
 from ..models.policy_model import PolicyModelBasic3D

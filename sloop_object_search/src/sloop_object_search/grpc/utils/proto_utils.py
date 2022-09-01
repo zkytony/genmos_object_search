@@ -308,8 +308,8 @@ def robot_belief_to_proto(robot_belief, search_region, header=None, **other_fiel
     robot_id = mpe_robot_state["id"]
 
     # get robot pose in world frame
-    robot_pose_pomdp = robot_belief.pose_dist.mean
-    robot_pose_cov_pomdp = robot_belief.pose_dist.covariance
+    robot_pose_pomdp = robot_belief.pose_est.mean
+    robot_pose_cov_pomdp = robot_belief.pose_est.covariance
     robot_pose_world, robot_pose_cov_world =\
         search_region.to_world_pose(robot_pose_pomdp, robot_pose_cov_pomdp)
     if mpe_robot_state.is_2d:
@@ -386,6 +386,8 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
 
     robot_pose_estimate_pomdp = slpo.RobotLocalization(
         agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
+    # if agent.is_2d:
+    #     robot_pose_estimate_pomdp
 
     # objects found
     objects_found = set(agent.belief.b(agent.robot_id).mpe().objects_found)  # objects already found
@@ -412,6 +414,8 @@ def pomdp_observation_from_request(request, agent, action=None):
         "request must be ProcessObservationRequest"
     if request.robot_id != agent.robot_id:
         raise ValueError("request is not for the agent")
+
+    # import pdb; pdb.set_trace()
 
     # we will always create a robot observation
     robot_observation = pomdp_robot_observation_from_request(request, agent, action=action)

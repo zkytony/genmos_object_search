@@ -66,7 +66,7 @@ def create_agent(robot_id, agent_config_world, robot_localization_world, search_
     robot_pose_pomdp, robot_pose_cov_pomdp =\
         search_region.to_pomdp_pose(robot_pose_world, robot_pose_cov_world)
     # create initial robot pose dist
-    init_robot_pose_dist = belief.RobotPoseDist(robot_pose_pomdp, robot_pose_cov_pomdp)
+    init_robot_pose_dist = belief.RobotLocalization(robot_id, robot_pose_pomdp, robot_pose_cov_pomdp)
     if isinstance(search_region, SearchRegion2D):
         init_robot_pose_dist = init_robot_pose_dist.to_2d()
     agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist)
