@@ -1,9 +1,12 @@
 # basic2d: 2D search agent with primitive action space.
 import pomdp_py
+from tqdm import tqdm
 from ..models.search_region import SearchRegion2D
 from ..models.transition_model import RobotTransBasic2D
 from ..models.policy_model import PolicyModelBasic2D
+from ..domain.observation import JointObservation, ObjectDetection
 from .common import MosAgent, SloopMosAgent, init_object_transition_models, init_primitive_movements
+from sloop_object_search.utils import open3d_utils
 
 class MosAgentBasic2D(MosAgent):
 
@@ -31,7 +34,61 @@ class MosAgentBasic2D(MosAgent):
         return pos not in self.search_region.grid_map.obstacles
 
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
-        raise NotImplementedError()
+        assert isinstance(observation, JointObservation)
+        if not self.robot_id in observation:
+            raise ValueError("requires knowing robot pose corresponding"\
+                             " to the object detections.")
+
+        robot_pose_est = observation.z(self.robot_id).pose_est
+        robot_pose = robot_pose_est.pose
+        if robot_pose_est.is_3d:
+            robot_pose = observation.z(self.robot_id).pose_est.to_2d().pose
+
+        for objid in observation:
+            if objid == self.robot_id:
+                continue
+            zobj = observation.z(objid)
+            if not isinstance(zobj, ObjectDetection):
+                raise NotImplementedError(f"Unable to handle object observation of type {type(zobj)}")
+            detection_model = self.detection_models[objid]
+            fov_cells = build_area_observation(zobj, detection_model.sensor, robot_pose)
+            import pdb; pdb.set_trace()
+
+
+def build_area_observation(detection, fansensor, robot_pose,
+                           num_samples=1000, label_only=False,
+                           debug=True, discrete=True):
+    """Returns a set of ((x,y), label) tuples where (x,y) is
+    a location in the FOV. label=detection.id if (x,y) is
+    the detection's location, or if 'label_only' is True.
+    label='free' otherwise."""
+    cells = {}
+    for i in tqdm(range(num_samples), desc="Building area FOV"):
+        x, y = fansensor.uniform_sample_sensor_region(robot_pose)
+        grid_x, grid_y = int(round(x)), int(round(y))
+        if not fansensor.in_range((grid_x, grid_y), robot_pose):
+            continue
+        label = 'free'
+        if label_only:
+            if detection.loc is not None:
+                label = detection.id
+        else:
+            if (grid_x, grid_y) == detection.loc:
+                label = detection.id
+
+        if discrete:
+            cell_loc = (grid_x, grid_y)
+        else:
+            cell_loc = (x, y)
+        if cell_loc in cells:
+            if cells[cell_loc] == 'free' and label != 'free':
+                cells[cell_loc] = label
+        else:
+            cells[cell_loc] = label
+    cells = {(k, v) for k, v in cells.items()}
+    if debug:
+        open3d_utils.draw_fov_2d(cells, robot_pose, viz=True)
+    return cells
 
 
 class SloopMosAgentBasic2D(SloopMosAgent):

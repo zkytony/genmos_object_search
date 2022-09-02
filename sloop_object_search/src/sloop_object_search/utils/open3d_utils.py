@@ -288,3 +288,18 @@ def draw_topo_graph3d(topo_map,
     if viz:
         o3d.visualization.draw_geometries(geometries, width=760, height=480)
     return geometries
+
+def draw_fov_2d(cells, robot_pose, viz=False):
+    """cells is a set of ((x,y), label) tuples"""
+    robot_pose3d = (*robot_pose[:2], 0.0, *math_utils.euler_to_quat(0, 0, robot_pose[2]))
+    pose_arrow = draw_robot_pose(robot_pose3d)
+
+    pcd2 = o3d.geometry.PointCloud()
+    cell_points = np.array([[*cell[0], 0.0] for cell in cells])
+    pcd2.points = o3d.utility.Vector3dVector(cell_points)
+    pcd2.colors = o3d.utility.Vector3dVector(np.full((len(cell_points), 3), (0.2, 0.2, 0.6)))
+
+    geometries = [pcd2, pose_arrow]
+    if viz:
+        o3d.visualization.draw_geometries(geometries, width=760, height=480)
+    return geometries
