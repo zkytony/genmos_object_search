@@ -54,7 +54,6 @@ class RobotStateBelief(pomdp_py.GenerativeDistribution):
             self.pose_est[srobot.pose]
 
 
-
 class LocDist2D(pomdp_py.GenerativeDistribution):
     """This is the belief representation over an object's location in 2D. Similar to
     Octree Belief, this representation maintains a collection of locations, each
@@ -151,6 +150,9 @@ class ObjectBelief2D(pomdp_py.GenerativeDistribution):
         pos = self._loc_dist.mpe()
         return ObjectState(self._objid, self._objclass, pos)
 
+
+def update_object_belief_2d(object_belief_2d, real_observation):
+    pass
 
 
 ##### Belief initialization ####
@@ -258,7 +260,3 @@ def accumulate_object_beliefs(search_region,
             sobj = ObjectState(objid, random_sobj.objclass, loc)
             dist[loc] += object_beliefs[objid][sobj]
     return dist
-
-def update_object_belief_2d(objid, agent, observation, action):
-    for loc in agent.search_region:
-        pass

@@ -401,9 +401,6 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
         objects_found |= set(request.objects_found.object_ids)
     objects_found = tuple(sorted(objects_found))
 
-    if agent.is_2d:
-        robot_pose_estimate_pomdp = robot_pose_estimate_pomdp.to_2d()
-
     # Now create the robot observation object; Note that even for
     # topo agents, they will only receive RobotObservation instead
     # of RobotObservationTopo because the client has no obligation

@@ -76,6 +76,16 @@ CONFIG_HIER = {
         "robot": {
             "id": "robot0",
             "no_look": True,
+            # "sensors": [{"name": "camera",
+            #              "params": {"fov": 61,
+            #                         "far": 1.75,
+            #                         "near": 0.2,
+            #                         "occlusion_enabled": True}}],
+
+            "detectors": {"book": {"class": 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                                   "params": {"sensor": "camera",
+                                              "quality": [1e5, 0.1]}}},
+
             "sensors": [{"name": 'fan',
                          'params': {'fov': 61,
                                     'min_range': 0.2,
@@ -97,7 +107,7 @@ CONFIG_HIER = {
                                 # 'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                 #          'params': {"sensor": "camera",
                                 #                     "quality": [1e5, 0.1]}}},
-                                },
+                                # },
             "action_local": {"topo": {}}
         },
         'objects': {'book': {'class': 'book',
