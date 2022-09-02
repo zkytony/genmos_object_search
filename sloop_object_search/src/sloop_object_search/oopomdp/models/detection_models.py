@@ -2,7 +2,7 @@ import math
 import random
 from pomdp_py import Gaussian
 from sloop_object_search.utils.math import fround, euclidean_dist
-from ..domain.observation import ObjectDetection, Voxel, ObjectVoxel
+from ..domain.observation import ObjectDetection, Voxel, ObjectVoxel, ObjectLoc
 from .observation_model import ObjectDetectionModel
 from .sensors import FanSensor, FrustumCamera
 from .octree_belief import octree
@@ -512,6 +512,49 @@ class FanModelSimpleFPLabelOnly(FanModel):
             return zi
 
 
+class FanModelAlphaBeta(FanModel):
+    def __init__(self, objid, fan_params, quality_params, round_to="int"):
+        """
+        Args:
+            objid (int) object id to detect
+            quality_params; (detection_prob, false_pos_rate, sigma);
+                detection_prob is essentially true positive rate.
+        """
+        super().__init__(objid, fan_params,
+                         quality_params, round_to="int")
+        self.sensor = FanSensor(**fan_params)
+        self.params = quality_params
+
+    @property
+    def alpha(self):
+        return self.params[0]
+
+    @property
+    def beta(self):
+        return self.params[1]
+
+    @property
+    def gamma(self):
+        if len(self.params) == 3:
+            return self.params[2]
+        else:
+            return 1.0
+
+    def sample(self, si, srobot, return_event=False):
+        loc = ObjectLoc(self.objid, ObjectLOC.NO_LOC, ObjectLOC.UNKNOWN)
+        if srobot.in_range(self.sensor, si):
+            if FrustumCamera.sensor_functioning(
+                    self.alpha, self.beta):
+                loc = ObjectLoc(self.objid, si.loc, si.id)
+            else:
+                loc = ObjectLoc(self.objid, si.loc, ObjectLOC.OTHER)
+        return voxel
+
+    def probability(self, zi, si, srobot):
+        raise NotImplementedError()
+
+
+
 ################# Models based on FrustumCamera ############
 class FrustumModel(ObjectDetectionModel):
     def __init__(self, objid, frustum_params,
@@ -582,5 +625,4 @@ class FrustumVoxelAlphaBeta(FrustumModel):
         return voxel
 
     def probability(self, zi, si, srobot):
-        raise ValueError("per-voxel observation model is not"
-                         "meant for belief update.")
+        raise NotImplementedError()
