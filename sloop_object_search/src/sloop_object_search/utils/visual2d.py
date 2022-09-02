@@ -216,6 +216,7 @@ class Visualizer2D:
             if len(color) == 4:
                 stop = color[3]/255 < 0.1
             else:
+                #TODO: this may be a bug; why not > 0.999?
                 stop = np.mean(np.array(color[:3]) / np.array([255, 255, 255])) < 0.999
 
             if not stop:

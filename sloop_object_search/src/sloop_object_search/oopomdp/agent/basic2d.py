@@ -43,7 +43,7 @@ class MosAgentBasic2D(MosAgent):
         robot_pose_est = observation.z(self.robot_id).pose_est
         robot_pose = robot_pose_est.pose
         if robot_pose_est.is_3d:
-            robot_pose = observation.z(self.robot_id).pose_est.to_2d().pose
+            raise ValueError("2D agent should receive 2D robot observation")
 
         for objid in observation:
             if objid == self.robot_id:
@@ -51,6 +51,8 @@ class MosAgentBasic2D(MosAgent):
             zobj = observation.z(objid)
             if not isinstance(zobj, ObjectDetection):
                 raise NotImplementedError(f"Unable to handle object observation of type {type(zobj)}")
+            if zobj.loc is not None and zobj.is_3d:
+                raise ValueError("2D agent should receive 2D object observation")
             # build area observation
             detection_model = self.detection_models[objid]
             label_only = detection_model.label_only\

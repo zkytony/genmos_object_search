@@ -403,6 +403,9 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
     robot_pose_estimate_pomdp = slpo.RobotLocalization(
         agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
 
+    if not agent.search_region.is_3d:
+        robot_pose_estimate_pomdp = robot_pose_estimate_pomdp.to_2d()
+
     # objects found
     objects_found = set(agent.belief.b(agent.robot_id).mpe().objects_found)  # objects already found
     if request.HasField("objects_found"):

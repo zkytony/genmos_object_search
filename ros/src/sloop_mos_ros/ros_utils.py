@@ -30,7 +30,7 @@ import sloop_object_search.grpc.common_pb2 as c_pb2
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import hash16
-from sloop_object_search.utils.colors import color_map, cmaps
+from sloop_object_search.utils.colors import color_map, cmaps, lighter_with_alpha
 
 
 def IS_TAG(t):
@@ -478,24 +478,38 @@ def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
     markers = []
     object_id = object_belief2d_pb.object_id
     hist_pb = object_belief2d_pb.dist
+    hist = {}
     prob_max = max(hist_pb.probs)
     prob_min = min(hist_pb.probs)
     for i in range(hist_pb.length):
         pos_pb = common_pb2.Vec2()
         hist_pb.values[i].Unpack(pos_pb)
-
-        pos = [pos_pb.x, pos_pb.y, pos_z]
+        pos = (pos_pb.x, pos_pb.y, pos_z)
         prob = hist_pb.probs[i]
-        alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
-        color = [*color, alpha]
-        marker = make_viz_marker_for_object(object_id, (*pos, 0, 0, 0, 1),
-                                            header, id=i,
-                                            lifetime=0, color=color,
-                                            viz_type=Marker.CYLINDER,
-                                            scale=geometry_msgs.msg.Vector3(x=search_space_resolution,
-                                                                            y=search_space_resolution,
-                                                                            z=0.05))
-        markers.append(marker)
+        hist[pos] = prob
+
+    last_val = -1
+    if len(color) == 3:
+        color = [*color, 1.0]
+    i = 0
+    for pos in reversed(sorted(hist, key=hist.get)):
+        if last_val != -1:
+            color = lighter_with_alpha(np.asarray(color)*255, 1-hist[pos]/last_val)/255
+
+        stop = color[3] < 0.1
+        if not stop:
+            marker = make_viz_marker_for_object(object_id, (*pos, 0, 0, 0, 1),
+                                                header, id=i,
+                                                lifetime=0, color=color,
+                                                viz_type=Marker.CYLINDER,
+                                                scale=geometry_msgs.msg.Vector3(x=search_space_resolution,
+                                                                                y=search_space_resolution,
+                                                                                z=0.05))
+            markers.append(marker)
+            last_val = hist[pos]
+            i += 1
+            if last_val <= 0:
+                break
     return MarkerArray(markers)
 
 def make_topo_map_proto_markers_msg(topo_map_pb, header,

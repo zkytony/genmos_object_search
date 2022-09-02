@@ -92,6 +92,10 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         else:
             return center_bbox
 
+    def to_2d(self):
+        """converts the detection to 2D"""
+        return ObjectDetection(self.objid, self.loc[:2], sizes=self.sizes[:2])
+
 
 class RobotLocalization(pomdp_py.Gaussian):
     """This wraps pomdp_py Gaussian as the belief over robot pose - could be

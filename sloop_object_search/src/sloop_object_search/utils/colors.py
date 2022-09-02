@@ -21,7 +21,7 @@ def lighter_with_alpha(color, percent):
     vector = white-color
 
     cc = color + vector*percent
-    cc[3] = color[3] + (color-white)[3]*(percent)
+    cc[3] = color[3] - percent*white[3]
     return cc
 
 def linear_color_gradient(rgb_start, rgb_end, n):

@@ -205,7 +205,6 @@ class TestSimpleEnvLocalSearch2D:
             print("-----------")
 
             self.get_and_visualize_belief()
-
             # Check if we are done
             if objects_found == set(AGENT_CONFIG["targets"]):
                 rospy.loginfo("Done!")
