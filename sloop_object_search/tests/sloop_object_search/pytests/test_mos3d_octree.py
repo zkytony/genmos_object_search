@@ -47,6 +47,11 @@ def octree_belief_zero_prior():
     octree_belief = OctreeBelief(1, "cube", octree_dist)
     return octree_belief
 
+def test_octree(octree_belief):
+    octree_dist = octree_belief.octree_dist
+    octree_dist[(1,1,1,2)] = 10
+    assert octree_dist.prob_at(3,3,3,1) == octree_dist.normalized_probability(10/8)
+
 def test_basics(octree_belief):
     # Test probability; __getitem__
     print("** Testing Basics")

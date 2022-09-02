@@ -20,7 +20,7 @@ from sloop_object_search.oopomdp.agent.belief import RobotStateBelief
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeBelief, plot_octree_belief
-from sloop_object_search.utils import math_utils
+from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils import open3d_utils
 
 def v3toa(v3):

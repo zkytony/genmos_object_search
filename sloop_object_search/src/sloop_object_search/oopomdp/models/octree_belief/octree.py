@@ -115,12 +115,17 @@ class OctNode:
             else:
                 assert self.leaf
                 self.parent.set_val(self.pos, val, child=self)
+                # now, the distribution among children becomes uniform.
+                value = self.value()
+                for pos in OctNode.child_poses(*self.pos, self.res):
+                    self.set_val(pos, value / 8, child=None)
+
 
     def get_val(self, child_pos):
         """get value at child_pos. If child_pos is None,
-        then return own value, as stored in parent. This
-        function shouldn't be used by non-leaf nodes if
-        child_pos is not None"""
+        then return own value, as stored in parent. If child_pos
+        is not None, but there is no record for it (i.e. it's
+        not in self.children), default value will be returned."""
         if child_pos is not None:
             if child_pos not in self.children:
                 return self._default_val*((self.res//2)**3)
@@ -137,6 +142,10 @@ class OctNode:
         if not self.leaf and self.res > 1:
             self.children = {}
             self.leaf = True
+            # now, the distribution among children becomes uniform.
+            value = self.value()
+            for pos in OctNode.child_poses(*self.pos, self.res):
+                self.set_val(pos, value / 8, child=None)
 
     @staticmethod
     def child_poses(x, y, z, res):

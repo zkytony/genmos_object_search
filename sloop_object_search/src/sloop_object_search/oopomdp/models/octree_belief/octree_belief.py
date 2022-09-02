@@ -131,7 +131,8 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         """
         This can happen for voxels at different resolution levels.
         The value is unnormalized probability, unless normalized is
-        set to True.
+        set to True. The difference from __setitem__ is this function
+        can handle normalized probability.
 
         Note: This will make child voxels a uniform distribution;
         Should only be used for setting prior.
@@ -147,25 +148,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
             val_voxel = self.prob_at(*voxel) * self._normalizer  # unnormalized prob
             dv = (prob*self._normalizer - val_voxel) / (1.0 - prob)
             value = val_voxel + dv
-
-        x,y,z = voxel[:3]
-        node = self._octree.add_node(x, y, z, res)
-        # set the value of the node
-        if res > 1:
-            for pos in OctNode.child_poses(x, y, z, res):
-                if not node.has_child(pos):
-                    child = None
-                else:
-                    child = node.child_at(pos)
-                node.set_val(pos, value / 8, child=child)
-        else:
-            # node is at ground level so it has no children. Just set its value
-            node.set_val(None, value)
-        old_value = node.parent.get_val(node.pos)
-        # Make sure the parent agrees with the value of the node
-        node.parent.set_val((x,y,z), value, child=node)
-        self.update_normalizer(old_value, value)
-        self.backtrack(node)
+        self[voxel] = value
 
     def random(self, res=1):
         """Returns a voxel position (x,y,z) at resolution 'res'."""
