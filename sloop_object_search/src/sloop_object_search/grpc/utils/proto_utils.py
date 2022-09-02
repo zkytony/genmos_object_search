@@ -16,7 +16,7 @@ from .. import sloop_object_search_pb2 as slpb2
 
 from sloop_object_search.oopomdp.domain import action as slpa
 from sloop_object_search.oopomdp.domain import observation as slpo
-from sloop_object_search.oopomdp.agent.belief import RobotStateBelief
+from sloop_object_search.oopomdp.models.belief import RobotStateBelief
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeBelief, plot_octree_belief

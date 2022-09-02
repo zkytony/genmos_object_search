@@ -30,6 +30,9 @@ class MosAgentBasic2D(MosAgent):
     def reachable(self, pos):
         return pos not in self.search_region.grid_map.obstacles
 
+    def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
+        pass
+
 
 class SloopMosAgentBasic2D(SloopMosAgent):
     def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):

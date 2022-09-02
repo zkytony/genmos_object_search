@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-# Test the complete algorithm: hierarchical search.
-# Performs hierarchical object search with 3D local
-# search and 2D global search.
-#
+# Test 2D local search in SimpleSimEnv
 #
 # To run the test, do the following IN ORDER:
 # 0. run config_simple_sim_lab121_lidar.py to generate the .yaml configuration file
@@ -35,8 +32,8 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
-from test_simple_sim_env_local_search import (wait_for_robot_pose,
-                                              observation_msg_to_proto)
+from test_simple_sim_env_local_search_3d import (wait_for_robot_pose,
+                                                 observation_msg_to_proto)
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
@@ -58,7 +55,7 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
     OBJECT_LOCATIONS = CONFIG["object_locations"]
 
 
-class TestSimpleEnvHierSearch:
+class TestSimpleEnvLocalSearch2D:
 
     def get_and_visualize_belief(self):
         # First, clear existing belief messages
@@ -66,7 +63,6 @@ class TestSimpleEnvHierSearch:
                                  frame_id=self.world_frame)
         clear_msg = ros_utils.clear_markers(header, ns="")
         self._belief_2d_markers_pub.publish(clear_msg)
-        self._topo_map_2d_markers_pub.publish(clear_msg)
 
         response = self._sloop_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
@@ -85,18 +81,6 @@ class TestSimpleEnvHierSearch:
                 color=color)
             markers.extend(msg.markers)
         self._belief_2d_markers_pub.publish(MarkerArray(markers))
-
-        # visualize topo map in robot belief
-        markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
-        robot_belief_pb = response_robot_belief.robot_belief
-        if robot_belief_pb.HasField("topo_map"):
-            msg = ros_utils.make_topo_map_proto_markers_msg(
-                robot_belief_pb.topo_map,
-                header, SEARCH_SPACE_RESOLUTION)
-            markers.extend(msg.markers)
-        self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
         rospy.loginfo("belief visualized")
 
 
@@ -107,8 +91,6 @@ class TestSimpleEnvHierSearch:
 
         # Initialize ROS stuff
         action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
-        self._topo_map_2d_markers_pub = rospy.Publisher(
-            "~topo_map_2d", MarkerArray, queue_size=10, latch=True)
         self._belief_2d_markers_pub = rospy.Publisher(
             "~belief_2d", MarkerArray, queue_size=10, latch=True)
         self._fovs_markers_pub = rospy.Publisher(
@@ -152,7 +134,6 @@ class TestSimpleEnvHierSearch:
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
-        # visualize initial belief
         self.get_and_visualize_belief()
 
         # create planner
@@ -161,98 +142,10 @@ class TestSimpleEnvHierSearch:
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
 
-        # Send planning requests
-        for step in range(TASK_CONFIG["max_steps"]):
-            response_plan = self._sloop_client.planAction(
-                self.robot_id, header=proto_utils.make_header(self.world_frame))
-            action = proto_utils.interpret_planned_action(response_plan)
-            action_id = response_plan.action_id
-            rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
-
-            # Now, we need to execute the action, and receive observation
-            # from SimpleEnv. First, convert the dest_3d in action to
-            # a KeyValAction message
-            if isinstance(action, a_pb2.MoveViewpoint):
-                if action.HasField("dest_3d"):
-                    dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
-                elif action.HasField("dest_2d"):
-                    robot_pose = np.asarray(wait_for_robot_pose())
-                    dest_2d = proto_utils.poseproto_to_posetuple(action.dest_2d)
-                    x, y, thz = dest_2d
-                    z = robot_pose[2]
-                    thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
-                    dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
-                else:
-                    raise NotImplementedError("No relative motion right now.")
-
-                nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
-                action_pub.publish(nav_action)
-                rospy.loginfo("published nav action for execution")
-                # wait for navigation done
-                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                          allow_headerless=True, verbose=True)
-                rospy.loginfo("nav action done.")
-            elif isinstance(action, a_pb2.Find):
-                find_action = KeyValAction(stamp=rospy.Time.now(),
-                                           type="find")
-                action_pub.publish(find_action)
-                rospy.loginfo("published find action for execution")
-                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                          allow_headerless=True, verbose=True)
-                rospy.loginfo("find action done")
-
-            # Now, wait for observation
-            obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
-                                                [KeyValObservation],
-                                                verbose=True, allow_headerless=True).messages[0]
-            detections_pb, robot_pose_pb, objects_found_pb =\
-                observation_msg_to_proto(self.world_frame, obs_msg)
-
-            # Now, send obseravtions for belief update
-            header = proto_utils.make_header(frame_id=self.world_frame)
-            response_observation = self._sloop_client.processObservation(
-                self.robot_id, robot_pose_pb,
-                object_detections=detections_pb,
-                objects_found=objects_found_pb,
-                header=header, return_fov=True,
-                action_id=action_id, action_finished=True, debug=False)
-            response_robot_belief = self._sloop_client.getRobotBelief(
-                self.robot_id, header=proto_utils.make_header(self.world_frame))
-
-            # visualize initial belief
-            self.get_and_visualize_belief()
-            break
         rospy.spin()
 
-
-        #     print(f"Step {step} robot belief:")
-        #     robot_belief_pb = response_robot_belief.robot_belief
-        #     objects_found = set(robot_belief_pb.objects_found.object_ids)
-        #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-        #     print(f"  objects found: {objects_found}")
-        #     print("-----------")
-
-        #     # Clear markers
-        #     header = std_msgs.Header(stamp=rospy.Time.now(),
-        #                              frame_id=self.world_frame)
-        #     clear_msg = ros_utils.clear_markers(header, ns="")
-        #     self._octbelief_markers_pub.publish(clear_msg)
-        #     self._fovs_markers_pub.publish(clear_msg)
-
-        #     # visualize FOV and belief
-        #     self.visualize_fovs(response_observation)
-        #     self.get_and_visualize_belief(o3dviz=o3dviz)
-
-        #     # Check if we are done
-        #     if objects_found == set(AGENT_CONFIG["targets"]):
-        #         rospy.loginfo("Done!")
-        #         break
-        #     time.sleep(1)
-
-
-
 def main():
-    TestSimpleEnvHierSearch(prior="uniform")
+    TestSimpleEnvLocalSearch2D(prior="uniform")
 
 if __name__ == "__main__":
     main()

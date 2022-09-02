@@ -4,7 +4,6 @@ topo graph-based action space.
 import random
 import pomdp_py
 
-from . import belief
 from .basic3d import MosAgentBasic3D
 from ..domain.state import RobotStateTopo
 from ..domain.observation import RobotObservation, RobotObservationTopo
@@ -13,6 +12,7 @@ from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo3D
 from ..models.observation_model import RobotObservationModelTopo
+from ..models import belief
 from .common import MosAgent, SloopMosAgent, init_object_transition_models
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue

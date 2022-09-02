@@ -3,9 +3,9 @@ space such as moving / rotating with respect to an axis.
 """
 import pomdp_py
 import numpy as np
-from . import belief
 from ..domain.observation\
     import JointObservation, ObjectDetection, Voxel, FovVoxels
+from ..models import belief
 from ..models.transition_model import RobotTransBasic3D
 from ..models.sensors import FrustumCamera
 from ..models.policy_model import PolicyModelBasic3D

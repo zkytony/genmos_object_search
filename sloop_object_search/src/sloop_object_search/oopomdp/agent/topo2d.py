@@ -13,9 +13,10 @@ from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo2D
 from ..models.observation_model import RobotObservationModelTopo
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
+from ..models import belief
 from .common import (MosAgent, SloopMosAgent, init_object_transition_models,
                      interpret_localization_model, init_visualizer2d)
-from . import belief
+
 
 class MosAgentTopo2D(MosAgent):
     """This agent will have a topological graph-based action space."""

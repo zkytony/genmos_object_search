@@ -10,7 +10,7 @@ from ..models.observation_model import (GMOSObservationModel,
                                         IdentityLocalizationModel)
 from ..models.reward_model import GoalBasedRewardModel
 from ..models.transition_model import RobotTransTopo
-from . import belief
+from ..models import belief
 
 
 def init_detection_models(agent_config):
@@ -168,14 +168,6 @@ class MosAgent(pomdp_py.Agent):
                          transition_model,
                          observation_model,
                          reward_model)
-
-    @property
-    def is_3d(self):
-        return isinstance(self.search_region, SearchRegion3D)
-
-    @property
-    def is_2d(self):
-        return not self.is_3d
 
     @property
     def robot_transition_model(self):

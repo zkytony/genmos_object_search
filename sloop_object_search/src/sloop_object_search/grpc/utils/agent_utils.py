@@ -10,7 +10,7 @@ from sloop_object_search.oopomdp.agent import\
      MosAgentBasic3D, MosAgentTopo3D)
 import sloop_object_search.oopomdp.domain.observation as slpo
 import sloop_object_search.oopomdp.domain.action as slpa
-from sloop_object_search.oopomdp.agent import belief
+from sloop_object_search.oopomdp.models import belief
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
 
 VALID_AGENTS = {"SloopMosAgentBasic2D",
