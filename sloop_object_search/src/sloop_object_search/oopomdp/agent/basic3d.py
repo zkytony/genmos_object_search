@@ -66,7 +66,10 @@ class MosAgentBasic3D(MosAgent):
             and not self.search_region.occupied_at(pos, res=1)
 
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
-        self._check_observation_for_update_object_beliefs(observation)
+        assert isinstance(observation, JointObservation)
+        if not self.robot_id in observation:
+            raise ValueError("requires knowing robot pose corresponding"\
+                             " to the object detections.")
 
         robot_pose = observation.z(self.robot_id).pose
         return_fov = kwargs.get("return_fov", False)

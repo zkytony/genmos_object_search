@@ -31,7 +31,7 @@ class MosAgentBasic2D(MosAgent):
         return pos not in self.search_region.grid_map.obstacles
 
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
-        pass
+        raise NotImplementedError()
 
 
 class SloopMosAgentBasic2D(SloopMosAgent):

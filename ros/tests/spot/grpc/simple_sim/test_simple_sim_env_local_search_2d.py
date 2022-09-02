@@ -170,6 +170,50 @@ class TestSimpleEnvLocalSearch2D:
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("nav action done.")
 
+            elif isinstance(action, a_pb2.Find):
+                find_action = KeyValAction(stamp=rospy.Time.now(),
+                                           type="find")
+                action_pub.publish(find_action)
+                rospy.loginfo("published find action for execution")
+                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+                                          allow_headerless=True, verbose=True)
+                rospy.loginfo("find action done")
+
+            # Now, wait for observation
+            obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                                [KeyValObservation],
+                                                verbose=True, allow_headerless=True).messages[0]
+            detections_pb, robot_pose_pb, objects_found_pb =\
+                observation_msg_to_proto(self.world_frame, obs_msg)
+
+            # Now, send obseravtions for belief update
+            header = proto_utils.make_header(frame_id=self.world_frame)
+            response_observation = self._sloop_client.processObservation(
+                self.robot_id, robot_pose_pb,
+                object_detections=detections_pb,
+                objects_found=objects_found_pb,
+                header=header, return_fov=True,
+                action_id=action_id, action_finished=True, debug=False)
+            response_robot_belief = self._sloop_client.getRobotBelief(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+
+            print(f"Step {step} robot belief:")
+            robot_belief_pb = response_robot_belief.robot_belief
+            objects_found = set(robot_belief_pb.objects_found.object_ids)
+            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+            print(f"  objects found: {objects_found}")
+            print("-----------")
+
+            self.get_and_visualize_belief()
+
+            # Check if we are done
+            if objects_found == set(AGENT_CONFIG["targets"]):
+                rospy.loginfo("Done!")
+                break
+            time.sleep(1)
+
+
+
         rospy.spin()
 
 def main():
