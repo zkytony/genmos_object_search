@@ -541,14 +541,14 @@ class FanModelAlphaBeta(FanModel):
             return 1.0
 
     def sample(self, si, srobot, return_event=False):
-        loc = ObjectLoc(self.objid, ObjectLOC.NO_LOC, ObjectLOC.UNKNOWN)
+        loc = ObjectLoc(self.objid, ObjectLoc.NO_LOC, ObjectLoc.UNKNOWN)
         if srobot.in_range(self.sensor, si):
             if FrustumCamera.sensor_functioning(
                     self.alpha, self.beta):
                 loc = ObjectLoc(self.objid, si.loc, si.id)
             else:
-                loc = ObjectLoc(self.objid, si.loc, ObjectLOC.OTHER)
-        return voxel
+                loc = ObjectLoc(self.objid, si.loc, ObjectLoc.OTHER)
+        return loc
 
     def probability(self, zi, si, srobot):
         raise NotImplementedError()

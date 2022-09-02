@@ -34,10 +34,10 @@ agent_config:
     - 0.9
     detectors:
       book:
-        class: sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly
+        class: sloop_object_search.oopomdp.FanModelAlphaBeta
         params:
           quality:
-          - 0.9
+          - 100000.0
           - 0.05
           sensor: fan
     id: robot0

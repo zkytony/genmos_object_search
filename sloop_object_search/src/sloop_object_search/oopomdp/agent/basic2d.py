@@ -54,14 +54,16 @@ class MosAgentBasic2D(MosAgent):
             # build area observation
             detection_model = self.detection_models[objid]
             label_only = detection_model.label_only\
-                if has_attr(detection_model, "label_only") else False
+                if hasattr(detection_model, "label_only") else False
             fov_cells = build_area_observation(
                 zobj, detection_model.sensor, robot_pose, label_only=label_only)
             # TODO: potentially set these parameters dynamically
             if objid in self.target_objects:
+                b_obj = self.belief.b(objid)
                 alpha = detection_model.alpha
                 beta = detection_model.beta
-                b_obj_new = belief.update_object_belief_2d(b_obj, fov_cells, alpha, beta)
+                b_obj_new = belief.update_object_belief_2d(
+                    b_obj, fov_cells, alpha, beta)
                 self.belief.set_object_belief(objid, b_obj_new)
             else:
                 # objid is not a target object. It may be a correlated object each

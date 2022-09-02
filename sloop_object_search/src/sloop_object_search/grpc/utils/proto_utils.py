@@ -264,11 +264,10 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
         hist_probs = []   # the probabilities
         if not isinstance(search_region, SearchRegion3D):
             # For 2D belief, just iterate over all
-            for s_obj in b_obj:
-                assert s_obj.is_2d, "expecting object state to be 2d."
-                x, y = search_region.to_world_pos(s_obj.loc)
+            for loc in b_obj.loc_dist:
+                x, y = search_region.to_world_pos(loc)
                 hist_values.append(to_any_proto(Vec2(x=x, y=y)))
-                hist_probs.append(b_obj[s_obj])
+                hist_probs.append(b_obj.loc_dist.prob_at(*loc))
 
         else:
             # b_obj is octree belief

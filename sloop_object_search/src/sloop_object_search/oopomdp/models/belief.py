@@ -179,6 +179,9 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
     def get_val(self, x, y):
         return self._values[(x,y)]
 
+    def in_region(self, pos):
+        return pos in self._values
+
     def assign(self, pos, value, normalized=False):
         """Sets the value at a position to be the given. If 'normalized' is True, then
         'value' is a normalized probability.
@@ -194,7 +197,7 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
             value = val_pos + dv
         old_val = self._values[pos]
         self._values[pos] = value
-        self.update_normalizer(old_value, value)
+        self.update_normalizer(old_val, value)
 
     def update_normalizer(self, old_value, value):
         self._normalizer += (value - old_value)
@@ -207,9 +210,12 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
     def __setitem__(self, pos, value):
         self.assign(pos, value)
 
+    def __iter__(self):
+        return iter(self._values)
+
     def random(self, rnd=random):
         candidates = list(self._values.keys())
-        weights = [self.values[loc] for loc in candidates]
+        weights = [self._values[loc] for loc in candidates]
         return rnd.choices(candidates, weights=weights, k=1)[0]
 
     def mpe(self):
@@ -266,7 +272,9 @@ def update_object_belief_2d(object_belief_2d, real_observation,
        raise TypeError("Belief update should happen using"\
                        " cells in the FOV (type set)")
 
-    for loc, label in real_obseravtion:
+    for loc, label in real_observation:
+        if not object_belief_2d.loc_dist.in_region(loc):
+            continue
         val_t = object_belief_2d.loc_dist.get_val(*loc)
         if label == "free":
             val_tp1 = val_t * beta
