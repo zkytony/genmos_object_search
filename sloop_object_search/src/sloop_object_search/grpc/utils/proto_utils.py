@@ -180,7 +180,16 @@ def pomdp_action_to_proto(action, agent, header=None):
     if isinstance(action, slpa.MotionAction):
         action_type = "move_action"
         if isinstance(action, slpa.MotionAction2D):
-            raise NotImplementedError()
+            forward, angle = action.motion
+            motion_pb = Motion2D(
+                forward=forward * agent.search_region.search_space_resolution,
+                dth=angle)
+            action_pb = MoveViewpoint(header=header,
+                                      robot_id=agent.robot_id,
+                                      motion_2d=motion_pb,
+                                      name=action.name,
+                                      expected_cost=action.step_cost)
+
         elif isinstance(action, slpa.MotionActionTopo):
             # then sample a random state from agent's belief, then
             # use the resulting pose as the goal viewpoint -> this

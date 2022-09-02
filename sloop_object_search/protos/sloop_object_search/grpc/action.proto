@@ -17,8 +17,11 @@ message Motion3D {
 }
 
 message Motion2D {
-  Vec2 dpos = 1;
-  double dth = 2;
+  oneof dtrans {
+    Vec2 dpos = 1;
+    double forward = 2;
+  }
+  double dth = 3;
 }
 
 message MoveViewpoint {

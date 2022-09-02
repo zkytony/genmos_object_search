@@ -65,7 +65,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.CreateAgentReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
-                message=self._logwarn("Agent {request.robot_id} already exists!"))
+                message=self._logwarn(f"Agent {request.robot_id} already exists!"))
 
         config_str = request.config.decode("utf-8")
         config = yaml.safe_load(config_str)

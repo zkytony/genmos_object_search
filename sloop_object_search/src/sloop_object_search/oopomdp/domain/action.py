@@ -51,13 +51,19 @@ class MotionAction2D(MotionAction):
     def dyaw(self):
         return self.motion[1]
 
-def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False):
+def basic_discrete_moves2d(step_size=1, h_rotation=45.0, back=False, yaxis="down"):
     """returns mapping from action name to Action"""
     # scheme vw: (vt, vw) translational, rotational velocities.
     FORWARD = (step_size, 0)
     BACKWARD = (-step_size, 0)
-    LEFT = (0, -h_rotation)  # left 45 deg
-    RIGHT = (0, h_rotation)  # right 45 deg
+    if yaxis == "down":
+        LEFT = (0, -h_rotation)  # left 45 deg
+        RIGHT = (0, h_rotation)  # right 45 deg
+    elif yaxis == "up":
+        LEFT = (0, h_rotation)  # left 45 deg
+        RIGHT = (0, -h_rotation)  # right 45 deg
+    else:
+        raise ValueError(f"invalid yaxis {yaxis}")
     MoveForward = MotionAction2D(FORWARD, motion_name="Forward")
     MoveBackward = MotionAction2D(BACKWARD, motion_name="Backward")
     TurnLeft = MotionAction2D(LEFT, motion_name="TurnLeft")

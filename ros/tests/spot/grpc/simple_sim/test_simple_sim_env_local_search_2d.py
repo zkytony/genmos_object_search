@@ -11,6 +11,7 @@
 # 6. run in a terminal 'roslaunch sloop_object_search_ros view_simple_sim.launch'
 # ------------------
 import numpy as np
+import math
 import time
 import rospy
 import pickle
@@ -141,6 +142,33 @@ class TestSimpleEnvLocalSearch2D:
                                                     header=proto_utils.make_header(),
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
+
+        # Send planning requests
+        for step in range(TASK_CONFIG["max_steps"]):
+            response_plan = self._sloop_client.planAction(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+            action = proto_utils.interpret_planned_action(response_plan)
+            action_id = response_plan.action_id
+            rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+
+            if isinstance(action, a_pb2.MoveViewpoint):
+                if action.HasField("motion_2d"):
+                    forward = action.motion_2d.forward
+                    angle = action.motion_2d.dth
+                    robot_pose = np.asarray(wait_for_robot_pose())
+                    rx, ry, rz = robot_pose[:3]
+                    thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
+                    thz = (thz + angle) % 360
+                    rx = rx + forward*math.cos(math_utils.to_rad(thz))
+                    ry = ry + forward*math.sin(math_utils.to_rad(thz))
+                    dest = (rx, ry, rz, *math_utils.euler_to_quat(thx, thy, thz))
+                nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
+                action_pub.publish(nav_action)
+                rospy.loginfo("published nav action for execution")
+                # wait for navigation done
+                ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+                                          allow_headerless=True, verbose=True)
+                rospy.loginfo("nav action done.")
 
         rospy.spin()
 

@@ -138,7 +138,7 @@ class RobotLocalization(pomdp_py.Gaussian):
         if self.is_3d:
             return RobotLocalization._to_quat_pose(super().mean)
         else:
-            return super().mean
+            return tuple(super().mean)
 
     @property
     def pose(self):
@@ -167,14 +167,14 @@ class RobotLocalization(pomdp_py.Gaussian):
             return super().__getitem__(pose)
 
     def __mpe__(self):
-        pose = super().mpe()
+        pose = tuple(super().mpe())
         if self.is_3d:
             return RobotLocalization._to_quat_pose(pose)
         else:
             return pose
 
     def random(self):
-        pose = super().random()
+        pose = tuple(super().random())
         if self.is_3d:
             return RobotLocalization._to_quat_pose(pose)
         else:
