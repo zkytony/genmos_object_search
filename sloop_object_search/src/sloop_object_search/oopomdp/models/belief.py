@@ -188,6 +188,9 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
         else:
             return self._values[(x,y)] / self._normalizer
 
+    def get_val(self, x, y):
+        return self._values[(x,y)]
+
     def assign(self, pos, value, normalized=False):
         """Sets the value at a position to be the given. If 'normalized' is True, then
         'value' is a normalized probability.
@@ -231,6 +234,16 @@ class ObjectBelief2D(pomdp_py.GenerativeDistribution):
         if not isinstance(loc_dist, LocDist2D):
             raise TypeError("loc_dist must be an instance of LocDist2D")
         self._loc_dist = loc_dist
+        self._objid = objid
+        self._objclass = objclass
+
+    @property
+    def objid(self):
+        return self._objid
+
+    @property
+    def loc_dist(self):
+        return self._loc_dist
 
     def __getitem__(self, object_state):
         if object_state.id != self._objid:
@@ -260,11 +273,19 @@ class ObjectBelief2D(pomdp_py.GenerativeDistribution):
 
 def update_object_belief_2d(object_belief_2d, real_observation,
                             alpha=1000., beta=0., gamma=1.0):
-    """real_observation should be a FovVoxels"""
-    if not isinstance(real_observation, FovVoxels):
+    """real_observation should be a FovVoxels; update in place"""
+    if not type(real_observation) == set:
        raise TypeError("Belief update should happen using"\
-                       " unfactored observation (type Observation)")
-    for voxel_pos in real_observation.voxels:
-        voxel = real_observation.voxels[voxel_pos]
-        if len(voxel_pos) == 3:
-            voxel_pos = (*voxel_pos, 1)
+                       " cells in the FOV (type set)")
+
+    for loc, label in real_obseravtion:
+        val_t = object_belief_2d.loc_dist.get_val(*loc)
+        if label == "free":
+            val_tp1 = val_t * beta
+        elif label == object_belief_2d.objid:
+            val_tp1 = val_t * alpha
+        else:
+            raise ValueError(f"Unexpected label {label}")
+        object_belief_2d.loc_dist[loc] = val_tp1
+        object_belief_2d.loc_dist.update_normalizer(val_t, val_tp1)
+    return object_belief_2d

@@ -4,6 +4,7 @@ from tqdm import tqdm
 from ..models.search_region import SearchRegion2D
 from ..models.transition_model import RobotTransBasic2D
 from ..models.policy_model import PolicyModelBasic2D
+from ..models import belief
 from ..domain.observation import JointObservation, ObjectDetection
 from .common import MosAgent, SloopMosAgent, init_object_transition_models, init_primitive_movements
 from sloop_object_search.utils import open3d_utils
@@ -52,7 +53,16 @@ class MosAgentBasic2D(MosAgent):
                 raise NotImplementedError(f"Unable to handle object observation of type {type(zobj)}")
             detection_model = self.detection_models[objid]
             fov_cells = build_area_observation(zobj, detection_model.sensor, robot_pose)
-            import pdb; pdb.set_trace()
+            # TODO: potentially set these parameters dynamically
+            if objid in self.target_objects:
+                alpha = detection_model.alpha
+                beta = detection_model.beta
+                b_obj_new = belief.update_object_belief_2d(b_obj, fov_cells, alpha, beta)
+                self.belief.set_object_belief(objid, b_obj_new)
+            else:
+                # objid is not a target object. It may be a correlated object each
+                # voxel will inform the belief update of surrounding voxels.
+                raise NotImplementedError("Doesn't handle correlated object right now.")
 
 
 def build_area_observation(detection, fansensor, robot_pose,

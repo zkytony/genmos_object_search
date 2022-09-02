@@ -339,7 +339,7 @@ def update_octree_belief(octree_belief, real_observation,
     """
     if not isinstance(real_observation, FovVoxels):
        raise TypeError("Belief update should happen using"\
-                       " unfactored observation (type Observation)")
+                       " voxels in the field of view (type FovVoxels)")
 
     for voxel_pos in real_observation.voxels:
         voxel = real_observation.voxels[voxel_pos]
