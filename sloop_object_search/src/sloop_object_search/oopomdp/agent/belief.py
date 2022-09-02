@@ -55,7 +55,7 @@ class RobotStateBelief(pomdp_py.GenerativeDistribution):
 
 
 
-class Loc2DBelief(pomdp_py.GenerativeDistribution):
+class LocDist2D(pomdp_py.GenerativeDistribution):
     """This is the belief representation over an object's location in 2D. Similar to
     Octree Belief, this representation maintains a collection of locations, each
     with an unnormalized probability. A separate normalizer is maintained. This
@@ -117,6 +117,41 @@ class Loc2DBelief(pomdp_py.GenerativeDistribution):
 
     def mpe(self):
         return max(self._values, key=self._values.get)
+
+
+class ObjectBelief2D(pomdp_py.GenerativeDistribution):
+    """A wrapper around LocDist2D that takes in and outputs ObjectState"""
+    def __init__(self, objid, objclass, loc_dist):
+        if not isinstance(loc_dist, LocDist2D):
+            raise TypeError("loc_dist must be an instance of LocDist2D")
+        self._loc_dist = loc_dist
+
+    def __getitem__(self, object_state):
+        if object_state.id != self._objid:
+            raise TypeError("Given object state has object id %d\n"\
+                            "but this belief is for object id %d"
+                            % (object_state.id, self._objid))
+        x, y = object_state.loc
+        return self._loc_dist.prob_at(x, y)
+
+    def __setitem__(self, object_state, value):
+        x, y = object_state.loc
+        self._loc_dist[(x,y)] = value
+
+    def assign(self, object_state, value, normalized=False):
+        x,y,z = object_state.loc
+        self._octree_dist.assign((x,y), value,
+                                 normalized=normalized)
+
+    def random(self):
+        pos = self._loc_dist.random()
+        return ObjectState(self._objid, self._objclass, pos)
+
+    def mpe(self):
+        pos = self._loc_dist.mpe()
+        return ObjectState(self._objid, self._objclass, pos)
+
+
 
 ##### Belief initialization ####
 def init_robot_belief(robot_config, robot_pose_est, robot_state_class=RobotState, **state_kwargs):
