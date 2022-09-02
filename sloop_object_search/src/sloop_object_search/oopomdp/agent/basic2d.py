@@ -51,8 +51,12 @@ class MosAgentBasic2D(MosAgent):
             zobj = observation.z(objid)
             if not isinstance(zobj, ObjectDetection):
                 raise NotImplementedError(f"Unable to handle object observation of type {type(zobj)}")
+            # build area observation
             detection_model = self.detection_models[objid]
-            fov_cells = build_area_observation(zobj, detection_model.sensor, robot_pose)
+            label_only = detection_model.label_only\
+                if has_attr(detection_model, "label_only") else False
+            fov_cells = build_area_observation(
+                zobj, detection_model.sensor, robot_pose, label_only=label_only)
             # TODO: potentially set these parameters dynamically
             if objid in self.target_objects:
                 alpha = detection_model.alpha

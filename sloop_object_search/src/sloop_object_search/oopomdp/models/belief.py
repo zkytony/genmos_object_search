@@ -35,26 +35,13 @@ def init_object_beliefs_2d(target_objects, search_region, belief_config={}):
         prior = {}
     for objid in target_objects:
         target = target_objects[objid]
-        object_belief_dist = {}
-
-        object_loc_prior = {}
+        loc_dist = LocDist2D(search_region)
+        object_belief = ObjectBelief2D(objid, target['class'], loc_dist)
         for loc, prob in prior.get(objid, []):
-            object_loc_prior[loc] = prob
-
-        for loc in search_region:
-            state = ObjectState(objid, target['class'], loc)
-            # if prior is not empty, then for unspecified location,
-            # the probability is zero
-            if len(object_loc_prior) > 0:
-                if loc in object_loc_prior:
-                    object_belief_dist[state] = object_prior_dist[loc]
-                else:
-                    object_belief_dist[state] = 0.0
-            else:
-                # No prior specified, uniform.
-                object_belief_dist[state] = 1.0 / len(search_region)
-
-        object_beliefs[objid] = pomdp_py.Histogram(object_belief_dist)
+            state = ObjectState(objid, target["class"], loc)
+            # TODO: make 'normalized' configurable
+            object_belief.assign(state, prob, normalized=True)
+        object_beliefs[objid] = object_belief
     return object_beliefs
 
 def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
@@ -82,6 +69,7 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
             for voxel, prob in prior[objid]:
                 x,y,z,r = voxel
                 state = ObjectState(objid, target["class"], (x,y,z), res=r)
+                # TODO: make 'normalized' configurable
                 octree_belief.assign(state, prob, normalized=True)
         object_beliefs[objid] = octree_belief
     return object_beliefs

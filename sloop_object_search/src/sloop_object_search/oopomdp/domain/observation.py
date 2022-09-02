@@ -460,12 +460,9 @@ class ObjectVoxel(pomdp_py.SimpleObservation):
 
 
 class FovVoxels(pomdp_py.Observation):
-
     """Voxels in the field of view.
 
     Immutable object."""
-
-
     def __init__(self, voxels):
         """
         voxels: dictionary (x,y,z)->Voxel, (x,y,z,r)->Voxel, or objid->Voxel
@@ -508,3 +505,36 @@ class FovVoxels(pomdp_py.Observation):
             self._hashcache = det_dict_hash(self._voxels)
         else:
             return self._hashcache
+
+########### Used for planning for 2D observation sampling #########
+class ObjectLoc(pomdp_py.SimpleObservation):
+    """Optionally, if objid is provided, then this can
+    be thought of as coming from the FOV for the specific
+    object, V_objid. Similar to ObjectVoxel but for 2D."""
+
+    UNKNOWN = "unknown"
+    FREE = "free"
+    OTHER = "other" #i.e. not i (same as FREE but for object observation)
+    NO_LOC = (float('inf'), float('inf'))
+
+    def __init__(self, objid, loc, label):
+        super().__init__((objid, (loc, label)))
+
+    @property
+    def id(self):
+        return self.data[0]
+
+    @property
+    def objid(self):
+        return self.id
+
+    @property
+    def loc(self):
+        return self.data[1][0]
+
+    @property
+    def label(self):
+        return self.data[1][1]
+
+    def __str__(self):
+        return f"ObjectLoc[{self.objid}]({self.loc}, {self.label})"
