@@ -35,7 +35,8 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
-from test_simple_sim_env_local_search import wait_for_robot_pose
+from test_simple_sim_env_local_search import (wait_for_robot_pose,
+                                              observation_msg_to_proto)
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
@@ -60,6 +61,13 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
 class TestSimpleEnvHierSearch:
 
     def get_and_visualize_belief(self):
+        # First, clear existing belief messages
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._belief_2d_markers_pub.publish(clear_msg)
+        self._topo_map_2d_markers_pub.publish(clear_msg)
+
         response = self._sloop_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
@@ -144,13 +152,6 @@ class TestSimpleEnvHierSearch:
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
-        # Clear markers
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        clear_msg = ros_utils.clear_markers(header, ns="")
-        self._belief_2d_markers_pub.publish(clear_msg)
-        self._topo_map_2d_markers_pub.publish(clear_msg)
-
         # visualize initial belief
         self.get_and_visualize_belief()
 
@@ -182,18 +183,7 @@ class TestSimpleEnvHierSearch:
                     thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
                     dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
                 else:
-                    robot_pose = np.asarray(wait_for_robot_pose())
-                    robot_pose[0] += action.motion_3d.dpos.x
-                    robot_pose[1] += action.motion_3d.dpos.y
-                    robot_pose[2] += action.motion_3d.dpos.z
-
-                    thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
-                    dthx = action.motion_3d.drot_euler.x
-                    dthy = action.motion_3d.drot_euler.y
-                    dthz = action.motion_3d.drot_euler.z
-                    robot_pose[3:] = np.asarray(math_utils.euler_to_quat(
-                        thx + dthx, thy + dthy, thz + dthz))
-                    dest = robot_pose
+                    raise NotImplementedError("No relative motion right now.")
 
                 nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
                 action_pub.publish(nav_action)
@@ -210,26 +200,30 @@ class TestSimpleEnvHierSearch:
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("find action done")
+
+            # Now, wait for observation
+            obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                                [KeyValObservation],
+                                                verbose=True, allow_headerless=True).messages[0]
+            detections_pb, robot_pose_pb, objects_found_pb =\
+                observation_msg_to_proto(self.world_frame, obs_msg)
+
+            # Now, send obseravtions for belief update
+            header = proto_utils.make_header(frame_id=self.world_frame)
+            response_observation = self._sloop_client.processObservation(
+                self.robot_id, robot_pose_pb,
+                object_detections=detections_pb,
+                objects_found=objects_found_pb,
+                header=header, return_fov=True,
+                action_id=action_id, action_finished=True, debug=False)
+            response_robot_belief = self._sloop_client.getRobotBelief(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+
+            # visualize initial belief
+            self.get_and_visualize_belief()
             break
         rospy.spin()
 
-        #     # Now, wait for observation
-        #     obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
-        #                                         [KeyValObservation],
-        #                                         verbose=True, allow_headerless=True).messages[0]
-        #     detections_pb, robot_pose_pb, objects_found_pb =\
-        #         observation_msg_to_proto(self.world_frame, obs_msg)
-
-        #     # Now, send obseravtions for belief update
-        #     header = proto_utils.make_header(frame_id=self.world_frame)
-        #     response_observation = self._sloop_client.processObservation(
-        #         self.robot_id, robot_pose_pb,
-        #         object_detections=detections_pb,
-        #         objects_found=objects_found_pb,
-        #         header=header, return_fov=True,
-        #         action_id=action_id, action_finished=True, debug=False)
-        #     response_robot_belief = self._sloop_client.getRobotBelief(
-        #         self.robot_id, header=proto_utils.make_header(self.world_frame))
 
         #     print(f"Step {step} robot belief:")
         #     robot_belief_pb = response_robot_belief.robot_belief

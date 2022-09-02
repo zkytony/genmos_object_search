@@ -158,3 +158,7 @@ def accumulate_object_beliefs(search_region,
             sobj = ObjectState(objid, random_sobj.objclass, loc)
             dist[loc] += object_beliefs[objid][sobj]
     return dist
+
+def update_object_belief_2d(objid, agent, observation, action):
+    for loc in agent.search_region:
+        pass

@@ -82,6 +82,8 @@ class ObjectDetection(pomdp_py.SimpleObservation):
         """axis-aligned boudning box. If origin_rep is True,
         return origin-based box. Otherwise,
         return center-based box"""
+        if not self.is_3d:
+            raise RuntimeError("bbox is only for 3D object detections")
         if self.pose == ObjectDetection.NULL:
             raise RuntimeError("NULL object detection has no bounding box.")
         center_bbox = (self.loc, *self.sizes)

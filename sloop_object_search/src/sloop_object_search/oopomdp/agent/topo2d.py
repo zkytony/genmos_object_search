@@ -8,6 +8,7 @@ from tqdm import tqdm
 from sloop_object_search.utils.math import euclidean_dist, normalize
 from sloop_object_search.utils import visual2d
 from ..domain.state import RobotStateTopo
+from ..domain.observation import RobotObservation, RobotObservationTopo
 from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo2D
 from ..models.observation_model import RobotObservationModelTopo
@@ -96,6 +97,43 @@ class MosAgentTopo2D(MosAgent):
             time.sleep(2)
             viz.on_cleanup()
         return topo_map
+
+    def _update_robot_belief(self, observation, action=None, **kwargs):
+        """from the perspective of the topo2d agent, it just needs to care about updating
+        its own belief, which is 2D"""
+        # obtain topo node
+        current_srobot_mpe = self.belief.mpe().s(self.robot_id)
+        super()._update_robot_belief(observation_2d, action=action,
+                                     robot_state_class=RobotStateTopo,
+                                     topo_nid=current_srobot_mpe.topo_nid,
+                                     topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
+
+    def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
+        """the object detections and robot obseravtion in 'observation' should be 2D; we
+        need to update the 2D belief given this 3D observation.
+
+        There are two kinds of situations for belief update for the 2D topo agent.
+        (1) Local search is happening. Then, the belief of this agent will be updated
+            according to the local agent's belief.
+        (2) Local search is not happening. Then, the belief of this agent will be
+            updated based on the observation. Note that we assume the robot does not
+            tilt its camera actively during 2D search - that means, the 2D sensor model
+            appropriately approximates the FOV during 2D search.
+        """
+        searching_locally = kwargs.pop("searching_locally", False)
+        if not searching_locally:
+            # convert all 3D observations to 2D.
+            # First, do the robot observation conversion
+            zrobot_3d = observation.z(self.robot_id)
+            zrobot_2d = RobotObservation(zrobot_3d.robot_id,
+                                         zrobot_3d.pose_est.to_2d(),
+                                         zrobot_3d.objects_found,
+                                         zrobot_3d.camera_direction)
+            for objid in observation:
+                zobj = observation.z(objid)
+
+        import pdb; pdb.set_trace()
+
 
 
 class SloopMosAgentTopo2D(SloopMosAgent):

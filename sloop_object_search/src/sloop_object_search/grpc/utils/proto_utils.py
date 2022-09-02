@@ -20,7 +20,7 @@ from sloop_object_search.oopomdp.agent.belief import RobotStateBelief
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeBelief, plot_octree_belief
-from sloop_object_search.utils.math import to_rad, fround
+from sloop_object_search.utils import math_utils
 from sloop_object_search.utils import open3d_utils
 
 def v3toa(v3):
@@ -342,10 +342,18 @@ def pomdp_detection_from_proto(detection_pb, search_region,
 
     # because the POMDP frame and the world frame are axis-aligned,
     # we only need to convert the position, not rotation.
-    center_pos = (center.position.x, center.position.y, center.position.z)
-    center_rot = fround(rot_precision, quatproto_to_tuple(center.rotation))
-    pomdp_center_pos = fround(pos_precision, search_region.to_pomdp_pos(center_pos))
-    pomdp_sizes = fround(size_precision, sizes / search_region.search_space_resolution)
+    if search_region.is_3d:
+        center_pos = (center.position.x, center.position.y, center.position.z)
+        center_rot = math_utils.fround(rot_precision, quatproto_to_tuple(center.rotation))
+        pomdp_center_pos = math_utils.fround(pos_precision, search_region.to_pomdp_pos(center_pos))
+        pomdp_sizes = math_utils.fround(size_precision, sizes / search_region.search_space_resolution)
+    else:
+        center_pos = (center.position.x, center.position.y)
+        quat = quatproto_to_tuple(center.rotation)
+        _, _, yaw = math_utils.quat_to_euler(*quat)
+        center_rot = math_utils.fround(rot_precision, yaw)
+        pomdp_center_pos = math_utils.fround(pos_precision, search_region.to_pomdp_pos(center_pos))
+        pomdp_sizes = math_utils.fround(size_precision, sizes[:2] / search_region.search_space_resolution)
     pomdp_pose = (pomdp_center_pos, center_rot)
     return slpo.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
@@ -377,23 +385,24 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
         agent.search_region.to_pomdp_pose(robot_pose_world, robot_pose_world_cov)
     if len(robot_pose_pomdp) == 7:
         # rounding - eliminate numerical issues for planner update
-        robot_pos_pomdp = fround(pos_precision, robot_pose_pomdp[:3])
-        robot_rot_pomdp = fround(rot_precision, robot_pose_pomdp[3:])
+        robot_pos_pomdp = math_utils.fround(pos_precision, robot_pose_pomdp[:3])
+        robot_rot_pomdp = math_utils.fround(rot_precision, robot_pose_pomdp[3:])
     else:
-        robot_pos_pomdp = fround(pos_precision, robot_pose_pomdp[:2])
-        robot_rot_pomdp = fround(rot_precision, robot_pose_pomdp[2:])
+        robot_pos_pomdp = math_utils.fround(pos_precision, robot_pose_pomdp[:2])
+        robot_rot_pomdp = math_utils.fround(rot_precision, robot_pose_pomdp[2:])
     robot_pose_pomdp = (*robot_pos_pomdp, *robot_rot_pomdp)
 
     robot_pose_estimate_pomdp = slpo.RobotLocalization(
         agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
-    # if agent.is_2d:
-    #     robot_pose_estimate_pomdp
 
     # objects found
     objects_found = set(agent.belief.b(agent.robot_id).mpe().objects_found)  # objects already found
     if request.HasField("objects_found"):
         objects_found |= set(request.objects_found.object_ids)
     objects_found = tuple(sorted(objects_found))
+
+    if agent.is_2d:
+        robot_pose_estimate_pomdp = robot_pose_estimate_pomdp.to_2d()
 
     # Now create the robot observation object; Note that even for
     # topo agents, they will only receive RobotObservation instead
@@ -414,8 +423,6 @@ def pomdp_observation_from_request(request, agent, action=None):
         "request must be ProcessObservationRequest"
     if request.robot_id != agent.robot_id:
         raise ValueError("request is not for the agent")
-
-    # import pdb; pdb.set_trace()
 
     # we will always create a robot observation
     robot_observation = pomdp_robot_observation_from_request(request, agent, action=action)
