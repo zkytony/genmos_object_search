@@ -3,6 +3,7 @@
 from tqdm import tqdm
 import numpy as np
 import pomdp_py
+import random
 from ..domain.observation import RobotLocalization, RobotObservation
 from ..models.search_region import SearchRegion2D, SearchRegion3D
 from ..models.octree_belief import Octree, OctreeBelief, RegionalOctreeDistribution
@@ -52,6 +53,70 @@ class RobotStateBelief(pomdp_py.GenerativeDistribution):
         else:
             self.pose_est[srobot.pose]
 
+
+
+class Loc2DBelief(pomdp_py.GenerativeDistribution):
+    """This is the belief representation over an object's location in 2D. Similar to
+    Octree Belief, this representation maintains a collection of locations, each
+    with an unnormalized probability. A separate normalizer is maintained. This
+    representation enables updating belief by only updating the values in a
+    small region, without the need to enumerate over the entire space. But unlike
+    octree belief, this representation initializes explicitly a value for every
+    location, because we assume it is efficient enough computationally to do so for 2D.
+    """
+    def __init__(self, search_region, default_val=1.):
+        """
+        belief_config: the 'belief' dict in agent_config"""
+        assert isinstance(search_region, SearchRegion2D),\
+            f"search_region should be a SearchRegion2D but its {type(search_region)}"
+        # maps from a location in search region to an unnormalized probability value
+        self._search_region = search_region
+        self._default_val = default_val
+        self._values = {loc: self._default_val
+                       for loc in self._search_region}
+        self._normalizer = len(self._search_region) * self._default_val
+
+    def prob_at(self, x, y):
+        if (x,y) not in self._search_region:
+            return 0.0
+        else:
+            return self._values[(x,y)] / self._normalizer
+
+    def assign(self, pos, value, normalized=False):
+        """Sets the value at a position to be the given. If 'normalized' is True, then
+        'value' is a normalized probability.
+        """
+        if type(pos) != tuple and len(pos) != 2:
+            raise ValueError("Requires pos to be a tuple (x,y)")
+        if pos not in self._search_region:
+            raise ValueError(f"pos {pos} is not in search region")
+        if normalized:
+            prob = value
+            val_pos = self.prob_at(*pos) * self._normalizer
+            dv = (prob*self._normalizer - val_pos) (1.0 - prob)
+            value = val_pos + dv
+        old_val = self._values[pos]
+        self._values[pos] = value
+        self.update_normalizer(old_value, value)
+
+    def update_normalizer(self, old_value, value):
+        self._normalizer += (value - old_value)
+
+    def __getitem__(self, pos):
+        if type(pos) != tuple and len(pos) != 2:
+            raise ValueError("Requires pos to be a tuple (x,y)")
+        return self.prob_at(*pos)
+
+    def __setitem__(self, pos, value):
+        self.assign(pos, value)
+
+    def random(self, rnd=random):
+        candidates = list(self._values.keys())
+        weights = [self.values[loc] for loc in candidates]
+        return rnd.choices(candidates, weights=weights, k=1)[0]
+
+    def mpe(self):
+        return max(self._values, key=self._values.get)
 
 ##### Belief initialization ####
 def init_robot_belief(robot_config, robot_pose_est, robot_state_class=RobotState, **state_kwargs):

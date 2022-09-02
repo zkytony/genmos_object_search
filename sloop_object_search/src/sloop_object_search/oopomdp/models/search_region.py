@@ -170,6 +170,9 @@ class SearchRegion2D(SearchRegion):
     def __len__(self):
         return len(self.grid_map.free_locations)
 
+    def __contains__(self, pos):
+        return pos in self.grid_map.free_locations
+
 
 
 
