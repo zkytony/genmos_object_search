@@ -108,9 +108,9 @@ class RobotLocalization(pomdp_py.Gaussian):
         """
         self.robot_id = robot_id
         if len(pose) == 7:
-            self.is_3d = True
+            self._is_3d = True
         elif len(pose) == 3:
-            self.is_3d = False
+            self._is_3d = False
         else:
             raise ValueError("Invalid dimension of robot pose estimate. "\
                              f"Expected 3 or 7, but got {len(pose)}")
@@ -122,6 +122,14 @@ class RobotLocalization(pomdp_py.Gaussian):
             super().__init__(list(RobotLocalization._to_euler_pose(pose)), covariance)
         else:
             super().__init__(list(pose), covariance)
+
+    @property
+    def is_3d(self):
+        return self._is_3d
+
+    @property
+    def is_2d(self):
+        return not self.is_3d
 
     @property
     def mean(self):
@@ -173,7 +181,7 @@ class RobotLocalization(pomdp_py.Gaussian):
     def to_2d(self):
         if self.is_3d:
             x, y, _ = self.mean[:3]
-            _, _, yaw = quat_to_euler(*self.mean[3:])
+            _, _, yaw = math_utils.quat_to_euler(*self.mean[3:])
             cov = np.asarray(self.cov)[np.ix_((0,1,-1), (0,1,-1))]  # get covariance matrix
             return RobotLocalization(self.robot_id, (x,y,yaw), cov)
         raise ValueError("is already 2D.")
@@ -255,7 +263,8 @@ class RobotObservationTopo(RobotObservation):
     """The equality comparison of RobotObseravtionTopo does not consider
     the robot pose -- comparing the node id and topo map hashcode is
     sufficient. The pose estimation is still useful as a grounding
-    of a viewpoint at the node."""
+    of a viewpoint at the node. This observation type is only used
+    for sampling observations during planning."""
     def __init__(self, robot_id, robot_pose_est, objects_found,
                  camera_direction, topo_nid, topo_map_hashcode):
         super().__init__(robot_id,

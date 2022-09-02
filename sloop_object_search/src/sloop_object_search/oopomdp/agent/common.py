@@ -14,7 +14,7 @@ from . import belief
 
 
 def init_detection_models(agent_config):
-    """A detection model is initialized with nsensor
+    """A detection model is initialized with n sensor
     and quality parameters.
     """
     robot = agent_config["robot"]
@@ -232,7 +232,18 @@ class MosAgent(pomdp_py.Agent):
             # update robot belief
             if self.robot_id in observation:
                 robot_observation = observation.z(self.robot_id)
+                if not isinstance(robot_observation, RobotObservation):
+                    raise ValueError("For robot belief update, expect robot_observation in observation"\
+                                     " to be a RobotObservation.")
+                if not isinstance(robot_observation.pose_estimate, RobotLocalization):
+                    raise ValueError("For robot belief update, expect pose in robot observation"\
+                                     " to be a RobotLocalization which captures uncertainty")
+                if not robot_observation.pose_est.is_3d == self.is_3d:
+                    msg = "Agent is 3D but robot pose estimation is 2D" if self.is_3d\
+                        else "Agent is 2D but robot pose estimation is 3D"
+                    raise ValueError(msg)
                 self._update_robot_belief(robot_observation, action=action, debug=debug, **kwargs)
+
             # then update object beliefs
             return self._update_object_beliefs(
                 observation, action=action, debug=debug, **kwargs)
@@ -245,7 +256,21 @@ class MosAgent(pomdp_py.Agent):
 
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
         """ Override this function for more specific agents."""
-        raise NotImplementedError()
+        raise NotImplementedError("update object belief is not implemented")
+
+    def _check_observation_for_update_object_beliefs(self, observation):
+        """This function checks if the object detection dimensionality is
+        appropriate. should be called prior to updating object obseravtion"""
+        assert isinstance(observation, JointObservation)
+        if not self.robot_id in observation:
+            raise ValueError("requires knowing robot pose corresponding"\
+                             " to the object detections.")
+        for objid in observation:
+            zobj = observation.z(objid)
+            if zobj.pose is not None and zobj.is_3d != self.is_3d:
+                msg = "Agent is 3D but object detection is 2D" if self.is_3d\
+                    else "Agent is 2D but object detection is 3D"
+                raise ValueError(msg)
 
     def _update_robot_belief(self, observation, action=None, **kwargs):
         """ Override this function for more specific agents.
