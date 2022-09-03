@@ -28,6 +28,7 @@ from sloop_object_search.oopomdp.domain.action import MotionAction3D, FindAction
 from sloop_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
 from sloop_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
+from sloop_object_search.oopomdp.models.detection_models import FanModelAlphaBeta, FrustumVoxelAlphaBeta
 from sloop_object_search.oopomdp.agent.common import (init_object_transition_models,
                                                       init_detection_models,
                                                       interpret_localization_model)
@@ -35,6 +36,22 @@ from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils import math as math_utils
+
+
+
+def ensure_detection_model_3d(detection_model):
+    if isinstance(detection_model, FanModelAlphaBeta):
+        near = detection_model.sensor.min_range
+        far = detection_model.sensor.max_range
+        fov = detection_model.sensor.fov
+        quality = [detection_model.alpha, detection_model.beta]
+        return FrustumVoxelAlphaBeta(detection_model.objid,
+                                     dict(near=near, far=far, fov=fov, occlusion_enabled=True),
+                                     quality)
+    elif isinstance(detection_model, FrustumVoxelAlphaBeta):
+        return detection_model
+    else:
+        raise NotImplementedError()
 
 
 class SimpleSimEnv(pomdp_py.Environment):
@@ -65,8 +82,14 @@ class SimpleSimEnv(pomdp_py.Environment):
         init_state = pomdp_py.OOState({self.robot_id: init_robot_state,
                                        **object_states})
 
-        # Transition model
-        self.detection_models = init_detection_models(self.agent_config)
+        # Transition model; Note that the agent will have a 3D
+        # sensor - because it operates in 3D. So if the agent_config's
+        # sensor is 2D, we will convert it.
+        _dms = init_detection_models(self.agent_config)
+        detection_models = {}
+        for objid in _dms:
+            detection_models[objid] = ensure_detection_model_3d(_dms[objid])
+        self.detection_models = detection_models
         self.no_look = self.agent_config["robot"].get("no_look", True)
         robot_trans_model = RobotTransBasic3D(
             self.robot_id, self.reachable,
@@ -100,6 +123,7 @@ class SimpleSimEnv(pomdp_py.Environment):
     def provide_observation(self, action=None):
         # will use own observation model.
         observation = self.observation_model.sample(self.state, action)
+
         # convert voxels into object detections -- what a robot would receive
         real_zobjs = {self.robot_id: observation.z(self.robot_id)}
         for objid in observation:
@@ -291,31 +315,7 @@ class SimpleSimEnvROSNode:
     def find(self):
         """calls the find action"""
         action = FindAction()
-        if self.env.agent_config["agent_class"].endswith("2D"):
-            # temporarily use the 2d sensor to sample next state (for objects foudn)
-            # but the state transition in env is still 3D
-            state2d = self.env.get_2d_state()
-            srobot2d = state2d.s(self.env.robot_id)
-            srobot_next2d = self.env.transition_model.sample(state2d, action).s(self.env.robot_id)
-            objects_found = srobot_next2d.objects_found
-
-            # rebuild 3d state
-            srobot_next = RobotState(self.env.robot_id,
-                                     self.env.state.s(self.env.robot_id).pose,
-                                     objects_found,
-                                     srobot_next2d.camera_direction)
-
-            object_states = {objid: self.env.state.s(objid)
-                             for objid in self.env.state.object_states
-                             if objid != self.env.robot_id}
-            object_states[self.env.robot_id] = srobot_next
-            next_state = pomdp_py.OOState(object_states)
-        else:
-            state = self.env.state
-            next_state = self.env.transition_model.sample(state, action)
-        self.env.apply_transition(next_state)
-
-
+        self.env.state_transition(action, execute=True)
 
     def navigate_to(self, goal_pose):
         """Super simple navigation. Will first level the camera,
