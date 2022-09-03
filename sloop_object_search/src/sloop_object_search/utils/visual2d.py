@@ -208,10 +208,10 @@ class Visualizer2D:
         radius = int(round(size / 2))
         shift = int(round(self._res / 2))
         last_val = -1
-        hist = belief.get_histogram()
-        for state in reversed(sorted(hist, key=hist.get)):
+        hist = {loc: belief.loc_dist[loc] for loc in belief.loc_dist}
+        for loc in reversed(sorted(hist, key=hist.get)):
             if last_val != -1:
-                color = lighter_with_alpha(color, 1-hist[state]/last_val)
+                color = lighter_with_alpha(color, 1-hist[loc]/last_val)
 
             if len(color) == 4:
                 stop = color[3]/255 < 0.1
@@ -220,7 +220,7 @@ class Visualizer2D:
                 stop = np.mean(np.array(color[:3]) / np.array([255, 255, 255])) < 0.999
 
             if not stop:
-                tx, ty = self._get_viz_pos(state.loc)
+                tx, ty = self._get_viz_pos(loc)
                 if (tx,ty) not in circle_drawn:
                     circle_drawn[(tx,ty)] = 0
                 circle_drawn[(tx,ty)] += 1
@@ -238,7 +238,7 @@ class Visualizer2D:
                                    thickness=-1, alpha=color[3]/255)
                 else:
                     raise ValueError(f"Unknown shape {shape}")
-                last_val = hist[state]
+                last_val = hist[loc]
                 if last_val <= 0:
                     break
         return img
