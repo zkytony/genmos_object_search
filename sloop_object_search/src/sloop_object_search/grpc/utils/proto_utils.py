@@ -174,7 +174,7 @@ def robot_pose_proto_from_tuple(robot_pose):
     else:
         raise ValueError(f"Invalid pose: {robot_pose}")
 
-def pomdp_action_to_proto(action, agent, header=None):
+def pomdp_action_to_proto(action, agent, header=None, **kwargs):
     if header is None:
         header = make_header()
     if isinstance(action, slpa.MotionAction):
@@ -191,12 +191,12 @@ def pomdp_action_to_proto(action, agent, header=None):
                                       expected_cost=action.step_cost)
 
         elif isinstance(action, slpa.MotionActionTopo):
-            # then sample a random state from agent's belief, then
+            # then sample N random states from agent's belief, then
             # use the resulting pose as the goal viewpoint -> this
             # results in a rotation that faces the target while respecting
             # the agent's current belief.
-            rnd_state = agent.belief.random()
             robot_trans_model = agent.transition_model[agent.robot_id]
+            rnd_state = agent.belief.random()
             goal_pose_pomdp = robot_trans_model.sample(rnd_state, action).pose
             goal_pose_world = agent.search_region.to_world_pose(goal_pose_pomdp)
             goal_pose_world_pb = posetuple_to_poseproto(goal_pose_world)
