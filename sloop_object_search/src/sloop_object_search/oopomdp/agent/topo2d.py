@@ -54,10 +54,8 @@ class MosAgentTopo2D(MosAgentBasic2D):
     def init_transition_and_policy_models(self):
         target_ids = self.agent_config["targets"]
         trans_args = self.agent_config["robot"].get("transition", {})
-        h_angle_res = trans_args.get("h_angle_res", 45.0)
         robot_trans_model = RobotTransTopo2D(self.robot_id, target_ids,
                                              self.topo_map, self.detection_models,
-                                             h_angle_res=h_angle_res,
                                              no_look=self.no_look)
         object_transition_models = {
             self.robot_id: robot_trans_model,

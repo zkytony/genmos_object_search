@@ -393,14 +393,11 @@ class RobotTransTopo2D(RobotTransTopo):
                  **kwargs):
         super().__init__(robot_id, target_ids, topo_map,
                          detection_models, no_look=no_look)
-        h_angle_res = kwargs.pop("h_angle_res", 45.0)
-        self._h_angles = [i*h_angle_res
-                          for i in range(int(360/h_angle_res))]
 
     def target_facing_rotation(self, robot_pos, target_pos):
         """returns a yaw angle"""
         # will sample a yaw facing the target object
-        yaw = yaw_facing(robot_pos, target_pos, self._h_angles)
+        yaw = yaw_facing(robot_pos, target_pos)
         return yaw
 
 

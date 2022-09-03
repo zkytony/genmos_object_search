@@ -191,7 +191,7 @@ CONFIG_HIER = {
         "planner_params": {
             "exploration_const": 1000,
             "max_depth": 8,
-            "num_sims": 200,
+            "num_sims": 400,
             "show_progress": True
         }
     }

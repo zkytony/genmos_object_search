@@ -541,7 +541,7 @@ def make_topo_map_proto_markers_msg(topo_map_pb, header,
         edge_scale = geometry_msgs.msg.Vector3(x=edge_thickness)
         edge_marker = make_viz_marker_for_line_segment(
             pos1, pos2, header, color=edge_color, scale=edge_thickness,
-            lifetime=0)
+            lifetime=0, id=int(edge_pb.id))
         markers.append(edge_marker)
 
     for nid in node_pbs:

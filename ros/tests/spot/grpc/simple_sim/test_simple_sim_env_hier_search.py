@@ -235,7 +235,7 @@ class TestSimpleEnvHierSearch:
         rospy.spin()
 
 def main():
-    TestSimpleEnvHierSearch(prior="groundtruth")
+    TestSimpleEnvHierSearch(prior="uniform")
 
 if __name__ == "__main__":
     main()
