@@ -217,17 +217,26 @@ def update_planner(request, planner, agent, observation, action):
     """update planner"""
     # For 3D agents, the planning observation for an object is a Voxel
     # at the ground resolution level. So we need to convert ObjectDetection
-    # into a Voxel.
+    # into a Voxel. For 2D agents, we need to convert it to ObjectLoc.
     planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
     for objid in observation:
         if objid == agent.robot_id:
             continue
         zobj = observation.z(objid)
         if isinstance(zobj, slpo.ObjectDetection):
-            if zobj.loc is not None:
-                planning_zobj = slpo.ObjectVoxel(objid, zobj.loc, objid)
+            if agent.search_region.is_3d:
+                if zobj.loc is not None:
+                    planning_zobj = slpo.ObjectVoxel(objid, zobj.loc, objid)
+                else:
+                    planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE,
+                                                     slpo.Voxel.UNKNOWN)
             else:
-                planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE, slpo.Voxel.UNKNOWN)
+                if zobj.loc is not None:
+                    planning_zobj = slpo.ObjectLoc(objid, zobj.loc[:2], objid)
+                else:
+                    planning_zobj = slpo.ObjectLoc(objid,
+                                                   slpo.ObjectLoc.NO_LOC,
+                                                   slpo.ObjectLoc.UNKNOWN)
             planning_zobjs[objid] = planning_zobj
         else:
             raise TypeError(f"Unable to handle observation of type {zobj} for planner update")
