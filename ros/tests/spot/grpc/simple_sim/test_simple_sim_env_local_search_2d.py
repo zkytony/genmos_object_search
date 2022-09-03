@@ -210,9 +210,6 @@ class TestSimpleEnvLocalSearch2D:
                 rospy.loginfo("Done!")
                 break
             time.sleep(1)
-
-
-
         rospy.spin()
 
 def main():

@@ -219,9 +219,19 @@ class TestSimpleEnvHierSearch:
             response_robot_belief = self._sloop_client.getRobotBelief(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
 
-            # visualize initial belief
+            print(f"Step {step} robot belief:")
+            robot_belief_pb = response_robot_belief.robot_belief
+            objects_found = set(robot_belief_pb.objects_found.object_ids)
+            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+            print(f"  objects found: {objects_found}")
+            print("-----------")
+
             self.get_and_visualize_belief()
-            break
+            # Check if we are done
+            if objects_found == set(AGENT_CONFIG["targets"]):
+                rospy.loginfo("Done!")
+                break
+            time.sleep(1)
         rospy.spin()
 
 

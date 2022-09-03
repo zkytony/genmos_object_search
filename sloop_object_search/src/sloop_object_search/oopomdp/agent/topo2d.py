@@ -130,8 +130,38 @@ class MosAgentTopo2D(MosAgentBasic2D):
                 self._update_topo_map(topo_map, robot_observation, action=action)
         return _aux
 
+    def _update_topo_map(self, topo_map, robot_observation, action=None):
+        """
+        we expect robot_observation to be RobotObservation which
+        contains a RobotLocalization; This is checked by update_robot_belief
+        """
+        self.topo_map = topo_map
+        self.policy_model.update(topo_map)
+        # Now, we need to update the robot belief because new topo map leads
+        # to new topo nid and hash
+        topo_nid = self.topo_map.closest_node(robot_observation.loc)
+        super()._update_robot_belief(robot_observation, action=action,
+                                     robot_state_class=RobotStateTopo,
+                                     topo_nid=topo_nid,
+                                     topo_map_hashcode=self.topo_map.hashcode)
+
     def should_resample_topo_map(self, object_beliefs):
-        raise NotImplementedError()
+        zone_res = self.topo_config.get("sampling", {}).get("zone_res", 8)
+        resample_prob_thres = self.topo_config.get("sampling", {}).get("zone_res", 0.4)
+        total_prob = 0
+        zones_covered = set()  # set of zones whose area's probability has been considered
+        for nid in self.topo_map.nodes:
+            pos = self.topo_map.nodes[nid].pos
+            zone_pos = (pos[0] // zone_res, pos[1] // zone_res)
+            if zone_pos in zones_covered:
+                continue
+            prob = _compute_combined_prob_around(pos, object_beliefs, zone_res)
+            total_prob += prob
+            zones_covered.add(zone_pos)
+        # total_prob should be a normalized probability
+        assert 0 <= total_prob <= 1
+        print("total prob covered by existing topo map nodes:", total_prob)
+        return total_prob < resample_prob_thres
 
 
 
@@ -250,7 +280,6 @@ def _sample_topo_map(init_object_beliefs,
     positions = [init_robot_pose[:2]]
     for pos, prob_pos in candidate_scores:
         norm_score = (prob_pos - min_prob) / (max_prob - min_prob)
-        print(norm_score)
         if norm_score > pos_importance_thres:
             pq.push(pos, -norm_score)
     while not pq.isEmpty() and len(positions) < num_nodes:
