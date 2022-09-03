@@ -58,7 +58,7 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
     OBJECT_LOCATIONS = CONFIG["object_locations"]
 
 
-class TestSimpleEnvHierSearch:
+class TestSimpleEnvTopo2DSearch:
 
     def get_and_visualize_belief(self):
         # First, clear existing belief messages
@@ -234,7 +234,7 @@ class TestSimpleEnvHierSearch:
             time.sleep(1)
 
 def main():
-    TestSimpleEnvHierSearch(prior="uniform")
+    TestSimpleEnvTopo2DSearch(prior="uniform")
 
 if __name__ == "__main__":
     main()

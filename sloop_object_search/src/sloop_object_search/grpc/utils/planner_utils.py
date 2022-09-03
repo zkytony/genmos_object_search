@@ -12,5 +12,8 @@ def create_planner(planner_config, agent):
         planner = import_class(planner_class)(**planner_config["planner_params"],
                                               rollout_policy=agent.policy_model)
         return planner
+    elif planner_class.endswith("HierarchicalPlanner"):
+        planner = import_class(planner_class)(agent, **planner_config["planner_params"])
+        return planner
     else:
         raise NotImplementedError(f"Planner {planner_class} is unrecognized.")

@@ -237,7 +237,7 @@ CONFIG_HIER = {
     },
 
     "planner_config": {
-        "planner": "pomdp_py.POUCT",
+        "planner": "sloop_object_search.HierarchicalPlanner",
         "planner_params": {
             "exploration_const": 1000,
             "max_depth": 8,
@@ -248,7 +248,7 @@ CONFIG_HIER = {
 }
 
 #### SET WHICH CONFIG TO USE ###
-CONFIG = CONFIG_TOPO2D
+CONFIG = CONFIG_HIER
 
 
 

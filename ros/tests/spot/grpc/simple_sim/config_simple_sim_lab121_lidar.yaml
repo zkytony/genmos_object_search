@@ -23,6 +23,8 @@ agent_config:
   robot:
     action:
       topo: {}
+    action_local:
+      topo: {}
     color:
     - 0.9
     - 0.1
@@ -36,6 +38,14 @@ agent_config:
           - 100000.0
           - 0.05
           sensor: fan
+    detectors_local:
+      book:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 100000.0
+          - 0.1
+          sensor: camera
     id: robot0
     no_look: true
     sensors:
@@ -44,6 +54,13 @@ agent_config:
         fov: 61
         max_range: 1.75
         min_range: 0.2
+    sensors_local:
+    - name: camera
+      params:
+        far: 1.75
+        fov: 61
+        near: 0.2
+        occlusion_enabled: true
   targets:
   - book
 object_locations:
@@ -56,7 +73,7 @@ object_locations:
   - 0.1
   - 0.5
 planner_config:
-  planner: pomdp_py.POUCT
+  planner: sloop_object_search.HierarchicalPlanner
   planner_params:
     exploration_const: 1000
     max_depth: 8
