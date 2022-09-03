@@ -99,12 +99,19 @@ class MosAgentTopo2D(MosAgentBasic2D):
     def _update_robot_belief(self, observation, action=None, **kwargs):
         """from the perspective of the topo2d agent, it just needs to care about updating
         its own belief, which is 2D"""
-        # obtain topo node
-        current_srobot_mpe = self.belief.mpe().s(self.robot_id)
+        # obtain topo node; we only update topo node when action finishes.
+        if action is not None:
+            # this means action execution has finished
+            topo_nid = self.topo_map.closest_node(observation.loc)
+            topo_map_hashcode = self.topo_map.hashcode
+        else:
+            current_srobot_mpe = self.belief.mpe().s(self.robot_id)
+            topo_nid = current_srobot_mpe.topo_nid
+            topo_map_hashcode = current_srobot_mpe.topo_map_hashcode
         super()._update_robot_belief(observation, action=action,
                                      robot_state_class=RobotStateTopo,
-                                     topo_nid=current_srobot_mpe.topo_nid,
-                                     topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
+                                     topo_nid=topo_nid,
+                                     topo_map_hashcode=topo_map_hashcode)
 
     def update_belief(self, observation, action=None, debug=False, **kwargs):
         _aux = super().update_belief(observation, action=action, debug=debug, **kwargs)
