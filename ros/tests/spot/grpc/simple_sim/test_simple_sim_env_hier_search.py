@@ -35,8 +35,8 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
-from test_simple_sim_env_local_search import (wait_for_robot_pose,
-                                              observation_msg_to_proto)
+from test_simple_sim_env_local_search_3d import (wait_for_robot_pose,
+                                                 observation_msg_to_proto)
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"

@@ -221,6 +221,15 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
     def mpe(self):
         return max(self._values, key=self._values.get)
 
+    def prob_in_rect(self, center, w, l):
+        cx, cy = map(lambda v: int(round(v)), center)
+        total_prob = 0.0
+        for x in range(cx - w//2, cx + w//2):
+            for y in range(cy - l//2, cy + l//2):
+                if (x,y) in self._search_region:
+                    total_prob += self.prob_at(x,y)
+        return total_prob
+
 
 class ObjectBelief2D(pomdp_py.GenerativeDistribution):
     """A wrapper around LocDist2D that takes in and outputs ObjectState"""

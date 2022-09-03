@@ -5,8 +5,6 @@ import random
 import time
 from collections import deque
 from tqdm import tqdm
-from sloop_object_search.utils.math import euclidean_dist, normalize
-from sloop_object_search.utils import visual2d
 from ..domain.state import RobotStateTopo
 from ..domain.observation import RobotObservation, RobotObservationTopo
 from ..models.policy_model import PolicyModelTopo
@@ -16,9 +14,13 @@ from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from ..models import belief
 from .common import (MosAgent, SloopMosAgent, init_object_transition_models,
                      interpret_localization_model, init_visualizer2d)
+from .basic2d import MosAgentBasic2D
+from sloop_object_search.utils import math as math_utils
+from sloop_object_search.utils import visual2d
+from sloop_object_search.utils.algo import PriorityQueue
 
 
-class MosAgentTopo2D(MosAgent):
+class MosAgentTopo2D(MosAgentBasic2D):
     """This agent will have a topological graph-based action space."""
 
     def init_belief(self, init_robot_pose_dist, init_object_beliefs=None):
@@ -73,20 +75,13 @@ class MosAgentTopo2D(MosAgent):
         the current 'robot_pose', sample a topological graph
         based on this distribution.
         """
-        combined_dist = belief.accumulate_object_beliefs(
-            self.search_region, object_beliefs)
-        position_candidates = self.search_region.grid_map.free_locations
-        if len(position_candidates) == 0:
-            raise ValueError("No position candidates for topo map sampling.")
         topo_map_args = self.agent_config.get("topo_map_args", {})
         print("Sampling topological graph...")
-        topo_map = _sample_topo_map(combined_dist,
-                                    position_candidates,
-                                    topo_map_args.get("num_place_samples", 10),
-                                    degree=topo_map_args.get("degree", (3,5)),
-                                    sep=topo_map_args.get("sep", 4.0),
-                                    rnd=random.Random(topo_map_args.get("seed", 1001)),
-                                    robot_pos=robot_pose[:2])
+        topo_map = _sample_topo_map(object_beliefs,
+                                    robot_pose,
+                                    self.search_region,
+                                    self.reachable,
+                                    self.topo_config)
         if debug:
             viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
                                     grid_map=self.search_region.grid_map,
@@ -99,41 +94,44 @@ class MosAgentTopo2D(MosAgent):
             viz.on_cleanup()
         return topo_map
 
+    @property
+    def topo_config(self):
+        return self.agent_config["robot"]["action"].get("topo", {})
+
     def _update_robot_belief(self, observation, action=None, **kwargs):
         """from the perspective of the topo2d agent, it just needs to care about updating
         its own belief, which is 2D"""
         # obtain topo node
         current_srobot_mpe = self.belief.mpe().s(self.robot_id)
-        super()._update_robot_belief(observation_2d, action=action,
+        super()._update_robot_belief(observation, action=action,
                                      robot_state_class=RobotStateTopo,
                                      topo_nid=current_srobot_mpe.topo_nid,
                                      topo_map_hashcode=current_srobot_mpe.topo_map_hashcode)
 
-    def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
-        """the object detections and robot obseravtion in 'observation' should be 2D; we
-        need to update the 2D belief given this 3D observation.
+    def update_belief(self, observation, action=None, debug=False, **kwargs):
+        _aux = super().update_belief(observation, action=action, debug=debug, **kwargs)
+        if isinstance(observation, RobotObservation):
+            # The observation doesn't lead to object belief change. We are done.
+            return _aux
 
-        There are two kinds of situations for belief update for the 2D topo agent.
-        (1) Local search is happening. Then, the belief of this agent will be updated
-            according to the local agent's belief.
-        (2) Local search is not happening. Then, the belief of this agent will be
-            updated based on the observation. Note that we assume the robot does not
-            tilt its camera actively during 2D search - that means, the 2D sensor model
-            appropriately approximates the FOV during 2D search.
-        """
-        searching_locally = kwargs.pop("searching_locally", False)
-        if not searching_locally:
-            # convert all 3D observations to 2D.
-            # First, do the robot observation conversion
-            zrobot_3d = observation.z(self.robot_id)
-            zrobot_2d = RobotObservation(zrobot_3d.robot_id,
-                                         zrobot_3d.pose_est.to_2d(),
-                                         zrobot_3d.objects_found,
-                                         zrobot_3d.camera_direction)
-            for objid in observation:
-                zobj = observation.z(objid)
+        robot_observation = observation.z(self.robot_id)
 
-        import pdb; pdb.set_trace()
+        # Check if we need to resample topo map - check with objects not yet found
+        object_beliefs = {objid: self.belief.b(objid)
+                          for objid in self.belief.object_beliefs
+                          if objid != self.robot_id\
+                          and objid not in robot_observation.objects_found}
+        if len(object_beliefs) > 0:
+            # there exist unfound objects
+            if self.should_resample_topo_map(object_beliefs):
+                robot_pose = robot_observation.pose
+                topo_map = self.generate_topo_map(
+                    object_beliefs, robot_pose, debug=debug)
+                self._update_topo_map(topo_map, robot_observation, action=action)
+        return _aux
+
+    def should_resample_topo_map(self, object_beliefs):
+        raise NotImplementedError()
 
 
 
@@ -153,13 +151,27 @@ class SloopMosAgentTopo2D(SloopMosAgent):
                 mos_agent.reward_model)
 
 
-def _sample_topo_map(target_hist,
-                     reachable_positions,
-                     num_samples,
-                     degree=(3,5),
-                     sep=4.0,
-                     rnd=random,
-                     robot_pos=None):
+def _compute_combined_prob_around(pos, object_beliefs, zone_res=8):
+    """Given a position 'pos', and object beliefs, and a resolution level for the
+    zone which the belief around the position is considered, return a normalized
+    probability that combines the beliefs over all objects within that zone.
+    """
+    comb_prob = 0
+    for objid in object_beliefs:
+        if not isinstance(object_beliefs[objid], belief.ObjectBelief2D):
+            raise ValueError("topo graph3d requires object beliefs to be OctreeBelief")
+        b_obj = object_beliefs[objid]
+        comb_prob += b_obj.loc_dist.prob_in_rect(pos, zone_res, zone_res)
+    # because 'prob_at' returns normalized prob for each object, the normalizer
+    # of the combinations is just the number of objects.
+    return comb_prob / len(object_beliefs)
+
+
+def _sample_topo_map(init_object_beliefs,
+                     init_robot_pose,
+                     search_region,
+                     reachable_func,
+                     topo_config={}):
     """Note: originally from COSPOMDP codebase; But
     modified - instead of creating a mapping from reachable position
     to a set of closest search region locations, simply sample from
@@ -183,6 +195,14 @@ def _sample_topo_map(target_hist,
     Returns:
         TopologicalMap.
     """
+    num_nodes = topo_config.get("num_nodes", 10)
+    num_samples = topo_config.get("num_samples", 1000)
+    degree = topo_config.get("degree", (3,5))
+    sep = topo_config.get("sep", 4.0)
+    rnd = random.Random(topo_config.get("seed", 1000))
+    zone_res = topo_config.get("zone_res", 8)
+    pos_importance_thres = topo_config.get("pos_importance_thres", 0.3)
+
     if type(degree) == int:
         degree_range = (degree, degree)
     else:
@@ -191,29 +211,55 @@ def _sample_topo_map(target_hist,
             raise ValueError("Invalid argument for degree {}."
                              "Accepts int or (int, int)".format(degree))
 
-    hist = pomdp_py.Histogram(normalize(target_hist))
+    if isinstance(init_object_beliefs, pomdp_py.OOBelief):
+        init_object_beliefs = init_object_beliefs.object_beliefs
 
-    places = set()
-    if robot_pos is not None:
-        places.add(robot_pos)
-    for i in tqdm(range(num_samples)):
-        search_region_loc = hist.random(rnd=rnd)
-        closest_reachable_pos = min(reachable_positions,
-                                    key=lambda robot_pos: euclidean_dist(
-                                        search_region_loc, robot_pos))
-        pos = closest_reachable_pos
-        if len(places) > 0:
-            closest_pos = min(places,
-                              key=lambda c: euclidean_dist(pos, c))
-            if euclidean_dist(closest_pos, pos) >= sep:
-                places.add(pos)
-        else:
-            places.add(pos)
+    # The overall idea: sample robot positions from within the search region,
+    # and rank them based on object beliefs, and only keep <= X number of nodes
+    # that have normalized scores above some threshold
+    grid_map = search_region.grid_map  # should be GridMap2
+    candidate_positions = set([init_robot_pose[:2]])
+    candidate_scores = []
+    min_prob = float("inf")
+    max_prob = float("-inf")
+    for i in range(num_samples):
+        shifted_x = random.uniform(0, grid_map.width)
+        shifted_y = random.uniform(0, grid_map.length)
+        x, y = grid_map.shift_back_pos(shifted_x, shifted_y)
+        pos = (int(round(x)), int(round(y)))
+        added = False
+        if reachable_func(pos):
+            if len(candidate_positions) == 0:
+                candidate_positions.add(pos)
+                added = True
+            else:
+                closest = min(candidate_positions,
+                              key=lambda c: math_utils.euclidean_dist(pos, c))
+                if math_utils.euclidean_dist(closest, pos) >= sep:
+                    candidate_positions.add(pos)
+                    added = True
+
+        if added:
+            prob_pos =\
+                _compute_combined_prob_around(pos, init_object_beliefs, zone_res=zone_res)
+            candidate_scores.append((pos, prob_pos))
+            min_prob = min(min_prob, prob_pos)
+            max_prob = max(max_prob, prob_pos)
+
+    pq = PriorityQueue()
+    positions = [init_robot_pose[:2]]
+    for pos, prob_pos in candidate_scores:
+        norm_score = (prob_pos - min_prob) / (max_prob - min_prob)
+        print(norm_score)
+        if norm_score > pos_importance_thres:
+            pq.push(pos, -norm_score)
+    while not pq.isEmpty() and len(positions) < num_nodes:
+        positions.append(pq.pop())
 
     # Create nodes
     pos_to_nid = {}
     nodes = {}
-    for i, pos in enumerate(places):
+    for i, pos in enumerate(positions):
         topo_node = TopoNode(i, pos)
         nodes[i] = topo_node
         pos_to_nid[pos] = i
@@ -226,11 +272,11 @@ def _sample_topo_map(target_hist,
             _conns[nid] = set()
         neighbors = _conns[nid]
         neighbor_positions = {nodes[nbnid].pos for nbnid in neighbors}
-        candidates = set(places) - {nodes[nid].pos} - neighbor_positions
+        candidates = set(positions) - {nodes[nid].pos} - neighbor_positions
         degree_needed = degree_range[0] - len(neighbors)
         if degree_needed <= 0:
             continue
-        new_neighbors = list(sorted(candidates, key=lambda pos: euclidean_dist(pos, nodes[nid].pos)))[:degree_needed]
+        new_neighbors = list(sorted(candidates, key=lambda pos: math_utils.euclidean_dist(pos, nodes[nid].pos)))[:degree_needed]
         for nbpos in new_neighbors:
             nbnid = pos_to_nid[nbpos]
             if nbnid not in _conns or len(_conns[nbnid]) < degree_range[1]:
@@ -239,7 +285,8 @@ def _sample_topo_map(target_hist,
                     _conns[nbnid] = set()
                 _conns[nbnid].add(nid)
 
-                path = _shortest_path(reachable_positions,
+                #TODO: treating free locations as reachable
+                path = _shortest_path(search_region.grid_map.free_locations,
                                       nodes[nbnid].pos,
                                       nodes[nid].pos)
                 if path is None:
@@ -259,7 +306,6 @@ def _sample_topo_map(target_hist,
         assert len(topo_map.edges_from(nid)) <= degree_range[1]
 
     return topo_map
-
 
 def _shortest_path(reachable_positions, gloc1, gloc2):
     """

@@ -146,9 +146,9 @@ CONFIG_HIER = {
                          'params': {'fov': 61,
                                     'min_range': 0.2,
                                     'max_range': 1.75}}],
-            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FanModelSimpleFPLabelOnly',
+            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
                                    'params': {"sensor": "fan",
-                                              "quality": [0.9, 0.05]}}},
+                                              "quality": [1e5, 0.05]}}},
             "action": {"topo": {}},
             'color': [0.9, 0.1, 0.1, 0.9],
             #### Below are specific to hierarchical type agents ####
@@ -199,7 +199,7 @@ CONFIG_HIER = {
 
 
 #### SET WHICH CONFIG TO USE ###
-CONFIG = CONFIG_LOCAL2D
+CONFIG = CONFIG_HIER
 
 import yaml
 def main():
