@@ -10,7 +10,7 @@
 # 2. run in a terminal 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/init_robot_pose'
 # 3. run in a terminal 'roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
 # 4. run in a terminal 'python -m sloop_object_search.grpc.server'
-# 5. run in a terminal 'python test_simple_sim_env_hier_search.py'
+# 5. run in a terminal 'python test_simple_sim_env_topo2d_search.py'
 # 6. run in a terminal 'roslaunch sloop_object_search_ros view_simple_sim.launch'
 # ------------------
 import numpy as np

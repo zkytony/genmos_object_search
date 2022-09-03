@@ -1,4 +1,3 @@
-
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
 CONFIG_LOCAL = {
     "object_locations": {
@@ -118,6 +117,57 @@ CONFIG_LOCAL2D = {
 
 
 
+######### THE FOLLOWING IS USED FOR TOPO2D SEARCH TEST #########
+CONFIG_TOPO2D = {
+    "object_locations": {
+        "book": [0.0, 2.0, 0.1],
+        "cup": [1.2, 0.1, 0.5]
+    },
+
+    "agent_config": {
+        "agent_class": "MosAgentTopo2D",
+        "agent_type": "hierarchical",  # 'hierarchical' or 'local'
+        "belief": {},
+        "robot": {
+            "id": "robot0",
+            "no_look": True,
+            "sensors": [{"name": 'fan',
+                         'params': {'fov': 61,
+                                    'min_range': 0.2,
+                                    'max_range': 1.75}}],
+            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+                                   'params': {"sensor": "fan",
+                                              "quality": [1e5, 0.05]}}},
+            "action": {"topo": {}},
+            'color': [0.9, 0.1, 0.1, 0.9],
+        },
+        'objects': {'book': {'class': 'book',
+                             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                             'color': [0.4, 0.7, 0.3, 0.8],
+                             'viz_type': 'cube',
+                             'sizes': [0.14, 0.08, 0.10]}},
+        'targets': ['book'],
+        'misc': {
+            'visual': {'res': 25},
+        }
+    },
+
+    "task_config": {
+        "max_steps": 100
+    },
+
+    "planner_config": {
+        "planner": "pomdp_py.POUCT",
+        "planner_params": {
+            "exploration_const": 1000,
+            "max_depth": 8,
+            "num_sims": 400,
+            "show_progress": True
+        }
+    }
+}
+
+
 ######### THE FOLLOWING IS USED FOR HIERARCHICAL SEARCH TEST #########
 CONFIG_HIER = {
     "object_locations": {
@@ -197,9 +247,10 @@ CONFIG_HIER = {
     }
 }
 
-
 #### SET WHICH CONFIG TO USE ###
-CONFIG = CONFIG_HIER
+CONFIG = CONFIG_TOPO2D
+
+
 
 import yaml
 def main():
