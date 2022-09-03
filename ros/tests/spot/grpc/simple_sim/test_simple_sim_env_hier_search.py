@@ -234,35 +234,8 @@ class TestSimpleEnvHierSearch:
             time.sleep(1)
         rospy.spin()
 
-
-        #     print(f"Step {step} robot belief:")
-        #     robot_belief_pb = response_robot_belief.robot_belief
-        #     objects_found = set(robot_belief_pb.objects_found.object_ids)
-        #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-        #     print(f"  objects found: {objects_found}")
-        #     print("-----------")
-
-        #     # Clear markers
-        #     header = std_msgs.Header(stamp=rospy.Time.now(),
-        #                              frame_id=self.world_frame)
-        #     clear_msg = ros_utils.clear_markers(header, ns="")
-        #     self._octbelief_markers_pub.publish(clear_msg)
-        #     self._fovs_markers_pub.publish(clear_msg)
-
-        #     # visualize FOV and belief
-        #     self.visualize_fovs(response_observation)
-        #     self.get_and_visualize_belief(o3dviz=o3dviz)
-
-        #     # Check if we are done
-        #     if objects_found == set(AGENT_CONFIG["targets"]):
-        #         rospy.loginfo("Done!")
-        #         break
-        #     time.sleep(1)
-
-
-
 def main():
-    TestSimpleEnvHierSearch(prior="uniform")
+    TestSimpleEnvHierSearch(prior="groundtruth")
 
 if __name__ == "__main__":
     main()

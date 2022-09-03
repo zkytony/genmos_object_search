@@ -147,19 +147,21 @@ class MosAgentTopo2D(MosAgentBasic2D):
 
     def should_resample_topo_map(self, object_beliefs):
         zone_res = self.topo_config.get("sampling", {}).get("zone_res", 8)
-        resample_prob_thres = self.topo_config.get("sampling", {}).get("zone_res", 0.4)
+        resample_prob_thres = self.topo_config.get("sampling", {}).get("zone_res", 0.3)
         total_prob = 0
         zones_covered = set()  # set of zones whose area's probability has been considered
         for nid in self.topo_map.nodes:
             pos = self.topo_map.nodes[nid].pos
-            zone_pos = (pos[0] // zone_res, pos[1] // zone_res)
+            zone_pos = (pos[0] // zone_res,
+                        pos[1] // zone_res)
             if zone_pos in zones_covered:
                 continue
             prob = _compute_combined_prob_around(pos, object_beliefs, zone_res)
             total_prob += prob
             zones_covered.add(zone_pos)
         # total_prob should be a normalized probability
-        assert 0 <= total_prob <= 1
+        if not 0 <= total_prob <= 1:
+            print(f"invalid total prob:  {total_prob}")
         print("total prob covered by existing topo map nodes:", total_prob)
         return total_prob < resample_prob_thres
 
