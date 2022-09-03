@@ -244,7 +244,7 @@ class FanSensor3D(FanSensor):
         return fan2d.uniform_sample_sensor_region((x,y,yaw))
 
     def in_range_facing(self, point, sensor_pose,
-                        angular_tolerance=15,
+                        angular_tolerance=30,
                         v_angular_tolerance=20):
         x, y, height, pitch, yaw = sensor_pose
 
