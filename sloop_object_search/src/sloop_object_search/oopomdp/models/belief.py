@@ -193,7 +193,7 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
         if normalized:
             prob = value
             val_pos = self.prob_at(*pos) * self._normalizer
-            dv = (prob*self._normalizer - val_pos) (1.0 - prob)
+            dv = (prob*self._normalizer - val_pos) / (1.0 - prob)
             value = val_pos + dv
         old_val = self._values[pos]
         self._values[pos] = value
@@ -252,9 +252,9 @@ class ObjectBelief2D(pomdp_py.GenerativeDistribution):
         self._loc_dist[(x,y)] = value
 
     def assign(self, object_state, value, normalized=False):
-        x,y,z = object_state.loc
-        self._octree_dist.assign((x,y), value,
-                                 normalized=normalized)
+        x,y = object_state.loc
+        self._loc_dist.assign((x,y), value,
+                              normalized=normalized)
 
     def random(self):
         pos = self._loc_dist.random()

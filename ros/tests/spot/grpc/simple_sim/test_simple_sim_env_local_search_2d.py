@@ -106,7 +106,7 @@ class TestSimpleEnvLocalSearch2D:
         if prior == "groundtruth":
             AGENT_CONFIG["belief"]["prior"] = {}
             for objid in AGENT_CONFIG["targets"]:
-                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid][:2], 0.99]]
 
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
@@ -216,7 +216,7 @@ class TestSimpleEnvLocalSearch2D:
         rospy.spin()
 
 def main():
-    TestSimpleEnvLocalSearch2D(prior="uniform")
+    TestSimpleEnvLocalSearch2D(prior="groundtruth")
 
 if __name__ == "__main__":
     main()

@@ -119,6 +119,26 @@ class SimpleSimEnv(pomdp_py.Environment):
     def object_spec(self, objid):
         return self.agent_config["objects"][objid]
 
+    def get_2d_state(self):
+        robot_pose = self.state.s(self.robot_id).pose
+        x, y, _ = robot_pose[:3]
+        _, _, yaw = math_utils.quat_to_euler(*robot_pose[3:])
+        srobot2d = RobotState(self.robot_id,
+                              (x, y, yaw),
+                              self.state.s(self.robot_id).objects_found,
+                              self.state.s(self.robot_id).camera_direction)
+        sobjs = {self.robot_id: srobot2d}
+        for objid in self.state.object_states:
+            if objid == self.robot_id:
+                continue
+            sobj = self.state.s(objid)
+            x, y = sobj.loc[:2]
+            sobj2d = ObjectState(objid,
+                                 sobj.objclass,
+                                 (x,y))
+            sobjs[objid] = sobj2d
+        return pomdp_py.OOState(sobjs)
+
 
 class SimpleSimEnvROSNode:
     """
@@ -271,7 +291,30 @@ class SimpleSimEnvROSNode:
     def find(self):
         """calls the find action"""
         action = FindAction()
-        self.env.state_transition(action, execute=True)
+        if self.env.agent_config["agent_class"].endswith("2D"):
+            # temporarily use the 2d sensor to sample next state (for objects foudn)
+            # but the state transition in env is still 3D
+            state2d = self.env.get_2d_state()
+            srobot2d = state2d.s(self.env.robot_id)
+            srobot_next2d = self.env.transition_model.sample(state2d, action).s(self.env.robot_id)
+            objects_found = srobot_next2d.objects_found
+
+            # rebuild 3d state
+            srobot_next = RobotState(self.env.robot_id,
+                                     self.env.state.s(self.env.robot_id).pose,
+                                     objects_found,
+                                     srobot_next2d.camera_direction)
+
+            object_states = {objid: self.env.state.s(objid)
+                             for objid in self.env.state.object_states
+                             if objid != self.env.robot_id}
+            object_states[self.env.robot_id] = srobot_next
+            next_state = pomdp_py.OOState(object_states)
+        else:
+            state = self.env.state
+            next_state = self.env.transition_model.sample(state, action)
+        self.env.apply_transition(next_state)
+
 
 
     def navigate_to(self, goal_pose):

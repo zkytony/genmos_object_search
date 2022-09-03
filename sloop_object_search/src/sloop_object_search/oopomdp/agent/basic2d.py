@@ -75,7 +75,7 @@ class MosAgentBasic2D(MosAgent):
 
 def build_area_observation(detection, fansensor, robot_pose,
                            num_samples=1000, label_only=False,
-                           debug=True, discrete=True):
+                           debug=False, discrete=True):
     """Returns a set of ((x,y), label) tuples where (x,y) is
     a location in the FOV. label=detection.id if (x,y) is
     the detection's location, or if 'label_only' is True.
