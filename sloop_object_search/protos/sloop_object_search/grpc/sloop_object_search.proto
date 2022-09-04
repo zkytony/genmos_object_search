@@ -34,9 +34,6 @@ service SloopObjectSearch {
 
   // Calls the planner to return an action for execution
   rpc PlanAction(PlanActionRequest) returns (PlanActionReply) {}
-
-  // This is bidirectional stream to enable server talking to the client
-  rpc Communicate(stream BidiNote) returns (stream BidiNote) {}
 }
 
 

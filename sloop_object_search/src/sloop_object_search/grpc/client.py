@@ -20,6 +20,7 @@ from .utils import proto_utils
 
 
 DEFAULT_RPC_TIMEOUT = 60
+DEFAULT_RPC_ASYNC_TIMEOUT = 100000
 
 
 class SloopObjectSearchClient:
@@ -40,8 +41,13 @@ class SloopObjectSearchClient:
     def call(self, rpc_method, request, timeout=DEFAULT_RPC_TIMEOUT):
         return rpc_method(request, timeout=timeout)
 
-    def call_async(self, rpc_method, request, timeout=DEFAULT_RPC_TIMEOUT):
-        raise NotImplementedError()
+    def call_async(self, rpc_method, request, callback=None, timeout=DEFAULT_RPC_ASYNC_TIMEOUT):
+        def done_callback(result):
+            if result.code() == grpc.StatusCode.OK:
+                callback(result)
+        future = rpc_method.future(request, timeout=timeout)
+        future.add_done_callback(done_callback)
+        return future
 
     def createAgent(self, config=None, config_file_path=None, **kwargs):
         """

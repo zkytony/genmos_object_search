@@ -8,6 +8,7 @@ import argparse
 import yaml
 import random
 import pomdp_py
+from collections import deque
 
 from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slbp2_grpc
@@ -44,8 +45,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         self._actions_finished = {}
         # an sequence ID used for identifying an action
         self._action_seq = 0
-
-        self._world_origin = None
 
     def _loginfo(self, text):
         logging.info(text)
