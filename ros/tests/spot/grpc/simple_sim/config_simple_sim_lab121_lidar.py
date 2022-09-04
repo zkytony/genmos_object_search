@@ -239,10 +239,12 @@ CONFIG_HIER = {
     "planner_config": {
         "planner": "sloop_object_search.HierarchicalPlanner",
         "planner_params": {
-            "exploration_const": 1000,
-            "max_depth": 8,
-            "num_sims": 400,
-            "show_progress": True
+            "global": {
+                "exploration_const": 1000,
+                "max_depth": 8,
+                "num_sims": 400,
+                "show_progress": True
+            }
         }
     }
 }

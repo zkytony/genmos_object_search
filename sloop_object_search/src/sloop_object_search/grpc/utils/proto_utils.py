@@ -404,6 +404,7 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
         agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
 
     if not agent.search_region.is_3d:
+        #TODO
         robot_pose_estimate_pomdp = robot_pose_estimate_pomdp.to_2d()
 
     # objects found
