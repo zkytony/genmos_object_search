@@ -7,7 +7,7 @@ import copy
 
 from sloop_object_search.oopomdp.agent import\
     (SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentTopo2D,
-     MosAgentBasic3D, MosAgentTopo3D)
+     MosAgentBasic3D, MosAgentTopo3D, HierMosAgent)
 import sloop_object_search.oopomdp.domain.observation as slpo
 import sloop_object_search.oopomdp.domain.action as slpa
 from sloop_object_search.oopomdp.models import belief
@@ -18,7 +18,8 @@ VALID_AGENTS = {"SloopMosAgentBasic2D",
                 "SloopMosAgentTopo2D",
                 "MosAgentTopo2D",
                 "MosAgentBasic3D",
-                "MosAgentTopo3D"}
+                "MosAgentTopo3D",
+                "HierMosAgent"}
 
 
 def create_agent(robot_id, agent_config_world, robot_localization_world, search_region):

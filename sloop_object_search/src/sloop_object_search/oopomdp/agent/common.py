@@ -203,7 +203,15 @@ class MosAgent(pomdp_py.Agent):
         is reachable by this agent."""
         raise NotImplementedError()
 
+    @property
+    def is_3d(self):
+        """Returns True if the agent is 3D; Note that a 3D agent should receive 3D
+        object detections and 3D robot pose estimations, while a 2D agent should receive
+        2D object detections and 2D robot pose estimations."""
+        raise NotImplementedError()
+
     def update_belief(self, observation, action=None, debug=False, **kwargs):
+
         """
         update belief given observation.  We can accept two kinds of observations:
         either JointObservation, which should contain object detections and a

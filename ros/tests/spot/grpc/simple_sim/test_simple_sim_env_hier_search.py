@@ -161,6 +161,38 @@ class TestSimpleEnvHierSearch:
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
 
+
+
+        response_plan = self._sloop_client.planAction(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        action = proto_utils.interpret_planned_action(response_plan)
+        action_id = response_plan.action_id
+        rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+
+        if action.name.startswith("stay"):
+            # Action is stay --> may need to create local search agent.
+            # Will send over an UpdateSearchRegion request to help that.
+            # need to get a region point cloud and a pose use that as search region
+            region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
+                [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
+                [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
+                delay=10, verbose=True).messages
+            cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+            robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+            robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+            self._sloop_client.updateSearchRegion(header=cloud_pb.header,
+                                                  robot_id=self.robot_id,
+                                                  is_3d=True,
+                                                  robot_pose=robot_pose_pb,
+                                                  point_cloud=cloud_pb,
+                                                  search_region_params_3d={"octree_size": 32,
+                                                                           "search_space_resolution": SEARCH_SPACE_RESOLUTION,
+                                                                           "debug": False,
+                                                                           "region_size_x": 4.0,
+                                                                           "region_size_y": 4.0,
+                                                                           "region_size_z": 2.5})
+
+
         # # Send planning requests
         # for step in range(TASK_CONFIG["max_steps"]):
         #     response_plan = self._sloop_client.planAction(

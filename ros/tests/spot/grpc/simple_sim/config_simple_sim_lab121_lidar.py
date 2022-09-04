@@ -176,7 +176,7 @@ CONFIG_HIER = {
     },
 
     "agent_config": {
-        "agent_class": "MosAgentTopo2D",
+        "agent_class": "HierMosAgent",
         "agent_type": "hierarchical",  # 'hierarchical' or 'local'
         "belief": {},
         "robot": {
@@ -237,7 +237,7 @@ CONFIG_HIER = {
     },
 
     "planner_config": {
-        "planner": "sloop_object_search.HierarchicalPlanner",
+        "planner": "sloop_object_search.oopomdp.agent.hier.HierPlanner",
         "planner_params": {
             "global": {
                 "exploration_const": 1000,

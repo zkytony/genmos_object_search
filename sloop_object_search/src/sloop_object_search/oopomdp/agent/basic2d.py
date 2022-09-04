@@ -34,6 +34,10 @@ class MosAgentBasic2D(MosAgent):
     def reachable(self, pos):
         return pos not in self.search_region.grid_map.obstacles
 
+    @property
+    def is_3d(self):
+        return False
+
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
         assert isinstance(observation, JointObservation)
         if not self.robot_id in observation:
