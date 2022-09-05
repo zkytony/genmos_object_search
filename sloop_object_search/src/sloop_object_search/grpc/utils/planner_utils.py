@@ -2,7 +2,7 @@ import pomdp_py
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.oopomdp.agent import HierMosAgent
 from sloop_object_search.oopomdp.domain.action import StayAction
-from ..messages import Message
+from ..constants import Message, Info
 
 def create_planner(planner_config, agent):
     """
@@ -66,7 +66,10 @@ def plan_action(planner, agent, server):
     if isinstance(agent, HierMosAgent)\
        and isinstance(action, StayAction):
         # server tells client, please send over update search region request
-        server.add_message(agent.robot_id,
-                           Message.REQUEST_SEARCH_REGION_UPDATE.format(agent.robot_id))
+        server.add_message(
+            agent.robot_id, Message.REQUEST_SEARCH_REGION_UPDATE.format(agent.robot_id))
+        local_search_region = server.wait_for_client_provided_info(
+            Info.LOCAL_SEARCH_REGION_INFO.format(agent.robot_id))
+        print("HELLO!")
 
-    return action
+    return True, action

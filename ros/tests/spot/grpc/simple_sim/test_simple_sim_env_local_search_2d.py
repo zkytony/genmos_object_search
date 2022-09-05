@@ -37,7 +37,7 @@ from test_simple_sim_env_local_search_3d import (wait_for_robot_pose,
                                                  observation_msg_to_proto)
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
-INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
+ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
 ACTION_TOPIC = "/simple_sim_env/pomdp_action"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
@@ -114,7 +114,7 @@ class TestSimpleEnvLocalSearch2D:
 
         # need to get a region point cloud and a pose use that as search region
         region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-            [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
+            [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=10, verbose=True).messages
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)

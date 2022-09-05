@@ -636,3 +636,8 @@ class WaitForMessages:
         if self.verbose:
             rospy.loginfo("WaitForMessages: got messages!")
         self.messages = messages
+
+
+### Time ###
+def stamp_to_sec(stamp):
+    return stamp.to_sec()

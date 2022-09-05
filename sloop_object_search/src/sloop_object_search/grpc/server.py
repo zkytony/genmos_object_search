@@ -18,6 +18,7 @@ from .utils import proto_utils
 from .utils import agent_utils
 from .utils import planner_utils
 from ..utils.misc import hash16
+from .constants import Message, Info
 
 
 MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
@@ -49,6 +50,13 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         # messages to send to client
         self._messages_for_client = deque()
+
+        # After sending a message to the client, the server may
+        # expect to receive something from the client in return.
+        # The temporary information sent from a client can be
+        # saved here. The server is responsible for managing this.
+        self._tmp_client_provided_info = {}
+
 
     def _loginfo(self, text):
         logging.info(text)
@@ -109,11 +117,16 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the corresponding POMDP agent should be created and
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
-
         if request.robot_id in self._agents:
             # This is an update search region request for an existing agent
             agent = self._agents[request.robot_id]
-            agent_utils.update_agent_search_region(agent, request)
+            search_region, robot_loc_world = \
+                agent_utils.update_agent_search_region(agent, request)
+            # provide info for local search, if needed
+            _info_key = Info.LOCAL_SEARCH_REGION_INFO.format(request.robot_id)
+            if self.waiting_for_client_provided_info(_info_key):
+                self.add_client_provided_info(_info_key, search_region)
+
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
                                                  message=self._loginfo("Search region updated"))
@@ -232,7 +245,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         action_id = self._make_action_id(agent, action)
         self._actions_planned[agent.robot_id] = (action_id, action)
         return slpb2.PlanActionReply(header=header,
-                                     status=status.SUCCESSFUL,
+                                     status=Status.SUCCESSFUL,
                                      action_id=action_id,
                                      **{action_type: action_pb})
 
@@ -240,6 +253,28 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         action_id = "{}:{}_{}".format(agent.robot_id, action.name, self._action_seq)
         self._action_seq += 1
         return action_id
+
+    def wait_for_client_provided_info(self, key, timeout=None, sleep_time=1.0):
+        """waits until the server receives information with key"""
+        _start = time.time()
+        self._loginfo(f"waiting for client to provide info for {key}")
+        self._tmp_client_provided_info[key] = None
+        while True:
+            if self._tmp_client_provided_info[key] is not None:
+                return self._tmp_client_provided_info[key]
+            time.sleep(sleep_time)
+            if timeout is not None:
+                if time.time() - _start > timeout:
+                    raise RuntimeError("Timeout when waiting for search region request")
+
+    def add_client_provided_info(self, key, info):
+        self._tmp_client_provided_info[key] = info
+
+    def waiting_for_client_provided_info(self, key):
+        """returns True if the server is currently waiting for a piece of info called 'key'
+        from the client."""
+        return key in self._tmp_client_provided_info\
+            and self._tmp_client_provided_info[key] is None
 
     def GetObjectBeliefs(self, request, context):
         if request.robot_id not in self._agents:

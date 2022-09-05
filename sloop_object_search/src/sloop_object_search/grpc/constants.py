@@ -15,3 +15,6 @@ class Message:
         match = re.search("\[for [^\[\]]*\]", m)
         if match:
             return match.group(0)[5:-1].strip()
+
+class Info:
+    LOCAL_SEARCH_REGION_INFO = "local search region [for {}]"

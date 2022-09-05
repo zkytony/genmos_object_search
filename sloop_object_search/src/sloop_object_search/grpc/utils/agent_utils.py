@@ -302,9 +302,34 @@ def update_agent_search_region(agent, request):
             request.point_cloud, robot_position,
             existing_search_region=agent.search_region,
             **params)
-    elif agent_config["agent_class"] in {"HierMosagent"}:
-        # Mixed
-        raise NotImplementedError()
+
+    elif type(agent) in {HierMosAgent}:
+        # Situation-dependent
+        if agent.searching_locally:
+            # 3D - a local search region
+            params = proto_utils.process_search_region_params_3d(
+                request.search_region_params_3d)
+            robot_position = robot_pose[:3]
+            existing_search_region = None
+            if agent.local_agent is not None:
+                existing_search_region = agent.local_agent.search_region
+            logging.info("converting point cloud to 3d search region...")
+            search_region = search_region_3d_from_point_cloud(
+                request.point_cloud, robot_position,
+                existing_search_region=existing_search_region,
+                **params)
+        else:
+            # 2D is enough - the agent is not waiting for local search region
+            params = proto_utils.process_search_region_params_2d(
+                request.search_region_params_2d)
+            robot_position = robot_pose[:2]
+            logging.info("converting point cloud to 2d search region...")
+            search_region = search_region_2d_from_point_cloud(
+                request.point_cloud, robot_position,
+                existing_search_region=agent.search_region,
+                **params)
 
     else:
         raise ValueError(f"agent class unsupported: {agent_config['agent_class']}")
+
+    return search_region, robot_loc_world

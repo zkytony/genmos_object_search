@@ -172,6 +172,7 @@ class SimpleSimEnvROSNode:
     Subscribes:
       ~pomdp_action (KeyValAction)
     Publishes:
+      ~robot_pose (PoseStamped)
       ~state_markers (MarkerArray)
       ~pomdp_observation (KeyValObservation)
     """
@@ -186,13 +187,15 @@ class SimpleSimEnvROSNode:
 
         action_topic = "~pomdp_action"
         state_markers_topic = "~state_markers"
+        robot_pose_topic = "~robot_pose"
         observation_topic = "~pomdp_observation"
         self.env = SimpleSimEnv(config)
         self.action_sub = rospy.Subscriber(action_topic, KeyValAction, self._action_cb)
 
-        self.state_markers_pub = rospy.Publisher(
-            state_markers_topic, MarkerArray, queue_size=10)
+        self.state_markers_pub = rospy.Publisher(state_markers_topic, MarkerArray, queue_size=10)
         self.state_pub_rate = state_pub_rate
+
+        self.robot_pose_pub = rospy.Publisher(robot_pose_topic, PoseStamped, queue_size=10)
 
         # observation
         self.observation_pub = rospy.Publisher(observation_topic, KeyValObservation, queue_size=10)
@@ -216,8 +219,9 @@ class SimpleSimEnvROSNode:
         rospy.loginfo("publishing state markers")
         rate = rospy.Rate(self.state_pub_rate)
         while not rospy.is_shutdown():
-            state_markers_msg, tf2_msgs = self._make_state_markers_and_tf2msgs(self.env.state)
+            state_markers_msg, tf2_msgs, robot_pose_msg = self._make_state_messages_for_pub(self.env.state)
             self.state_markers_pub.publish(state_markers_msg)
+            self.robot_pose_pub.publish(robot_pose_msg)
             for t in tf2_msgs:
                 self.br.sendTransform(t)
             rate.sleep()
@@ -277,7 +281,7 @@ class SimpleSimEnvROSNode:
             time.sleep(0.1)
             self._action_done_pub.publish(String(data=f"find action is done."))
 
-    def _make_state_markers_and_tf2msgs(self, state):
+    def _make_state_messages_for_pub(self, state):
         markers = []
         tf2msgs = []
         header = Header(stamp=rospy.Time.now(),
@@ -310,7 +314,10 @@ class SimpleSimEnvROSNode:
         markers.append(robot_marker)
         # get a tf transform from world to robot
         tf2msgs.append(trobot)
-        return MarkerArray(markers), tf2msgs
+        # get robot pose message (in world frame)
+        robot_pose_msg = ros_utils.transform_to_pose_stamped(
+            trobot.transform, self.world_frame, stamp=trobot.header.stamp)
+        return MarkerArray(markers), tf2msgs, robot_pose_msg
 
     def find(self):
         """calls the find action"""
