@@ -6,8 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /MarkerArray2
+        - /state markers1
         - /fov1
+        - /Pose1
       Splitter Ratio: 0.5
     Tree Height: 882
   - Class: rviz/Selection
@@ -85,7 +86,7 @@ Visualization Manager:
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /graphnav_waypoints_markers
-      Name: MarkerArray
+      Name: graphnav_waypoints
       Namespaces:
         {}
       Queue Size: 100
@@ -93,7 +94,7 @@ Visualization Manager:
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /simple_sim_env/state_markers
-      Name: MarkerArray
+      Name: state markers
       Namespaces:
         "": true
         object: true
@@ -150,20 +151,36 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /test_simple_env_hier_search/belief_2d
-      Name: belief2d
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
       Marker Topic: /test_simple_env_local_search/topo_map_3d
       Name: topo_map_3d
       Namespaces:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /test_simple_env_hier_search/belief_2d
+      Name: belief2d
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 46; 46
+      Enabled: false
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 0.5
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /simple_sim_env/robot_pose
+      Unreliable: false
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -192,7 +209,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.735963821411133
+      Distance: 3.4509682655334473
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -200,17 +217,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.4525550603866577
-        Y: 1.08945894241333
-        Z: -0.056716952472925186
+        X: 1.4426369667053223
+        Y: 1.9770532846450806
+        Z: 0.2606082856655121
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7597957849502563
+      Pitch: 0.664795994758606
       Target Frame: <Fixed Frame>
-      Yaw: 5.5553460121154785
+      Yaw: 6.010349273681641
     Saved: ~
 Window Geometry:
   Displays:
