@@ -196,7 +196,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         """The agent can only plan and execute one action at a time.
         Before a previously planned action is marked finished, no
         more planning will happen."""
-        # TODO: REFACTOR
         if request.robot_id not in self._agents:
             # agent not yet created
             return slpb2.PlanActionReply(
@@ -221,12 +220,19 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         agent = self._agents[request.robot_id]
         planner = self._planners[request.robot_id]
-        action = planner_utils.plan_action(planner, agent, self)
+        success, result = planner_utils.plan_action(planner, agent, self)
+        if not success:
+            return slpb2.PlanActionReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=self._logwarn(f"Planning failed. {result}"))
+        action = result
         header = proto_utils.make_header(request.header.frame_id)
         action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
         action_id = self._make_action_id(agent, action)
         self._actions_planned[agent.robot_id] = (action_id, action)
         return slpb2.PlanActionReply(header=header,
+                                     status=status.SUCCESSFUL,
                                      action_id=action_id,
                                      **{action_type: action_pb})
 
