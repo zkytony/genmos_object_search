@@ -34,6 +34,9 @@ service SloopObjectSearch {
 
   // Calls the planner to return an action for execution
   rpc PlanAction(PlanActionRequest) returns (PlanActionReply) {}
+
+  // receives messages from server
+  rpc ListenServer(ListenServerRequest) returns (stream ListenServerReply) {}
 }
 
 
@@ -220,13 +223,18 @@ message PlanActionReply {
   string action_id = 7;
 }
 
-// Note used for bidirectional communication. This
-// communication should be simple - only string is allowed.
-message BidiNote {
+//// For ListenServer rpc ////
+message ListenServerRequest {
   Header header = 1;
-  string message = 2;
+  string robot_id = 2;
+  string message = 3;
 }
 
+message ListenServerReply {
+  Header header = 1;
+  string robot_id = 2;
+  string message = 3;
+}
 
 
 /////////////////////////////////////

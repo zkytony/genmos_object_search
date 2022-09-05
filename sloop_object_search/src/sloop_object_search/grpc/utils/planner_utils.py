@@ -1,5 +1,8 @@
 import pomdp_py
 from sloop_object_search.utils.misc import import_class
+from sloop_object_search.oopomdp.agent import HierMosAgent
+from sloop_object_search.oopomdp.domain.action import StayAction
+
 
 def create_planner(planner_config, agent):
     """
@@ -17,3 +20,22 @@ def create_planner(planner_config, agent):
         return planner
     else:
         raise NotImplementedError(f"Planner {planner_class} is unrecognized.")
+
+
+def plan_action(planner, agent, server):
+    action = planner.plan(agent)
+    if hasattr(agent, "tree") and agent.tree is not None:
+        # print planning tree
+        _dd = pomdp_py.utils.TreeDebugger(agent.tree)
+        _dd.p(0)
+
+    # If the agent is hierarchical, and it planned a Stay
+    # action, then will ask the server to wait for an
+    # update search region request in order to gather
+    # the necessary inputs to create the local agent.
+    if isinstance(agent, HierMosAgent)\
+       and isinstance(action, StayAction):
+        # server tells client, please send over update search region request
+        server.add_message(agent.robot_id, f"Request UpdateSearchRegion for {agent.robot_id}_local")
+
+    return action

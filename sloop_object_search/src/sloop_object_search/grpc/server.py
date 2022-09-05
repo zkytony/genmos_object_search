@@ -8,6 +8,7 @@ import argparse
 import yaml
 import random
 import pomdp_py
+import time
 from collections import deque
 
 from . import sloop_object_search_pb2 as slpb2
@@ -40,11 +41,16 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         # once the robot finishes executing the action, its entry
         # will be removed.
         self._actions_planned = {}
+
         # maps from robot_id to {action_id -> Action}. Accumulated
         # as the robot finishes executing actions.
         self._actions_finished = {}
+
         # an sequence ID used for identifying an action
         self._action_seq = 0
+
+        # messages to send to client
+        self._messages_for_client = deque()
 
     def _loginfo(self, text):
         logging.info(text)
@@ -77,7 +83,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             "search_region": None,
             "init_robot_pose": None
         }
-
         return slpb2.CreateAgentReply(
             status=Status.PENDING,
             message=self._loginfo(f"Agent {request.robot_id} configuration received. Waiting for additional inputs..."))
@@ -108,7 +113,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         corresponding agent's search region."""
         zrobotloc = proto_utils.robot_localization_from_proto(request.robot_pose)
         robot_pose = zrobotloc.pose  # world frame robot pose
-
         if request.HasField('occupancy_grid'):
             raise NotImplementedError()
         elif request.HasField('point_cloud'):
@@ -134,7 +138,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         else:
             raise RuntimeError("Either 'occupancy_grid' or 'point_cloud'"\
                                "must be specified in request.")
-
         # set search region for the agent for creation
         if request.robot_id in self._pending_agents:
             # prepare for creation
@@ -144,21 +147,18 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
                                                  message="Search region updated")
-
         elif request.robot_id in self._agents:
             # TODO: agent should be able to update its search region.
             return slpb2.UpdateSearchRegionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
                 message=self._logwarn("updating existing search region of an agent is not yet implemented"))
-
         else:
             logging.warning(f"Agent {request.robot_id} is not recognized.")
             return slpb2.UpdateSearchRegionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
                 message=self._logwarn(f"Agent {request.robot_id} is not recognized."))
-
 
     def search_region_for(self, robot_id):
         if robot_id in self._pending_agents:
@@ -245,11 +245,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         agent = self._agents[request.robot_id]
         planner = self._planners[request.robot_id]
-        action = planner.plan(agent)
-        if hasattr(agent, "tree") and agent.tree is not None:
-            # print planning tree
-            _dd = pomdp_py.utils.TreeDebugger(agent.tree)
-            _dd.p(0)
+        action = planner_utils.plan_action(planner, agent, self)
         header = proto_utils.make_header(request.header.frame_id)
         action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
         action_id = self._make_action_id(agent, action)
@@ -366,6 +362,34 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         else:
             return self._actions_planned[robot_id][0]
 
+    def ListenServer(self, request, context):
+        """This rpc allows client to receive messages from the server"""
+        logging.info("server-client communication established.")
+        while True:
+            if len(self._messages_for_client) > 0:
+                robot_id, message = self._messages_for_client[0]
+                if robot_id != request.robot_id:
+                    # the message is not intended for this request
+                    continue
+                else:
+                    self._messages_for_client.popleft()
+                header = proto_utils.make_header(request.header.frame_id)
+                response = slpb2.ListenServerReply(header=header,
+                                                   robot_id=robot_id,
+                                                   message=message)
+                logging.info(f"Sending {message} to {robot_id}")
+                yield response
+
+            else:
+                # otherwise, sleep
+                logging.info("Nothing to send to client.")
+                time.sleep(3)
+
+
+
+    def add_message(self, robot_id, message):
+        """adds a message in the queue to be sent to a client"""
+        self._messages_for_client.append((robot_id, message))
 
 
 ###########################################################################

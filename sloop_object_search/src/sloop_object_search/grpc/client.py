@@ -6,10 +6,11 @@
 #     services, the function name is camelCase (first letter
 #     lower-case).
 
-
+import logging
 import grpc
 import yaml
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from . import sloop_object_search_pb2 as slpb2
 from . import sloop_object_search_pb2_grpc as slpb2_grpc
@@ -20,7 +21,6 @@ from .utils import proto_utils
 
 
 DEFAULT_RPC_TIMEOUT = 60
-DEFAULT_RPC_ASYNC_TIMEOUT = 100000
 
 
 class SloopObjectSearchClient:
@@ -34,20 +34,14 @@ class SloopObjectSearchClient:
         # one client has one channel
         self.channel = grpc.insecure_channel(self.server_address, options=options)
         self.stub = slpb2_grpc.SloopObjectSearchStub(self.channel)
+        self.executor = ThreadPoolExecutor()
+        self.futures = []
 
     def __del__(self):
         self.channel.close()
 
     def call(self, rpc_method, request, timeout=DEFAULT_RPC_TIMEOUT):
         return rpc_method(request, timeout=timeout)
-
-    def call_async(self, rpc_method, request, callback=None, timeout=DEFAULT_RPC_ASYNC_TIMEOUT):
-        def done_callback(result):
-            if result.code() == grpc.StatusCode.OK:
-                callback(result)
-        future = rpc_method.future(request, timeout=timeout)
-        future.add_done_callback(done_callback)
-        return future
 
     def createAgent(self, config=None, config_file_path=None, **kwargs):
         """
@@ -160,3 +154,21 @@ class SloopObjectSearchClient:
             robot_pose=robot_pose_pb,
             **kwargs)
         return self.call(self.stub.ProcessObservation, request, timeout=timeout)
+
+    def listenToServer(self, robot_id, callback):
+        """Asynchronously listen to the server. Upon receiving
+        a message from the server, the callback will be called.
+        Non-blocking."""
+        request = slpb2.ListenServerRequest(header=proto_utils.make_header(),
+                                            robot_id=robot_id)
+        response_iterator = self.stub.ListenServer(request)
+        future = self.executor.submit(self._server_message_watcher,
+                                      response_iterator,
+                                      callback)
+        self.futures.append(future)
+        return future
+
+    def _server_message_watcher(self, response_iterator, callback):
+        for response in response_iterator:
+            logging.info(f"Received message from server: {response.message}")
+            callback(response.message)

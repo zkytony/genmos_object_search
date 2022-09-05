@@ -18,6 +18,7 @@ import time
 import rospy
 import pickle
 import json
+import asyncio
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
@@ -99,6 +100,9 @@ class TestSimpleEnvHierSearch:
         self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
         rospy.loginfo("belief visualized")
 
+    def server_message_callback(self, message):
+        print("HEY!", message)
+
 
     def __init__(self, prior="uniform"):
         # This is an example of how to get started with using the
@@ -124,6 +128,9 @@ class TestSimpleEnvHierSearch:
             AGENT_CONFIG["belief"]["prior"] = {}
             for objid in AGENT_CONFIG["targets"]:
                 AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+
+        # Make the client listen to server
+        ls_future = self._sloop_client.listenToServer(self.robot_id, self.server_message_callback)
 
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
@@ -170,27 +177,29 @@ class TestSimpleEnvHierSearch:
         rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
 
         if action.name.startswith("stay"):
-            # Action is stay --> may need to create local search agent.
-            # Will send over an UpdateSearchRegion request to help that.
-            # need to get a region point cloud and a pose use that as search region
-            region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-                [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
-                [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-                delay=10, verbose=True).messages
-            cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-            robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
-            robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-            self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                                  robot_id=self.robot_id,
-                                                  is_3d=True,
-                                                  robot_pose=robot_pose_pb,
-                                                  point_cloud=cloud_pb,
-                                                  search_region_params_3d={"octree_size": 32,
-                                                                           "search_space_resolution": SEARCH_SPACE_RESOLUTION,
-                                                                           "debug": False,
-                                                                           "region_size_x": 4.0,
-                                                                           "region_size_y": 4.0,
-                                                                           "region_size_z": 2.5})
+            print("Stay")
+            rospy.spin()
+            # # Action is stay --> may need to create local search agent.
+            # # Will send over an UpdateSearchRegion request to help that.
+            # # need to get a region point cloud and a pose use that as search region
+            # region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
+            #     [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
+            #     [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
+            #     delay=10, verbose=True).messages
+            # cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+            # robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+            # robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+            # self._sloop_client.updateSearchRegion(header=cloud_pb.header,
+            #                                       robot_id=self.robot_id,
+            #                                       is_3d=True,
+            #                                       robot_pose=robot_pose_pb,
+            #                                       point_cloud=cloud_pb,
+            #                                       search_region_params_3d={"octree_size": 32,
+            #                                                                "search_space_resolution": SEARCH_SPACE_RESOLUTION,
+            #                                                                "debug": False,
+            #                                                                "region_size_x": 4.0,
+            #                                                                "region_size_y": 4.0,
+            #                                                                "region_size_z": 2.5})
 
 
         # # Send planning requests

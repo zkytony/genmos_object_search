@@ -18,8 +18,8 @@ class HierMosAgent(MosAgentTopo2D):
                          init_object_beliefs=init_object_beliefs)
         self._local_agent = None
 
-    def create_local_agent(self, search_region):
-        pass
+    def set_local_agent(self, local_agent):
+        self._local_agent = local_agent
 
     @property
     def local_agent(self):
@@ -69,7 +69,8 @@ class HierPlanner(pomdp_py.Planner):
                 # If the local agent is available, then plan with the local agent
                 return self.plan_local()
             else:
-                # This should trigger the creation of a local agent
+                # This should trigger the creation of a local agent by the user of
+                # this planner.
                 return subgoal
         else:
             return subgoal
