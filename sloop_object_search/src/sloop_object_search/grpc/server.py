@@ -117,7 +117,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
                                                  message=self._loginfo("Search region updated"))
-
         elif request.robot_id in self._pending_agents:
             # This is an update search region request for a new agent
             agent_config = self._pending_agents[request.robot_id]["agent_config"]
@@ -129,63 +128,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
                                                  message=self._loginfo("Search region created"))
-
         else:
             # We do not handle this robot_id
-            return slpb2.UpdateSearchRegionReply(
-                header=proto_utils.make_header(),
-                status=Status.FAILED,
-                message=self._logwarn(f"Agent {request.robot_id} is not recognized."))
-
-        zrobotloc = proto_utils.robot_localization_from_proto(request.robot_pose)
-        robot_pose = zrobotloc.pose  # world frame robot pose
-
-
-
-
-
-        if request.HasField('occupancy_grid'):
-            raise NotImplementedError()
-        elif request.HasField('point_cloud'):
-            params = {}
-            if not request.is_3d:  # 2D
-                params = proto_utils.process_search_region_params_2d(
-                    request.search_region_params_2d)
-                robot_position = robot_pose[:2]
-                logging.info("converting point cloud to 2d search region...")
-                search_region = search_region_2d_from_point_cloud(
-                    request.point_cloud, robot_position,
-                    existing_search_region=self.search_region_for(request.robot_id),
-                    **params)
-            else: # 3D
-                params = proto_utils.process_search_region_params_3d(
-                    request.search_region_params_3d)
-                robot_position = robot_pose[:3]
-                logging.info("converting point cloud to 3d search region...")
-                search_region = search_region_3d_from_point_cloud(
-                    request.point_cloud, robot_position,
-                    existing_search_region=self.search_region_for(request.robot_id),
-                    **params)
-        else:
-            raise RuntimeError("Either 'occupancy_grid' or 'point_cloud'"\
-                               "must be specified in request.")
-        # set search region for the agent for creation
-        if request.robot_id in self._pending_agents:
-            # prepare for creation
-            self._pending_agents[request.robot_id]["search_region"] = search_region
-            self._pending_agents[request.robot_id]["init_robot_localization"] = zrobotloc
-            self._create_agent(request.robot_id)
-            return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
-                                                 status=Status.SUCCESSFUL,
-                                                 message="Search region updated")
-        elif request.robot_id in self._agents:
-            # TODO: agent should be able to update its search region.
-            return slpb2.UpdateSearchRegionReply(
-                header=proto_utils.make_header(),
-                status=Status.FAILED,
-                message=self._logwarn("updating existing search region of an agent is not yet implemented"))
-        else:
-            logging.warning(f"Agent {request.robot_id} is not recognized.")
             return slpb2.UpdateSearchRegionReply(
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
