@@ -32,6 +32,7 @@ from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
 from sloop_object_search.grpc import observation_pb2 as o_pb2
 from sloop_object_search.grpc import action_pb2 as a_pb2
 from sloop_object_search.grpc import common_pb2
+from sloop_object_search.grpc.messages import Message
 from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
@@ -101,7 +102,10 @@ class TestSimpleEnvHierSearch:
         rospy.loginfo("belief visualized")
 
     def server_message_callback(self, message):
-        print("HEY!", message)
+        if Message.match(message) == Message.REQUEST_SEARCH_REGION_UPDATE:
+            # will send a update search request to the designated robot id
+            pass
+
 
 
     def __init__(self, prior="uniform"):

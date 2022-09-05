@@ -36,6 +36,7 @@ def plan_action(planner, agent, server):
     if isinstance(agent, HierMosAgent)\
        and isinstance(action, StayAction):
         # server tells client, please send over update search region request
-        server.add_message(agent.robot_id, f"Request UpdateSearchRegion for {agent.robot_id}_local")
+        server.add_message(agent.robot_id,
+                           f"Request UpdateSearchRegion for {agent.robot_id}_local")
 
     return action

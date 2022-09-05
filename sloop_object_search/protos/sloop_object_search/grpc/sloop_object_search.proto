@@ -83,6 +83,7 @@ message UpdateSearchRegionRequest {
   string robot_id = 2;
 
   // Whether the search region is 3D.
+  // DEPRECATED
   bool is_3d = 3;
 
   // robot pose in the world frame
