@@ -17,6 +17,7 @@ class HierMosAgent(MosAgentTopo2D):
         super().__init__(agent_config, search_region, init_robot_pose_dist,
                          init_object_beliefs=init_object_beliefs)
         self._local_agent = None
+        self.searching_locally = True    # The agent has started to search locally
 
     def set_local_agent(self, local_agent):
         self._local_agent = local_agent
@@ -24,6 +25,36 @@ class HierMosAgent(MosAgentTopo2D):
     @property
     def local_agent(self):
         return self._local_agent
+
+    def create_local_agent(self, robot_loc, local_search_region):
+        """Create a local agent with initial belief based on the global agent's belief.
+        Args:
+            robot_loc (RobotLocalization): 3D robot localization, in local region frame
+            local_search_region (SearchRegion3D): 3D search regionx
+        """
+        if self._local_agent is not None:
+            local_agent_config = self.make_local_agent_config()
+            self._local_agent = MosAgentTopo3D(local_agent_config,
+                                               local_search_region,
+                                               robot_loc)
+
+    def make_local_agent_config(self):
+        agent_config = {
+            "agent_class": "MosAgentTopo3D",
+            "agent_type": "local",
+            "robot": {
+                "id": self.robot_id,
+                "no_look": self.no_look,
+                "detectors": self.agent_config["robot"]["detectors_local"],
+                "sensors": self.agent_config["robot"]["sensors_local"],
+                "action": self.agent_config["robot"]["action_local"],
+                "color": self.agent_config["robot"]["color"]
+            },
+            "objects": self.agent_config["objects"],
+            "targets": self.agent_config["targets"]
+        }
+        return agent_config
+
 
 
 class HierPlanner(pomdp_py.Planner):
@@ -65,12 +96,13 @@ class HierPlanner(pomdp_py.Planner):
         print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
         if isinstance(subgoal, StayAction):
+            self._hier_agent.searching_locally = True  # this is a server-set attribute
             if self._hier_agent.local_agent is not None:
                 # If the local agent is available, then plan with the local agent
                 return self.plan_local()
             else:
                 # This should trigger the creation of a local agent by the user of
-                # this planner.
+                # this planner. Then, local search will be planned.
                 return subgoal
         else:
             return subgoal

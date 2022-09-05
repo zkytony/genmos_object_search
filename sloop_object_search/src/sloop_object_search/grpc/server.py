@@ -125,7 +125,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             # provide info for local search, if needed
             _info_key = Info.LOCAL_SEARCH_REGION_INFO.format(request.robot_id)
             if self.waiting_for_client_provided_info(_info_key):
-                self.add_client_provided_info(_info_key, search_region)
+                self.add_client_provided_info(_info_key, (search_region, robot_loc_world))
 
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
@@ -399,7 +399,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
             else:
                 # otherwise, sleep
-                logging.info("Nothing to send to client.")
                 time.sleep(3)
 
 

@@ -129,7 +129,7 @@ class MosAgent(pomdp_py.Agent):
         Args:
             agent_config (dict): configuration for the agent
             search_region (SearchRegion2D): 2d search region
-            init_robot_pose_dist (pomdp_py.GenerativeDistribution):
+            init_robot_pose_dist (RobotLocalization):
                 belief over initial robot pose
             init_object_beliefs (dict): maps from object id
                 to pomdp_py.GenerativeDistribution

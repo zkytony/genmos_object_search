@@ -105,6 +105,22 @@ def accumulate_object_beliefs(search_region,
             dist[loc] += object_beliefs[objid][sobj]
     return dist
 
+def init_local_object_belief_from_global(
+        global_object_belief, global_search_region, local_search_region):
+    """used when creating object belief for local search based
+    on global belief"""
+    # TODO.
+    pass
+
+def init_local_robot_belief_from_global(
+        global_robot_belief, global_search_region, local_search_region):
+    """used when creating robot belief for local search based
+    on global belief"""
+    global_pose_est = global_robot_belief.pose_est
+    global_pose_world = global_search_region.to_world_pose(global_pose_est.pose)
+    global_pose_cov_world = global_search_region.to_world_cov(global_pose_est.cov)
+
+
 
 class RobotStateBelief(pomdp_py.GenerativeDistribution):
     """This is a distribution that samples RobotState obejcts"""
