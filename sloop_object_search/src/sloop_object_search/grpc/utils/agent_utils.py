@@ -6,16 +6,16 @@ import time
 import copy
 
 from sloop_object_search.oopomdp.agent import\
-    (SloopMosAgentBasic2D, MosAgentBasic2D, SloopMosAgentTopo2D, MosAgentTopo2D,
-     MosAgentBasic3D, MosAgentTopo3D, HierMosAgent)
+    (MosAgentBasic2D, MosAgentTopo2D, MosAgentBasic3D, MosAgentTopo3D, HierMosAgent)
 import sloop_object_search.oopomdp.domain.observation as slpo
 import sloop_object_search.oopomdp.domain.action as slpa
 from sloop_object_search.oopomdp.models import belief
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
+from . import proto_utils
+from .search_region_processing import (search_region_2d_from_point_cloud,
+                                       search_region_3d_from_point_cloud)
 
-VALID_AGENTS = {"SloopMosAgentBasic2D",
-                "MosAgentBasic2D",
-                "SloopMosAgentTopo2D",
+VALID_AGENTS = {"MosAgentBasic2D",
                 "MosAgentTopo2D",
                 "MosAgentBasic3D",
                 "MosAgentTopo3D",
@@ -244,3 +244,67 @@ def update_planner(request, planner, agent, observation, action):
     planning_observation = slpo.GMOSObservation(planning_zobjs)
     planner.update(agent, action, planning_observation)
     logging.info("planner updated")
+
+
+def create_agent_search_region(agent_config, request):
+    """Called before the agent is created, upon receiving an UpdateSearchRegion
+    request. Returns a tuple, (SearchRegion, RobotLocalization), where the robot
+    localization is in the world frame.
+    """
+    robot_loc_world = proto_utils.robot_localization_from_proto(request.robot_pose)
+    robot_pose = robot_loc_world.pose  # world frame robot pose
+    if agent_config["agent_class"] in {"MosAgentBasic2D", "MosAgentTopo2D", "HierMosAgent"}:
+        # 2D
+        params = proto_utils.process_search_region_params_2d(
+            request.search_region_params_2d)
+        robot_position = robot_pose[:2]
+        logging.info("converting point cloud to 2d search region...")
+        search_region = search_region_2d_from_point_cloud(
+            request.point_cloud, robot_position,
+            **params)
+
+    elif agent_config["agent_class"] in {"MosAgentBasic3D", "MosAgentTopo3D"}:
+        # 3D
+        params = proto_utils.process_search_region_params_3d(
+            request.search_region_params_3d)
+        robot_position = robot_pose[:3]
+        logging.info("converting point cloud to 3d search region...")
+        search_region = search_region_3d_from_point_cloud(
+            request.point_cloud, robot_position,
+            **params)
+    else:
+        raise ValueError(f"agent class unsupported: {agent_config['agent_class']}")
+    # existing_search_region=self.search_region_for(request.robot_id),
+    # existing_search_region=self.search_region_for(request.robot_id),
+    return search_region, robot_loc_world
+
+
+def update_agent_search_region(agent, request):
+    robot_loc_world = proto_utils.robot_localization_from_proto(request.robot_pose)
+    robot_pose = robot_loc_world.pose  # world frame robot pose
+    if type(agent) in {MosAgentBasic2D, MosAgentTopo2D}:
+        # 2D
+        params = proto_utils.process_search_region_params_2d(
+            request.search_region_params_2d)
+        robot_position = robot_pose[:2]
+        logging.info("converting point cloud to 2d search region...")
+        search_region = search_region_2d_from_point_cloud(
+            request.point_cloud, robot_position,
+            existing_search_region=agent.search_region,
+            **params)
+    elif type(agent) in {MosAgentBasic3D, MosAgentTopo3D}:
+        # 3D
+        params = proto_utils.process_search_region_params_3d(
+            request.search_region_params_3d)
+        robot_position = robot_pose[:3]
+        logging.info("converting point cloud to 3d search region...")
+        search_region = search_region_3d_from_point_cloud(
+            request.point_cloud, robot_position,
+            existing_search_region=agent.search_region,
+            **params)
+    elif agent_config["agent_class"] in {"HierMosagent"}:
+        # Mixed
+        raise NotImplementedError()
+
+    else:
+        raise ValueError(f"agent class unsupported: {agent_config['agent_class']}")

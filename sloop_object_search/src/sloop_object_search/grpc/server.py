@@ -17,8 +17,6 @@ from .common_pb2 import Status
 from .utils import proto_utils
 from .utils import agent_utils
 from .utils import planner_utils
-from .utils.search_region_processing import (search_region_2d_from_point_cloud,
-                                             search_region_3d_from_point_cloud)
 from ..utils.misc import hash16
 
 
@@ -111,8 +109,41 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the corresponding POMDP agent should be created and
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
+
+        if request.robot_id in self._agents:
+            # This is an update search region request for an existing agent
+            agent = self._agents[request.robot_id]
+            agent_utils.update_agent_search_region(agent, request)
+            return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
+                                                 status=Status.SUCCESSFUL,
+                                                 message=self._loginfo("Search region updated"))
+
+        elif request.robot_id in self._pending_agents:
+            # This is an update search region request for a new agent
+            agent_config = self._pending_agents[request.robot_id]["agent_config"]
+            search_region, robot_loc_world =\
+                agent_utils.create_agent_search_region(agent_config, request)
+            self._pending_agents[request.robot_id]["search_region"] = search_region
+            self._pending_agents[request.robot_id]["init_robot_localization"] = robot_loc_world
+            self._create_agent(request.robot_id)
+            return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
+                                                 status=Status.SUCCESSFUL,
+                                                 message=self._loginfo("Search region created"))
+
+        else:
+            # We do not handle this robot_id
+            return slpb2.UpdateSearchRegionReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=self._logwarn(f"Agent {request.robot_id} is not recognized."))
+
         zrobotloc = proto_utils.robot_localization_from_proto(request.robot_pose)
         robot_pose = zrobotloc.pose  # world frame robot pose
+
+
+
+
+
         if request.HasField('occupancy_grid'):
             raise NotImplementedError()
         elif request.HasField('point_cloud'):
@@ -221,6 +252,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         """The agent can only plan and execute one action at a time.
         Before a previously planned action is marked finished, no
         more planning will happen."""
+        # TODO: REFACTOR
         if request.robot_id not in self._agents:
             # agent not yet created
             return slpb2.PlanActionReply(

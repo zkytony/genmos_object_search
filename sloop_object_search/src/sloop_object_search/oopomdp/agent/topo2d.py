@@ -171,23 +171,6 @@ class MosAgentTopo2D(MosAgentBasic2D):
         return total_prob < resample_prob_thres
 
 
-
-class SloopMosAgentTopo2D(SloopMosAgent):
-    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
-        if init_robot_pose_dist is None:
-            raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
-
-        mos_agent = MosAgentTopo2D(self.agent_config,
-                                    self.search_region,
-                                    init_robot_pose_dist=init_robot_pose_dist,
-                                    init_object_beliefs=init_object_beliefs)
-        return (mos_agent.belief,
-                mos_agent.policy_model,
-                mos_agent.transition_model,
-                mos_agent.observation_model,
-                mos_agent.reward_model)
-
-
 def _compute_combined_prob_around(pos, object_beliefs, zone_res=8):
     """Given a position 'pos', and object beliefs, and a resolution level for the
     zone which the belief around the position is considered, return a normalized
@@ -382,3 +365,20 @@ def _shortest_path(reachable_positions, gloc1, gloc2):
                     visited.add(nb_loc)
                     prev[nb_loc] = loc
     return None
+
+
+### DEPRECATED ###
+class SloopMosAgentTopo2D(SloopMosAgent):
+    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
+        if init_robot_pose_dist is None:
+            raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
+
+        mos_agent = MosAgentTopo2D(self.agent_config,
+                                    self.search_region,
+                                    init_robot_pose_dist=init_robot_pose_dist,
+                                    init_object_beliefs=init_object_beliefs)
+        return (mos_agent.belief,
+                mos_agent.policy_model,
+                mos_agent.transition_model,
+                mos_agent.observation_model,
+                mos_agent.reward_model)

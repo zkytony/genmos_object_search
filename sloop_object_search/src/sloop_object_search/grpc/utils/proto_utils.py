@@ -166,7 +166,8 @@ def robot_localization_from_proto(robot_pose_pb):
 
 def robot_pose_proto_from_tuple(robot_pose):
     """Returns a RobotPose proto from a given tuple
-    representation of robot pose."""
+    representation of robot pose. Note that robot_pose
+    is assumed to contain both position and rotation."""
     if len(robot_pose) == 3:
         return o_pb2.RobotPose(pose_2d=posetuple_to_poseproto(robot_pose))
     elif len(robot_pose) == 7:

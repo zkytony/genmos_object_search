@@ -113,6 +113,7 @@ def build_area_observation(detection, fansensor, robot_pose,
     return cells
 
 
+### DEPRECATED ###
 class SloopMosAgentBasic2D(SloopMosAgent):
     def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
         if init_robot_pose_dist is None:

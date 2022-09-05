@@ -190,7 +190,8 @@ class RobotLocalization(pomdp_py.Gaussian):
             _, _, yaw = math_utils.quat_to_euler(*self.mean[3:])
             cov = np.asarray(self.cov)[np.ix_((0,1,-1), (0,1,-1))]  # get covariance matrix
             return RobotLocalization(self.robot_id, (x,y,yaw), cov)
-        raise ValueError("is already 2D.")
+        # already 2D
+        return self
 
     def __str__(self):
         return f"RobotLocalization[{self.robot_id}]({self.pose}, {self.cov})"
