@@ -2,7 +2,7 @@ import pomdp_py
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.oopomdp.agent import HierMosAgent
 from sloop_object_search.oopomdp.domain.action import StayAction
-
+from ..messages import Message
 
 def create_planner(planner_config, agent):
     """
@@ -23,6 +23,36 @@ def create_planner(planner_config, agent):
 
 
 def plan_action(planner, agent, server):
+    """
+    Performs planning and outputs the next action for execution.
+
+    Note for hierarchical agent:
+    When the planner of the global search agent outputs StayAction,
+    the the following happens:
+      (1) the server sends the client a message requesting a UpdateSearchRegion
+      (2) the server waits, until receiving this message from the client.
+      (3) Upon receiving this message, a search_region is created, and
+          a *local search agent* is also then created. This should be a 3D agent.
+          Note that the client does not need to supply configuration for
+          the creation of this client. This configuration is interpreted based
+          on the initial configuration when creating the ~HierMosAgent~. The
+          initial belief of the local search agent is based on the global
+          search agent's belief.
+      (4) A planner for the local search agent is created.
+      (5) Planning is performed for the local search agent. The action is
+          returned for execution to the client. This means the client
+          doesn't see the "StayAction" by the global agent; It will take
+          an action corresponding to the local search agent's planning output.
+
+    Args:
+        planner (pomdp_py.Planner)
+        agent (MosAgent)
+        server (grpc server)
+    Returns:
+        (bool, str or Action)
+        If planning is successful, return True, and the action.
+        If failed, return False, and a string as the reason
+    """
     action = planner.plan(agent)
     if hasattr(agent, "tree") and agent.tree is not None:
         # print planning tree
@@ -37,6 +67,6 @@ def plan_action(planner, agent, server):
        and isinstance(action, StayAction):
         # server tells client, please send over update search region request
         server.add_message(agent.robot_id,
-                           f"Request UpdateSearchRegion for {agent.robot_id}_local")
+                           Message.REQUEST_SEARCH_REGION_UPDATE.format(agent.robot_id))
 
     return action
