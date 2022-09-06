@@ -1,30 +1,14 @@
-# sloop_object_search
-ROS Package for SLOOP (Spatial Language Understanding Object-Oriented POMDP)
-
-
-## Overview
-Currently structured as a ROS package, this repository contains implementation of
-SLOOP for object search and related planning algorithms which are robot-middleware-independent.
-Referred to as "sloop_object_search", this implementation allows:
-
-1. Direct creation of SLOOP object search agents in Python through imports
-2. Running the agent as a server that accepts gRPC calls.
-
-The first option allows developers to build upon the source code of the POMDP agent.
-The second option allows the agent to be run as a "backend" of a robotic system,
-regardless of the middleware, as long as proper gRPC calls are made. These gRPC
-calls serve the purpose of:
-
-- belief update
-- request planning next action
-- execute an action
-- information getters
-
-If your middleware is not ROS, you can still clone this repository,
-and install only the "sloop" and "sloop_object_search" packages, TODO
-
+# Example ROS package that uses sloop_object_search
 
 ## Setup
+
+### Create symbolic link
+
+Go to the `src` folder of your ROS workspace. Then run:
+```
+ln -s path/to/sloop_object_search/ros sloop_object_search_ros
+```
+This effectively adds a ROS package called "sloop_object_search_ros" into your workspace
 
 ### Install Dependencies
 
@@ -35,6 +19,12 @@ Before building this package, make sure you have activated a virtualenv. Then, r
 source install_dependencies.bash
 ```
 to install python dependencies.
+
+### Build the ROS package
+```
+catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_object_search_ros"
+```
+
 
 
 ### Download Dataset and Models
