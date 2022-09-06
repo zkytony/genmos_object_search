@@ -16,7 +16,6 @@ from . import sloop_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
 from .utils import proto_utils
 from .utils import agent_utils
-from .utils import planner_utils
 from ..utils.misc import hash16
 from .constants import Message, Info
 from ..oopomdp.planner.hier import HierPlanner
@@ -219,7 +218,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         else:
             planner_config = config
         agent = self._agents[request.robot_id]
-        planner = planner_utils.create_planner(planner_config, agent)
+        planner = agent_utils.create_planner(planner_config, agent)
         self._planners[request.robot_id] = planner
 
         return slpb2.CreatePlannerReply(
@@ -255,7 +254,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
 
         agent = self._agents[request.robot_id]
         planner = self._planners[request.robot_id]
-        success, result = planner_utils.plan_action(planner, agent, self)
+        success, result = agent_utils.plan_action(planner, agent, self)
         if not success:
             return slpb2.PlanActionReply(
                 header=proto_utils.make_header(),
