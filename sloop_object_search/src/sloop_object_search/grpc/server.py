@@ -84,14 +84,27 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             agent_config = config["agent_config"]
         else:
             agent_config = config
-        self._pending_agents[request.robot_id] = {
-            "agent_config": agent_config,
-            "search_region": None,
-            "init_robot_pose": None
-        }
+        if request.robot_id != agent_config["robot"]["id"]:
+            return slpb2.CreateAgentReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=self._logwarn(f"robot id in request ({request.robot_id}) "\
+                                      "mismatch robot id in config {agent_config['robot']['id']}"))
+
+        self.prepare_agent_for_creation(agent_config)
         return slpb2.CreateAgentReply(
             status=Status.PENDING,
             message=self._loginfo(f"Agent {request.robot_id} configuration received. Waiting for additional inputs..."))
+
+    def prepare_agent_for_creation(self, agent_config,
+                                   search_region=None,
+                                   init_robot_loc=None):
+        robot_id = agent_config["robot"]["id"]
+        self._pending_agents[robot_id] = {
+            "agent_config": agent_config,
+            "search_region": search_region,
+            "init_robot_loc": init_robot_loc
+        }
 
     def GetAgentCreationStatus(self, request, context):
         if request.robot_id in self._pending_agents:
@@ -136,8 +149,8 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             search_region, robot_loc_world =\
                 agent_utils.create_agent_search_region(agent_config, request)
             self._pending_agents[request.robot_id]["search_region"] = search_region
-            self._pending_agents[request.robot_id]["init_robot_localization"] = robot_loc_world
-            self._create_agent(request.robot_id)
+            self._pending_agents[request.robot_id]["init_robot_loc"] = robot_loc_world
+            self.create_agent(request.robot_id)
             return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
                                                  status=Status.SUCCESSFUL,
                                                  message=self._loginfo("Search region created"))
@@ -156,13 +169,13 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         else:
             return None
 
-    def _create_agent(self, robot_id):
+    def create_agent(self, robot_id):
         """This function is called when an agent is first being created"""
         assert robot_id not in self._agents,\
             f"Internal error: agent {robot_id} already exists."
         info = self._pending_agents.pop(robot_id)
         self._agents[robot_id] = agent_utils.create_agent(
-            robot_id, info["agent_config"], info["init_robot_localization"], info["search_region"])
+            robot_id, info["agent_config"], info["init_robot_loc"], info["search_region"])
         self._check_invariant()
 
     def _check_invariant(self):

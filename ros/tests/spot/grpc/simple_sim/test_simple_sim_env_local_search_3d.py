@@ -48,26 +48,13 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
+from test_simple_sim_env_common import (TestSimpleEnvCase,
+                                        REGION_POINT_CLOUD_TOPIC,
+                                        INIT_ROBOT_POSE_TOPIC,
+                                        ACTION_DONE_TOPIC, OBSERVATION_TOPIC,
+                                        AGENT_CONFIG, PLANNER_CONFIG,
+                                        TASK_CONFIG)
 
-
-REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
-INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
-ACTION_TOPIC = "/simple_sim_env/pomdp_action"
-ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
-OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
-
-WORLD_FRAME = "graphnav_map"
-
-SEARCH_SPACE_RESOLUTION = 0.1
-
-
-import yaml
-with open("./config_simple_sim_lab121_lidar.yaml") as f:
-    CONFIG = yaml.safe_load(f)
-    AGENT_CONFIG = CONFIG["agent_config"]
-    TASK_CONFIG = CONFIG["task_config"]
-    PLANNER_CONFIG = CONFIG["planner_config"]
-    OBJECT_LOCATIONS = CONFIG["object_locations"]
 
 def observation_msg_to_proto(world_frame, o_msg):
     """returns three observation proto objects: (ObjectDetectionArray, RobotPose,
@@ -115,111 +102,11 @@ def wait_for_robot_pose():
     robot_pose = eval(kv["robot_pose"])
     return robot_pose
 
-class TestSimpleEnvLocalSearch:
 
-    def visualize_fovs(self, response):
-        # Clear markers
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        clear_msg = ros_utils.clear_markers(header, ns="")
-        self._fovs_markers_pub.publish(clear_msg)
-
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        fovs = json.loads(response.fovs.decode('utf-8'))
-        markers = []
-        for objid in fovs:
-            free_color = np.array(self.agent_config["objects"][objid].get(
-                "color", [0.8, 0.4, 0.8]))[:3]
-            hit_color = lighter(free_color*255, -0.25)/255
-
-            obstacles_hit = set(map(tuple, fovs[objid]['obstacles_hit']))
-            for voxel in fovs[objid]['visible_volume']:
-                voxel = tuple(voxel)
-                if voxel in obstacles_hit:
-                    continue
-                m = ros_utils.make_viz_marker_for_voxel(
-                    voxel, header, color=free_color, ns="fov",
-                    lifetime=0, alpha=0.7)
-                markers.append(m)
-            for voxel in obstacles_hit:
-                m = ros_utils.make_viz_marker_for_voxel(
-                    voxel, header, color=hit_color, ns="fov",
-                    lifetime=0, alpha=0.7)
-                markers.append(m)
-        self._fovs_markers_pub.publish(MarkerArray(markers))
-
-    def get_and_visualize_belief(self, o3dviz=True):
-        # Clear markers
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        clear_msg = ros_utils.clear_markers(header, ns="")
-        self._octbelief_markers_pub.publish(clear_msg)
-        self._topo_map_3d_markers_pub.publish(clear_msg)
-
-        response = self._sloop_client.getObjectBeliefs(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
-        assert response.status == Status.SUCCESSFUL
-        rospy.loginfo("got belief")
-
-        # visualize the belief
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        markers = []
-        for bobj_pb in response.object_beliefs:
-            msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=20.0)
-            markers.extend(msg.markers)
-        self._octbelief_markers_pub.publish(MarkerArray(markers))
-
-        rospy.loginfo("belief visualized")
-
-        # visualize topo map in robot belief
-        markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
-        robot_belief_pb = response_robot_belief.robot_belief
-        if robot_belief_pb.HasField("topo_map"):
-            msg = ros_utils.make_topo_map_proto_markers_msg(
-                robot_belief_pb.topo_map,
-                header, SEARCH_SPACE_RESOLUTION,
-                node_color=[0.82, 0.01, 0.08, 0.8],
-                edge_color=[0.24, 0.82, 0.01, 0.8],
-                node_thickness=SEARCH_SPACE_RESOLUTION)
-            markers.extend(msg.markers)
-        self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
-        rospy.loginfo("belief visualized")
-
-
+class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
     def __init__(self, o3dviz=False, prior="uniform"):
-        # This is an example of how to get started with using the
-        # sloop_object_search grpc-based package.
-        rospy.init_node("test_simple_env_local_search")
-
-        # Initialize ROS stuff
-        action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
-        self._octbelief_markers_pub = rospy.Publisher(
-            "~octree_belief", MarkerArray, queue_size=10, latch=True)
-        self._fovs_markers_pub = rospy.Publisher(
-            "~fovs", MarkerArray, queue_size=10, latch=True)
-        self._topo_map_3d_markers_pub = rospy.Publisher(
-            "~topo_map_3d", MarkerArray, queue_size=10, latch=True)
-
-        # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
-        self.agent_config = AGENT_CONFIG
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
-        self.world_frame = WORLD_FRAME
-
-        if prior == "groundtruth":
-            AGENT_CONFIG["belief"]["prior"] = {}
-            for objid in AGENT_CONFIG["targets"]:
-                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
-
-        # First, create an agent
-        self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
-                                       robot_id=self.robot_id)
+        super().__init__(o3dviz=o3dviz, prior=prior)
 
         # need to get a region point cloud and a pose use that as search region
         region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
@@ -235,7 +122,7 @@ class TestSimpleEnvLocalSearch:
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
-                                                                       "search_space_resolution": SEARCH_SPACE_RESOLUTION,
+                                                                       "search_space_resolution": self.search_space_res_3d,
                                                                        "debug": False,
                                                                        "region_size_x": 4.0,
                                                                        "region_size_y": 4.0,
@@ -246,7 +133,7 @@ class TestSimpleEnvLocalSearch:
         rospy.loginfo("agent created!")
 
         # visualize initial belief
-        self.get_and_visualize_belief(o3dviz=o3dviz)
+        self.get_and_visualize_belief_3d(o3dviz=o3dviz)
 
         # create planner
         response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
@@ -282,7 +169,7 @@ class TestSimpleEnvLocalSearch:
                         thx + dthx, thy + dthy, thz + dthz))
                     dest = robot_pose
                 nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
-                action_pub.publish(nav_action)
+                self._action_pub.publish(nav_action)
                 rospy.loginfo("published nav action for execution")
                 # wait for navigation done
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
@@ -291,7 +178,7 @@ class TestSimpleEnvLocalSearch:
             elif isinstance(action, a_pb2.Find):
                 find_action = KeyValAction(stamp=rospy.Time.now(),
                                            type="find")
-                action_pub.publish(find_action)
+                self._action_pub.publish(find_action)
                 rospy.loginfo("published find action for execution")
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
@@ -323,8 +210,8 @@ class TestSimpleEnvLocalSearch:
             print("-----------")
 
             # visualize FOV and belief
-            self.visualize_fovs(response_observation)
-            self.get_and_visualize_belief(o3dviz=o3dviz)
+            self.visualize_fovs_3d(response_observation)
+            self.get_and_visualize_belief_3d(o3dviz=o3dviz)
 
             # Check if we are done
             if objects_found == set(AGENT_CONFIG["targets"]):
