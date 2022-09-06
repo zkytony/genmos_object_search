@@ -3,12 +3,12 @@ import re
 class Message:
     """message used as communication between server and client.
     A message is """
-    REQUEST_SEARCH_REGION_UPDATE = "Request UpdateSearch Region [for {}]"
+    REQUEST_LOCAL_SEARCH_REGION_UPDATE = "Request local search region update [for {}]"
 
     @staticmethod
     def match(m):
-        if m.startswith("Request UpdateSearch Region"):
-            return Message.REQUEST_SEARCH_REGION_UPDATE
+        if m.startswith("Request local search region update"):
+            return Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE
 
     @staticmethod
     def forwhom(m):
@@ -17,4 +17,4 @@ class Message:
             return match.group(0)[5:-1].strip()
 
 class Info:
-    LOCAL_SEARCH_REGION_INFO = "local search region [for {}]"
+    LOCAL_SEARCH_REGION = "local search region [for {}]"

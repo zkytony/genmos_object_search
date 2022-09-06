@@ -106,6 +106,10 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             "init_robot_loc": init_robot_loc
         }
 
+    @property
+    def agents(self):
+        return self._agents
+
     def GetAgentCreationStatus(self, request, context):
         if request.robot_id in self._pending_agents:
             return slpb2.GetAgentCreationStatusReply(
@@ -130,19 +134,21 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         the corresponding POMDP agent should be created and
         the agent is no longer pending. Otherwise, update the
         corresponding agent's search region."""
+        if request.robot_id not in self._agents\
+           and request.robot_id not in self._pending_agents:
+            # We do not handle this robot_id
+            return slpb2.UpdateSearchRegionReply(
+                header=proto_utils.make_header(),
+                status=Status.FAILED,
+                message=self._logwarn(f"Agent {request.robot_id} is not recognized."))
+
         if request.robot_id in self._agents:
             # This is an update search region request for an existing agent
             agent = self._agents[request.robot_id]
             search_region, robot_loc_world = \
                 agent_utils.update_agent_search_region(agent, request)
-            # provide info for local search, if needed
-            _info_key = Info.LOCAL_SEARCH_REGION_INFO.format(request.robot_id)
-            if self.waiting_for_client_provided_info(_info_key):
-                self.add_client_provided_info(_info_key, (search_region, robot_loc_world))
+            reply_msg = "Search region updated"
 
-            return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
-                                                 status=Status.SUCCESSFUL,
-                                                 message=self._loginfo("Search region updated"))
         elif request.robot_id in self._pending_agents:
             # This is an update search region request for a new agent
             agent_config = self._pending_agents[request.robot_id]["agent_config"]
@@ -151,15 +157,17 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             self._pending_agents[request.robot_id]["search_region"] = search_region
             self._pending_agents[request.robot_id]["init_robot_loc"] = robot_loc_world
             self.create_agent(request.robot_id)
-            return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
-                                                 status=Status.SUCCESSFUL,
-                                                 message=self._loginfo("Search region created"))
-        else:
-            # We do not handle this robot_id
-            return slpb2.UpdateSearchRegionReply(
-                header=proto_utils.make_header(),
-                status=Status.FAILED,
-                message=self._logwarn(f"Agent {request.robot_id} is not recognized."))
+            reply_msg = f"Search region created (Agent {request.robot_id} created)"
+
+        # provide info for local search, if needed
+        _info_key = Info.LOCAL_SEARCH_REGION.format(request.robot_id)
+        if self.waiting_for_client_provided_info(_info_key):
+            self.add_client_provided_info(_info_key, (search_region, robot_loc_world))
+
+        return slpb2.UpdateSearchRegionReply(header=proto_utils.make_header(),
+                                             status=Status.SUCCESSFUL,
+                                             message=self._loginfo(reply_msg))
+
 
     def search_region_for(self, robot_id):
         if robot_id in self._pending_agents:
@@ -413,8 +421,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             else:
                 # otherwise, sleep
                 time.sleep(3)
-
-
 
     def add_message(self, robot_id, message):
         """adds a message in the queue to be sent to a client"""

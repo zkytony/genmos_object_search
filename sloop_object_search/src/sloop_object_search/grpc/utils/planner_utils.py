@@ -1,3 +1,4 @@
+import logging
 import pomdp_py
 from sloop_object_search.utils.misc import import_class
 from sloop_object_search.oopomdp.agent import HierMosAgent
@@ -23,10 +24,13 @@ def create_planner(planner_config, agent):
         raise NotImplementedError(f"Planner {planner_class} is unrecognized.")
 
 
-def make_local_agent_config(hier_agent_config):
+def make_local_agent_config(hier_agent_config, belief_config=None):
+    if belief_config is None:
+        belief_config = {}
     agent_config = {
         "agent_class": "MosAgentTopo3D",
         "agent_type": "local",
+        "belief": belief_config,
         "robot": {
             "id": hier_agent_config["robot"]["id"] + "_local",
             "no_look": hier_agent_config["no_look"],
@@ -87,16 +91,19 @@ def plan_action(planner, agent, server):
         # server tells client, please send over update search region request
         local_robot_id = f"{agent.robot_id}_local"
         server.add_message(agent.robot_id,
-                           Message.REQUEST_SEARCH_REGION_UPDATE.format(local_robot_id))
+                           Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
+
+        # Use the server's own mechanism to create the local agent
+        # create a placeholder for the local agent in the server
+        local_agent_config = make_local_agent_config(agent.agent_config)
+        server.prepare_agent_for_creation(local_agent_config)
+
+        # Now, wait for local search region; note that this will
+        # also create the local agent, if it is not yet created.
         local_search_region, robot_loc_world =\
             server.wait_for_client_provided_info(
-                Info.LOCAL_SEARCH_REGION_INFO.format(local_robot_id))
-        # use the server's own mechanism to create this agent
-        local_agent_config = make_local_agent_config(agent.config)
-        server.prepare_agent_for_creation(local_agent_config,
-                                          local_search_region,
-                                          robot_loc_world)
-        server.create_agent(local_robot_id)
-        print("Local agent created")
+                Info.LOCAL_SEARCH_REGION.format(local_robot_id),
+                timeout=15)
+        import pdb; pdb.set_trace()
 
     return True, action

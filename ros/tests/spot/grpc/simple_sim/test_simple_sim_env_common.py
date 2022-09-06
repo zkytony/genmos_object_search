@@ -123,7 +123,10 @@ class TestSimpleEnvCase:
                 markers.append(m)
         self._fovs_markers_pub.publish(MarkerArray(markers))
 
-    def get_and_visualize_belief_3d(self, o3dviz=True):
+    def get_and_visualize_belief_3d(self, robot_id=None, o3dviz=True):
+        if robot_id is None:
+            robot_id = self.robot_id
+
         # Clear markers
         header = std_msgs.Header(stamp=rospy.Time.now(),
                                  frame_id=self.world_frame)
@@ -132,7 +135,7 @@ class TestSimpleEnvCase:
         self._topo_map_3d_markers_pub.publish(clear_msg)
 
         response = self._sloop_client.getObjectBeliefs(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
+            robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got belief")
 
@@ -151,7 +154,7 @@ class TestSimpleEnvCase:
         # visualize topo map in robot belief
         markers = []
         response_robot_belief = self._sloop_client.getRobotBelief(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
+            robot_id, header=proto_utils.make_header(self.world_frame))
         robot_belief_pb = response_robot_belief.robot_belief
         if robot_belief_pb.HasField("topo_map"):
             msg = ros_utils.make_topo_map_proto_markers_msg(
@@ -203,8 +206,10 @@ class TestSimpleEnvCase:
         self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
         rospy.loginfo("belief visualized")
 
-    def update_search_region_2d(self):
+    def update_search_region_2d(self, robot_id=None):
         # need to get a region point cloud and a pose use that as search region
+        if robot_id is None:
+            robot_id = self.robot_id
         rospy.loginfo("Sending request to update search region (2D)")
         if self._region_cloud_msg is None:
             region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
@@ -222,8 +227,7 @@ class TestSimpleEnvCase:
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              robot_id=self.robot_id,
-                                              is_3d=False,
+                                              robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_2d={"layout_cut": 0.6,
@@ -232,7 +236,9 @@ class TestSimpleEnvCase:
                                                                        "grid_size": self.search_space_res_2d,
                                                                        "debug": False})
 
-    def update_search_region_3d(self):
+    def update_search_region_3d(self, robot_id=None):
+        if robot_id is None:
+            robot_id = self.robot_id
         rospy.loginfo("Sending request to update search region (3D)")
         if self._region_cloud_msg is None:
             region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
@@ -250,8 +256,7 @@ class TestSimpleEnvCase:
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              robot_id=self.robot_id,
-                                              is_3d=True,
+                                              robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,

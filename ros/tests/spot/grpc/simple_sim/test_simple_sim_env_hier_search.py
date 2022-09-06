@@ -49,46 +49,19 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvHierSearch(TestSimpleEnvCase):
 
-
     def server_message_callback(self, message):
-        if Message.match(message) == Message.REQUEST_SEARCH_REGION_UPDATE:
-            print("will send a update search request to the designated robot id")
-            self.update_search_region_3d()
+        if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
+            local_robot_id = Message.forwhom(message)
+            rospy.loginfo(f"will send a update search request to {local_robot_id}")
+            self.update_search_region_3d(robot_id=local_robot_id)
 
     def __init__(self, prior="uniform"):
-        # This is an example of how to get started with using the
-        # sloop_object_search grpc-based package.
-        rospy.init_node("test_simple_env_hier_search")
-
-        # Initialize ROS stuff
-        action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
-        self._topo_map_2d_markers_pub = rospy.Publisher(
-            "~topo_map_2d", MarkerArray, queue_size=10, latch=True)
-        self._belief_2d_markers_pub = rospy.Publisher(
-            "~belief_2d", MarkerArray, queue_size=10, latch=True)
-        self._fovs_markers_pub = rospy.Publisher(
-            "~fovs", MarkerArray, queue_size=10, latch=True)
-        # because region cloud is latched and only published once (for now),
-        # we'll need to save it for this test
-        self._region_cloud_msg = None
-
-        # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
-        self.agent_config = AGENT_CONFIG
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
-        self.world_frame = WORLD_FRAME
-
-        if prior == "groundtruth":
-            AGENT_CONFIG["belief"]["prior"] = {}
-            for objid in AGENT_CONFIG["targets"]:
-                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+        super().__init__(prior=prior)
 
         # Make the client listen to server
-        ls_future = self._sloop_client.listenToServer(self.robot_id, self.server_message_callback)
+        ls_future = self._sloop_client.listenToServer(
+            self.robot_id, self.server_message_callback)
 
-        # First, create an agent
-        self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
-                                       robot_id=self.robot_id)
         self.update_search_region_2d()
 
         # wait for agent creation
@@ -97,15 +70,13 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
         rospy.loginfo("agent created!")
 
         # visualize initial belief
-        self.get_and_visualize_belief()
+        self.get_and_visualize_belief_2d()
 
         # create planner
         response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
                                                     header=proto_utils.make_header(),
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
-
-
 
         response_plan = self._sloop_client.planAction(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
@@ -116,7 +87,17 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
         if action.name.startswith("stay"):
             print("Stay")
             self.update_search_region_3d()
-            rospy.spin()
+
+
+        rospy.loginfo("waiting for local agent creation...")
+        local_robot_id = f"{self.robot_id}_local"
+        self._sloop_client.waitForAgentCreation(local_robot_id)
+        rospy.loginfo(f"local agent {local_robot_id} created!")
+
+        self.get_and_visualize_belief_3d(robot_id=local_robot_id)
+
+        rospy.spin()
+
             # # Action is stay --> may need to create local search agent.
             # # Will send over an UpdateSearchRegion request to help that.
             # # need to get a region point cloud and a pose use that as search region
