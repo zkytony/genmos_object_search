@@ -24,6 +24,7 @@ WORLD_FRAME = "graphnav_map"
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
+ROBOT_POSE_TOPIC = "/simple_sim_env/robot_pose"
 ACTION_TOPIC = "/simple_sim_env/pomdp_action"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
@@ -39,6 +40,53 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
     TASK_CONFIG = CONFIG["task_config"]
     PLANNER_CONFIG = CONFIG["planner_config"]
     OBJECT_LOCATIONS = CONFIG["object_locations"]
+
+
+def observation_msg_to_proto(world_frame, o_msg):
+    """returns three observation proto objects: (ObjectDetectionArray, RobotPose,
+    ObjectsFound) This is reasonable because it's not typically the case that
+    you receive all observations as a joint KeyValObservation message.
+    """
+    if o_msg.type != "joint":
+        raise NotImplementedError(f"Cannot handle type {o_msg.type}")
+
+    header = proto_utils.make_header(frame_id=world_frame)
+    kv = {k:v for k,v in zip(o_msg.keys, o_msg.values)}
+
+    robot_id = kv["robot_id"]
+    robot_pose = eval(kv["robot_pose"])
+    objects_found = eval(kv["objects_found"])
+    robot_pose_pb = o_pb2.RobotPose(header=header, robot_id=robot_id,
+                                    pose_3d=proto_utils.posetuple_to_poseproto(robot_pose))
+    objects_found_pb = o_pb2.ObjectsFound(header=header, robot_id=robot_id,
+                                          object_ids=objects_found)
+
+    # figure out what objects there are
+    object_ids = set()
+    for k in kv:
+        if k.startswith("loc"):
+            object_ids.add(k.split("_")[1])
+
+    detections = []
+    for objid in object_ids:
+        objloc = eval(kv[f"loc_{objid}"])
+        objsizes = eval(kv[f"sizes_{objid}"])
+        if objloc is not None:
+            objbox = common_pb2.Box3D(center=proto_utils.posetuple_to_poseproto((*objloc, 0, 0, 0, 1)),
+                                      sizes=common_pb2.Vec3(x=objsizes[0], y=objsizes[1], z=objsizes[2]))
+            detections.append(o_pb2.Detection3D(label=objid, box=objbox))
+    detections_pb = o_pb2.ObjectDetectionArray(header=header,
+                                               robot_id=robot_id,
+                                               detections=detections)
+    return detections_pb, robot_pose_pb, objects_found_pb
+
+def wait_for_robot_pose():
+    obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                        [KeyValObservation],
+                                        verbose=True, allow_headerless=True).messages[0]
+    kv = {k:v for k,v in zip(obs_msg.keys, obs_msg.values)}
+    robot_pose = eval(kv["robot_pose"])
+    return robot_pose
 
 
 class TestSimpleEnvCase:
@@ -115,6 +163,47 @@ class TestSimpleEnvCase:
             markers.extend(msg.markers)
         self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
         rospy.loginfo("belief visualized")
+
+    def get_and_visualize_belief_2d(self):
+        # First, clear existing belief messages
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._belief_2d_markers_pub.publish(clear_msg)
+        self._topo_map_2d_markers_pub.publish(clear_msg)
+
+        response = self._sloop_client.getObjectBeliefs(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        assert response.status == Status.SUCCESSFUL
+        rospy.loginfo("got belief")
+
+        # visualize object belief
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        markers = []
+        for bobj_pb in response.object_beliefs:
+            color = AGENT_CONFIG["objects"][bobj_pb.object_id].get(
+                "color", [0.2, 0.7, 0.2])[:3]
+            msg = ros_utils.make_object_belief2d_proto_markers_msg(
+                bobj_pb, header, self.search_space_res_2d,
+                color=color)
+            markers.extend(msg.markers)
+        self._belief_2d_markers_pub.publish(MarkerArray(markers))
+
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, self.search_space_res_2d)
+            markers.extend(msg.markers)
+        self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
+        rospy.loginfo("belief visualized")
+
+
 
     def __init__(self, name="test_simple_env_search",
                  o3dviz=False, prior="uniform",
