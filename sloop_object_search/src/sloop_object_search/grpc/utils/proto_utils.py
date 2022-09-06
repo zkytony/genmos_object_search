@@ -337,7 +337,7 @@ def robot_belief_to_proto(robot_belief, search_region, header=None, **other_fiel
                              pose=robot_pose_pb,
                              **other_fields)
 
-def pomdp_detection_from_proto(detection_pb, search_region,
+def pomdp_detection_from_proto(detection_pb, agent,
                                pos_precision='int',
                                rot_precision=0.001,
                                size_precision=0.001):
@@ -351,18 +351,22 @@ def pomdp_detection_from_proto(detection_pb, search_region,
 
     # because the POMDP frame and the world frame are axis-aligned,
     # we only need to convert the position, not rotation.
-    if search_region.is_3d:
-        center_pos = (center.position.x, center.position.y, center.position.z)
-        center_rot = math_utils.fround(rot_precision, quatproto_to_tuple(center.rotation))
-        pomdp_center_pos = math_utils.fround(pos_precision, search_region.to_pomdp_pos(center_pos))
-        pomdp_sizes = math_utils.fround(size_precision, sizes / search_region.search_space_resolution)
-    else:
+    search_region = agent.search_region
+    if not agent.is_hierarchical and not search_region.is_3d:
+        # agent is local 2D agent
         center_pos = (center.position.x, center.position.y)
         quat = quatproto_to_tuple(center.rotation)
         _, _, yaw = math_utils.quat_to_euler(*quat)
         center_rot = math_utils.fround(rot_precision, yaw)
         pomdp_center_pos = math_utils.fround(pos_precision, search_region.to_pomdp_pos(center_pos))
         pomdp_sizes = math_utils.fround(size_precision, sizes[:2] / search_region.search_space_resolution)
+    else:
+        # agent is 3D or hierarchical. Will receive 3D observation
+        center_pos = (center.position.x, center.position.y, center.position.z)
+        center_rot = math_utils.fround(rot_precision, quatproto_to_tuple(center.rotation))
+        pomdp_center_pos = math_utils.fround(pos_precision, search_region.to_pomdp_pos(center_pos))
+        pomdp_sizes = math_utils.fround(size_precision, sizes / search_region.search_space_resolution)
+
     pomdp_pose = (pomdp_center_pos, center_rot)
     return slpo.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
@@ -404,8 +408,8 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
     robot_pose_estimate_pomdp = slpo.RobotLocalization(
         agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
 
-    if not agent.search_region.is_3d:
-        #TODO
+    if not agent.search_region.is_3d and not agent.is_hierarchical:
+        # 2D local agent receives 2D observation
         robot_pose_estimate_pomdp = robot_pose_estimate_pomdp.to_2d()
 
     # objects found
@@ -445,7 +449,7 @@ def pomdp_observation_from_request(request, agent, action=None):
         # First collect what we do detect
         detections = {}
         for detection_pb in request.object_detections.detections:
-            zobj = pomdp_detection_from_proto(detection_pb, agent.search_region)
+            zobj = pomdp_detection_from_proto(detection_pb, agent)
             if zobj.id not in detections:
                 detections[zobj.id] = zobj
             else:

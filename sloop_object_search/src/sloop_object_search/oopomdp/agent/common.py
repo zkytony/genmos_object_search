@@ -210,6 +210,13 @@ class MosAgent(pomdp_py.Agent):
         2D object detections and 2D robot pose estimations."""
         raise NotImplementedError()
 
+    @property
+    def is_hierarchical(self):
+        agent_type = self.agent_config.get("agent_type", "local")
+        if agent_type not in {"local", "hierarchical"}:
+            raise ValueError("'agent_type' in agent_config must be 'local' or 'hierarchical'")
+        return agent_type == "hierarchical"
+
     def update_belief(self, observation, action=None, debug=False, **kwargs):
 
         """
