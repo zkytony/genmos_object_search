@@ -1,9 +1,9 @@
 import logging
 import pomdp_py
 from sloop_object_search.utils.misc import import_class
-from sloop_object_search.oopomdp.agent import HierMosAgent
 from sloop_object_search.oopomdp.domain.action import StayAction
 from sloop_object_search.oopomdp.domain.observation import RobotLocalization
+from sloop_object_search.oopomdp.planner.hier import HierPlanner
 from ..constants import Message, Info
 
 def create_planner(planner_config, agent):
@@ -86,24 +86,37 @@ def plan_action(planner, agent, server):
     # action, then will ask the server to wait for an
     # update search region request in order to gather
     # the necessary inputs to create the local agent.
-    if isinstance(agent, HierMosAgent)\
-       and isinstance(action, StayAction):
-        # server tells client, please send over update search region request
-        local_robot_id = f"{agent.robot_id}_local"
-        server.add_message(agent.robot_id,
-                           Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
+    if isinstance(planner, HierPlanner):
+        assert planner.global_agent.robot_id == agent.robot_id,\
+            "Expecting planning request on behalf of global agent"
+        if action.robot_id == agent.robot_id and isinstance(action, StayAction):
+            # The action is planned for the global agent, AND it is a Stay.
+            # Handle the creation of local search agent if needed
+            if planner.local_agent is None:
+                # server tells client, please send over update search region request
+                local_robot_id = f"{agent.robot_id}_local"
+                server.add_message(agent.robot_id,
+                                   Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
 
-        # Use the server's own mechanism to create the local agent
-        # create a placeholder for the local agent in the server
-        local_agent_config = make_local_agent_config(agent.agent_config)
-        server.prepare_agent_for_creation(local_agent_config)
+                # Use the server's own mechanism to create the local agent
+                # create a placeholder for the local agent in the server
+                local_agent_config = make_local_agent_config(agent.agent_config)
+                server.prepare_agent_for_creation(local_agent_config)
 
-        # Now, wait for local search region; note that this will
-        # also create the local agent, if it is not yet created.
-        local_search_region, robot_loc_world =\
-            server.wait_for_client_provided_info(
-                Info.LOCAL_SEARCH_REGION.format(local_robot_id),
-                timeout=15)
-        import pdb; pdb.set_trace()
+                # Now, wait for local search region; note that this will
+                # also create the local agent, if it is not yet created.
+                local_search_region, robot_loc_world =\
+                    server.wait_for_client_provided_info(
+                        Info.LOCAL_SEARCH_REGION.format(local_robot_id),
+                        timeout=15)
+
+                # Now, we have a local agent
+                planner.set_local_agent(server.agents[local_robot_id])
+                action = planner.plan_local()
+            else:
+                # If the local agent is not None, the hierarchical planner would
+                # not output a Stay action for the global agent. It would output
+                # an action for the local agent. So this is unexpected.
+                raise RuntimeError("Unexpected. Planner should output action for local agent")
 
     return True, action

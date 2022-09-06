@@ -126,7 +126,7 @@ CONFIG_TOPO2D = {
 
     "agent_config": {
         "agent_class": "MosAgentTopo2D",
-        "agent_type": "hierarchical",  # 'hierarchical' or 'local'
+        "agent_type": "local",  # 'hierarchical' or 'local'
         "belief": {},
         "robot": {
             "id": "robot0",
@@ -176,18 +176,12 @@ CONFIG_HIER = {
     },
 
     "agent_config": {
-        "agent_class": "HierMosAgent",
+        "agent_class": "MosAgentTopo2D",
         "agent_type": "hierarchical",  # 'hierarchical' or 'local'
         "belief": {},
         "robot": {
             "id": "robot0",
             "no_look": True,
-            # "sensors": [{"name": "camera",
-            #              "params": {"fov": 61,
-            #                         "far": 1.75,
-            #                         "near": 0.2,
-            #                         "occlusion_enabled": True}}],
-
             "detectors": {"book": {"class": 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    "params": {"sensor": "camera",
                                               "quality": [1e5, 0.1]}}},
@@ -209,11 +203,7 @@ CONFIG_HIER = {
                                           'occlusion_enabled': True}}],
             "detectors_local": {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                          'params': {"sensor": "camera",
-                                                    "quality": [1e5, 0.1]}},
-                                # 'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
-                                #          'params': {"sensor": "camera",
-                                #                     "quality": [1e5, 0.1]}}},
-                                },
+                                                    "quality": [1e5, 0.1]}}},
             "action_local": {"topo": {}}
         },
         'objects': {'book': {'class': 'book',
@@ -221,11 +211,6 @@ CONFIG_HIER = {
                              'color': [0.4, 0.7, 0.3, 0.8],
                              'viz_type': 'cube',
                              'sizes': [0.14, 0.08, 0.10]}},
-                    # 'cup': {'class': 'cup',
-                    #         'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
-                    #         'color': [0.89, 0.6, 0.05, 0.8],
-                    #         'sizes': [0.12, 0.12, 0.12],
-                    #         'viz_type': 'cube'}},
         'targets': ['book'],
         'misc': {
             'visual': {'res': 25},
@@ -237,9 +222,15 @@ CONFIG_HIER = {
     },
 
     "planner_config": {
-        "planner": "sloop_object_search.oopomdp.agent.hier.HierPlanner",
+        "planner": "sloop_object_search.oopomdp.planner.hier.HierPlanner",
         "planner_params": {
             "global": {
+                "exploration_const": 1000,
+                "max_depth": 8,
+                "num_sims": 400,
+                "show_progress": True
+            },
+            "local": {
                 "exploration_const": 1000,
                 "max_depth": 8,
                 "num_sims": 400,

@@ -1,5 +1,5 @@
 agent_config:
-  agent_class: HierMosAgent
+  agent_class: MosAgentTopo2D
   agent_type: hierarchical
   belief: {}
   misc:
@@ -73,9 +73,14 @@ object_locations:
   - 0.1
   - 0.5
 planner_config:
-  planner: sloop_object_search.oopomdp.agent.hier.HierPlanner
+  planner: sloop_object_search.oopomdp.planner.hier.HierPlanner
   planner_params:
     global:
+      exploration_const: 1000
+      max_depth: 8
+      num_sims: 400
+      show_progress: true
+    local:
       exploration_const: 1000
       max_depth: 8
       num_sims: 400

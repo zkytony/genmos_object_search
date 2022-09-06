@@ -6,7 +6,7 @@ import time
 import copy
 
 from sloop_object_search.oopomdp.agent import\
-    (MosAgentBasic2D, MosAgentTopo2D, MosAgentBasic3D, MosAgentTopo3D, HierMosAgent)
+    (MosAgentBasic2D, MosAgentTopo2D, MosAgentBasic3D, MosAgentTopo3D)
 import sloop_object_search.oopomdp.domain.observation as slpo
 import sloop_object_search.oopomdp.domain.action as slpa
 from sloop_object_search.oopomdp.models import belief
@@ -18,8 +18,7 @@ from .search_region_processing import (search_region_2d_from_point_cloud,
 VALID_AGENTS = {"MosAgentBasic2D",
                 "MosAgentTopo2D",
                 "MosAgentBasic3D",
-                "MosAgentTopo3D",
-                "HierMosAgent"}
+                "MosAgentTopo3D"}
 
 
 def create_agent(robot_id, agent_config_world, robot_localization_world, search_region):
@@ -253,7 +252,7 @@ def create_agent_search_region(agent_config, request):
     """
     robot_loc_world = proto_utils.robot_localization_from_proto(request.robot_pose)
     robot_pose = robot_loc_world.pose  # world frame robot pose
-    if agent_config["agent_class"] in {"MosAgentBasic2D", "MosAgentTopo2D", "HierMosAgent"}:
+    if agent_config["agent_class"] in {"MosAgentBasic2D", "MosAgentTopo2D"}:
         # 2D
         params = proto_utils.process_search_region_params_2d(
             request.search_region_params_2d)
@@ -282,6 +281,7 @@ def create_agent_search_region(agent_config, request):
 def update_agent_search_region(agent, request):
     robot_loc_world = proto_utils.robot_localization_from_proto(request.robot_pose)
     robot_pose = robot_loc_world.pose  # world frame robot pose
+
     if type(agent) in {MosAgentBasic2D, MosAgentTopo2D}:
         # 2D
         params = proto_utils.process_search_region_params_2d(
@@ -292,6 +292,7 @@ def update_agent_search_region(agent, request):
             request.point_cloud, robot_position,
             existing_search_region=agent.search_region,
             **params)
+
     elif type(agent) in {MosAgentBasic3D, MosAgentTopo3D}:
         # 3D
         params = proto_utils.process_search_region_params_3d(
@@ -302,32 +303,6 @@ def update_agent_search_region(agent, request):
             request.point_cloud, robot_position,
             existing_search_region=agent.search_region,
             **params)
-
-    elif type(agent) in {HierMosAgent}:
-        # Situation-dependent
-        if agent.searching_locally:
-            # 3D - a local search region
-            params = proto_utils.process_search_region_params_3d(
-                request.search_region_params_3d)
-            robot_position = robot_pose[:3]
-            existing_search_region = None
-            if agent.local_agent is not None:
-                existing_search_region = agent.local_agent.search_region
-            logging.info("converting point cloud to 3d search region...")
-            search_region = search_region_3d_from_point_cloud(
-                request.point_cloud, robot_position,
-                existing_search_region=existing_search_region,
-                **params)
-        else:
-            # 2D is enough - the agent is not waiting for local search region
-            params = proto_utils.process_search_region_params_2d(
-                request.search_region_params_2d)
-            robot_position = robot_pose[:2]
-            logging.info("converting point cloud to 2d search region...")
-            search_region = search_region_2d_from_point_cloud(
-                request.point_cloud, robot_position,
-                existing_search_region=agent.search_region,
-                **params)
 
     else:
         raise ValueError(f"agent class unsupported: {agent_config['agent_class']}")
