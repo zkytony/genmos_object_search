@@ -87,8 +87,9 @@ def plan_action(planner, agent, server):
     # update search region request in order to gather
     # the necessary inputs to create the local agent.
     if isinstance(planner, HierPlanner):
-        assert planner.global_agent.robot_id == agent.robot_id,\
-            "Expecting planning request on behalf of global agent"
+        if planner.global_agent.robot_id != agent.robot_id:
+            return False, "Expecting planning request on behalf of global agent"
+
         if action.robot_id == agent.robot_id and isinstance(action, StayAction):
             # The action is planned for the global agent, AND it is a Stay.
             # Handle the creation of local search agent if needed

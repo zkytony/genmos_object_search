@@ -19,6 +19,7 @@ from .utils import agent_utils
 from .utils import planner_utils
 from ..utils.misc import hash16
 from .constants import Message, Info
+from ..oopomdp.planner.hier import HierPlanner
 
 
 MAX_MESSAGE_LENGTH = 1024*1024*100  # 100MB
@@ -380,12 +381,19 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 self._actions_planned.pop(request.robot_id)
                 action_finished = True
 
-        observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)
-        aux = agent_utils.update_belief(request, agent, observation, action=action)
-        if action_finished:
-            # update planner, when the action finishes
-            planner = self._planners[request.robot_id]
-            agent_utils.update_planner(request, planner, agent, observation, action)
+        planner = self._planners[request.robot_id]
+        if isinstance(planner, HierPlanner):
+            # If the planner is hierarchical, we will let the planner
+            # handle the belief update --> because it is more tricky
+            aux = agent_utils.update_hier(
+                request, planner, agent, action, action_finished)
+        else:
+            # Otherwise, we will update the agent and planner normally
+            observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)
+            aux = agent_utils.update_belief(request, agent, observation, action=action)
+            if action_finished:
+                # update planner, when the action finishes
+                agent_utils.update_planner(request, planner, agent, observation, action)
 
         header = proto_utils.make_header(request.header.frame_id)
         return slpb2.ProcessObservationReply(
