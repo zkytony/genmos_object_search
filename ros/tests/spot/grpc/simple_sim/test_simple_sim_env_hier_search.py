@@ -37,128 +37,18 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
-from test_simple_sim_env_local_search_3d import (wait_for_robot_pose,
-                                                 observation_msg_to_proto)
-
-REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
-ROBOT_POSE_TOPIC = "/simple_sim_env/robot_pose"
-ACTION_TOPIC = "/simple_sim_env/pomdp_action"
-ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
-OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
-
-WORLD_FRAME = "graphnav_map"
-
-SEARCH_SPACE_RESOLUTION = 0.15
+from test_simple_sim_env_common import (TestSimpleEnvCase,
+                                        observation_msg_to_proto,
+                                        wait_for_robot_pose,
+                                        REGION_POINT_CLOUD_TOPIC,
+                                        ROBOT_POSE_TOPIC,
+                                        ACTION_DONE_TOPIC, OBSERVATION_TOPIC,
+                                        AGENT_CONFIG, PLANNER_CONFIG,
+                                        TASK_CONFIG)
 
 
-import yaml
-with open("./config_simple_sim_lab121_lidar.yaml") as f:
-    CONFIG = yaml.safe_load(f)
-    AGENT_CONFIG = CONFIG["agent_config"]
-    TASK_CONFIG = CONFIG["task_config"]
-    PLANNER_CONFIG = CONFIG["planner_config"]
-    OBJECT_LOCATIONS = CONFIG["object_locations"]
+class TestSimpleEnvHierSearch(TestSimpleEnvCase):
 
-
-class TestSimpleEnvHierSearch:
-
-    def get_and_visualize_global_belief(self):
-        # First, clear existing belief messages
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        clear_msg = ros_utils.clear_markers(header, ns="")
-        self._belief_2d_markers_pub.publish(clear_msg)
-        self._topo_map_2d_markers_pub.publish(clear_msg)
-
-        # Request belief
-        response = self._sloop_client.getObjectBeliefs(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
-        assert response.status == Status.SUCCESSFUL
-        rospy.loginfo("got belief")
-
-        # visualize object belief
-        header = std_msgs.Header(stamp=rospy.Time.now(),
-                                 frame_id=self.world_frame)
-        markers = []
-        for bobj_pb in response.object_beliefs:
-            color = AGENT_CONFIG["objects"][bobj_pb.object_id].get(
-                "color", [0.2, 0.7, 0.2])[:3]
-            msg = ros_utils.make_object_belief2d_proto_markers_msg(
-                bobj_pb, header, SEARCH_SPACE_RESOLUTION,
-                color=color)
-            markers.extend(msg.markers)
-        self._belief_2d_markers_pub.publish(MarkerArray(markers))
-
-        # visualize topo map in robot belief
-        markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
-            self.robot_id, header=proto_utils.make_header(self.world_frame))
-        robot_belief_pb = response_robot_belief.robot_belief
-        if robot_belief_pb.HasField("topo_map"):
-            msg = ros_utils.make_topo_map_proto_markers_msg(
-                robot_belief_pb.topo_map,
-                header, SEARCH_SPACE_RESOLUTION)
-            markers.extend(msg.markers)
-        self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
-        rospy.loginfo("belief visualized")
-
-    def update_search_region_2d(self):
-        # need to get a region point cloud and a pose use that as search region
-        rospy.loginfo("Sending request to update search region (2D)")
-        if self._region_cloud_msg is None:
-            region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-                [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
-                [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages
-            self._region_cloud_msg = region_cloud_msg
-        else:
-            pose_stamped_msg = ros_utils.WaitForMessages(
-                [ROBOT_POSE_TOPIC],
-                [geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages[0]
-
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(self._region_cloud_msg)
-        robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
-        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-        self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              robot_id=self.robot_id,
-                                              is_3d=False,
-                                              robot_pose=robot_pose_pb,
-                                              point_cloud=cloud_pb,
-                                              search_region_params_2d={"layout_cut": 0.6,
-                                                                       "region_size": 5.0,
-                                                                       "brush_size": 0.5,
-                                                                       "grid_size": SEARCH_SPACE_RESOLUTION,
-                                                                       "debug": False})
-
-    def update_search_region_3d(self):
-        rospy.loginfo("Sending request to update search region (3D)")
-        if self._region_cloud_msg is None:
-            region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-                [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
-                [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages
-            self._region_cloud_msg = region_cloud_msg
-        else:
-            pose_stamped_msg = ros_utils.WaitForMessages(
-                [ROBOT_POSE_TOPIC],
-                [geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages[0]
-
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(self._region_cloud_msg)
-        robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
-        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-        self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              robot_id=self.robot_id,
-                                              is_3d=True,
-                                              robot_pose=robot_pose_pb,
-                                              point_cloud=cloud_pb,
-                                              search_region_params_3d={"octree_size": 32,
-                                                                       "search_space_resolution": SEARCH_SPACE_RESOLUTION,
-                                                                       "debug": False,
-                                                                       "region_size_x": 4.0,
-                                                                       "region_size_y": 4.0,
-                                                                       "region_size_z": 2.5})
 
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_SEARCH_REGION_UPDATE:

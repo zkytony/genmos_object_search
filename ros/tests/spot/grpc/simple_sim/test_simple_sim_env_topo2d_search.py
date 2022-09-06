@@ -50,24 +50,8 @@ class TestSimpleEnvTopo2DSearch(TestSimpleEnvCase):
     def __init__(self, prior="uniform"):
         super().__init__(prior=prior)
 
-        # need to get a region point cloud and a pose use that as search region
-        region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-            [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
-            [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-            delay=100, verbose=True).messages
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-        robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
-        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-        self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              robot_id=self.robot_id,
-                                              robot_pose=robot_pose_pb,
-                                              point_cloud=cloud_pb,
-                                              search_region_params_2d={"layout_cut": 0.6,
-                                                                       "region_size": 5.0,
-                                                                       "brush_size": 0.5,
-                                                                       "grid_size": self.search_space_res_2d,
-                                                                       "debug": False})
-        # wait for agent creation
+        self.update_search_region_2d()
+
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")

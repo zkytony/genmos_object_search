@@ -65,24 +65,8 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
     def __init__(self, o3dviz=False, prior="uniform"):
         super().__init__(o3dviz=o3dviz, prior=prior)
 
-        # need to get a region point cloud and a pose use that as search region
-        region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-            [REGION_POINT_CLOUD_TOPIC, INIT_ROBOT_POSE_TOPIC],
-            [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-            delay=10, verbose=True).messages
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-        robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
-        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-        self._sloop_client.updateSearchRegion(header=cloud_pb.header,
-                                              robot_id=self.robot_id,
-                                              robot_pose=robot_pose_pb,
-                                              point_cloud=cloud_pb,
-                                              search_region_params_3d={"octree_size": 32,
-                                                                       "search_space_resolution": self.search_space_res_3d,
-                                                                       "debug": False,
-                                                                       "region_size_x": 4.0,
-                                                                       "region_size_y": 4.0,
-                                                                       "region_size_z": 2.5})
+        self.update_search_region_3d()
+
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
