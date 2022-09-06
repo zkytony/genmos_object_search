@@ -38,23 +38,6 @@ class HierMosAgent(MosAgentTopo2D):
                                                local_search_region,
                                                robot_loc)
 
-    def make_local_agent_config(self):
-        agent_config = {
-            "agent_class": "MosAgentTopo3D",
-            "agent_type": "local",
-            "robot": {
-                "id": self.robot_id,
-                "no_look": self.no_look,
-                "detectors": self.agent_config["robot"]["detectors_local"],
-                "sensors": self.agent_config["robot"]["sensors_local"],
-                "action": self.agent_config["robot"]["action_local"],
-                "color": self.agent_config["robot"]["color"]
-            },
-            "objects": self.agent_config["objects"],
-            "targets": self.agent_config["targets"]
-        }
-        return agent_config
-
 
 
 class HierPlanner(pomdp_py.Planner):

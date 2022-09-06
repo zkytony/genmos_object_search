@@ -23,6 +23,24 @@ def create_planner(planner_config, agent):
         raise NotImplementedError(f"Planner {planner_class} is unrecognized.")
 
 
+def make_local_agent_config(hier_agent_config):
+    agent_config = {
+        "agent_class": "MosAgentTopo3D",
+        "agent_type": "local",
+        "robot": {
+            "id": hier_agent_config["robot"]["id"] + "_local",
+            "no_look": hier_agent_config["no_look"],
+            "detectors": hier_agent_config["robot"]["detectors_local"],
+            "sensors": hier_agent_config["robot"]["sensors_local"],
+            "action": hier_agent_config["robot"]["action_local"],
+            "color": hier_agent_config["robot"]["color"]
+        },
+        "objects": hier_agent_config["objects"],
+        "targets": hier_agent_config["targets"]
+    }
+    return agent_config
+
+
 def plan_action(planner, agent, server):
     """
     Performs planning and outputs the next action for execution.
@@ -67,18 +85,18 @@ def plan_action(planner, agent, server):
     if isinstance(agent, HierMosAgent)\
        and isinstance(action, StayAction):
         # server tells client, please send over update search region request
+        local_robot_id = f"{agent.robot_id}_local"
         server.add_message(agent.robot_id,
-                           Message.REQUEST_SEARCH_REGION_UPDATE.format(agent.robot_id))
+                           Message.REQUEST_SEARCH_REGION_UPDATE.format(local_robot_id))
         local_search_region, robot_loc_world =\
             server.wait_for_client_provided_info(
-                Info.LOCAL_SEARCH_REGION_INFO.format(agent.robot_id))
-        robot_pose_local, robot_pose_cov_local =\
-            local_search_region.to_pomdp_pose(robot_loc_world.pose, robot_loc_world.cov)
-        robot_loc_local = RobotLocalization(
-            agent.robot_id, robot_pose_local,
-            robot_pose_cov_local)
-        agent.create_local_agent(local_search_region, robot_loc_local)
-
+                Info.LOCAL_SEARCH_REGION_INFO.format(local_robot_id))
+        # use the server's own mechanism to create this agent
+        local_agent_config = make_local_agent_config(agent.config)
+        server.prepare_agent_for_creation(local_agent_config,
+                                          local_search_region,
+                                          robot_loc_world)
+        server.create_agent(local_robot_id)
         print("Local agent created")
 
     return True, action

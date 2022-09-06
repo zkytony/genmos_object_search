@@ -62,7 +62,7 @@ with open("./config_simple_sim_lab121_lidar.yaml") as f:
 
 class TestSimpleEnvHierSearch:
 
-    def get_and_visualize_belief(self):
+    def get_and_visualize_global_belief(self):
         # First, clear existing belief messages
         header = std_msgs.Header(stamp=rospy.Time.now(),
                                  frame_id=self.world_frame)
@@ -70,6 +70,7 @@ class TestSimpleEnvHierSearch:
         self._belief_2d_markers_pub.publish(clear_msg)
         self._topo_map_2d_markers_pub.publish(clear_msg)
 
+        # Request belief
         response = self._sloop_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
