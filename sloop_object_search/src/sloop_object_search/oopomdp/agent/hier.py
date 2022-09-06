@@ -26,19 +26,6 @@ class HierMosAgent(MosAgentTopo2D):
     def local_agent(self):
         return self._local_agent
 
-    def create_local_agent(self, robot_loc, local_search_region):
-        """Create a local agent with initial belief based on the global agent's belief.
-        Args:
-            robot_loc (RobotLocalization): 3D robot localization, in local region frame
-            local_search_region (SearchRegion3D): 3D search regionx
-        """
-        if self._local_agent is not None:
-            local_agent_config = self.make_local_agent_config()
-            self._local_agent = MosAgentTopo3D(local_agent_config,
-                                               local_search_region,
-                                               robot_loc)
-
-
 
 class HierPlanner(pomdp_py.Planner):
     def __init__(self, hier_agent, **planner_params):
