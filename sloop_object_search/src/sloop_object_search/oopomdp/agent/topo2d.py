@@ -243,8 +243,8 @@ def _sample_topo_map(init_object_beliefs,
     min_prob = float("inf")
     max_prob = float("-inf")
     for i in range(num_samples):
-        shifted_x = rnd.uniform(0, grid_map.width)
-        shifted_y = rnd.uniform(0, grid_map.length)
+        shifted_x = rnd.uniform(0, grid_map.width-1)
+        shifted_y = rnd.uniform(0, grid_map.length-1)
         x, y = grid_map.shift_back_pos(shifted_x, shifted_y)
         pos = (int(round(x)), int(round(y)))
         added = False
