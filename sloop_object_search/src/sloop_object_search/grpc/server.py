@@ -384,6 +384,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if isinstance(planner, HierPlanner):
             # If the planner is hierarchical, we will let the planner
             # handle the belief update --> because it is more tricky
+            import pdb; pdb.set_trace()
             aux = agent_utils.update_hier(
                 request, planner, agent, action, action_finished)
         else:

@@ -219,38 +219,6 @@ def update_belief(request, agent, observation, action=None):
     return result
 
 
-def update_planner(request, planner, agent, observation, action):
-    """update planner"""
-    # For 3D agents, the planning observation for an object is a Voxel
-    # at the ground resolution level. So we need to convert ObjectDetection
-    # into a Voxel. For 2D agents, we need to convert it to ObjectLoc.
-    planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
-    for objid in observation:
-        if objid == agent.robot_id:
-            continue
-        zobj = observation.z(objid)
-        if isinstance(zobj, slpo.ObjectDetection):
-            if agent.search_region.is_3d:
-                if zobj.loc is not None:
-                    planning_zobj = slpo.ObjectVoxel(objid, zobj.loc, objid)
-                else:
-                    planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE,
-                                                     slpo.Voxel.UNKNOWN)
-            else:
-                if zobj.loc is not None:
-                    planning_zobj = slpo.ObjectLoc(objid, zobj.loc[:2], objid)
-                else:
-                    planning_zobj = slpo.ObjectLoc(objid,
-                                                   slpo.ObjectLoc.NO_LOC,
-                                                   slpo.ObjectLoc.UNKNOWN)
-            planning_zobjs[objid] = planning_zobj
-        else:
-            raise TypeError(f"Unable to handle observation of type {zobj} for planner update")
-    planning_observation = slpo.GMOSObservation(planning_zobjs)
-    planner.update(agent, action, planning_observation)
-    logging.info("planner updated")
-
-
 def create_agent_search_region(agent_config, request):
     """Called before the agent is created, upon receiving an UpdateSearchRegion
     request. Returns a tuple, (SearchRegion, RobotLocalization), where the robot
@@ -362,20 +330,14 @@ def plan_action(planner, agent, server):
     Note for hierarchical agent:
     When the planner of the global search agent outputs StayAction,
     the the following happens:
-      (1) the server sends the client a message requesting a UpdateSearchRegion
-      (2) the server waits, until receiving this message from the client.
-      (3) Upon receiving this message, a search_region is created, and
-          a *local search agent* is also then created. This should be a 3D agent.
-          Note that the client does not need to supply configuration for
-          the creation of this client. This configuration is interpreted based
-          on the initial configuration when creating the ~HierMosAgent~. The
-          initial belief of the local search agent is based on the global
-          search agent's belief.
-      (4) A planner for the local search agent is created.
-      (5) Planning is performed for the local search agent. The action is
-          returned for execution to the client. This means the client
-          doesn't see the "StayAction" by the global agent; It will take
-          an action corresponding to the local search agent's planning output.
+      (1) the server creates a placeholder for agent "hrobot0_local"
+      (2) the server sends the client a message requesting a UpdateSearchRegion
+          for "hrobot0_local". This is necessary in order to provide
+          the search region to create the local search agent.
+      (3) Upon receiving UpdateSearchRegion for "hrobot0_local", the
+          local search agent is created.
+      (4) The HierPlanner is given the local search agent, and plans
+          an action for this agent to be executed by the client.
 
     Args:
         planner (pomdp_py.Planner)
@@ -431,3 +393,39 @@ def plan_action(planner, agent, server):
                 raise RuntimeError("Unexpected. Planner should output action for local agent")
 
     return True, action
+
+
+def update_planner(request, planner, agent, observation, action):
+    """update planner"""
+    # For 3D agents, the planning observation for an object is a Voxel
+    # at the ground resolution level. So we need to convert ObjectDetection
+    # into a Voxel. For 2D agents, we need to convert it to ObjectLoc.
+    planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
+    for objid in observation:
+        if objid == agent.robot_id:
+            continue
+        zobj = observation.z(objid)
+        if isinstance(zobj, slpo.ObjectDetection):
+            if agent.search_region.is_3d:
+                if zobj.loc is not None:
+                    planning_zobj = slpo.ObjectVoxel(objid, zobj.loc, objid)
+                else:
+                    planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE,
+                                                     slpo.Voxel.UNKNOWN)
+            else:
+                if zobj.loc is not None:
+                    planning_zobj = slpo.ObjectLoc(objid, zobj.loc[:2], objid)
+                else:
+                    planning_zobj = slpo.ObjectLoc(objid,
+                                                   slpo.ObjectLoc.NO_LOC,
+                                                   slpo.ObjectLoc.UNKNOWN)
+            planning_zobjs[objid] = planning_zobj
+        else:
+            raise TypeError(f"Unable to handle observation of type {zobj} for planner update")
+    planning_observation = slpo.GMOSObservation(planning_zobjs)
+    planner.update(agent, action, planning_observation)
+    logging.info("planner updated")
+
+
+def update_hier(request, planner, agent, action, action_finished):
+    pass
