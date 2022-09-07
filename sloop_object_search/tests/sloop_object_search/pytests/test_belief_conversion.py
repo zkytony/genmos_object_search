@@ -7,6 +7,7 @@ from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
 from sloop_object_search.utils import open3d_utils
+from sloop_object_search.utils.colors import cmaps
 
 @pytest.fixture
 def search_region2d():
@@ -15,7 +16,7 @@ def search_region2d():
     grid_map2 = GridMap2(obstacles=obstacles,
                         free_locations=free_locations)
     region_origin = (1.357, 2.324)
-    grid_size = 0.3
+    grid_size = 0.15
     return SearchRegion2D(grid_map2, region_origin, grid_size)
 
 @pytest.fixture
@@ -30,14 +31,16 @@ def bobj2d(objid, search_region2d):
 @pytest.fixture
 def search_region3d():
     occupancy_octree = OccupancyOctreeDistribution((32, 32, 32))
-    region_origin = (3.22, 1.292)
+    region_origin = (1.357, 2.324)
     search_space_resolution = 0.1
     return SearchRegion3D(occupancy_octree, region_origin=region_origin,
                           search_space_resolution=search_space_resolution)
 
 def test_belief_2d_to_3d(bobj2d, search_region2d, search_region3d):
-    bobj3d = object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d)
-    geometries = open3d_utils.draw_octree_dist(bobj3d.octree_dist, viz=False)
+    bobj3d = object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8)
+    geometries = open3d_utils.draw_search_region3d(
+        search_region3d, octree_dist=bobj3d.octree_dist, viz=False,
+        cmap=cmaps.COLOR_MAP_GRAYS)
     geometries.extend(open3d_utils.draw_locdist2d(
         bobj2d.loc_dist, search_region=search_region2d, viz=False))
     o3d.visualization.draw_geometries(geometries)

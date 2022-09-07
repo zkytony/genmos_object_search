@@ -88,7 +88,7 @@ def cube_filled(scale=1, color=[1,0,0], alpha=1.0, name=None, with_border=False)
     return {'name': name, 'geometry': box, 'material': mat}
 
 
-def draw_search_region3d(search_region, octree_dist=None, points=None,
+def draw_search_region3d(search_region, octree_dist=None, points=None, viz=True,
                          color_by_prob=True, cmap=cmaps.COLOR_MAP_HALLOWEEN):
     """
     By default draws the octree_dist in search_region, unless one
@@ -139,7 +139,8 @@ def draw_search_region3d(search_region, octree_dist=None, points=None,
             color = [0.9, 0.1, 0.1]
         mesh_box.paint_uniform_color(color)
         geometries.append(mesh_box)
-    o3d.visualization.draw_geometries(geometries)
+    if viz:
+        o3d.visualization.draw_geometries(geometries)
     return geometries
 
 def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
