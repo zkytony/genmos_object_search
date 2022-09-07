@@ -32,8 +32,8 @@ class HierPlanner(pomdp_py.Planner):
         if local_agent.robot_id != self.global_agent.robot_id + "_local":
             raise ValueError("Invalid robot id for local agent: {local_agent.robot_id}; "\
                              f"Expecting {self.global_agent.robot_id}_local")
-        robot_state_local = local_agent.belief.b(local_agent.robot_id)
-        robot_state_global = self.global_agent.belief.b(self.global_agent.robot_id)
+        robot_state_local = local_agent.belief.b(local_agent.robot_id).mpe()
+        robot_state_global = self.global_agent.belief.b(self.global_agent.robot_id).mpe()
         if robot_state_local.objects_found != robot_state_global.objects_found:
             raise ValueError("local and global agents have different belief in 'objects_found' "\
                              f"local: {robot_state_local.objects_found} "\
@@ -49,11 +49,9 @@ class HierPlanner(pomdp_py.Planner):
         the local_agent's object beliefs with that in the global agent, mapped
         to 3D. """
         self._verify_local_agent(local_agent)
-
         belief_conversion_params =\
-            self.global_agent.agent_config["belief"].get("conversion")
-
-        if init_belief_from_global:
+            self.global_agent.agent_config["belief"].get("conversion", {})
+        if init_object_beliefs_from_global:
             for objid in self.global_agent.belief.object_beliefs:
                 if objid == self.global_agent.robot_id:
                     continue
@@ -70,7 +68,7 @@ class HierPlanner(pomdp_py.Planner):
         Will update global agent's belief by projecting the
         3D belief of local agent down to 2D."""
         belief_conversion_params =\
-            self.global_agent.agent_config["belief"].get("conversion")
+            self.global_agent.agent_config["belief"].get("conversion", {})
         for objid in self.global_agent.belief.object_beliefs:
             if objid == self.global_agent.robot_id:
                 continue
@@ -92,6 +90,7 @@ class HierPlanner(pomdp_py.Planner):
                                                  rollout_policy=self._local_agent.policy_model)
         action = self._local_planner.plan(self._local_agent)
         action.robot_id = self._local_agent.robot_id
+        action.name = action.name + "[local]"
         return action
 
     def plan(self, agent):

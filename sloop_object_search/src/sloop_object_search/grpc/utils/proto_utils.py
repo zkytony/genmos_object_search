@@ -385,7 +385,8 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
     # process observation about objects now).
     assert isinstance(request, slpb2.ProcessObservationRequest),\
         "request must be ProcessObservationRequest"
-    if request.robot_id != agent.robot_id:
+    if request.robot_id != agent.robot_id\
+       and request.robot_id + "_local" != agent.robot_id:
         raise ValueError("request is not for the agent")
 
     if not agent.no_look:
@@ -440,7 +441,8 @@ def pomdp_observation_from_request(request, agent, action=None):
     in the request."""
     assert isinstance(request, slpb2.ProcessObservationRequest),\
         "request must be ProcessObservationRequest"
-    if request.robot_id != agent.robot_id:
+    if request.robot_id != agent.robot_id\
+       and request.robot_id + "_local" != agent.robot_id:
         raise ValueError("request is not for the agent")
 
     # we will always create a robot observation

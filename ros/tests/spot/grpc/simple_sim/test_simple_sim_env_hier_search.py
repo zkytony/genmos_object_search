@@ -179,7 +179,7 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
 
             # visualize FOV and belief
             self.get_and_visualize_belief_3d(robot_id=local_robot_id)
-
+            self.get_and_visualize_belief_2d()
 
 def main():
     TestSimpleEnvHierSearch(prior="uniform")
