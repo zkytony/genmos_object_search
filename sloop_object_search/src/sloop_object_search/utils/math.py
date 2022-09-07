@@ -414,6 +414,16 @@ def approx_equal(v1, v2, epsilon=1e-6):
             return False
     return True
 
+def divisible_by(a, b, epsilon=1e-6):
+    """returns True if a is divisible by b,
+    considering numerical instability"""
+    if math.isclose(a % b, 0.0, abs_tol=epsilon):
+        return True
+    elif math.isclose(a % b, b, abs_tol=epsilon):
+        return True
+    return False
+
+
 ## Geometry
 def euclidean_dist(p1, p2):
     return math.sqrt(sum([(a - b)** 2 for a, b in zip(p1, p2)]))

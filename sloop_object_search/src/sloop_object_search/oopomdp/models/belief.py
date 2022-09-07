@@ -1,5 +1,6 @@
 # utility functions for belief. The joint belief is modeled by
 # pomdp_py.OOBelief
+import math
 from tqdm import tqdm
 import numpy as np
 import pomdp_py
@@ -8,7 +9,8 @@ from ..domain.observation import RobotLocalization, RobotObservation, FovVoxels,
 from ..models.search_region import SearchRegion2D, SearchRegion3D
 from ..models.octree_belief import Octree, OctreeBelief, RegionalOctreeDistribution
 from ..domain.state import ObjectState, RobotState
-from sloop_object_search.utils.math import quat_to_euler, euler_to_quat, identity
+from sloop_object_search.utils.math import (quat_to_euler, euler_to_quat,
+                                            identity, divisible_by)
 
 
 ##### Belief initialization utilities ####
@@ -359,18 +361,15 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kw
 
     kwargs: parameters for creating RegionalOctreeDistribution.
     """
-    if belief3d_init_params is None:
-        belief3d_init_params = {}
-
     dimension = search_region3d.octree_dist.octree.dimensions[0]
     # obtain estimate of height increments
     region_height = search_region3d.octree_dist.region[3]
-    if region_height % res != 0.0:
+    if not divisible_by(region_height, res):
         region_height_world = region_height * search_region3d.search_space_resolution
         res_world = res * search_region3d.search_space_resolution
         raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
-                         "divisible by res {res} (metric: {res_world})")
-    height_increments = int(region_height / res)
+                         f"divisible by res {res} (metric: {res_world})")
+    height_increments = int(region_height // res)
 
     # octree distribution used for belief
     object_belief_octree_dist = RegionalOctreeDistribution(
@@ -418,7 +417,7 @@ def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res
     dimension = search_region3d.octree_dist.octree.dimensions[0]
     # obtain estimate of height increments
     region_height = search_region3d.octree_dist.region[3]
-    if region_height % res != 0.0:
+    if not divisible_by(region_height, res):
         region_height_world = region_height * search_region3d.search_space_resolution
         res_world = res * search_region3d.search_space_resolution
         raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\

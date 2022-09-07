@@ -264,7 +264,7 @@ class TestSimpleEnvCase:
                                                                        "debug": False,
                                                                        "region_size_x": 4.0,
                                                                        "region_size_y": 4.0,
-                                                                       "region_size_z": 2.5})
+                                                                       "region_size_z": 2.4})
 
     def __init__(self, name="test_simple_env_search",
                  o3dviz=False, prior="uniform",
