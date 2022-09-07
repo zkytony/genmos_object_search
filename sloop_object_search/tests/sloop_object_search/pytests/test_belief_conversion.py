@@ -53,5 +53,5 @@ def test_belief_conversion(bobj2d, search_region2d, search_region3d):
         search_region3d, octree_dist=bobj3d.octree_dist, viz=False,
         cmap=cmaps.COLOR_MAP_GRAYS)
     geometries.extend(open3d_utils.draw_locdist2d(
-        bobj2d.loc_dist, search_region=search_region2d, viz=False))
+        bobj2d_projected.loc_dist, search_region=search_region2d, viz=False))
     o3d.visualization.draw_geometries(geometries)
