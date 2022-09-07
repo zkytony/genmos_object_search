@@ -139,7 +139,9 @@ class SearchRegion:
 
 
 class SearchRegion2D(SearchRegion):
-    """The 2D search region is represented as a GridMap"""
+    """The 2D search region is represented as a GridMap.
+    For now, the free locations on the grid map are potential
+    object locations. TODO: change this to be label-based?"""
     def __init__(self, grid_map, region_origin=None, grid_size=None):
         """
         Args:
@@ -185,6 +187,7 @@ class SearchRegion3D(SearchRegion):
     should be zero, indicating free space (it is not a belief,
     it is occupancy)."""
     def __init__(self, octree_dist, **kwargs):
+        """octree_dist should be an OccupancyOctreeDistribution"""
         assert isinstance(octree_dist, OccupancyOctreeDistribution),\
             "octree_dist must be OccupancyOctreeDistribution."
         super().__init__(octree_dist, **kwargs)

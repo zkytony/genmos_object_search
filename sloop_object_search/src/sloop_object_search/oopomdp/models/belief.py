@@ -261,6 +261,10 @@ class ObjectBelief2D(pomdp_py.GenerativeDistribution):
         return self._objid
 
     @property
+    def objclass(self):
+        return self._objclass
+
+    @property
     def loc_dist(self):
         return self._loc_dist
 
@@ -310,3 +314,67 @@ def update_object_belief_2d(object_belief_2d, real_observation,
         object_belief_2d.loc_dist[loc] = val_tp1
         object_belief_2d.loc_dist.update_normalizer(val_t, val_tp1)
     return object_belief_2d
+
+
+def update_global_agent_belief_from_local(global_agent, local_agent):
+    """Given local agent, update global_agent's belief accordingly"""
+
+
+def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8):
+    """Given a 2D object belief (ObjectBelief2D), search_region2d (SearchRegion2D),
+    and a search_region3d (SearchRegion3D), return a corresponding 3D octree
+    belief over the object location.
+
+    Note that the 3D search region may be overlapping but not completely
+    contained within the 2D locations that form the 2D belief.
+
+    Also note that the 2D search region, where the 2D belief is based on,
+    may have a different resolution than the 3D search region. We need
+    to perform coordinate conversion through the world frame between 2D
+    and 3D. The resulting 3D belief will have location coordinates that
+    make sense for the 3D search region.
+
+    'res' controls how precisely the 2D belief is converted into 3D.
+    The lower (i.e. higher resolution), the more precise. It means
+    the length size of a cuboid that will be assigned a value based
+    on the 2D belief, representing a uniform distribution within that
+    cuboid's space.  We expect 'res' to be set so that the height of
+    the local search region (in POMDP frame) is divisible by 'res'.
+    """
+    dimension = search_region3d.octree_dist.octree.dimensions[0]
+    # obtain estimate of height increments
+    region_height = search_region3d.octree_dist.region[3]
+    if region_height % res != 0.0:
+        region_height_world = region_height * search_region3d.search_space_resolution
+        res_world = res * search_region3d.search_space_resolution
+        raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
+                         "divisible by res {res} (metric: {res_world})")
+    height_increments = int(region_height / res)
+
+    # octree distribution used for belief
+    object_belief_octree_dist = RegionalOctreeDistribution(
+        (dimension, dimension, dimension),
+        search_region.octree_dist.region,
+        num_samples=init_params.get("num_samples", 200))
+
+    # iterate over the 2D locations within the 3D region
+    for x in range(int(dimension // res)):
+        for y in range(int(dimension // res)):
+            # we need to combine the values of 2D locations within
+            # this larger square
+            val_per_cuboid = 0
+            for dx in range(dimension):
+                for dy in range(dimension):
+                    pos3d_ground = (x+dx, y+dy, 0)  # position in 3D region at ground resolution
+                    pos3d_world = search_region3d.to_world_pos(pos3d_ground)
+                    pos2d = search_region2d.to_pomdp_pos(pos3d_world)
+                    # obtain the unnormalized belief - this will be the value of
+                    # a node in the octree belief at the same location
+                    if pos_2d in search_region2d:
+                        val2d = bobj2d.get_val(*pos_2d)
+                        val_per_cuboid += val2d
+            for z in range(height_increments):
+                voxel = (x, y, z, res)
+                object_belief_octree_dist.assign(voxel, val_per_cuboid)
+    bobj3d = OctreeBelief(bobj2d.objid, bobj2d.objclass, object_belief_octree_dist)
+    return bobj3d
