@@ -386,7 +386,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             # handle the belief update --> because it is more tricky
             assert planner.global_agent.robot_id == agent.robot_id,\
                 "Expecting request to contain global agent's robot id"
-            import pdb; pdb.set_trace()
             aux = agent_utils.update_hier(
                 request, planner, action, action_finished)
         else:
