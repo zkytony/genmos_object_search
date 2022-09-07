@@ -4,6 +4,8 @@ from ..agent.topo3d import MosAgentTopo3D
 from ..agent.topo2d import MosAgentTopo2D
 from ..agent.common import MosAgent
 from ..domain.action import StayAction
+from ..models import belief
+from sloop_object_search.utils.math import euclidean_dist
 
 class HierPlanner(pomdp_py.Planner):
     def __init__(self, global_agent, **planner_params):
@@ -24,8 +26,61 @@ class HierPlanner(pomdp_py.Planner):
     def local_agent(self):
         return self._local_agent
 
-    def set_local_agent(self, local_agent):
+    def _verify_local_agent(self, local_agent):
+        """The local agent is expected to have the same robot belief,
+        as the global agent difference in pose due to noise."""
+        if local_agent.robot_id != self.global_agent.robot_id + "_local":
+            raise ValueError("Invalid robot id for local agent: {local_agent.robot_id}; "\
+                             f"Expecting {self.global_agent.robot_id}_local")
+        robot_state_local = local_agent.belief.b(local_agent.robot_id)
+        robot_state_global = self.global_agent.belief.b(self.global_agent.robot_id)
+        if robot_state_local.objects_found != robot_state_global.objects_found:
+            raise ValueError("local and global agents have different belief in 'objects_found' "\
+                             f"local: {robot_state_local.objects_found} "\
+                             f"global: {robot_state_global.objects_found}")
+        robot_pose_local_world = local_agent.search_region.to_world_pose(robot_state_local.pose)
+        robot_pose_global_world = self.global_agent.search_region.to_world_pose(robot_state_global.pose)
+        _pos_diff_tol = self.planner_params.get("local_global_pos_diff_tol", 3.0)
+        assert euclidean_dist(robot_pose_local_world[:2], robot_pose_global_world[:2]) <= _pos_diff_tol,\
+            "local and global robot poses differ too much."
+
+    def set_local_agent(self, local_agent, init_object_beliefs_from_global=True):
+        """If 'init_belief_from_global' is True, then will override
+        the local_agent's object beliefs with that in the global agent, mapped
+        to 3D. """
+        self._verify_local_agent(local_agent)
+
+        belief_conversion_params =\
+            self.global_agent.agent_config["belief"].get("conversion")
+
+        if init_belief_from_global:
+            for objid in self.global_agent.belief.object_beliefs:
+                if objid == self.global_agent.robot_id:
+                    continue
+                bobj2d = self.global_agent.belief.b(objid)
+                bobj3d = belief.object_belief_2d_to_3d(
+                    bobj2d, self.global_agent.search_region,
+                    local_agent.search_region,
+                    **belief_conversion_params)
+                local_agent.belief.set_object_belief(objid, bobj3d)
         self._local_agent = local_agent
+
+    def update_global_object_beliefs_from_local(self):
+        """"Assuming self.local_agent belief has been updated.
+        Will update global agent's belief by projecting the
+        3D belief of local agent down to 2D."""
+        belief_conversion_params =\
+            self.global_agent.agent_config["belief"].get("conversion")
+        for objid in self.global_agent.belief.object_beliefs:
+            if objid == self.global_agent.robot_id:
+                continue
+            bobj2d = self.global_agent.belief.b(objid)
+            bobj3d = self.local_agent.belief.b(objid)
+            bobj2d_updated = belief.update_2d_belief_by_3d(
+                bobj2d, bobj3d, self.global_agent.search_region,
+                self.local_agent.search_region,
+                **belief_conversion_params)
+            self.global_agent.belief.set_object_belief(objid, bobj2d_updated)
 
     def plan_local(self):
         if self._local_agent is None:

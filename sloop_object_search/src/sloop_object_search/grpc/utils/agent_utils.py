@@ -182,7 +182,7 @@ def voxel_to_world(v, search_region):
     world_res = r * search_region.search_space_resolution
     return [*world_pos, world_res]
 
-def update_belief(request, agent, observation, action=None):
+def update_belief(agent, observation, action=None, **kwargs):
     """
     performs belief update and returns what the request wants.
 
@@ -191,13 +191,14 @@ def update_belief(request, agent, observation, action=None):
         agent: pomdp agent
         observation: pomdp Observation
         action: pomdp action
+        kwargs: contains parameters interpreted from request, such as 'return_fov'
     """
     _start_time = time.time()
     result = {}
 
     # Perform the belief update
-    ret = agent.update_belief(observation, action=action, debug=request.debug,
-                              return_fov=request.return_fov)
+    ret = agent.update_belief(
+        observation, action=action, debug=request.debug, **kwargs)
 
     # Process auxiliary returning information
     if isinstance(observation, slpo.JointObservation):
@@ -427,7 +428,7 @@ def update_planner(request, planner, agent, observation, action):
     logging.info("planner updated")
 
 
-def update_hier(request, planner, agent, action, action_finished):
+def update_hier(request, planner, action, action_finished):
     """Update agent and planner (HierPlanner)."""
     if not isinstance(planner, HierPlanner):
         raise TypeError(f"update_hier only applies to HierPlanner. Got {type(planner)}")
@@ -436,7 +437,24 @@ def update_hier(request, planner, agent, action, action_finished):
     # and then update the global agent's belief based on
     # the local agent belief.
     if planner.searching_locally:
-        observation = proto_utils.pomdp_observation_from_request(
+        # interpret request and update local agent belief.
+        observation_local = proto_utils.pomdp_observation_from_request(
             request, planner.local_agent, action=action)
-        aux = update_belief(request, planner.local_agent, action=action)
-        # Update global agent's belief
+        aux_local = update_belief(planner.local_agent, observation, action=action,
+                                  **proto_utils.process_observation_params(request))
+        # Update global agent's object belief
+        planner.update_global_object_beliefs_from_local()
+        observation_global = proto_utils.pomdp_observation_from_request(
+            request, planner.global_agent, action=action)
+        robot_observation_global = observation_global.z(planner.global_agent.robot_id)
+        aux_global = update_belief(planner.global_agent, robot_observation_global, action=action,
+                                   **proto_utils.process_observation_params(request))
+        aux = {**aux_local, **aux_global}
+
+    else:
+        # No local agent. Just update the global planner
+        observation_global = proto_utils.pomdp_observation_from_request(
+            request, planner.global_agent, action=action)
+        aux = update_belief(planner.global_agent, observation_global, action=action,
+                            **proto_utils.process_observation_params(request))
+    return aux

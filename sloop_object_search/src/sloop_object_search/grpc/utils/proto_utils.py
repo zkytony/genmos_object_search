@@ -59,6 +59,11 @@ def process_search_region_params_3d(search_region_params_3d_pb):
         params["region_size_z"] = search_region_params_3d_pb.region_size_z
     return params
 
+def process_observation_params(request):
+    params = {}
+    if request.HasField("return_fov"):
+        params["return_fov"] = request.return_fov
+    return params
 
 def pointcloudproto_to_array(point_cloud):
     points_array = np.array([[p.pos.x, p.pos.y, p.pos.z]

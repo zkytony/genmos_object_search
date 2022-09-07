@@ -336,12 +336,7 @@ def update_object_belief_2d(object_belief_2d, real_observation,
     return object_belief_2d
 
 
-def update_global_agent_belief_from_local(global_agent, local_agent):
-    """Given local agent, update global_agent's belief accordingly"""
-
-
-def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
-                           belief3d_init_params=None):
+def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kwargs):
     """Given a 2D object belief (ObjectBelief2D), search_region2d (SearchRegion2D),
     and a search_region3d (SearchRegion3D), return a corresponding 3D octree
     belief over the object location.
@@ -361,6 +356,8 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
     on the 2D belief, representing a uniform distribution within that
     cuboid's space.  We expect 'res' to be set so that the height of
     the local search region (in POMDP frame) is divisible by 'res'.
+
+    kwargs: parameters for creating RegionalOctreeDistribution.
     """
     if belief3d_init_params is None:
         belief3d_init_params = {}
@@ -379,7 +376,7 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
     object_belief_octree_dist = RegionalOctreeDistribution(
         (dimension, dimension, dimension),
         search_region3d.octree_dist.region,
-        num_samples=belief3d_init_params.get("num_samples", 200))
+        num_samples=kwargs.get("num_samples", 200))
 
     cuboid_vals = {}  # maps from voxel to a list of values, because multiple 2D
                       # grids may map to the same 3D grid
@@ -412,7 +409,7 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
     return bobj3d
 
 
-def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res=8):
+def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res=8, **kwargs):
     """Update 2D object belief by returning a new ObjectBelief2D,
     based on the 3D regional belief bobj3d.
 
