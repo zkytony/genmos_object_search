@@ -68,6 +68,10 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         # node value is not in log space.
         return node_value / self._normalizer
 
+    @property
+    def normalizer(self):
+        return self._normalizer
+
     def __getitem__(self, voxel):
         """voxel: a tuple (x, y, z, res)"""
         if type(voxel) != tuple and len(voxel) != 4:

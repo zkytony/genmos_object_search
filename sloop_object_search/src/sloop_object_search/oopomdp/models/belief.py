@@ -174,17 +174,24 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
     octree belief, this representation initializes explicitly a value for every
     location, because we assume it is efficient enough computationally to do so for 2D.
     """
-    def __init__(self, search_region, default_val=1.):
+    def __init__(self, search_region=None, default_val=1.,
+                 values=None, normalizer=None):
         """
         belief_config: the 'belief' dict in agent_config"""
-        assert isinstance(search_region, SearchRegion2D),\
-            f"search_region should be a SearchRegion2D but its {type(search_region)}"
-        # maps from a location in search region to an unnormalized probability value
-        self._search_region = search_region
-        self._default_val = default_val
-        self._values = {loc: self._default_val
-                       for loc in self._search_region}
-        self._normalizer = len(self._search_region) * self._default_val
+        if search_region is not None:
+            assert isinstance(search_region, SearchRegion2D),\
+                f"search_region should be a SearchRegion2D but its {type(search_region)}"
+            # maps from a location in search region to an unnormalized probability value
+            self._search_region = search_region
+            self._default_val = default_val
+            self._values = {loc: self._default_val
+                           for loc in self._search_region}
+            self._normalizer = len(self._search_region) * self._default_val
+        else:
+            assert (values is not None) and (normalizer is not None),\
+                "search region unspecified, values and normalizer should not be None."
+            self._values = values
+            self._normalizer = normalizer
 
     @property
     def values_dict(self):
@@ -369,6 +376,8 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
         search_region3d.octree_dist.region,
         num_samples=belief3d_init_params.get("num_samples", 200))
 
+    cuboid_vals = {}  # maps from voxel to a list of values, because multiple 2D
+                      # grids may map to the same 3D grid
     # iterate over the 2D locations within the 3D region
     for x in range(int(dimension // res)):
         for y in range(int(dimension // res)):
@@ -387,6 +396,57 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
                         val_per_cuboid += val2d
             for z in range(height_increments):
                 voxel = (x, y, z, res)
-                object_belief_octree_dist.assign(voxel, val_per_cuboid)
+                if voxel not in cuboid_vals:
+                    cuboid_vals[voxel] = []
+                cuboid_vals[voxel].append(val_per_cuboid)
+    # assign values
+    for voxel in cuboid_vals:
+        object_belief_octree_dist.assign(voxel, np.mean(cuboid_vals[voxel]))
+
     bobj3d = OctreeBelief(bobj2d.objid, bobj2d.objclass, object_belief_octree_dist)
     return bobj3d
+
+
+def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res=8):
+    """Update 2D object belief by returning a new ObjectBelief2D,
+    based on the 3D regional belief bobj3d.
+
+    Similar to object_belief_2d_to_3d, 'res' controls how precisely
+    the 3D belief is projected down to 2D."""
+    dimension = search_region3d.octree_dist.octree.dimensions[0]
+    # obtain estimate of height increments
+    region_height = search_region3d.octree_dist.region[3]
+    if region_height % res != 0.0:
+        region_height_world = region_height * search_region3d.search_space_resolution
+        res_world = res * search_region3d.search_space_resolution
+        raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
+                         "divisible by res {res} (metric: {res_world})")
+    height_increments = int(region_height / res)
+
+    locdist2d_updated = LocDist2D(values=bobj2d.loc_dist.values.copy(),
+                                  normalizer=bobj2d.loc_dist.normalizer)
+
+    grid_vals = {} # maps from pos to a list of values, because multiple 3D
+                   # grids may map to the same 3D grid
+    # iterate over the 2D locations within the 3D region
+    for x in range(int(dimension // res)):
+        for y in range(int(dimension // res)):
+            val3d_total = 0
+            for z in range(height_increments):
+                val_cuboid = bobj3d.octree_dist.prob_at(x,y,z,res) * bobj3d.octree_dist.normalizer
+                val3d_total += val_cuboid
+            val2d = val3d_total / height_increments
+            for dx in range(dimension):
+                for dy in range(dimension):
+                    pos3d_ground = (x+dx, y+dy, 0)  # position in 3D region at ground resolution
+                    pos3d_world = search_region3d.to_world_pos(pos3d_ground)
+                    pos2d = search_region2d.to_pomdp_pos(pos3d_world[:2])
+                    if pos2d not in grid_vals:
+                        grid_vals[pos2d] = []
+                    grid_vals[pos2d].append(val2d)
+    # assign values
+    for pos in grid_vals:
+        locdist2d_updated.assign(pos, np.mean(grid_vals[pos]))
+    bobj2d_updated = ObjectBelief2D(bobj2d.objid, bobj2d.objclass,
+                                    locdist2d_updated)
+    return bobj2d_updated
