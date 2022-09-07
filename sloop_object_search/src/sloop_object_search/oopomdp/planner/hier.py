@@ -14,6 +14,7 @@ class HierPlanner(pomdp_py.Planner):
                                               rollout_policy=self._global_agent.policy_model)
         self._local_agent = None
         self._local_planner = None
+        self.searching_locally = False
 
     @property
     def global_agent(self):
@@ -56,7 +57,7 @@ class HierPlanner(pomdp_py.Planner):
         print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
         if isinstance(subgoal, StayAction):
-            self._global_agent.searching_locally = True
+            self.searching_locally = True
             if self._local_agent is not None:
                 # If the local agent is available, then plan with the local agent
                 return self.plan_local()
@@ -65,4 +66,5 @@ class HierPlanner(pomdp_py.Planner):
                 # this planner. Then, local search will be planned.
                 return subgoal
         else:
+            self.searching_locally = False
             return subgoal

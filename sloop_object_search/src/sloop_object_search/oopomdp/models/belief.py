@@ -186,6 +186,14 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
                        for loc in self._search_region}
         self._normalizer = len(self._search_region) * self._default_val
 
+    @property
+    def values_dict(self):
+        return self._values
+
+    @property
+    def normalizer(self):
+        return self._normalizer
+
     def prob_at(self, x, y):
         if (x,y) not in self._search_region:
             return 0.0
@@ -320,7 +328,8 @@ def update_global_agent_belief_from_local(global_agent, local_agent):
     """Given local agent, update global_agent's belief accordingly"""
 
 
-def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8):
+def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8,
+                           belief3d_init_params=None):
     """Given a 2D object belief (ObjectBelief2D), search_region2d (SearchRegion2D),
     and a search_region3d (SearchRegion3D), return a corresponding 3D octree
     belief over the object location.
@@ -341,6 +350,9 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8):
     cuboid's space.  We expect 'res' to be set so that the height of
     the local search region (in POMDP frame) is divisible by 'res'.
     """
+    if belief3d_init_params is None:
+        belief3d_init_params = {}
+
     dimension = search_region3d.octree_dist.octree.dimensions[0]
     # obtain estimate of height increments
     region_height = search_region3d.octree_dist.region[3]
@@ -354,8 +366,8 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8):
     # octree distribution used for belief
     object_belief_octree_dist = RegionalOctreeDistribution(
         (dimension, dimension, dimension),
-        search_region.octree_dist.region,
-        num_samples=init_params.get("num_samples", 200))
+        search_region3d.octree_dist.region,
+        num_samples=belief3d_init_params.get("num_samples", 200))
 
     # iterate over the 2D locations within the 3D region
     for x in range(int(dimension // res)):
@@ -367,11 +379,11 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8):
                 for dy in range(dimension):
                     pos3d_ground = (x+dx, y+dy, 0)  # position in 3D region at ground resolution
                     pos3d_world = search_region3d.to_world_pos(pos3d_ground)
-                    pos2d = search_region2d.to_pomdp_pos(pos3d_world)
+                    pos2d = search_region2d.to_pomdp_pos(pos3d_world[:2])
                     # obtain the unnormalized belief - this will be the value of
                     # a node in the octree belief at the same location
-                    if pos_2d in search_region2d:
-                        val2d = bobj2d.get_val(*pos_2d)
+                    if pos2d in search_region2d:
+                        val2d = bobj2d.loc_dist.get_val(*pos2d)
                         val_per_cuboid += val2d
             for z in range(height_increments):
                 voxel = (x, y, z, res)

@@ -428,4 +428,15 @@ def update_planner(request, planner, agent, observation, action):
 
 
 def update_hier(request, planner, agent, action, action_finished):
-    pass
+    """Update agent and planner (HierPlanner)."""
+    if not isinstance(planner, HierPlanner):
+        raise TypeError(f"update_hier only applies to HierPlanner. Got {type(planner)}")
+
+    # If there is a local agent, will update its belief,
+    # and then update the global agent's belief based on
+    # the local agent belief.
+    if planner.searching_locally:
+        observation = proto_utils.pomdp_observation_from_request(
+            request, planner.local_agent, action=action)
+        aux = update_belief(request, planner.local_agent, action=action)
+        # Update global agent's belief

@@ -1,7 +1,7 @@
 import open3d as o3d
 import numpy as np
 import random
-from sloop_object_search.utils.colors import color_map, cmaps
+from sloop_object_search.utils.colors import color_map, cmaps, lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
 from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
@@ -210,6 +210,48 @@ def draw_search_region2d(search_region, grid_robot_position=None, points=None):
         pcd2.colors.append([0.0, 0.8, 0.0])
     geometries.append(pcd2)
     o3d.visualization.draw_geometries(geometries)
+    return geometries
+
+def draw_locdist2d(locdist2d,
+                   marker_height=0.1, color=[0.2, 0.7, 0.2],
+                   search_region=None, viz=True):
+    """locdist2d (LocDist2D). Uses the algorithm I always use
+    to draw 2D belief. If search_region is provided, will draw
+    the positions in world frame"""
+    prob_max = max(locdist2d.values_dict.values())
+    prob_min = min(locdist2d.values_dict.values())
+    hist = {}
+    for loc in locdist2d.values_dict:
+        hist[loc] = locdist2d.prob_at(*loc)
+
+    if search_region is None:
+        grid_size = 1
+    else:
+        grid_size = search_region.grid_size
+
+    geometries = []
+    last_val = -1
+    i = 0
+    for pos in reversed(sorted(hist, key=hist.get)):
+        if last_val != -1:
+            color = lighter(np.asarray(color)*255, 1-hist[pos]/last_val)/255
+
+        stop = np.mean(np.array(color[:3]) / np.array([255, 255, 255])) > 0.999
+        if not stop:
+            marker = o3d.geometry.TriangleMesh.create_cylinder(grid_size/2, marker_height)
+            if search_region is None:
+                marker.translate(np.asarray([*pos, 0.0]))
+            else:
+                pos_world = search_region.to_world_pos(pos)
+                marker.translate(np.asarray([*pos_world, 0.0]))
+            marker.paint_uniform_color(np.asarray(color))
+            geometries.append(marker)
+            last_val = hist[pos]
+            i += 1
+            if last_val <= 0:
+                break
+    if viz:
+        o3d.visualization.draw_geometries(geometries)
     return geometries
 
 
