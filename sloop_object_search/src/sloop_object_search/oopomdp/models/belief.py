@@ -429,14 +429,18 @@ def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res
 
     grid_vals = {} # maps from pos to a list of values, because multiple 3D
                    # grids may map to the same 3D grid
+
     # iterate over the 2D locations within the 3D region
     for x in range(int(dimension // res)):
         for y in range(int(dimension // res)):
-            val3d_total = 0
+            prob3d_total = 0
             for z in range(height_increments):
-                val_cuboid = bobj3d.octree_dist.prob_at(x,y,z,res) * bobj3d.octree_dist.normalizer
-                val3d_total += val_cuboid
-            val2d = val3d_total / height_increments
+                prob_cuboid = bobj3d.octree_dist.prob_at(x,y,z,res)
+                prob3d_total += prob_cuboid
+            # 2d pos may be a fraction of (or bigger) than a 3d voxel
+            area_ratio = (search_region2d.search_space_resolution**2
+                          /(res*search_region3d.search_space_resolution**2))
+            prob2d = (prob3d_total/height_increments) * area_ratio
             for dx in range(dimension):
                 for dy in range(dimension):
                     pos3d_ground = (x+dx, y+dy, 0)  # position in 3D region at ground resolution
@@ -445,10 +449,11 @@ def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res
                     if pos2d in search_region2d:
                         if pos2d not in grid_vals:
                             grid_vals[pos2d] = []
-                        grid_vals[pos2d].append(val2d)
+                        grid_vals[pos2d].append(prob2d)
     # assign values
     for pos in grid_vals:
-        locdist2d_updated.assign(pos, np.mean(grid_vals[pos]))
+        locdist2d_updated.assign(pos, np.mean(grid_vals[pos]), normalized=True)
     bobj2d_updated = ObjectBelief2D(bobj2d.objid, bobj2d.objclass,
                                     locdist2d_updated)
+    import pdb; pdb.set_trace()
     return bobj2d_updated

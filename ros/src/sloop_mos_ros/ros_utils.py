@@ -442,9 +442,9 @@ def clear_markers(header, ns):
 
 def _compute_alpha(p, vmin, vmax):
     if vmax - vmin > 0.0:
-        return math_utils.remap(p, vmin, vmax, 0.001, 0.8)
+        return math_utils.remap(p, vmin, vmax, 0.001, 0.5)
     else:
-        return 0.8
+        return 0.5
 
 def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.COLOR_MAP_JET,
                                          alpha_scaling=1.0):
