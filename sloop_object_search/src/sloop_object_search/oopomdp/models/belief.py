@@ -174,24 +174,29 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
     octree belief, this representation initializes explicitly a value for every
     location, because we assume it is efficient enough computationally to do so for 2D.
     """
-    def __init__(self, search_region=None, default_val=1.,
+    def __init__(self, search_region, default_val=1.,
                  values=None, normalizer=None):
         """
         belief_config: the 'belief' dict in agent_config"""
-        if search_region is not None:
-            assert isinstance(search_region, SearchRegion2D),\
-                f"search_region should be a SearchRegion2D but its {type(search_region)}"
-            # maps from a location in search region to an unnormalized probability value
-            self._search_region = search_region
-            self._default_val = default_val
+        assert isinstance(search_region, SearchRegion2D),\
+            f"search_region should be a SearchRegion2D but its {type(search_region)}"
+        # maps from a location in search region to an unnormalized probability value
+        self._search_region = search_region
+        self._default_val = default_val
+
+        if values is None:
             self._values = {loc: self._default_val
-                           for loc in self._search_region}
+                            for loc in self._search_region}
+        else:
+            self._values = values
+        if normalizer is None:
             self._normalizer = len(self._search_region) * self._default_val
         else:
-            assert (values is not None) and (normalizer is not None),\
-                "search region unspecified, values and normalizer should not be None."
-            self._values = values
             self._normalizer = normalizer
+        if sum(self._values.values()) != self._normalizer:
+            raise ValueError("Invalid distribution. Sum of unnormalized "\
+                             "values does not equal to normalizer")
+
 
     @property
     def values_dict(self):
@@ -423,7 +428,7 @@ def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res
                          "divisible by res {res} (metric: {res_world})")
     height_increments = int(region_height / res)
 
-    locdist2d_updated = LocDist2D(values=bobj2d.loc_dist.values.copy(),
+    locdist2d_updated = LocDist2D(search_region2d, values=bobj2d.loc_dist.values_dict.copy(),
                                   normalizer=bobj2d.loc_dist.normalizer)
 
     grid_vals = {} # maps from pos to a list of values, because multiple 3D
@@ -441,9 +446,10 @@ def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res
                     pos3d_ground = (x+dx, y+dy, 0)  # position in 3D region at ground resolution
                     pos3d_world = search_region3d.to_world_pos(pos3d_ground)
                     pos2d = search_region2d.to_pomdp_pos(pos3d_world[:2])
-                    if pos2d not in grid_vals:
-                        grid_vals[pos2d] = []
-                    grid_vals[pos2d].append(val2d)
+                    if pos2d in search_region2d:
+                        if pos2d not in grid_vals:
+                            grid_vals[pos2d] = []
+                        grid_vals[pos2d].append(val2d)
     # assign values
     for pos in grid_vals:
         locdist2d_updated.assign(pos, np.mean(grid_vals[pos]))

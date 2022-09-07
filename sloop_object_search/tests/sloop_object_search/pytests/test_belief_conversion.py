@@ -2,7 +2,8 @@
 import open3d as o3d
 import pytest
 import random
-from sloop_object_search.oopomdp.models.belief import object_belief_2d_to_3d, init_object_beliefs_2d
+from sloop_object_search.oopomdp.models.belief\
+    import object_belief_2d_to_3d, update_2d_belief_by_3d, init_object_beliefs_2d
 from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
 from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
@@ -36,8 +37,18 @@ def search_region3d():
     return SearchRegion3D(occupancy_octree, region_origin=region_origin,
                           search_space_resolution=search_space_resolution)
 
-def test_belief_2d_to_3d(bobj2d, search_region2d, search_region3d):
+def test_belief_conversion(bobj2d, search_region2d, search_region3d):
     bobj3d = object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8)
+    print("2D->3D")
+    geometries = open3d_utils.draw_search_region3d(
+        search_region3d, octree_dist=bobj3d.octree_dist, viz=False,
+        cmap=cmaps.COLOR_MAP_GRAYS)
+    geometries.extend(open3d_utils.draw_locdist2d(
+        bobj2d.loc_dist, search_region=search_region2d, viz=False))
+    o3d.visualization.draw_geometries(geometries)
+
+    print("3D->2D")
+    bobj2d_projected = update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d)
     geometries = open3d_utils.draw_search_region3d(
         search_region3d, octree_dist=bobj3d.octree_dist, viz=False,
         cmap=cmaps.COLOR_MAP_GRAYS)
