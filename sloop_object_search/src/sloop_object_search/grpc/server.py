@@ -384,14 +384,17 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if isinstance(planner, HierPlanner):
             # If the planner is hierarchical, we will let the planner
             # handle the belief update --> because it is more tricky
-            assert planner.global_agent.robot_id == agent.robot_id,\
-                "Expecting request to contain global agent's robot id"
-            aux = agent_utils.update_hier(
-                request, planner, action, action_finished)
+            # assert planner.global_agent.robot_id == agent.robot_id,\
+            #     "Expecting request to contain global agent's robot id"
+            # aux = agent_utils.update_hier(
+            #     request, planner, action, action_finished)
+            raise NotImplementedError()
         else:
             # Otherwise, we will update the agent and planner normally
             observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)
-            aux = agent_utils.update_belief(request, agent, observation, action=action)
+            aux = agent_utils.update_belief(
+                agent, observation, action=action,
+                debug=request.debug, **proto_utils.process_observation_params(request))
             if action_finished:
                 # update planner, when the action finishes
                 agent_utils.update_planner(request, planner, agent, observation, action)

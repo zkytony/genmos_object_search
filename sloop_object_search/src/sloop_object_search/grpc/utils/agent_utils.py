@@ -360,39 +360,39 @@ def plan_action(planner, agent, server):
     # update search region request in order to gather
     # the necessary inputs to create the local agent.
     if isinstance(planner, HierPlanner):
-        if planner.global_agent.robot_id != agent.robot_id:
-            return False, "Expecting planning request on behalf of global agent"
+        raise NotImplementedError()
+        # if planner.global_agent.robot_id != agent.robot_id:
+        #     return False, "Expecting planning request on behalf of global agent"
 
-        if action.robot_id == agent.robot_id and isinstance(action, slpa.StayAction):
-            # The action is planned for the global agent, AND it is a Stay.
-            # Handle the creation of local search agent if needed
-            if planner.local_agent is None:
-                # server tells client, please send over update search region request
-                local_robot_id = f"{agent.robot_id}_local"
-                server.add_message(agent.robot_id,
-                                   Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
+        # if action.robot_id == agent.robot_id and isinstance(action, slpa.StayAction):
+        #     # The action is planned for the global agent, AND it is a Stay.
+        #     # Handle the creation of local search agent if needed
+        #     if planner.local_agent is None:
+        #         # server tells client, please send over update search region request
+        #         local_robot_id = f"{agent.robot_id}_local"
+        #         server.add_message(agent.robot_id,
+        #                            Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
 
-                # Use the server's own mechanism to create the local agent
-                # create a placeholder for the local agent in the server
-                local_agent_config = make_local_agent_config(agent.agent_config)
-                server.prepare_agent_for_creation(local_agent_config)
+        #         # Use the server's own mechanism to create the local agent
+        #         # create a placeholder for the local agent in the server
+        #         local_agent_config = make_local_agent_config(agent.agent_config)
+        #         server.prepare_agent_for_creation(local_agent_config)
 
-                # Now, wait for local search region; note that this will
-                # also create the local agent, if it is not yet created.
-                local_search_region, robot_loc_world =\
-                    server.wait_for_client_provided_info(
-                        Info.LOCAL_SEARCH_REGION.format(local_robot_id),
-                        timeout=15)
+        #         # Now, wait for local search region; note that this will
+        #         # also create the local agent, if it is not yet created.
+        #         local_search_region, robot_loc_world =\
+        #             server.wait_for_client_provided_info(
+        #                 Info.LOCAL_SEARCH_REGION.format(local_robot_id),
+        #                 timeout=15)
 
-                # Now, we have a local agent
-                planner.set_local_agent(server.agents[local_robot_id])
-                action = planner.plan_local()
-            else:
-                # If the local agent is not None, the hierarchical planner would
-                # not output a Stay action for the global agent. It would output
-                # an action for the local agent. So this is unexpected.
-                raise RuntimeError("Unexpected. Planner should output action for local agent")
-
+        #         # Now, we have a local agent
+        #         planner.set_local_agent(server.agents[local_robot_id])
+        #         action = planner.plan_local()
+        #     else:
+        #         # If the local agent is not None, the hierarchical planner would
+        #         # not output a Stay action for the global agent. It would output
+        #         # an action for the local agent. So this is unexpected.
+        #         raise RuntimeError("Unexpected. Planner should output action for local agent")
     return True, action
 
 
@@ -428,46 +428,46 @@ def update_planner(request, planner, agent, observation, action):
     logging.info("planner updated")
 
 
-def update_hier(request, planner, action, action_finished):
-    """Update agent and planner (HierPlanner)."""
-    if not isinstance(planner, HierPlanner):
-        raise TypeError(f"update_hier only applies to HierPlanner. Got {type(planner)}")
+# def update_hier(request, planner, action, action_finished):
+#     """Update agent and planner (HierPlanner)."""
+#     if not isinstance(planner, HierPlanner):
+#         raise TypeError(f"update_hier only applies to HierPlanner. Got {type(planner)}")
 
-    # If there is a local agent, will update its belief,
-    # and then update the global agent's belief based on
-    # the local agent belief.
-    if planner.searching_locally:
-        # Interpret request and update local agent belief.
-        observation_local = proto_utils.pomdp_observation_from_request(
-            request, planner.local_agent, action=action)
-        # this is useful for updating global agent belief
-        _normalizers_old = {objid: planner.local_agent.belief.b(objid).octree_dist.normalizer
-                           for objid in planner.local_agent.belief.object_beliefs
-                           if objid != planner.local_agent.robot_id}
-        aux_local = update_belief(planner.local_agent, observation_local, action=action,
-                                  debug=request.debug, **proto_utils.process_observation_params(request))
+#     # If there is a local agent, will update its belief,
+#     # and then update the global agent's belief based on
+#     # the local agent belief.
+#     if planner.searching_locally:
+#         # Interpret request and update local agent belief.
+#         observation_local = proto_utils.pomdp_observation_from_request(
+#             request, planner.local_agent, action=action)
+#         # this is useful for updating global agent belief
+#         _normalizers_old = {objid: planner.local_agent.belief.b(objid).octree_dist.normalizer
+#                            for objid in planner.local_agent.belief.object_beliefs
+#                            if objid != planner.local_agent.robot_id}
+#         aux_local = update_belief(planner.local_agent, observation_local, action=action,
+#                                   debug=request.debug, **proto_utils.process_observation_params(request))
 
-        # Update global agent's object belief
-        planner.update_global_object_beliefs_from_local(_normalizers_old)
-        observation_global = proto_utils.pomdp_observation_from_request(
-            request, planner.global_agent, action=action)
-        robot_observation_global = observation_global.z(planner.global_agent.robot_id)
-        aux_global = update_belief(planner.global_agent, robot_observation_global, action=action,
-                                   debug=request.debug, **proto_utils.process_observation_params(request))
-        aux = {**aux_local, **aux_global}
+#         # Update global agent's object belief
+#         planner.update_global_object_beliefs_from_local(_normalizers_old)
+#         observation_global = proto_utils.pomdp_observation_from_request(
+#             request, planner.global_agent, action=action)
+#         robot_observation_global = observation_global.z(planner.global_agent.robot_id)
+#         aux_global = update_belief(planner.global_agent, robot_observation_global, action=action,
+#                                    debug=request.debug, **proto_utils.process_observation_params(request))
+#         aux = {**aux_local, **aux_global}
 
-        if action_finished:
-            update_planner(request, planner.local_planner, planner.local_agent,
-                           observation_local, action)
+#         if action_finished:
+#             update_planner(request, planner.local_planner, planner.local_agent,
+#                            observation_local, action)
 
-    else:
-        # No local agent. Just update the global planner
-        observation_global = proto_utils.pomdp_observation_from_request(
-            request, planner.global_agent, action=action)
-        aux = update_belief(planner.global_agent, observation_global, action=action,
-                            **proto_utils.process_observation_params(request))
+#     else:
+#         # No local agent. Just update the global planner
+#         observation_global = proto_utils.pomdp_observation_from_request(
+#             request, planner.global_agent, action=action)
+#         aux = update_belief(planner.global_agent, observation_global, action=action,
+#                             **proto_utils.process_observation_params(request))
 
-    if action_finished:
-        update_planner(request, planner.global_planner, planner.global_agent,
-                       observation_global, action)
-    return aux
+#     if action_finished:
+#         update_planner(request, planner.global_planner, planner.global_agent,
+#                        observation_global, action)
+#     return aux
