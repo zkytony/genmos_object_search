@@ -369,7 +369,7 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kw
         res_world = res * search_region3d.search_space_resolution
         raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
                          f"divisible by res {res} (metric: {res_world})")
-    height_increments = int(region_height // res)
+    height_increments = int(region_height // (res-0.1))  # to deal with numerical instability in region_height
 
     # octree distribution used for belief
     object_belief_octree_dist = RegionalOctreeDistribution(
@@ -408,52 +408,31 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kw
     return bobj3d
 
 
-def update_2d_belief_by_3d(bobj2d, bobj3d, search_region2d, search_region3d, res=8, **kwargs):
+def update_2d_belief_by_3d(bobj2d_t, bobj3d_tp1, bobj3d_t_normalizer, search_region2d, search_region3d, **kwargs):
     """Update 2D object belief by returning a new ObjectBelief2D,
     based on the 3D regional belief bobj3d.
 
-    Similar to object_belief_2d_to_3d, 'res' controls how precisely
-    the 3D belief is projected down to 2D."""
-    dimension = search_region3d.octree_dist.octree.dimensions[0]
-    # obtain estimate of height increments
-    region_height = search_region3d.octree_dist.region[3]
-    if not divisible_by(region_height, res):
-        region_height_world = region_height * search_region3d.search_space_resolution
-        res_world = res * search_region3d.search_space_resolution
-        raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
-                         "divisible by res {res} (metric: {res_world})")
-    height_increments = int(region_height / res)
+    Since there is no good way to do this exactly, we just update
+    the 2D belief of locations within the local search region uniformly
+    based on the change in the 3D local belief. Specifically,
 
-    locdist2d_updated = LocDist2D(search_region2d, values=bobj2d.loc_dist.values_dict.copy(),
-                                  normalizer=bobj2d.loc_dist.normalizer)
-
-    grid_vals = {} # maps from pos to a list of values, because multiple 3D
-                   # grids may map to the same 3D grid
-
-    # iterate over the 2D locations within the 3D region
-    for x in range(int(dimension // res)):
-        for y in range(int(dimension // res)):
-            prob3d_total = 0
-            for z in range(height_increments):
-                prob_cuboid = bobj3d.octree_dist.prob_at(x,y,z,res)
-                prob3d_total += prob_cuboid
-            # 2d pos may be a fraction of (or bigger) than a 3d voxel
-            area_ratio = (search_region2d.search_space_resolution**2
-                          /(res*search_region3d.search_space_resolution**2))
-            prob2d = (prob3d_total/height_increments) * area_ratio
-            for dx in range(dimension):
-                for dy in range(dimension):
-                    pos3d_ground = (x+dx, y+dy, 0)  # position in 3D region at ground resolution
-                    pos3d_world = search_region3d.to_world_pos(pos3d_ground)
-                    pos2d = search_region2d.to_pomdp_pos(pos3d_world[:2])
-                    if pos2d in search_region2d:
-                        if pos2d not in grid_vals:
-                            grid_vals[pos2d] = []
-                        grid_vals[pos2d].append(prob2d)
-    # assign values
-    for pos in grid_vals:
-        locdist2d_updated.assign(pos, np.mean(grid_vals[pos]), normalized=True)
-    bobj2d_updated = ObjectBelief2D(bobj2d.objid, bobj2d.objclass,
+    Pr_t+1(loc) = Pr_t(loc) * (bobj3d_t+1.normalizer / bobj3d_t.normalizer)
+    """
+    locdist2d_updated = LocDist2D(search_region2d, values=bobj2d_t.loc_dist.values_dict.copy(),
+                                  normalizer=bobj2d_t.loc_dist.normalizer)
+    # we estimate the fraction of space local region is with respect to the entire search space
+    region_width, region_length = search_region3d.octree_dist.region[1:3]
+    region_width_world = region_width * search_region3d.search_space_resolution
+    region_width_2d = int(round(region_width_world / search_region2d.search_space_resolution))
+    region_length_world = region_length * search_region3d.search_space_resolution
+    region_length_2d = int(round(region_length_world / search_region2d.search_space_resolution))
+    x_origin_2d, y_origin_2d = search_region2d.to_pomdp_pos(search_region3d.region_origin[:2])
+    for x in range(x_origin_2d, x_origin_2d + region_width_2d):
+        for y in range(y_origin_2d, y_origin_2d + region_length_2d):
+            if (x,y) in search_region2d:
+                val2d_t = bobj2d_t.loc_dist.get_val(x, y)
+                val2d_tp1 = val2d_t * (bobj3d_tp1.octree_dist.normalizer  / bobj3d_t_normalizer)
+                locdist2d_updated.assign((x,y), val2d_tp1)
+    bobj2d_updated = ObjectBelief2D(bobj2d_t.objid, bobj2d_t.objclass,
                                     locdist2d_updated)
-    import pdb; pdb.set_trace()
     return bobj2d_updated

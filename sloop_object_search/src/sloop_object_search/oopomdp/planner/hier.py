@@ -63,10 +63,14 @@ class HierPlanner(pomdp_py.Planner):
                 local_agent.belief.set_object_belief(objid, bobj3d)
         self._local_agent = local_agent
 
-    def update_global_object_beliefs_from_local(self):
+    def update_global_object_beliefs_from_local(self, normalizers_old):
         """"Assuming self.local_agent belief has been updated.
         Will update global agent's belief by projecting the
-        3D belief of local agent down to 2D."""
+        3D belief of local agent down to 2D.
+
+        normalizers_old: maps from objid to normalizer, indicating
+        the normalizer of the octree belief before the most recent
+        local agent belief update."""
         belief_conversion_params =\
             self.global_agent.agent_config["belief"].get("conversion", {})
         for objid in self.global_agent.belief.object_beliefs:
@@ -75,7 +79,7 @@ class HierPlanner(pomdp_py.Planner):
             bobj2d = self.global_agent.belief.b(objid)
             bobj3d = self.local_agent.belief.b(objid)
             bobj2d_updated = belief.update_2d_belief_by_3d(
-                bobj2d, bobj3d, self.global_agent.search_region,
+                bobj2d, bobj3d, normalizers_old[objid], self.global_agent.search_region,
                 self.local_agent.search_region,
                 **belief_conversion_params)
             self.global_agent.belief.set_object_belief(objid, bobj2d_updated)

@@ -437,14 +437,18 @@ def update_hier(request, planner, action, action_finished):
     # and then update the global agent's belief based on
     # the local agent belief.
     if planner.searching_locally:
-        # interpret request and update local agent belief.
+        # Interpret request and update local agent belief.
         observation_local = proto_utils.pomdp_observation_from_request(
             request, planner.local_agent, action=action)
+        # this is useful for updating global agent belief
+        _normalizers_old = {objid: planner.local_agent.belief.b(objid).octree_dist.normalizer
+                           for objid in planner.local_agent.belief.object_beliefs
+                           if objid != planner.local_agent.robot_id}
         aux_local = update_belief(planner.local_agent, observation_local, action=action,
                                   debug=request.debug, **proto_utils.process_observation_params(request))
 
         # Update global agent's object belief
-        planner.update_global_object_beliefs_from_local()
+        planner.update_global_object_beliefs_from_local(_normalizers_old)
         observation_global = proto_utils.pomdp_observation_from_request(
             request, planner.global_agent, action=action)
         robot_observation_global = observation_global.z(planner.global_agent.robot_id)
