@@ -12,10 +12,10 @@ class HierPlanner(pomdp_py.Planner):
         self.planner_params = planner_params
         self._global_agent = global_agent
         global_planner_params = self.planner_params["global"]
-        self._global_planner = pomdp_py.POUCT(**global_planner_params,
+        self.global_planner = pomdp_py.POUCT(**global_planner_params,
                                               rollout_policy=self._global_agent.policy_model)
         self._local_agent = None
-        self._local_planner = None
+        self.local_planner = None
         self.searching_locally = False
 
     @property
@@ -88,11 +88,11 @@ class HierPlanner(pomdp_py.Planner):
         if self._local_agent is None:
             raise RuntimeError("Local agent does not exist.")
 
-        if self._local_planner is None:
+        if self.local_planner is None:
             local_planner_params = self.planner_params["local"]
-            self._local_planner = pomdp_py.POUCT(**local_planner_params,
+            self.local_planner = pomdp_py.POUCT(**local_planner_params,
                                                  rollout_policy=self._local_agent.policy_model)
-        action = self._local_planner.plan(self._local_agent)
+        action = self.local_planner.plan(self._local_agent)
         action.robot_id = self._local_agent.robot_id
         action.name = action.name + "[local]"
         return action
@@ -106,7 +106,7 @@ class HierPlanner(pomdp_py.Planner):
             "only plan for the agent given at construction."
 
         # plan with the global agent
-        subgoal = self._global_planner.plan(self._global_agent)
+        subgoal = self.global_planner.plan(self._global_agent)
 
         # DEBUGGING: JUST DO STAY
         topo_nid = agent.belief.b(agent.robot_id).mpe().topo_nid

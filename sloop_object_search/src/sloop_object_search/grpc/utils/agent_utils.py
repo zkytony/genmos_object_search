@@ -456,10 +456,18 @@ def update_hier(request, planner, action, action_finished):
                                    debug=request.debug, **proto_utils.process_observation_params(request))
         aux = {**aux_local, **aux_global}
 
+        if action_finished:
+            update_planner(request, planner.local_planner, planner.local_agent,
+                           observation_local, action)
+
     else:
         # No local agent. Just update the global planner
         observation_global = proto_utils.pomdp_observation_from_request(
             request, planner.global_agent, action=action)
         aux = update_belief(planner.global_agent, observation_global, action=action,
                             **proto_utils.process_observation_params(request))
+
+    if action_finished:
+        update_planner(request, planner.global_planner, planner.global_agent,
+                       observation_global, action)
     return aux
