@@ -21,7 +21,7 @@ from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.utils.math import euler_to_quat, quat_to_euler
 from config_test_MosAgentBasic3D import TEST_CONFIG
 
-POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
+POINT_CLOUD_TOPIC = "/graphnav_map_publisher/graphnav_points"#/spot_local_cloud_publisher/region_points"
 WAYPOINT_TOPIC = "/graphnav_waypoints"
 FAKE_ROBOT_POSE_TOPIC = "/fake_robot_pose"
 
@@ -100,14 +100,6 @@ class UpdateSearchRegion3DTestCase:
                           0.45,
                           *euler_to_quat(90, 0, 0))
             robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-            if rospy.get_param('map_name') == "cit_first_floor":
-                layout_cut = 1.5
-                region_size = 12.0
-                brush_size = 0.5
-            else:
-                layout_cut = 0.6
-                region_size = 5.0
-                brush_size = 0.5
 
             self._sloop_client.updateSearchRegion(
                 header=cloud_pb.header,
@@ -115,11 +107,11 @@ class UpdateSearchRegion3DTestCase:
                 is_3d=True,
                 robot_pose=robot_pose_pb,
                 point_cloud=cloud_pb,
-                search_region_params_3d={"octree_size": 64,
-                                         "search_space_resolution": 0.1,
+                search_region_params_3d={"octree_size": 32,
+                                         "search_space_resolution": 1.0,
                                          "debug": self.debug,
-                                         "region_size_x": 4.0,
-                                         "region_size_y": 4.0,
+                                         "region_size_x": 100.0,
+                                         "region_size_y": 100.0,
                                          "region_size_z": 2.5})
 
 if __name__ == "__main__":

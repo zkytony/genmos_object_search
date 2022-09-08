@@ -269,11 +269,16 @@ def _sample_topo_graph3d(init_object_beliefs,
     pq = PriorityQueue()
     positions = [init_robot_pose[:3]]
     for pos, prob_pos in candidate_scores:
-        norm_score = (prob_pos - min_prob) / (max_prob - min_prob)
+        if max_prob - min_prob > 0:
+            norm_score = (prob_pos - min_prob) / (max_prob - min_prob)
+        else:
+            norm_score = prob_pos
         if norm_score > pos_importance_thres:
             pq.push(pos, -norm_score)
     while not pq.isEmpty() and len(positions) < num_nodes:
         positions.append(pq.pop())
+
+    print("HEY", positions)
 
     # The following is modified based on _sample_topo_map in topo2d
     # Create nodes

@@ -29,7 +29,7 @@ ACTION_TOPIC = "/simple_sim_env/pomdp_action"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
-SEARCH_SPACE_RESOLUTION_3D = 0.1
+SEARCH_SPACE_RESOLUTION_3D = 0.2
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
 
@@ -262,8 +262,8 @@ class TestSimpleEnvCase:
                                               search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": self.search_space_res_3d,
                                                                        "debug": False,
-                                                                       "region_size_x": 4.0,
-                                                                       "region_size_y": 4.0,
+                                                                       "region_size_x": 10.0,
+                                                                       "region_size_y": 10.0,
                                                                        "region_size_z": 2.4})
 
     def __init__(self, name="test_simple_env_search",
