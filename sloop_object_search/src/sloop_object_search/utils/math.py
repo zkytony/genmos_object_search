@@ -583,13 +583,15 @@ def centerbox_to_originbox(center_box):
     return ((origin_x, origin_y, origin_z), w, l, h)
 
 
-def sample_in_box3d_origin(box):
+def sample_in_box3d_origin(box, rnd=None):
     """Given a box represented as a tuple (origin, w, l, h),
     returns a point sampled from within the box"""
+    if rnd is None:
+        rnd = random
     origin, w, l, h = box
-    dx = random.uniform(0, w)
-    dy = random.uniform(0, l)
-    dz = random.uniform(0, h)
+    dx = rnd.uniform(0, w)
+    dy = rnd.uniform(0, l)
+    dz = rnd.uniform(0, h)
     return (origin[0] + dx,
             origin[1] + dy,
             origin[2] + dz)

@@ -272,11 +272,11 @@ class LocalRegionalOctreeDistribution(RegionalOctreeDistribution):
                 return False
             return True
 
-    def sample_from_region(self):
+    def sample_from_region(self, rnd=None):
         # avoid sampling from outside the global region
-        xr, yr, zr = super().sample_from_region()
+        xr, yr, zr = super().sample_from_region(rnd=rnd)
         while not self.in_region((xr, yr, zr, 1)):
-            xr, yr, zr = super().sample_from_region()
+            xr, yr, zr = super().sample_from_region(rnd=rnd)
         return (xr, yr, zr)
 
 

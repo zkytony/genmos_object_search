@@ -122,6 +122,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         """
         if type(voxel) != tuple and len(voxel) != 4:
             raise ValueError("Requires voxel to be a tuple (x,y,z,res)")
+
         x,y,z,res = voxel
         node = self._octree.add_node(x,y,z,res)
         old_value = node.value()
@@ -130,6 +131,11 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         node.set_val(None, value)
         self.update_normalizer(old_value, value)
         self.backtrack(node)
+        try:
+            assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
+        except:
+            import pdb; pdb.set_trace()
+
 
     def assign(self, voxel, value, normalized=False):
         """
@@ -254,6 +260,10 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         # cur_node is the root node.
         assert cur_node.res == self._octree.root.res
         cur_node_val = cur_node.value()
+        try:
+            assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
+        except:
+            import pdb; pdb.set_trace()
 
     def collect_plotting_voxels(self):
         return self.octree.collect_plotting_voxels()
@@ -494,14 +504,16 @@ class RegionalOctreeDistribution(OctreeDistribution):
         else:
             return super()._probability(x, y, z, res)
 
-    def sample_from_region(self):
+    def sample_from_region(self, rnd=None):
+        if rnd is None:
+            rnd = random
         if type(self.region) == set:
-            xr, yr, zr = random.sample(self.region, 1)[0]
+            xr, yr, zr = rnd.sample(self.region, 1)[0]
         else:
-            xr, yr, zr = util.sample_in_box3d_origin(self.region)
+            xr, yr, zr = util.sample_in_box3d_origin(self.region, rnd=rnd)
         return (xr, yr, zr)
 
-    def fill_region_uniform(self, default_val, num_samples=200):
+    def fill_region_uniform(self, default_val, num_samples=200, seed=1000):
         """
         This function will set the default values of octnodes within the
         region uniformly with the given value 'default_val'. It works
@@ -511,8 +523,9 @@ class RegionalOctreeDistribution(OctreeDistribution):
         each parent node's default value to be 'default_val', if the
         parent node's center is within the region.
         """
+        rnd = random.Random(seed)
         for i in range(num_samples):
-            xr, yr, zr = self.sample_from_region()
+            xr, yr, zr = self.sample_from_region(rnd=rnd)
 
             # check this voxel is within the region
             xr = int(round(xr))
@@ -528,7 +541,13 @@ class RegionalOctreeDistribution(OctreeDistribution):
             if node is None:
                 continue
 
+            try:
+                assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
+            except:
+                import pdb; pdb.set_trace()
             while self.in_region((*node.pos, node.res)):
+                nn = self._normalizer
+                mm = self.octree.root.value()
                 old_value = node.value()
                 node.set_default_val(default_val)
                 # we are essentially adding default value to all children of
@@ -541,8 +560,11 @@ class RegionalOctreeDistribution(OctreeDistribution):
 
                 if not node.leaf:
                     node.remove_children()  # we are overwriting this node
-                assert self.prob_at(*node.pos, node.res) == self.normalized_probability(node.value())
-                assert self._normalizer == self.octree.root.value()
+                try:
+                    assert math.isclose(self.prob_at(*node.pos, node.res), self.normalized_probability(node.value()),  abs_tol=1e-6)
+                    assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
+                except AssertionError:
+                    import pdb; pdb.set_trace()
                 node = node.parent
                 if node is None:
                     break
