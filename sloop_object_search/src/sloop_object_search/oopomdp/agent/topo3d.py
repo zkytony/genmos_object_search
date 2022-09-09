@@ -23,11 +23,12 @@ class MosAgentTopo3D(MosAgentBasic3D):
     primitive movements, but based on a topological graph, where
     each node is a position in the 3D search region that the robot
     can reach. Other aspects"""
-    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None):
+    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None, **args_init_object_beliefs):
         if init_object_beliefs is None:
             init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
-                belief_config=self.agent_config["belief"])
+                belief_config=self.agent_config["belief"],
+                **args_init_object_beliefs)
         robot_pose = init_robot_pose_dist.mean
         self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose, debug=True)
 

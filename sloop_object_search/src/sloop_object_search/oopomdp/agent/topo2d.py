@@ -23,12 +23,13 @@ from sloop_object_search.utils.algo import PriorityQueue
 class MosAgentTopo2D(MosAgentBasic2D):
     """This agent will have a topological graph-based action space."""
 
-    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None):
+    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None, **args_init_object_beliefs):
         # first, initialize object beliefs
         if init_object_beliefs is None:
             init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
-                belief_config=self.agent_config["belief"])
+                belief_config=self.agent_config["belief"],
+                **args_init_object_beliefs)
 
         # now, generate topological map
         mpe_robot_pose = tuple(init_robot_pose_dist.mean)

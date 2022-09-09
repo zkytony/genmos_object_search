@@ -49,18 +49,18 @@ class HierPlanner(pomdp_py.Planner):
         the local_agent's object beliefs with that in the global agent, mapped
         to 3D. """
         self._verify_local_agent(local_agent)
-        belief_conversion_params =\
-            self.global_agent.agent_config["belief"].get("conversion", {})
-        if init_object_beliefs_from_global:
-            for objid in self.global_agent.belief.object_beliefs:
-                if objid == self.global_agent.robot_id:
-                    continue
-                bobj2d = self.global_agent.belief.b(objid)
-                bobj3d = belief.object_belief_2d_to_3d(
-                    bobj2d, self.global_agent.search_region,
-                    local_agent.search_region,
-                    **belief_conversion_params)
-                local_agent.belief.set_object_belief(objid, bobj3d)
+        # belief_conversion_params =\
+        #     self.global_agent.agent_config["belief"].get("conversion", {})
+        # if init_object_beliefs_from_global:
+        #     for objid in self.global_agent.belief.object_beliefs:
+        #         if objid == self.global_agent.robot_id:
+        #             continue
+        #         bobj2d = self.global_agent.belief.b(objid)
+        #         bobj3d = belief.object_belief_2d_to_3d(
+        #             bobj2d, self.global_agent.search_region,
+        #             local_agent.search_region,
+        #             **belief_conversion_params)
+        #         local_agent.belief.set_object_belief(objid, bobj3d)
         self._local_agent = local_agent
 
     def update_global_object_beliefs_from_local(self, normalizers_old):

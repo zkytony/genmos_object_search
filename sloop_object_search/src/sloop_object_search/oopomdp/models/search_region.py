@@ -1,5 +1,5 @@
 from sloop_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
-from .octree_belief import OccupancyOctreeDistribution, RegionalOctreeDistribution
+from .octree_belief import OccupancyOctreeDistribution, RegionalOctreeDistribution, DEFAULT_VAL
 
 class SearchRegion:
     """model of the search region. The idea of search region is
@@ -236,12 +236,10 @@ class LocalRegionalOctreeDistribution(RegionalOctreeDistribution):
         assert isinstance(local_search_region, SearchRegion3D)
         assert isinstance(global_search_region, SearchRegion2D)
         dimensions = local_search_region.octree_dist.octree.dimensions
-
-        super().__init__(dimensions, region=local_search_region.octree_dist.region,
-                         default_region_val=default_region_val, **kwargs)
         self._local_search_region = local_search_region
         self._global_search_region = global_search_region
-        self._height_limit = self.region[3]
+        super().__init__(dimensions, region=local_search_region.octree_dist.region,
+                         default_region_val=default_region_val, **kwargs)
 
     def in_region(self, voxel):
         if not super().in_region(voxel):
