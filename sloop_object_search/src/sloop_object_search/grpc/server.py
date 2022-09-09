@@ -168,7 +168,6 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                                              status=Status.SUCCESSFUL,
                                              message=self._loginfo(reply_msg))
 
-
     def search_region_for(self, robot_id):
         if robot_id in self._pending_agents:
             return self._pending_agents[robot_id].get("search_region", None)
@@ -182,16 +181,24 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         assert robot_id not in self._agents,\
             f"Internal error: agent {robot_id} already exists."
         info = self._pending_agents.pop(robot_id)
-        self._agents[robot_id] = agent_utils.create_agent(
-            robot_id, info["agent_config"], info["init_robot_loc"], info["search_region"])
-        # if the agent is a local agent for hierarchical search, ensure its
+
+        kwargs = {}
+
+        # If the agent is a local agent for hierarchical search, ensure its
         # search region is within the bound of the global agent's search region.
-        if self._agents[robot_id].is_local_hierarchical:
+        # For that, we need to pass in additional arguments when initializing
+        # the agent's belief.
+        if info["agent_config"]["agent_type"] == "local_hierarchical":
             global_robot_id = robot_id.split("_local")[0]
             if global_robot_id not in self._agents:
                 raise RuntimeError("Expecting global agent to be present, when creating local agent")
             global_agent = self._agents[global_robot_id]
-            self._agents[robot_id].search_region.fit(global_agent.search_region)
+            kwargs["args_init_object_beliefs"] = {
+                "for_local_hierarchical": True,
+                "global_search_region": global_agent.search_region
+            }
+        self._agents[robot_id] = agent_utils.create_agent(
+            robot_id, info["agent_config"], info["init_robot_loc"], info["search_region"], **kwargs)
         self._check_invariant()
 
     def _check_invariant(self):

@@ -6,7 +6,7 @@ import numpy as np
 import pomdp_py
 import random
 from ..domain.observation import RobotLocalization, RobotObservation, FovVoxels, Voxel
-from ..models.search_region import SearchRegion2D, SearchRegion3D
+from ..models.search_region import SearchRegion2D, SearchRegion3D, LocalRegionalOctreeDistribution
 from ..models.octree_belief import Octree, OctreeBelief, RegionalOctreeDistribution
 from ..domain.state import ObjectState, RobotState
 from sloop_object_search.utils.math import (quat_to_euler, euler_to_quat,
@@ -27,7 +27,7 @@ def init_robot_belief(robot_config, robot_pose_est, robot_state_class=RobotState
                             camera_direction=None,
                             **state_kwargs)
 
-def init_object_beliefs_2d(target_objects, search_region, belief_config={}):
+def init_object_beliefs_2d(target_objects, search_region, belief_config={}, **kwargs):
     """prior: dictionary objid->[[loc, prob]]"""
     assert isinstance(search_region, SearchRegion2D),\
         f"search_region should be a SearchRegion2D but its {type(search_region)}"
@@ -46,7 +46,7 @@ def init_object_beliefs_2d(target_objects, search_region, belief_config={}):
         object_beliefs[objid] = object_belief
     return object_beliefs
 
-def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
+def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kwargs):
     """we'll use Octree belief. Here, 'search_region' should be a
     SearchRegion3D. As such, it has an RegionalOctreeDistribution
     used for modeling occupancy. The agent's octree belief will be
@@ -62,10 +62,17 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
     dimension = search_region.octree_dist.octree.dimensions[0]
     for objid in target_objects:
         target = target_objects[objid]
-        octree_dist = RegionalOctreeDistribution(
-            (dimension, dimension, dimension),
-            search_region.octree_dist.region,
+        if kwargs.get("for_local_hierarchical", False):
+            # initializing for local search agent in hierarchical planning
+            global_search_region = kwargs["global_search_region"]
+            octree_dist = LocalRegionalOctreeDistribution(
+                search_region, global_search_region,
             num_samples=init_params.get("num_samples", 200))
+        else:
+            octree_dist = RegionalOctreeDistribution(
+                (dimension, dimension, dimension),
+                search_region.octree_dist.region,
+                num_samples=init_params.get("num_samples", 200))
         octree_belief = OctreeBelief(objid, target['class'], octree_dist)
         if prior is not None and objid in prior:
             for voxel, prob in prior[objid]:
@@ -76,13 +83,13 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}):
         object_beliefs[objid] = octree_belief
     return object_beliefs
 
-def init_object_beliefs(target_objects, search_region, belief_config={}):
+def init_object_beliefs(target_objects, search_region, belief_config={}, **kwargs):
     if isinstance(search_region, SearchRegion2D):
-        return init_object_beliefs_2d(target_objects, search_region, belief_config=belief_config)
+        return init_object_beliefs_2d(target_objects, search_region, belief_config=belief_config, **kwargs)
     else:
         assert isinstance(search_region, SearchRegion3D),\
             "search region is of invalid type ({}).".format(type(search_region))
-        return init_object_beliefs_3d(target_objects, search_region, belief_config=belief_config)
+        return init_object_beliefs_3d(target_objects, search_region, belief_config=belief_config, **kwargs)
 
 def accumulate_object_beliefs(search_region,
                               object_beliefs):

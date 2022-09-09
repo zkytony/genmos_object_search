@@ -124,7 +124,8 @@ class MosAgent(pomdp_py.Agent):
     The action space and transition model are not specified here."""
     def __init__(self, agent_config, search_region,
                  init_robot_pose_dist,
-                 init_object_beliefs=None):
+                 init_object_beliefs=None,
+                 args_init_object_beliefs=None):
         """
         Args:
             agent_config (dict): configuration for the agent
@@ -134,6 +135,8 @@ class MosAgent(pomdp_py.Agent):
             init_object_beliefs (dict): maps from object id
                 to pomdp_py.GenerativeDistribution
         """
+        if args_init_object_beliefs is None:
+            args_init_object_beliefs = {}
 
         self.agent_config = agent_config
         agent_type = self.agent_config.get("agent_type", "local")
@@ -149,7 +152,8 @@ class MosAgent(pomdp_py.Agent):
 
         # Belief
         init_belief = self.init_belief(
-            init_robot_pose_dist, init_object_beliefs)
+            init_robot_pose_dist, init_object_beliefs,
+            **args_init_object_beliefs)
 
         # Observation Model (Mos)
         self.detection_models = self.init_detection_models()
@@ -186,13 +190,14 @@ class MosAgent(pomdp_py.Agent):
         detection_models = init_detection_models(self.agent_config)
         return detection_models
 
-    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None):
+    def init_belief(self, init_robot_pose_dist, init_object_beliefs=None, **args_init_object_beliefs):
         """Override this method if initial belief is constructed in
         a specialized way."""
         if init_object_beliefs is None:
             init_object_beliefs = belief.init_object_beliefs(
                 self.target_objects, self.search_region,
-                belief_config=self.agent_config["belief"])
+                belief_config=self.agent_config["belief"],
+                **args_init_object_beliefs)
         init_robot_belief = belief.init_robot_belief(self.agent_config["robot"],
                                                      init_robot_pose_dist)
         init_belief = pomdp_py.OOBelief({self.robot_id: init_robot_belief,

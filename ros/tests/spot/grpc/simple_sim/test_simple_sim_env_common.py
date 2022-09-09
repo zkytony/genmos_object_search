@@ -29,7 +29,7 @@ ACTION_TOPIC = "/simple_sim_env/pomdp_action"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
-SEARCH_SPACE_RESOLUTION_3D = 0.2
+SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
 

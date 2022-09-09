@@ -7,6 +7,7 @@ CONFIG_LOCAL = {
 
     "agent_config": {
         "agent_class": "MosAgentTopo3D", #"MosAgentBasic3D",
+        "agent_type": "local",
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
@@ -71,7 +72,7 @@ CONFIG_LOCAL2D = {
 
     "agent_config": {
         "agent_class": "MosAgentBasic2D",
-        "agent_type": "local",  # 'hierarchical' or 'local'
+        "agent_type": "local",
         "belief": {},
         "robot": {
             "id": "robot0",
@@ -126,7 +127,7 @@ CONFIG_TOPO2D = {
 
     "agent_config": {
         "agent_class": "MosAgentTopo2D",
-        "agent_type": "local",  # 'hierarchical' or 'local'
+        "agent_type": "local",
         "belief": {},
         "robot": {
             "id": "robot0",
@@ -241,7 +242,7 @@ CONFIG_HIER = {
 }
 
 #### SET WHICH CONFIG TO USE ###
-CONFIG = CONFIG_LOCAL
+CONFIG = CONFIG_HIER
 
 
 

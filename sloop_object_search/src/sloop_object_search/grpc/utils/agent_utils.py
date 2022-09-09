@@ -27,7 +27,7 @@ VALID_AGENTS = {"MosAgentBasic2D",
                 "MosAgentTopo3D"}
 
 
-def create_agent(robot_id, agent_config_world, robot_localization_world, search_region):
+def create_agent(robot_id, agent_config_world, robot_localization_world, search_region, **kwargs):
     """
     Creates a SLOOP POMDP agent named 'robot_id', with the given
     config (dict). The initial pose, in world frame, is given by
@@ -75,7 +75,7 @@ def create_agent(robot_id, agent_config_world, robot_localization_world, search_
     init_robot_pose_dist = belief.RobotLocalization(robot_id, robot_pose_pomdp, robot_pose_cov_pomdp)
     if isinstance(search_region, SearchRegion2D):
         init_robot_pose_dist = init_robot_pose_dist.to_2d()
-    agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist)
+    agent = agent_class(agent_config_pomdp, search_region, init_robot_pose_dist, **kwargs)
     return agent
 
 
@@ -457,6 +457,7 @@ def update_planner(request, planner, agent, observation, action):
 #         aux = {**aux_local, **aux_global}
 
 #         if action_finished:
+#         # THIS IS MOST LIKELY BUGGY
 #             update_planner(request, planner.local_planner, planner.local_agent,
 #                            observation_local, action)
 
@@ -468,6 +469,7 @@ def update_planner(request, planner, agent, observation, action):
 #                             **proto_utils.process_observation_params(request))
 
 #     if action_finished:
+#         # THIS IS MOST LIKELY BUGGY
 #         update_planner(request, planner.global_planner, planner.global_agent,
 #                        observation_global, action)
 #     return aux
