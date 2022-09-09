@@ -184,6 +184,14 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         info = self._pending_agents.pop(robot_id)
         self._agents[robot_id] = agent_utils.create_agent(
             robot_id, info["agent_config"], info["init_robot_loc"], info["search_region"])
+        # if the agent is a local agent for hierarchical search, ensure its
+        # search region is within the bound of the global agent's search region.
+        if self._agents[robot_id].is_local_hierarchical:
+            global_robot_id = robot_id.split("_local")[0]
+            if global_robot_id not in self._agents:
+                raise RuntimeError("Expecting global agent to be present, when creating local agent")
+            global_agent = self._agents[global_robot_id]
+            self._agents[robot_id].search_region.fit(global_agent.search_region)
         self._check_invariant()
 
     def _check_invariant(self):

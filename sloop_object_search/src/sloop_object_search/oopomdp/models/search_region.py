@@ -219,3 +219,6 @@ class SearchRegion3D(SearchRegion):
     def valid_voxel(self, voxel):
         """a voxel is a tuple (x, y, z, res)"""
         return self.octree_dist.octree.valid_voxel(*voxel)
+
+    def fit(self):
+        pass

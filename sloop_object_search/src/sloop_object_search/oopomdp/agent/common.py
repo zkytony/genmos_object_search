@@ -136,6 +136,10 @@ class MosAgent(pomdp_py.Agent):
         """
 
         self.agent_config = agent_config
+        agent_type = self.agent_config.get("agent_type", "local")
+        if agent_type not in {"local", "hierarchical", "local_hierarchical"}:
+            raise ValueError("'agent_type' in agent_config must be 'local', 'hierarchical', or 'local_hierarchical'")
+        self.agent_type = agent_type
         self.search_region = search_region
         robot_config = agent_config["robot"]
         self.no_look = agent_config.get("no_look", True)
@@ -212,13 +216,17 @@ class MosAgent(pomdp_py.Agent):
 
     @property
     def is_hierarchical(self):
-        agent_type = self.agent_config.get("agent_type", "local")
-        if agent_type not in {"local", "hierarchical"}:
-            raise ValueError("'agent_type' in agent_config must be 'local' or 'hierarchical'")
-        return agent_type == "hierarchical"
+        return self.agent_type == "hierarchical"
+
+    @property
+    def is_local_hierarchical(self):
+        return self.agent_type == "local_hierarchical"
+
+    @property
+    def is_local(self):
+        return self.agent_type == "local"
 
     def update_belief(self, observation, action=None, debug=False, **kwargs):
-
         """
         update belief given observation.  We can accept two kinds of observations:
         either JointObservation, which should contain object detections and a

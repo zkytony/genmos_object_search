@@ -308,7 +308,9 @@ def make_local_agent_config(hier_agent_config, belief_config=None):
         belief_config = {}
     agent_config = {
         "agent_class": "MosAgentTopo3D",
-        "agent_type": "local",
+        # 'local_hierarchical' means the agent is created as a local search agent
+        # as part of hierarchical search.
+        "agent_type": "local_hierarchical",
         "belief": belief_config,
         "robot": {
             "id": hier_agent_config["robot"]["id"] + "_local",
@@ -360,39 +362,38 @@ def plan_action(planner, agent, server):
     # update search region request in order to gather
     # the necessary inputs to create the local agent.
     if isinstance(planner, HierPlanner):
-        raise NotImplementedError()
-        # if planner.global_agent.robot_id != agent.robot_id:
-        #     return False, "Expecting planning request on behalf of global agent"
+        if planner.global_agent.robot_id != agent.robot_id:
+            return False, "Expecting planning request on behalf of global agent"
 
-        # if action.robot_id == agent.robot_id and isinstance(action, slpa.StayAction):
-        #     # The action is planned for the global agent, AND it is a Stay.
-        #     # Handle the creation of local search agent if needed
-        #     if planner.local_agent is None:
-        #         # server tells client, please send over update search region request
-        #         local_robot_id = f"{agent.robot_id}_local"
-        #         server.add_message(agent.robot_id,
-        #                            Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
+        if action.robot_id == agent.robot_id and isinstance(action, slpa.StayAction):
+            # The action is planned for the global agent, AND it is a Stay.
+            # Handle the creation of local search agent if needed
+            if planner.local_agent is None:
+                # server tells client, please send over update search region request
+                local_robot_id = f"{agent.robot_id}_local"
+                server.add_message(agent.robot_id,
+                                   Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE.format(local_robot_id))
 
-        #         # Use the server's own mechanism to create the local agent
-        #         # create a placeholder for the local agent in the server
-        #         local_agent_config = make_local_agent_config(agent.agent_config)
-        #         server.prepare_agent_for_creation(local_agent_config)
+                # Use the server's own mechanism to create the local agent
+                # create a placeholder for the local agent in the server
+                local_agent_config = make_local_agent_config(agent.agent_config)
+                server.prepare_agent_for_creation(local_agent_config)
 
-        #         # Now, wait for local search region; note that this will
-        #         # also create the local agent, if it is not yet created.
-        #         local_search_region, robot_loc_world =\
-        #             server.wait_for_client_provided_info(
-        #                 Info.LOCAL_SEARCH_REGION.format(local_robot_id),
-        #                 timeout=15)
+                # Now, wait for local search region; note that this will
+                # also create the local agent, if it is not yet created.
+                local_search_region, robot_loc_world =\
+                    server.wait_for_client_provided_info(
+                        Info.LOCAL_SEARCH_REGION.format(local_robot_id),
+                        timeout=15)
 
-        #         # Now, we have a local agent
-        #         planner.set_local_agent(server.agents[local_robot_id])
-        #         action = planner.plan_local()
-        #     else:
-        #         # If the local agent is not None, the hierarchical planner would
-        #         # not output a Stay action for the global agent. It would output
-        #         # an action for the local agent. So this is unexpected.
-        #         raise RuntimeError("Unexpected. Planner should output action for local agent")
+                # Now, we have a local agent
+                planner.set_local_agent(server.agents[local_robot_id])
+                action = planner.plan_local()
+            else:
+                # If the local agent is not None, the hierarchical planner would
+                # not output a Stay action for the global agent. It would output
+                # an action for the local agent. So this is unexpected.
+                raise RuntimeError("Unexpected. Planner should output action for local agent")
     return True, action
 
 
@@ -426,7 +427,6 @@ def update_planner(request, planner, agent, observation, action):
     planning_observation = slpo.GMOSObservation(planning_zobjs)
     planner.update(agent, action, planning_observation)
     logging.info("planner updated")
-
 
 # def update_hier(request, planner, action, action_finished):
 #     """Update agent and planner (HierPlanner)."""
