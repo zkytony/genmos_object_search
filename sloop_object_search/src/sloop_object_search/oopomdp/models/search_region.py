@@ -1,5 +1,5 @@
 from sloop_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
-from .octree_belief import OccupancyOctreeDistribution
+from .octree_belief import OccupancyOctreeDistribution, RegionalOctreeDistribution
 
 class SearchRegion:
     """model of the search region. The idea of search region is
@@ -220,5 +220,56 @@ class SearchRegion3D(SearchRegion):
         """a voxel is a tuple (x, y, z, res)"""
         return self.octree_dist.octree.valid_voxel(*voxel)
 
-    def fit(self):
-        pass
+    def project_to_2d(self, pos, search_region2d):
+        assert len(pos) == 3, "pos must be 3D"
+        world_pos = self.to_world_pos(pos)
+        return search_region2d.to_pomdp_pos(world_pos[:2])
+
+
+class LocalRegionalOctreeDistribution(RegionalOctreeDistribution):
+    """This is specifically for local search agent in hierarchical planning. The
+    region's height is given by a height limit and its footprint is determined
+    by a 2D search region; This ensures the local octree belief fits within
+    the 2D search region."""
+    def __init__(self, local_search_region, global_search_region,
+                 default_region_val=DEFAULT_VAL, **kwargs):
+        assert isinstance(local_search_region, SearchRegion3D)
+        assert isinstance(global_search_region, SearchRegion2D)
+        dimensions = local_search_region.octree_dist.octree.dimensions
+
+        super().__init__(dimensions, region=local_search_region.octree_dist.region,
+                         default_region_val=default_region_val, **kwargs)
+        self._local_search_region = local_search_region
+        self._global_search_region = global_search_region
+        self._height_limit = self.region[3]
+
+    def in_region(self, voxel):
+        if not super().in_region(voxel):
+            return False
+        else:
+            # check if the voxel is within the 2D map in global search region
+            x, y, z, r = voxel
+            # check center and corners
+            voxel_center = (x*r + r/2, y*r + r/2, z*r + r/2)
+            voxel_min_origin = (x*r, y*r, z*r)
+            voxel_max_origin = (x*r + r, y*r + r, z*r + r)
+
+            voxel_center_2d = self._local_search_region.project_to_2d(voxel_center, self._global_search_region)
+            if voxel_center_2d not in self._global_search_region:
+                return False
+
+            voxel_min_origin_2d = self._local_search_region.project_to_2d(voxel_min_origin, self._global_search_region)
+            if voxel_min_origin_2d not in self._global_search_region:
+                return False
+
+            voxel_max_origin_2d = self._local_search_region.project_to_2d(voxel_max_origin, self._global_search_region)
+            if voxel_max_origin_2d not in self._global_search_region:
+                return False
+            return True
+
+    def sample_from_region(self):
+        # avoid sampling from outside the global region
+        xr, yr, zr = super().sample_from_region()
+        while not self.in_region((xr, yr, zr, 1)):
+            xr, yr, zr = super().sample_from_region()
+        return (xr, yr, zr)

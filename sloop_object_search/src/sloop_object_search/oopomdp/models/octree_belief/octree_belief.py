@@ -430,10 +430,8 @@ class RegionalOctreeDistribution(OctreeDistribution):
     def __init__(self, dimensions, region=None,
                  default_region_val=DEFAULT_VAL, **kwargs):
         """The origin in 'region' here should be in POMDP frame (NOT world frame).
-        The origin and w, l, h in 'region' can be float-valued."""
-        if region is not None and type(region) != tuple and type(region) != set:
-            raise TypeError("region must be either a tuple (center, w, h, l)"
-                            "representing a box, or a set of voxels")
+        If 'region' is a tuple, then we expect it to be of the fomat
+        (origin, (w, l, h)). The origin and w, l, h in 'region' can be float-valued."""
         if region is None:
             region = ((0,0,0), dimensions[0], dimensions[1], dimensions[2])
 
@@ -441,8 +439,10 @@ class RegionalOctreeDistribution(OctreeDistribution):
         super().__init__(dimensions, default_val=0)
 
         # If region is larger than dimension, then we have to clip the region (max-clip)
-        w, l, h = region[1:]
-        region = (region[0], min(dimensions[0], w), min(dimensions[1], l), min(dimensions[2], h))
+        if type(region) == tuple:
+            w, l, h = region[1:]
+            region = (region[0], min(dimensions[0], w), min(dimensions[1], l), min(dimensions[2], h))
+
         self._region = region
 
         # initialize nodes within region to have a (different) default value.
@@ -494,6 +494,13 @@ class RegionalOctreeDistribution(OctreeDistribution):
         else:
             return super()._probability(x, y, z, res)
 
+    def sample_from_region(self):
+        if type(self.region) == set:
+            xr, yr, zr = random.sample(self.region, 1)[0]
+        else:
+            xr, yr, zr = util.sample_in_box3d_origin(self.region)
+        return (xr, yr, zr)
+
     def fill_region_uniform(self, default_val, num_samples=200):
         """
         This function will set the default values of octnodes within the
@@ -505,10 +512,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
         parent node's center is within the region.
         """
         for i in range(num_samples):
-            if type(self.region) == set:
-                xr, yr, zr = random.sample(self.region, 1)[0]
-            else:
-                xr, yr, zr = util.sample_in_box3d_origin(self.region)
+            xr, yr, zr = self.sample_from_region()
 
             # check this voxel is within the region
             xr = int(round(xr))

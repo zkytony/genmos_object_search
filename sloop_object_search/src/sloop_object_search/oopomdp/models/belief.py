@@ -363,6 +363,7 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kw
     """
     dimension = search_region3d.octree_dist.octree.dimensions[0]
     # obtain estimate of height increments
+    # TODO: handle non-rectangular region
     region_height = search_region3d.octree_dist.region[3]
     if not divisible_by(region_height, res):
         region_height_world = region_height * search_region3d.search_space_resolution
@@ -421,6 +422,7 @@ def update_2d_belief_by_3d(bobj2d_t, bobj3d_tp1, bobj3d_t_normalizer, search_reg
     locdist2d_updated = LocDist2D(search_region2d, values=bobj2d_t.loc_dist.values_dict.copy(),
                                   normalizer=bobj2d_t.loc_dist.normalizer)
     # we estimate the fraction of space local region is with respect to the entire search space
+    # TODO: handle non-rectangular region
     region_width, region_length = search_region3d.octree_dist.region[1:3]
     region_width_world = region_width * search_region3d.search_space_resolution
     region_width_2d = int(round(region_width_world / search_region2d.search_space_resolution))

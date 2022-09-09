@@ -235,6 +235,7 @@ def _sample_topo_graph3d(init_object_beliefs,
     # The overall idea: sample robot positions from within the search region,
     # and rank them based on object beliefs, and only keep <= X number of nodes
     # that have normalized scores above some threshold
+    # TODO: handle non-rectangular region
     region = search_region.octree_dist.region
     origin, w, l, h = region
     candidate_positions = set([init_robot_pose[:3]])
