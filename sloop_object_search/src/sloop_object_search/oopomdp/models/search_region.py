@@ -1,5 +1,6 @@
 from sloop_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
-from .octree_belief import OccupancyOctreeDistribution, RegionalOctreeDistribution, DEFAULT_VAL
+from .octree_belief import (OccupancyOctreeDistribution,
+                            RegionalOctreeDistribution, DEFAULT_VAL, Octree)
 
 class SearchRegion:
     """model of the search region. The idea of search region is
@@ -175,8 +176,13 @@ class SearchRegion2D(SearchRegion):
     def __contains__(self, pos):
         return pos in self.grid_map.free_locations
 
-
-
+    def pos_to_voxel(self, pos, z3d, search_region3d, res=1):
+        """Project a POMDP pos in 2D to a 3D voxel at a given resolution
+        Note that z3d should be a POMDP coordinate at ground resolution level."""
+        pos_world2d = self.to_world_pos(pos)
+        pos3d_plane = search_region3d.to_pomdp_pos((*pos_world2d, 0))
+        pos3d = (*pos3d_plane[:2], z3d)
+        return (*Octree.increase_res(pos3d, 1, res), res)
 
 class SearchRegion3D(SearchRegion):
     """The 3D search region is represented as an octree_dist
@@ -221,6 +227,7 @@ class SearchRegion3D(SearchRegion):
         return self.octree_dist.octree.valid_voxel(*voxel)
 
     def project_to_2d(self, pos, search_region2d):
+        """Project a POMDP pos in 3D to 2D"""
         assert len(pos) == 3, "pos must be 3D"
         world_pos = self.to_world_pos(pos)
         return search_region2d.to_pomdp_pos(world_pos[:2])
@@ -271,3 +278,15 @@ class LocalRegionalOctreeDistribution(RegionalOctreeDistribution):
         while not self.in_region((xr, yr, zr, 1)):
             xr, yr, zr = super().sample_from_region()
         return (xr, yr, zr)
+
+
+def project_3d_region_to_2d(search_region3d, search_region2d):
+    """Return a (origin, w, l) tuple that corresponds to
+    a region in search_region2d where search_region3d lives in."""
+    region_width, region_length = search_region3d.octree_dist.region[1:3]
+    region_width_world = region_width * search_region3d.search_space_resolution
+    region_width_2d = int(round(region_width_world / search_region2d.search_space_resolution))
+    region_length_world = region_length * search_region3d.search_space_resolution
+    region_length_2d = int(round(region_length_world / search_region2d.search_space_resolution))
+    region_origin_2d = search_region2d.to_pomdp_pos(search_region3d.region_origin[:2])
+    return (region_origin_2d, region_width_2d, region_length_2d)

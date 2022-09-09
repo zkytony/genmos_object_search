@@ -426,9 +426,13 @@ class RegionalOctreeDistribution(OctreeDistribution):
     value within a region in RegionalOctreeDistribution is configurable (DEFAULT_VAL
     by default), while the default value within a region in OccupancyOctreeDistribution
     is always 0.
+
+    NEW: besides setting default region val for voxels within a region,
+    the actual value of the node can be changed too according to a dict.
+    'region_val_dict'
     """
     def __init__(self, dimensions, region=None,
-                 default_region_val=DEFAULT_VAL, **kwargs):
+                 default_region_val=DEFAULT_VAL, region_val_dict=None, **kwargs):
         """The origin in 'region' here should be in POMDP frame (NOT world frame).
         If 'region' is a tuple, then we expect it to be of the fomat
         (origin, (w, l, h)). The origin and w, l, h in 'region' can be float-valued."""
@@ -450,7 +454,8 @@ class RegionalOctreeDistribution(OctreeDistribution):
         if default_region_val is not None and default_region_val != 0:
             num_samples = kwargs.pop("num_samples", 200)
             self.fill_region_uniform(default_region_val,
-                                     num_samples=num_samples)
+                                     num_samples=num_samples,
+                                     region_val_dict=region_val_dict)
 
     @property
     def region(self):
@@ -501,7 +506,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
             xr, yr, zr = util.sample_in_box3d_origin(self.region)
         return (xr, yr, zr)
 
-    def fill_region_uniform(self, default_val, num_samples=200):
+    def fill_region_uniform(self, default_val, num_samples=200, region_val_dict=None):
         """
         This function will set the default values of octnodes within the
         region uniformly with the given value 'default_val'. It works
@@ -510,7 +515,12 @@ class RegionalOctreeDistribution(OctreeDistribution):
         'defaul_val', trace back till the root depth wise and change
         each parent node's default value to be 'default_val', if the
         parent node's center is within the region.
+
+        NEW - region_val_dict: maps from voxel to a value.
         """
+        if region_val_dict is None:
+            region_val_dict = {}
+
         for i in range(num_samples):
             xr, yr, zr = self.sample_from_region()
 
