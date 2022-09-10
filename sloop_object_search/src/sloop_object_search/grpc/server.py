@@ -275,9 +275,15 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 header=proto_utils.make_header(),
                 status=Status.FAILED,
                 message=self._logwarn(f"Planning failed. {result}"))
-        action = result
+
+        planned_locally, action = result
         header = proto_utils.make_header(request.header.frame_id)
-        action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
+        if planned_locally:
+            local_robot_id = request.robot_id + "_local"
+            local_agent = self._agents[local_robot_id]
+            action_type, action_pb = proto_utils.pomdp_action_to_proto(action, local_agent, header)
+        else:
+            action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
         action_id = self._make_action_id(agent, action)
         self._actions_planned[agent.robot_id] = (action_id, action)
         return slpb2.PlanActionReply(header=header,
@@ -399,11 +405,10 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         if isinstance(planner, HierPlanner):
             # If the planner is hierarchical, we will let the planner
             # handle the belief update --> because it is more tricky
-            # assert planner.global_agent.robot_id == agent.robot_id,\
-            #     "Expecting request to contain global agent's robot id"
-            # aux = agent_utils.update_hier(
-            #     request, planner, action, action_finished)
-            raise NotImplementedError()
+            assert planner.global_agent.robot_id == agent.robot_id,\
+                "Expecting request to contain global agent's robot id"
+            aux = agent_utils.update_hier(
+                request, planner, action, action_finished)
         else:
             # Otherwise, we will update the agent and planner normally
             observation = proto_utils.pomdp_observation_from_request(request, agent, action=action)

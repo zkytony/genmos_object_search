@@ -170,7 +170,8 @@ class PolicyModelTopo(PolicyModel):
                 eid = self.topo_map.edge_between(srobot.nid, nb_id)
                 valid_moves.add(
                     action.MotionActionTopo(
-                        srobot.nid, nb_id, self.topo_map.edges[eid].nav_length))
+                        srobot.nid, nb_id, topo_map_hashcode=self.topo_map.hashcode,
+                        distance=self.topo_map.edges[eid].nav_length))
             self._legal_moves[srobot] = valid_moves
             return valid_moves
 

@@ -201,6 +201,8 @@ def pomdp_action_to_proto(action, agent, header=None, **kwargs):
             # use the resulting pose as the goal viewpoint -> this
             # results in a rotation that faces the target while respecting
             # the agent's current belief.
+            assert action.topo_map_hashcode == agent.topo_map.hashcode,\
+                f"topo map hashcode in {action.name} does not match agent {agent.robot_id}'s topo map"
             robot_trans_model = agent.transition_model[agent.robot_id]
             rnd_state = agent.belief.random()
             goal_pose_pomdp = robot_trans_model.sample(rnd_state, action).pose

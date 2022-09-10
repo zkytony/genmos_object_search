@@ -305,7 +305,7 @@ def create_planner(planner_config, agent):
 
 def make_local_agent_config(hier_agent_config, belief_config=None):
     if belief_config is None:
-        belief_config = {}
+        belief_config = hier_agent_config.get("belief_local", {})
     agent_config = {
         "agent_class": "MosAgentTopo3D",
         # 'local_hierarchical' means the agent is created as a local search agent
@@ -347,9 +347,11 @@ def plan_action(planner, agent, server):
         agent (MosAgent)
         server (grpc server)
     Returns:
-        (bool, str or Action)
-        If planning is successful, return True, and the action.
-        If failed, return False, and a string as the reason
+        a tuple.
+        The first element is a boolean. If planning is successful, return True
+        The second element is either a str, reason for failure,
+            or a tuple (bool, pomdp_py.Action); The first
+            element is True if the agent planned locally.
     """
     action = planner.plan(agent)
     if hasattr(agent, "tree") and agent.tree is not None:
@@ -361,6 +363,7 @@ def plan_action(planner, agent, server):
     # action, then will ask the server to wait for an
     # update search region request in order to gather
     # the necessary inputs to create the local agent.
+    planned_locally = False
     if isinstance(planner, HierPlanner):
         if planner.global_agent.robot_id != agent.robot_id:
             return False, "Expecting planning request on behalf of global agent"
@@ -389,12 +392,14 @@ def plan_action(planner, agent, server):
                 # Now, we have a local agent
                 planner.set_local_agent(server.agents[local_robot_id])
                 action = planner.plan_local()
+                planned_locally = True
+
             else:
                 # If the local agent is not None, the hierarchical planner would
                 # not output a Stay action for the global agent. It would output
                 # an action for the local agent. So this is unexpected.
                 raise RuntimeError("Unexpected. Planner should output action for local agent")
-    return True, action
+    return True, (planned_locally, action)
 
 
 def update_planner(request, planner, agent, observation, action):
@@ -428,48 +433,34 @@ def update_planner(request, planner, agent, observation, action):
     planner.update(agent, action, planning_observation)
     logging.info("planner updated")
 
-# def update_hier(request, planner, action, action_finished):
-#     """Update agent and planner (HierPlanner)."""
-#     if not isinstance(planner, HierPlanner):
-#         raise TypeError(f"update_hier only applies to HierPlanner. Got {type(planner)}")
+def update_hier(request, planner, action, action_finished):
+    """Update agent and planner (HierPlanner)."""
+    if not isinstance(planner, HierPlanner):
+        raise TypeError(f"update_hier only applies to HierPlanner. Got {type(planner)}")
 
-#     # If there is a local agent, will update its belief,
-#     # and then update the global agent's belief based on
-#     # the local agent belief.
-#     if planner.searching_locally:
-#         # Interpret request and update local agent belief.
-#         observation_local = proto_utils.pomdp_observation_from_request(
-#             request, planner.local_agent, action=action)
-#         # this is useful for updating global agent belief
-#         _normalizers_old = {objid: planner.local_agent.belief.b(objid).octree_dist.normalizer
-#                            for objid in planner.local_agent.belief.object_beliefs
-#                            if objid != planner.local_agent.robot_id}
-#         aux_local = update_belief(planner.local_agent, observation_local, action=action,
-#                                   debug=request.debug, **proto_utils.process_observation_params(request))
+    # If there is a local agent, will update its belief,
+    # and then update the global agent's belief based on
+    # the local agent belief.
+    if planner.searching_locally:
+        # Interpret request and update local agent belief.
+        observation_local = proto_utils.pomdp_observation_from_request(
+            request, planner.local_agent, action=action)
+        aux_local = update_belief(planner.local_agent, observation_local, action=action,
+                                  debug=request.debug, **proto_utils.process_observation_params(request))
 
-#         # Update global agent's object belief
-#         planner.update_global_object_beliefs_from_local(_normalizers_old)
-#         observation_global = proto_utils.pomdp_observation_from_request(
-#             request, planner.global_agent, action=action)
-#         robot_observation_global = observation_global.z(planner.global_agent.robot_id)
-#         aux_global = update_belief(planner.global_agent, robot_observation_global, action=action,
-#                                    debug=request.debug, **proto_utils.process_observation_params(request))
-#         aux = {**aux_local, **aux_global}
+        # Update global agent's object belief
+        planner.update_global_object_beliefs_from_local()
+        observation_global = proto_utils.pomdp_observation_from_request(
+            request, planner.global_agent, action=action)
+        robot_observation_global = observation_global.z(planner.global_agent.robot_id)
+        aux_global = update_belief(planner.global_agent, robot_observation_global, action=action,
+                                   debug=request.debug, **proto_utils.process_observation_params(request))
+        aux = {**aux_local, **aux_global}
 
-#         if action_finished:
-#         # THIS IS MOST LIKELY BUGGY
-#             update_planner(request, planner.local_planner, planner.local_agent,
-#                            observation_local, action)
-
-#     else:
-#         # No local agent. Just update the global planner
-#         observation_global = proto_utils.pomdp_observation_from_request(
-#             request, planner.global_agent, action=action)
-#         aux = update_belief(planner.global_agent, observation_global, action=action,
-#                             **proto_utils.process_observation_params(request))
-
-#     if action_finished:
-#         # THIS IS MOST LIKELY BUGGY
-#         update_planner(request, planner.global_planner, planner.global_agent,
-#                        observation_global, action)
-#     return aux
+    else:
+        # No local agent. Just update the global planner
+        observation_global = proto_utils.pomdp_observation_from_request(
+            request, planner.global_agent, action=action)
+        aux = update_belief(planner.global_agent, observation_global, action=action,
+                            **proto_utils.process_observation_params(request))
+    return aux

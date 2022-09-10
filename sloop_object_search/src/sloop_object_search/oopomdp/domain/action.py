@@ -132,15 +132,21 @@ def basic_discrete_moves3d(step_size=1, rotation=90.0, scheme="axis"):
 
 ################## Topological movement (General for 2D/3D) ###########################
 class MotionActionTopo(MotionAction):
-    def __init__(self, src_nid, dst_nid, distance=None,
+    def __init__(self, src_nid, dst_nid, topo_map_hashcode=None, distance=None,
                  cost_scaling_factor=1.0, atype="move"):
         """distance: distance between source and destination nodes.
                      (ideally, geodesic distance)"""
         self.src_nid = src_nid
         self.dst_nid = dst_nid
         self.distance = distance
+        self.topo_map_hashcode = topo_map_hashcode
         self._cost_scaling_factor = cost_scaling_factor
-        super().__init__("{}({}->{})".format(atype, self.src_nid, self.dst_nid))
+
+        if topo_map_hashcode is not None:
+            action_name = "{}({}->{}@{})".format(atype, self.src_nid, self.dst_nid, self.topo_map_hashcode[:4])
+        else:
+            action_name = "{}({}->{})".format(atype, self.src_nid, self.dst_nid)
+        super().__init__(action_name)
 
     @property
     def step_cost(self):
