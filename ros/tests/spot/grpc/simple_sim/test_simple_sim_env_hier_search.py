@@ -183,6 +183,12 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
             self.get_and_visualize_belief_3d(robot_id=local_robot_id)
             self.get_and_visualize_belief_2d()
 
+            # Check if we are done
+            if objects_found == set(AGENT_CONFIG["targets"]):
+                rospy.loginfo("Done!")
+                break
+            time.sleep(1)
+
 def main():
     TestSimpleEnvHierSearch(prior="uniform")
 

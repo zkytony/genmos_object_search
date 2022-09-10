@@ -208,7 +208,7 @@ class LocDist2D(pomdp_py.GenerativeDistribution):
             self._normalizer = len(self._search_region) * self._default_val
         else:
             self._normalizer = normalizer
-        if sum(self._values.values()) != self._normalizer:
+        if not math.isclose(sum(self._values.values()), self._normalizer, abs_tol=1e-6):
             raise ValueError("Invalid distribution. Sum of unnormalized "\
                              "values does not equal to normalizer")
 
@@ -374,50 +374,50 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kw
 
     kwargs: parameters for creating RegionalOctreeDistribution.
     """
-    dimension = search_region3d.octree_dist.octree.dimensions[0]
-    # obtain estimate of height increments
-    region_height = search_region3d.octree_dist.region[3]
-    if not divisible_by(region_height, res):
-        region_height_world = region_height * search_region3d.search_space_resolution
-        res_world = res * search_region3d.search_space_resolution
-        raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
-                         f"divisible by res {res} (metric: {res_world})")
-    height_increments = int(round(region_height / (res-0.1)))  # to deal with numerical instability in region_height
+    # dimension = search_region3d.octree_dist.octree.dimensions[0]
+    # # obtain estimate of height increments
+    # region_height = search_region3d.octree_dist.region[3]
+    # if not divisible_by(region_height, res):
+    #     region_height_world = region_height * search_region3d.search_space_resolution
+    #     res_world = res * search_region3d.search_space_resolution
+    #     raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
+    #                      f"divisible by res {res} (metric: {res_world})")
+    # height_increments = int(round(region_height / (res-0.1)))  # to deal with numerical instability in region_height
 
-    # compute how much we should scale a 2D value when setting it as the value at a unit of 3D region (at 'res')
-    r3d = search_region3d.search_space_resolution
-    r2d = search_region2d.search_space_resolution
-    scale_factor = ((r3d*res)**3/(r2d**3))  # volume ratio
+    # # compute how much we should scale a 2D value when setting it as the value at a unit of 3D region (at 'res')
+    # r3d = search_region3d.search_space_resolution
+    # r2d = search_region2d.search_space_resolution
+    # scale_factor = ((r3d*res)**3/(r2d**3))  # volume ratio
 
-    region2d = project_3d_region_to_2d(search_region3d, search_region2d)
-    x_origin_2d, y_origin_2d = region2d[0]
-    region_width_2d, region_length_2d = region2d[1:]
-    voxel_probs = {}
-    for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
-        for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
-            if (x2d, y2d) in search_region2d:
-                # this is the probability of object at location (x2d,y2d) over entire map
-                prob_pos2d = bobj2d.loc_dist.prob_at(x2d, y2d)
-                # this is the probability of object at one 3D cube over entire map
-                prob_pos3d = (prob_pos2d*scale_factor) / height_increments
-                for z3d in range(height_increments):
-                    voxel = search_region2d.pos_to_voxel(
-                        (x2d, y2d), z3d*res, search_region3d, res=res)
-                    voxel_probs[voxel] = voxel_probs.get(voxel, [])
-                    voxel_probs[voxel].append(prob_pos3d)
+    # region2d = project_3d_region_to_2d(search_region3d, search_region2d)
+    # x_origin_2d, y_origin_2d = region2d[0]
+    # region_width_2d, region_length_2d = region2d[1:]
+    # voxel_probs = {}
+    # for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
+    #     for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
+    #         if (x2d, y2d) in search_region2d:
+    #             # this is the probability of object at location (x2d,y2d) over entire map
+    #             prob_pos2d = bobj2d.loc_dist.prob_at(x2d, y2d)
+    #             # this is the probability of object at one 3D cube over entire map
+    #             prob_pos3d = (prob_pos2d*scale_factor) / height_increments
+    #             for z3d in range(height_increments):
+    #                 voxel = search_region2d.pos_to_voxel(
+    #                     (x2d, y2d), z3d*res, search_region3d, res=res)
+    #                 voxel_probs[voxel] = voxel_probs.get(voxel, [])
+    #                 voxel_probs[voxel].append(prob_pos3d)
 
-    total_prob = 0.0
-    for voxel in voxel_probs:
-        voxel_probs[voxel] = np.mean(voxel_probs[voxel])
-        total_prob += voxel_probs[voxel]
-    for voxel in voxel_probs:
-        voxel_probs[voxel] = voxel_probs[voxel] / total_prob
+    # total_prob = 0.0
+    # for voxel in voxel_probs:
+    #     voxel_probs[voxel] = np.mean(voxel_probs[voxel])
+    #     total_prob += voxel_probs[voxel]
+    # for voxel in voxel_probs:
+    #     voxel_probs[voxel] = voxel_probs[voxel] / total_prob
     octree_dist = LocalRegionalOctreeDistribution(
         search_region3d, search_region2d,
         num_samples=kwargs.get("num_samples", 200))
-    normalizer = octree_dist.normalizer
-    for voxel in voxel_probs:
-        octree_dist.assign(voxel, voxel_probs[voxel]*normalizer)
+    # normalizer = octree_dist.normalizer
+    # for voxel in voxel_probs:
+    #     octree_dist.assign(voxel, voxel_probs[voxel]*normalizer)
     bobj3d = OctreeBelief(bobj2d.objid, bobj2d.objclass, octree_dist)
     return bobj3d
 
@@ -432,68 +432,73 @@ def update_2d_belief_by_3d(bobj2d_t, bobj3d_tp1, search_region2d, search_region3
 
     Pr_t+1(loc) = Pr_t(loc) * (bobj3d_t+1.normalizer / bobj3d_t.normalizer)
     """
-    dimension = search_region3d.octree_dist.octree.dimensions[0]
-    # obtain estimate of height increments
-    region_height = search_region3d.octree_dist.region[3]
-    if not divisible_by(region_height, res):
-        region_height_world = region_height * search_region3d.search_space_resolution
-        res_world = res * search_region3d.search_space_resolution
-        raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
-                         f"divisible by res {res} (metric: {res_world})")
-    height_increments = int(round(region_height / (res-0.1)))  # to deal with numerical instability in region_height
+    # dimension = search_region3d.octree_dist.octree.dimensions[0]
+    # # obtain estimate of height increments
+    # region_height = search_region3d.octree_dist.region[3]
+    # if not divisible_by(region_height, res):
+    #     region_height_world = region_height * search_region3d.search_space_resolution
+    #     res_world = res * search_region3d.search_space_resolution
+    #     raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
+    #                      f"divisible by res {res} (metric: {res_world})")
+    # height_increments = int(round(region_height / (res-0.1)))  # to deal with numerical instability in region_height
 
-    # compute how much we should scale a 3D value (at 'res') when setting it as the value at a unit of 2D region
-    r3d = search_region3d.search_space_resolution
-    r2d = search_region2d.search_space_resolution
-    scale_factor = ((r2d**3)/(r3d*res)**3)  # volume ratio
+    # # compute how much we should scale a 3D value (at 'res') when setting it as the value at a unit of 2D region
+    # r3d = search_region3d.search_space_resolution
+    # r2d = search_region2d.search_space_resolution
+    # scale_factor = ((r2d**3)/(r3d*res)**3)  # volume ratio
 
-    locdist2d_updated = LocDist2D(search_region2d, values=bobj2d_t.loc_dist.values_dict.copy(),
-                                  normalizer=bobj2d_t.loc_dist.normalizer)
+    # locdist2d_updated = LocDist2D(search_region2d, values=bobj2d_t.loc_dist.values_dict.copy(),
+    #                               normalizer=bobj2d_t.loc_dist.normalizer)
 
-    region2d = project_3d_region_to_2d(search_region3d, search_region2d)
-    x_origin_2d, y_origin_2d = region2d[0]
-    region_width_2d, region_length_2d = region2d[1:]
+    # region2d = project_3d_region_to_2d(search_region3d, search_region2d)
+    # x_origin_2d, y_origin_2d = region2d[0]
+    # region_width_2d, region_length_2d = region2d[1:]
 
-    local_region_size = 0
-    for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
-        for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
-            if (x2d, y2d) in search_region2d:
-                local_region_size += 1
+    # local_region_size = 0
+    # for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
+    #     for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
+    #         if (x2d, y2d) in search_region2d:
+    #             local_region_size += 1
 
-    print(bobj3d_tp1.octree_dist.mpe(res=8))
-    import pdb; pdb.set_trace()
-    verify_octree_integrity(bobj3d_tp1.octree_dist.octree)
-    verify_octree_dist_integrity(bobj3d_tp1.octree_dist)
-    pos_probs = {}
-    for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
-        for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
-            if (x2d, y2d) in search_region2d:
+    # print(bobj3d_tp1.octree_dist.mpe(res=8))
+    # verify_octree_integrity(bobj3d_tp1.octree_dist.octree)
+    # verify_octree_dist_integrity(bobj3d_tp1.octree_dist)
+    # pos_probs = {}
 
-                for z3d in range(height_increments):
-                    voxel = search_region2d.pos_to_voxel(
-                        (x2d, y2d), z3d*res, search_region3d, res=res)
+    # for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
+    #     for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
+    #         if (x2d, y2d) in search_region2d:
+    #             for z3d in range(height_increments):
+    #                 voxel = search_region2d.pos_to_voxel(
+    #                     (x2d, y2d), z3d*res, search_region3d, res=res)
 
-                    print("{} -> {}".format((x2d, y2d), voxel))
+    #                 if bobj3d_tp1.octree_dist.in_region(voxel):
+    #                     print("{} -> {}".format((x2d, y2d), voxel))
+    #                     # probability at the voxel within the local search region
+    #                     prob_voxel_region = bobj3d_tp1.octree_dist.prob_at(*voxel)
+    #                     # probability at the 2D location within the local search region
+    #                     prob_pos_region = prob_voxel_region * scale_factor
+    #                     pos_probs[(x2d, y2d)] = pos_probs.get((x2d, y2d), [])
+    #                     pos_probs[(x2d, y2d)].append(prob_pos_region)
+    #                 else:
+    #                     print("HEY!!!!!!!")
 
-                    # probability at the voxel within the local search region
-                    prob_voxel_region = bobj3d_tp1.octree_dist.prob_at(*voxel)
-                    # probability at the 2D location within the local search region
-                    prob_pos_region = (prob_voxel_region/height_increments) * scale_factor
-                    pos_probs[(x2d, y2d)] = pos_probs.get((x2d, y2d), [])
-                    pos_probs[(x2d, y2d)].append(prob_pos_region)
+    # total_prob = 0.0
+    # for pos in pos_probs:
+    #     print(pos, ["{:.5f}".format(p) for p in pos_probs[pos]])
+    #     pos_probs[pos] = np.sum(pos_probs[pos])
+    #     total_prob += pos_probs[pos]
 
-    total_prob = 0.0
-    for pos in pos_probs:
-        pos_probs[pos] = np.mean(pos_probs[pos])
-        total_prob += pos_probs[pos]
-    for pos in pos_probs:
-        pos_probs[pos] = pos_probs[pos] / total_prob
-    normalizer = locdist2d_updated.normalizer
-    for pos in pos_probs:
-        prob_pos_region = pos_probs[pos]
-        # probability at the 2D location over the entire search region
-        prob_pos = prob_pos_region * (local_region_size / len(search_region2d))
-        locdist2d_updated.assign(pos, prob_pos*normalizer)
-    bobj2d_updated = ObjectBelief2D(bobj2d_t.objid, bobj2d_t.objclass,
-                                    locdist2d_updated)
-    return bobj2d_updated
+    # for pos in pos_probs:
+    #     pos_probs[pos] = pos_probs[pos] / total_prob
+
+    # normalizer = locdist2d_updated.normalizer
+    # for pos in pos_probs:
+    #     prob_pos_region = pos_probs[pos]
+    #     # probability at the 2D location over the entire search region
+    #     prob_pos = prob_pos_region * (local_region_size / len(search_region2d))
+    #     locdist2d_updated.assign(pos, prob_pos*normalizer)
+    # bobj2d_updated = ObjectBelief2D(bobj2d_t.objid, bobj2d_t.objclass,
+    #                                 locdist2d_updated)
+    # return bobj2d_updated
+    return bobj2d_t

@@ -70,7 +70,7 @@ def test_belief_conversion_3dto2d(
     search_region3d = search_region3d_2
     print("3D->2D")
     bobj2d_projected = update_2d_belief_by_3d(
-        bobj2d_t, bobj3d_tp1, search_region2d, search_region3d)
+        bobj2d_t, bobj3d_tp1, search_region2d, search_region3d, res=4)
     geometries = open3d_utils.draw_search_region3d(
         search_region3d, octree_dist=bobj3d_tp1.octree_dist, viz=False,
         cmap=cmaps.COLOR_MAP_GRAYS)
