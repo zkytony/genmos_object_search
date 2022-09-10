@@ -182,7 +182,6 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
                 self.visualize_fovs_3d(response_observation)
             self.get_and_visualize_belief_3d(robot_id=local_robot_id)
             self.get_and_visualize_belief_2d()
-            break
 
 def main():
     TestSimpleEnvHierSearch(prior="uniform")

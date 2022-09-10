@@ -363,7 +363,6 @@ def plan_action(planner, agent, server):
     # action, then will ask the server to wait for an
     # update search region request in order to gather
     # the necessary inputs to create the local agent.
-    planned_locally = False
     if isinstance(planner, HierPlanner):
         if planner.global_agent.robot_id != agent.robot_id:
             return False, "Expecting planning request on behalf of global agent"
@@ -392,17 +391,20 @@ def plan_action(planner, agent, server):
                 # Now, we have a local agent
                 planner.set_local_agent(server.agents[local_robot_id])
                 action = planner.plan_local()
-                planned_locally = True
 
             else:
                 # If the local agent is not None, the hierarchical planner would
                 # not output a Stay action for the global agent. It would output
                 # an action for the local agent. So this is unexpected.
                 raise RuntimeError("Unexpected. Planner should output action for local agent")
+
+    planned_locally = False
+    if isinstance(planner, HierPlanner):
+        planned_locally = planner.planning_locally
     return True, (planned_locally, action)
 
 
-def update_planner(request, planner, agent, observation, action):
+def update_planner(planner, agent, observation, action):
     """update planner"""
     # For 3D agents, the planning observation for an object is a Voxel
     # at the ground resolution level. So we need to convert ObjectDetection
@@ -441,7 +443,7 @@ def update_hier(request, planner, action, action_finished):
     # If there is a local agent, will update its belief,
     # and then update the global agent's belief based on
     # the local agent belief.
-    if planner.searching_locally:
+    if planner.planning_locally:
         # Interpret request and update local agent belief.
         observation_local = proto_utils.pomdp_observation_from_request(
             request, planner.local_agent, action=action)
@@ -458,11 +460,17 @@ def update_hier(request, planner, action, action_finished):
         aux = {**aux_local, **aux_global}
 
         #TODO: Update planner
+        assert isinstance(planner.last_planned_global_action, slpa.StayAction)
+        update_planner(planner.local_planner, planner.local_agent, observation_local, action)
+        update_planner(planner.global_planner, planner.global_agent, observation_global, planner.last_planned_global_action)
+
     else:
         # No local agent. Just update the global agent belief
         observation_global = proto_utils.pomdp_observation_from_request(
             request, planner.global_agent, action=action)
         aux = update_belief(planner.global_agent, observation_global, action=action,
                             **proto_utils.process_observation_params(request))
+        assert isinstance(planner.last_planned_global_action, slpa.StayAction)
+        update_planner(planner.global_planner, planner.global_agent, observation_global, planner.last_planned_global_action)
     #TODO: Update planner
     return aux

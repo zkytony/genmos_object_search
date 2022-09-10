@@ -16,7 +16,10 @@ class HierPlanner(pomdp_py.Planner):
                                               rollout_policy=self._global_agent.policy_model)
         self._local_agent = None
         self.local_planner = None
-        self.searching_locally = False
+        self.planning_locally = False
+
+        self.last_planned_global_action = None
+        self.last_planned_local_action = None
 
     @property
     def global_agent(self):
@@ -94,12 +97,15 @@ class HierPlanner(pomdp_py.Planner):
                                                  rollout_policy=self._local_agent.policy_model)
         action = self.local_planner.plan(self._local_agent)
         action.robot_id = self._local_agent.robot_id
+        self.last_planned_local_action = action
         return action
 
     def plan(self, agent):
         """
         The global planner always plans a subgoal. If the subgoal is
         "stay", then a local search agent is created, and action returned.
+        Will set a 'robot_id' attribute for the returning action as
+        the agent that planned that action.
         """
         assert agent.robot_id == self._global_agent.robot_id,\
             "only plan for the agent given at construction."
@@ -113,8 +119,10 @@ class HierPlanner(pomdp_py.Planner):
         subgoal.robot_id = agent.robot_id
         print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
+        self.last_planned_global_action = subgoal
+
         if isinstance(subgoal, StayAction):
-            self.searching_locally = True
+            self.planning_locally = True
             if self._local_agent is not None:
                 # If the local agent is available, then plan with the local agent
                 return self.plan_local()
@@ -123,5 +131,5 @@ class HierPlanner(pomdp_py.Planner):
                 # this planner. Then, local search will be planned.
                 return subgoal
         else:
-            self.searching_locally = False
+            self.planning_locally = False
             return subgoal

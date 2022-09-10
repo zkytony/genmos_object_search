@@ -417,7 +417,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 debug=request.debug, **proto_utils.process_observation_params(request))
             if action_finished:
                 # update planner, when the action finishes
-                agent_utils.update_planner(request, planner, agent, observation, action)
+                agent_utils.update_planner(planner, agent, observation, action)
 
         header = proto_utils.make_header(request.header.frame_id)
         return slpb2.ProcessObservationReply(

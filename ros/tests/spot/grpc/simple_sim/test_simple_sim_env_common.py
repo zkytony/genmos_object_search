@@ -215,13 +215,13 @@ class TestSimpleEnvCase:
             region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
                 [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
                 [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages
+                delay=10000, verbose=True).messages
             self._region_cloud_msg = region_cloud_msg
         else:
             pose_stamped_msg = ros_utils.WaitForMessages(
                 [ROBOT_POSE_TOPIC],
                 [geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages[0]
+                delay=10000, verbose=True).messages[0]
 
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(self._region_cloud_msg)
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
