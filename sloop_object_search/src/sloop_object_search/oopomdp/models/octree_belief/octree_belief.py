@@ -544,17 +544,15 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 continue
 
             while self.in_region((*node.pos, node.res)):
-                old_value = node.value()
                 node.set_default_val(default_val)
                 # we are essentially adding default value to all children of
                 # this node. So, we need to update the normalizer to account for
                 # this. Also, we need to backtrack because the node's value
                 # has changed - we need to update all parents' values.
-                new_value = node.value()
                 self.backtrack(node)
 
                 # reduce the number of nodes in the tree, if possible
-                if new_value == default_val * (node.res**3):
+                if node.value() == default_val * (node.res**3):
                     if not node.leaf:
                         node.remove_children()
 
