@@ -147,7 +147,7 @@ message ProcessObservationReply {
   //   {'objid' -> {'visible_volume': [ [x,y,z,r] ... ],
   //                'obstacles_hit': [ [x,y,z,r] ... ] }}
   // Note that the x,y,z,r should all be in world frame
-  bytes fovs = 4;
+  optional bytes fovs = 4;
 }
 
 //// For GetObjectBeliefs rpc ////

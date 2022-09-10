@@ -179,7 +179,9 @@ CONFIG_HIER = {
     "agent_config": {
         "agent_class": "MosAgentTopo2D",
         "agent_type": "hierarchical",  # 'hierarchical' or 'local'
-        "belief": {},
+        "belief_local": {"visible_volume_params": {"num_rays": 150,
+                                                   "step_size": 0.4,
+                                                   "voxel_res": 2}},
         "robot": {
             "id": "robot0",
             "no_look": True,

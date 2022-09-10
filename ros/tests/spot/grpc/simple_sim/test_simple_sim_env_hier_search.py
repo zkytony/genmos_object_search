@@ -147,37 +147,39 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("find action done")
 
-            # rospy.loginfo("waiting for local agent creation...")
+            rospy.loginfo("waiting for local agent creation...")
             local_robot_id = f"{self.robot_id}_local"
-            # self._sloop_client.waitForAgentCreation(local_robot_id)
-            # rospy.loginfo(f"local agent {local_robot_id} created!")
+            self._sloop_client.waitForAgentCreation(local_robot_id)
+            rospy.loginfo(f"local agent {local_robot_id} created!")
 
-            # # Now, wait for observation
-            # obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
-            #                                     [KeyValObservation],
-            #                                     verbose=True, allow_headerless=True).messages[0]
-            # detections_pb, robot_pose_pb, objects_found_pb =\
-            #     observation_msg_to_proto(self.world_frame, obs_msg)
+            # Now, wait for observation
+            obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                                [KeyValObservation],
+                                                verbose=True, allow_headerless=True).messages[0]
+            detections_pb, robot_pose_pb, objects_found_pb =\
+                observation_msg_to_proto(self.world_frame, obs_msg)
 
-            # # Now, send obseravtions for belief update
-            # header = proto_utils.make_header(frame_id=self.world_frame)
-            # response_observation = self._sloop_client.processObservation(
-            #     self.robot_id, robot_pose_pb,
-            #     object_detections=detections_pb,
-            #     objects_found=objects_found_pb,
-            #     header=header, return_fov=True,
-            #     action_id=action_id, action_finished=True, debug=False)
-            # response_robot_belief = self._sloop_client.getRobotBelief(
-            #     self.robot_id, header=proto_utils.make_header(self.world_frame))
+            # Now, send obseravtions for belief update
+            header = proto_utils.make_header(frame_id=self.world_frame)
+            response_observation = self._sloop_client.processObservation(
+                self.robot_id, robot_pose_pb,
+                object_detections=detections_pb,
+                objects_found=objects_found_pb,
+                header=header, return_fov=True,
+                action_id=action_id, action_finished=True, debug=False)
+            response_robot_belief = self._sloop_client.getRobotBelief(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
 
-            # print(f"Step {step} robot belief:")
-            # robot_belief_pb = response_robot_belief.robot_belief
-            # objects_found = set(robot_belief_pb.objects_found.object_ids)
-            # print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-            # print(f"  objects found: {objects_found}")
-            # print("-----------")
+            print(f"Step {step} robot belief:")
+            robot_belief_pb = response_robot_belief.robot_belief
+            objects_found = set(robot_belief_pb.objects_found.object_ids)
+            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+            print(f"  objects found: {objects_found}")
+            print("-----------")
 
             # visualize FOV and belief
+            if response_observation.HasField("fovs"):
+                self.visualize_fovs_3d(response_observation)
             self.get_and_visualize_belief_3d(robot_id=local_robot_id)
             self.get_and_visualize_belief_2d()
             break

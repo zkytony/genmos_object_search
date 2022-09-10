@@ -280,8 +280,6 @@ def _sample_topo_graph3d(init_object_beliefs,
     while not pq.isEmpty() and len(positions) < num_nodes:
         positions.append(pq.pop())
 
-    print("HEY", positions)
-
     # The following is modified based on _sample_topo_map in topo2d
     # Create nodes
     pos_to_nid = {}
