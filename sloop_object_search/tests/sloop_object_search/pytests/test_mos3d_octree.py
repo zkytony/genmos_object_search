@@ -228,10 +228,10 @@ def test_abnormal_add(octree_belief_zero_prior):
     octree_belief = octree_belief_zero_prior
     octree_belief[ObjectState(1, "cube", (1,0,1), res=4)] = TEST_ALPHA
     assert octree_belief.octree_dist.prob_at(1,0,1,4) == 1.0
-    assert octree_belief.octree_dist._normalizer == octree_belief.octree.root.value()
+    assert octree_belief.octree_dist.normalizer == octree_belief.octree.root.value()
     # Now, insert a ground node and assign it with some other value
     octree_belief[ObjectState(1, "cube", (9,0,10), res=1)] = 2
-    assert octree_belief.octree_dist._normalizer == octree_belief.octree.root.value()
+    assert octree_belief.octree_dist.normalizer == octree_belief.octree.root.value()
     # verify integrity
     verify_octree_integrity(octree_belief.octree_dist.octree)
     verify_octree_dist_integrity(octree_belief.octree_dist)

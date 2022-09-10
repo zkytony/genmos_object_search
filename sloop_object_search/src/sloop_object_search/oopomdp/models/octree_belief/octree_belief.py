@@ -31,7 +31,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
     Pr(X=x^l) = Val(g_x^l) / Normalizer
 
     where g_x^l is the octree node at the grid with location x at
-    resolution level l.
+    resolution level l. The normalizer is the value stored in the root node.
 
     The value stored at a node g_x^l represents an unnormalized
     probability that X=x^l, and it is the sum of the values of
@@ -48,29 +48,19 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         self._octree = Octree(dimensions, default_val=default_val)
         self._gamma = default_val
 
-        # world dimensions
-        w, l, h = dimensions
-
-        # normalizer; we only need one normalizer at the ground level.
-        # NOTE that the normalizer is not in log space.
-        self._normalizer = (w*l*h)*self._gamma
-
     @property
     def octree(self):
         return self._octree
-
-    def update_normalizer(self, old_value, value):
-        self._normalizer += (value - old_value)
 
     def normalized_probability(self, node_value):
         """Given the value of some node, which represents unnormalized proability,
         returns the normalized probability.."""
         # node value is not in log space.
-        return node_value / self._normalizer
+        return node_value / self.normalizer
 
     @property
     def normalizer(self):
-        return self._normalizer
+        return self._octree.root.value()
 
     def __getitem__(self, voxel):
         """voxel: a tuple (x, y, z, res)"""
@@ -129,7 +119,6 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         if not node.leaf:
             node.remove_children()
         node.set_val(None, value)
-        self.update_normalizer(old_value, value)
         self.backtrack(node)
 
     def assign(self, voxel, value, normalized=False):
@@ -150,8 +139,8 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
                              % (res, self._octree.root.res))
         if normalized:
             prob = value
-            val_voxel = self.prob_at(*voxel) * self._normalizer  # unnormalized prob
-            dv = (prob*self._normalizer - val_voxel) / (1.0 - prob)
+            val_voxel = self.prob_at(*voxel) * self.normalizer  # unnormalized prob
+            dv = (prob*self.normalizer - val_voxel) / (1.0 - prob)
             value = val_voxel + dv
         self[voxel] = value
 
@@ -385,7 +374,6 @@ def update_octree_belief(octree_belief, real_observation,
         else:
             node.set_val(None, (val_t * beta)*(res**3))
         val_tp1 = node.value()
-        octree_belief.octree_dist.update_normalizer(val_t, val_tp1)
         octree_belief.octree_dist.backtrack(node)
     return octree_belief
 
@@ -569,7 +557,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 # this. Also, we need to backtrack because the node's value
                 # has changed - we need to update all parents' values.
                 new_value = node.value()
-                self.update_normalizer(old_value, new_value)
                 self.backtrack(node)
 
                 # reduce the number of nodes in the tree, if possible
@@ -578,7 +565,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
                         node.remove_children()
 
                 assert math.isclose(self.prob_at(*node.pos, node.res), self.normalized_probability(node.value()),  abs_tol=1e-6)
-                assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
+                assert math.isclose(self.normalizer, self.octree.root.value(), abs_tol=1e-6)
                 node = node.parent
                 if node is None:
                     break
