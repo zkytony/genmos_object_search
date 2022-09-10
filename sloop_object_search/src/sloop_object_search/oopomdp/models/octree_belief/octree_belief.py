@@ -506,12 +506,6 @@ class RegionalOctreeDistribution(OctreeDistribution):
         else:
             super().__setitem__(voxel, value)
 
-    def _probability(self, x, y, z, res):
-        if not self.in_region((x, y, z, res)):
-            return 0.0
-        else:
-            return super()._probability(x, y, z, res)
-
     def sample_from_region(self, rnd=None):
         if rnd is None:
             rnd = random

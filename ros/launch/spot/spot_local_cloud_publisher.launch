@@ -2,7 +2,7 @@
   <arg name="robot_pose_topic" default="/spot_body_pose" />
   <arg name="region_size_x" value="4.0"/>
   <arg name="region_size_y" value="4.0"/>
-  <arg name="region_size_z" value="2.4"/>
+  <arg name="region_size_z" value="1.5"/>
 
   <!-- publish local cloud -->
   <node name="spot_local_cloud_publisher"
