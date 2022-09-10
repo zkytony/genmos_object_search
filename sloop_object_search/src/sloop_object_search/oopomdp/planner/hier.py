@@ -94,7 +94,6 @@ class HierPlanner(pomdp_py.Planner):
                                                  rollout_policy=self._local_agent.policy_model)
         action = self.local_planner.plan(self._local_agent)
         action.robot_id = self._local_agent.robot_id
-        action.name = action.name + "[local]"
         return action
 
     def plan(self, agent):
