@@ -131,11 +131,6 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         node.set_val(None, value)
         self.update_normalizer(old_value, value)
         self.backtrack(node)
-        try:
-            assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
-        except:
-            import pdb; pdb.set_trace()
-
 
     def assign(self, voxel, value, normalized=False):
         """
@@ -260,10 +255,6 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         # cur_node is the root node.
         assert cur_node.res == self._octree.root.res
         cur_node_val = cur_node.value()
-        try:
-            assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
-        except:
-            import pdb; pdb.set_trace()
 
     def collect_plotting_voxels(self):
         return self.octree.collect_plotting_voxels()
@@ -541,13 +532,7 @@ class RegionalOctreeDistribution(OctreeDistribution):
             if node is None:
                 continue
 
-            try:
-                assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
-            except:
-                import pdb; pdb.set_trace()
             while self.in_region((*node.pos, node.res)):
-                nn = self._normalizer
-                mm = self.octree.root.value()
                 old_value = node.value()
                 node.set_default_val(default_val)
                 # we are essentially adding default value to all children of
@@ -559,12 +544,10 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 self.backtrack(node)
 
                 if not node.leaf:
-                    node.remove_children()  # we are overwriting this node
-                try:
-                    assert math.isclose(self.prob_at(*node.pos, node.res), self.normalized_probability(node.value()),  abs_tol=1e-6)
-                    assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
-                except AssertionError:
-                    import pdb; pdb.set_trace()
+                    node.remove_children()
+
+                assert math.isclose(self.prob_at(*node.pos, node.res), self.normalized_probability(node.value()),  abs_tol=1e-6)
+                assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
                 node = node.parent
                 if node is None:
                     break
