@@ -2,6 +2,11 @@ agent_config:
   agent_class: MosAgentTopo2D
   agent_type: hierarchical
   belief: {}
+  belief_local:
+    visible_volume_params:
+      num_rays: 150
+      step_size: 0.4
+      voxel_res: 2
   misc:
     visual:
       res: 25

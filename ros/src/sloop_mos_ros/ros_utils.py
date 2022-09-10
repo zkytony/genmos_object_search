@@ -300,8 +300,6 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
     return cloud_pb
 
 
-
-
 ### Visualization ###
 from visualization_msgs.msg import Marker, MarkerArray
 def make_viz_marker_for_object(objid, pose, header, **kwargs):
