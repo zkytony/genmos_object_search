@@ -543,6 +543,11 @@ class RegionalOctreeDistribution(OctreeDistribution):
                 self.update_normalizer(old_value, new_value)
                 self.backtrack(node)
 
+                # reduce the number of nodes in the tree, if possible
+                if new_value == default_val * (node.res**3):
+                    if not node.leaf:
+                        node.remove_children()
+
                 assert math.isclose(self.prob_at(*node.pos, node.res), self.normalized_probability(node.value()),  abs_tol=1e-6)
                 assert math.isclose(self._normalizer, self.octree.root.value(), abs_tol=1e-6)
                 node = node.parent
