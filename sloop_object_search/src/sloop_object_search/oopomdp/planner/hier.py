@@ -2,6 +2,7 @@ import pomdp_py
 from pomdp_py.utils import typ
 from ..agent.topo3d import MosAgentTopo3D
 from ..agent.topo2d import MosAgentTopo2D
+from ..agent.basic2d import project_fov_voxels_to_2d
 from ..agent.common import MosAgent
 from ..domain.action import StayAction
 from ..models import belief
@@ -66,26 +67,21 @@ class HierPlanner(pomdp_py.Planner):
                 local_agent.belief.set_object_belief(objid, bobj3d)
         self._local_agent = local_agent
 
-    def update_global_object_beliefs_from_local(self):
-        """"Assuming self.local_agent belief has been updated.
-        Will update global agent's belief by projecting the
-        3D belief of local agent down to 2D.
-
-        normalizers_old: maps from objid to normalizer, indicating
-        the normalizer of the octree belief before the most recent
-        local agent belief update."""
-        belief_conversion_params =\
-            self.global_agent.agent_config["belief"].get("conversion", {})
-        for objid in self.global_agent.belief.object_beliefs:
-            if objid == self.global_agent.robot_id:
-                continue
+    def update_global_object_beliefs_from_local(self, local_volumetric_observations):
+        """
+        Project the 3D FOV down to 2D to update global belief
+        """
+        for objid in local_volumetric_observations:
+            fov_voxels = local_volumetric_observations[objid]
+            fov_cells = project_fov_voxels_to_2d(
+                fov_voxels, self.local_agent.search_region,
+                self.global_agent.search_region)
             bobj2d = self.global_agent.belief.b(objid)
-            bobj3d = self.local_agent.belief.b(objid)
-            bobj2d_updated = belief.update_2d_belief_by_3d(
-                bobj2d, bobj3d, self.global_agent.search_region,
-                self.local_agent.search_region,
-                **belief_conversion_params)
-            self.global_agent.belief.set_object_belief(objid, bobj2d_updated)
+            detection_model = self.global_agent.detection_models[objid]
+            bobj2d_new = belief.update_object_belief_2d(bobj2d, fov_cells,
+                                                        alpha=detection_model.alpha,
+                                                        beta=detection_model.beta)
+            self.global_agent.belief.set_object_belief(objid, bobj2d_new)
 
     def plan_local(self):
         if self._local_agent is None:

@@ -5,7 +5,7 @@ from ..models.search_region import SearchRegion2D
 from ..models.transition_model import RobotTransBasic2D
 from ..models.policy_model import PolicyModelBasic2D
 from ..models import belief
-from ..domain.observation import JointObservation, ObjectDetection
+from ..domain.observation import JointObservation, ObjectDetection, FovVoxels, Voxel
 from .common import MosAgent, SloopMosAgent, init_object_transition_models, init_primitive_movements
 from sloop_object_search.utils import open3d_utils
 
@@ -111,6 +111,31 @@ def build_area_observation(detection, fansensor, robot_pose,
     if debug:
         open3d_utils.draw_fov_2d(cells, robot_pose, viz=True)
     return cells
+
+def project_fov_voxels_to_2d(fov_voxels, search_region3d, search_region2d, objid=None):
+    if not isinstance(fov_voxels, FovVoxels):
+        raise TypeError(f"fov_voxels: Expect FovVoxels. Got {type(fov_voxels)}")
+    # Project voxels down to 2D
+    fov_cells = {}
+    for voxel_pos in fov_voxels.voxels:
+        voxel = fov_voxels.voxels[voxel_pos]
+        if len(voxel_pos) == 3:
+            voxel_pos = (*voxel_pos, 1)
+        res = voxel_pos[-1]
+        x, y, z = voxel_pos[:3]
+        pos2d = search_region3d.project_to_2d(
+            (x*res, y*res, z*res), search_region2d)
+
+        if pos2d not in fov_cells:
+            fov_cells[pos2d] = 'free'
+        if voxel.label != Voxel.FREE:
+            if objid is not None:
+                if voxel.label == objid:
+                    fov_cells[pos2d] = voxel.label
+            else:
+                fov_cells[pos2d] = voxel.label
+    fov_cells = {(k, v) for k, v in fov_cells.items()}
+    return fov_cells
 
 
 ### DEPRECATED ###

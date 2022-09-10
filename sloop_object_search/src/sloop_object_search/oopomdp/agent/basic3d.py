@@ -73,8 +73,10 @@ class MosAgentBasic3D(MosAgent):
 
         robot_pose = observation.z(self.robot_id).pose
         return_fov = kwargs.get("return_fov", False)
+        return_vobz = kwargs.get("return_volumetric_observations", False)
 
         fovs = {}  # maps from objid to (visible_volume, obstacles_hit)
+        vobzs = {}
         for objid in observation:
             if objid == self.robot_id:
                 continue
@@ -109,9 +111,14 @@ class MosAgentBasic3D(MosAgent):
 
             # save fov used for belief update
             fovs[objid] = (visible_volume, obstacles_hit)
+            vobzs[objid] = fov_voxels
 
+        aux = {}
         if return_fov:
-            return fovs
+            aux["fovs"] = fovs
+        if return_vobz:
+            aux["vobzs"] = vobzs
+        return aux
 
 
 def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_octree,

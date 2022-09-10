@@ -203,7 +203,9 @@ def update_belief(agent, observation, action=None, debug=False, **kwargs):
     # Process auxiliary returning information
     if isinstance(observation, slpo.JointObservation):
         if isinstance(agent, MosAgentBasic3D):
-            fovs = ret
+            fovs = None
+            if type(ret) == dict:
+                fovs = ret.get("fovs")
             if fovs is not None:
                 # serialize fovs as json string
                 fovs_dict = {}
@@ -217,7 +219,10 @@ def update_belief(agent, observation, action=None, debug=False, **kwargs):
 
     _total_time = time.time() - _start_time
     logging.info("Belief update took: {:.4f}s".format(_total_time))
-    return result
+    if kwargs.pop("return_raw_aux", False):
+        return result, ret
+    else:
+        return result
 
 
 def create_agent_search_region(agent_config, request):
@@ -447,11 +452,14 @@ def update_hier(request, planner, action, action_finished):
         # Interpret request and update local agent belief.
         observation_local = proto_utils.pomdp_observation_from_request(
             request, planner.local_agent, action=action)
-        aux_local = update_belief(planner.local_agent, observation_local, action=action,
-                                  debug=request.debug, **proto_utils.process_observation_params(request))
+        aux_local, aux_raw = update_belief(planner.local_agent, observation_local, action=action,
+                                           debug=request.debug, return_raw_aux=True,
+                                           return_volumetric_observations=True,
+                                           **proto_utils.process_observation_params(request))
 
         # Update global agent's object belief
-        planner.update_global_object_beliefs_from_local()
+        volumetric_observations = aux_raw["vobzs"]
+        planner.update_global_object_beliefs_from_local(volumetric_observations)
         observation_global = proto_utils.pomdp_observation_from_request(
             request, planner.global_agent, action=action)
         robot_observation_global = observation_global.z(planner.global_agent.robot_id)
