@@ -165,7 +165,8 @@ class PolicyModelTopo(PolicyModel):
             robot_pose = srobot["pose"]
             valid_moves = set()
             if self.can_stay:
-                valid_moves.add(action.StayAction(srobot.nid))  # stay is always a valid 'move'
+                valid_moves.add(action.StayAction(
+                    srobot.nid, topo_map_hashcode=self.topo_map.hashcode))  # stay is always a valid 'move'
             for nb_id in self.topo_map.neighbors(srobot.nid):
                 eid = self.topo_map.edge_between(srobot.nid, nb_id)
                 valid_moves.add(

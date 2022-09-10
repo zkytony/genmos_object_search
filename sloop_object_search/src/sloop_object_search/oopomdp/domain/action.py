@@ -153,5 +153,6 @@ class MotionActionTopo(MotionAction):
         return min(-(self.distance * self._cost_scaling_factor), -1)
 
 class StayAction(MotionActionTopo):
-    def __init__(self, nid, cost_scaling_factor=1.0):
-        super().__init__(nid, nid, distance=0.0, cost_scaling_factor=1.0, atype="stay")
+    def __init__(self, nid, topo_map_hashcode=None, cost_scaling_factor=1.0):
+        super().__init__(nid, nid, topo_map_hashcode=topo_map_hashcode,
+                         distance=0.0, cost_scaling_factor=1.0, atype="stay")
