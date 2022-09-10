@@ -9,7 +9,10 @@ from ..domain.observation import RobotLocalization, RobotObservation, FovVoxels,
 from ..models.search_region import (SearchRegion2D, SearchRegion3D,
                                     LocalRegionalOctreeDistribution,
                                     project_3d_region_to_2d)
-from ..models.octree_belief import Octree, OctreeBelief, RegionalOctreeDistribution
+from ..models.octree_belief import (Octree, OctreeBelief,
+                                    RegionalOctreeDistribution,
+                                    verify_octree_dist_integrity,
+                                    verify_octree_integrity)
 from ..domain.state import ObjectState, RobotState
 from sloop_object_search.utils.math import (quat_to_euler, euler_to_quat,
                                             identity, divisible_by)
@@ -457,13 +460,20 @@ def update_2d_belief_by_3d(bobj2d_t, bobj3d_tp1, search_region2d, search_region3
             if (x2d, y2d) in search_region2d:
                 local_region_size += 1
 
+    print(bobj3d_tp1.octree_dist.mpe(res=8))
+    import pdb; pdb.set_trace()
+    verify_octree_integrity(bobj3d_tp1.octree_dist.octree)
+    verify_octree_dist_integrity(bobj3d_tp1.octree_dist)
     pos_probs = {}
     for x2d in range(x_origin_2d, x_origin_2d + region_width_2d):
         for y2d in range(y_origin_2d, y_origin_2d + region_length_2d):
             if (x2d, y2d) in search_region2d:
+
                 for z3d in range(height_increments):
                     voxel = search_region2d.pos_to_voxel(
                         (x2d, y2d), z3d*res, search_region3d, res=res)
+
+                    print("{} -> {}".format((x2d, y2d), voxel))
 
                     # probability at the voxel within the local search region
                     prob_voxel_region = bobj3d_tp1.octree_dist.prob_at(*voxel)

@@ -355,6 +355,9 @@ def verify_octree_integrity(octree):
                     sum_of_children_vals += child.value()
                 else:
                     sum_of_children_vals += node.get_val(child_pos)
-            assert math.isclose(sum_of_children_vals, node.value(), abs_tol=1e-6)
+            try:
+                assert math.isclose(sum_of_children_vals, node.value(), abs_tol=1e-6)
+            except AssertionError:
+                import pdb; pdb.set_trace()
             _visited.add(node)
             node = node.parent

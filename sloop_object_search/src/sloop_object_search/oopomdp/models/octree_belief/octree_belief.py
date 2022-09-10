@@ -428,9 +428,11 @@ def verify_octree_dist_integrity(octree_dist):
             for child_pos in OctNode.child_poses(*node.pos, node.res):
                 child_prob = octree_dist.prob_at(*child_pos, node.res//2)
                 sum_of_children_probs += child_prob
-
-            assert math.isclose(sum_of_children_probs,
-                                octree_dist.prob_at(*node.pos, node.res), abs_tol=1e-6)
+            try:
+                assert math.isclose(sum_of_children_probs,
+                                    octree_dist.prob_at(*node.pos, node.res), abs_tol=1e-6)
+            except AssertionError:
+                import pdb; pdb.set_trace()
             _visited.add(node)
             node = node.parent
 
