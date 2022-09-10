@@ -156,11 +156,18 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
         self[voxel] = value
 
     def random(self, res=1):
-        """Returns a voxel position (x,y,z) at resolution 'res'."""
+        """Returns a voxel position (x,y,z) at resolution 'res'.
+        This sampling algorithm is EXACT."""
         voxel_pos = self._random_path(res, argmax=False)
         return voxel_pos
 
     def mpe(self, res=1):
+        """Note: This is NOT an EXACT mpe. It is an approximation; The
+        returned voxel is likely the MPE, but there is no guarantee that
+        it is. The exact mpe at a resolution level requires collecting
+        all nodes at that level and compare their values. This mpe is approximated
+        by traversing from the root level down till 'res' level, through
+        nodes that have the highest value among its siblings."""
         voxel_pos = self._random_path(res, argmax=True)
         return voxel_pos
 
