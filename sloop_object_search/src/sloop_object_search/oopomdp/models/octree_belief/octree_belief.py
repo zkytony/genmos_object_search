@@ -226,7 +226,7 @@ class OctreeDistribution(pomdp_py.GenerativeDistribution):
             if child is None:
                 return self._random_unif_child(chosen_pos, node.res // 2, target_res)
             else:
-                return self._random_path_helper(child, target_res)
+                return self._random_path_helper(child, target_res, argmax=argmax)
 
     def _random_unif_child(self, child_pos, child_res, target_res):
         """Assuming node at (*child_pos, child_res) does not exist in the
