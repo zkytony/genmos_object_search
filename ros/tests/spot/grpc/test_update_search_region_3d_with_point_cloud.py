@@ -98,7 +98,7 @@ class UpdateSearchRegion3DTestCase:
             robot_pose = (waypoints_array[self._update_count-1][0],
                           waypoints_array[self._update_count-1][1],
                           0.45,
-                          *euler_to_quat(90, 0, 0))
+                          *euler_to_quat(0, 0, 90))
             robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
             self._sloop_client.updateSearchRegion(
                 header=cloud_pb.header,

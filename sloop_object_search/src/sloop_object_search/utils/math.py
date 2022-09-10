@@ -518,12 +518,7 @@ def in_box3d_center(p, box):
     are dimensions along x, y, z axes, respectively."""
     if len(p) != 3:
         raise ValueError("Requires point to be 3D")
-    center, lx, ly, lz = box
-    px, py, pz = p
-    cx, cy, cz = center
-    return abs(px - cx) <= lx/2\
-        and abs(py - cy) <= ly/2\
-        and abs(pz - cz) <= lz/2
+    return in_box3d_origin(p, centerbox_to_originbox(box))
 
 def in_box3d_origin(p, box):
     """Returns true if point 'p' is inside the 3D box 'box'.
@@ -535,9 +530,9 @@ def in_box3d_origin(p, box):
     center, lx, ly, lz = box
     px, py, pz = p
     ox, oy, oz = center
-    return abs(px - ox) <= lx\
-        and abs(py - oy) <= ly\
-        and abs(pz - oz) <= lz
+    return 0 <= px - ox <= lx\
+        and 0 <= py - oy <= ly\
+        and 0 <= pz - oz <= lz
 
 def boxes_overlap3d_origin(box1, box2):
     """Return True if the two origin-based boxes overlap

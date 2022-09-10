@@ -30,10 +30,10 @@ from sloop_object_search.utils.open3d_utils import draw_octree_dist
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.oopomdp.models.octree_belief import plot_octree_belief
 
-from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
+from test_create_planner_3d_with_point_cloud import CreatePlannerTestCase
 
 
-class ProcessDetectionObservationTestCase(CreateAgentTestCase):
+class ProcessDetectionObservationTestCase(CreatePlannerTestCase):
 
     def _setup(self):
         super()._setup()
@@ -130,6 +130,9 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                         frame_id=self.world_frame)
         clear_msg = ros_utils.clear_markers(header, ns="")
         self._object_markers_pub.publish(clear_msg)
+        self._octbelief_markers_pub.publish(clear_msg)
+        self._fovs_markers_pub.publish(clear_msg)
+        self._robot_markers_pub.publish(clear_msg)
 
         # visualize belief now, with robot and object
         self.get_and_visualize_belief(o3dviz=o3dviz)
@@ -146,7 +149,8 @@ class ProcessDetectionObservationTestCase(CreateAgentTestCase):
                                                 robot_id=self.robot_id,
                                                 detections=detections)
         response = self._sloop_client.processObservation(
-            self.robot_id, object_detection, robot_pose_pb,
+            self.robot_id, robot_pose_pb,
+            object_detections=object_detection,
             header=header_pb, return_fov=True)
         assert response.status == Status.SUCCESSFUL
 

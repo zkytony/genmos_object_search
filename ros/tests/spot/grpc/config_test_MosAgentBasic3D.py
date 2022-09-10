@@ -2,6 +2,7 @@ TEST_CONFIG = {
     'agent_config': {
         'action': {'h_rotation': 45.0},
         'agent_class': 'MosAgentBasic3D',
+        'agent_type': 'local',
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
@@ -19,7 +20,7 @@ TEST_CONFIG = {
                 'name': 'camera',
                 'params': {'fov': 61,
                            'far': 1.5,
-                           'near': 1,
+                           'near': 0.1,
                            'occlusion_enabled': True}
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
