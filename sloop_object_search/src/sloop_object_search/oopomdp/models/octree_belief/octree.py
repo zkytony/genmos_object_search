@@ -348,6 +348,7 @@ def verify_octree_integrity(octree):
         if node in _visited:
             continue
         while node is not None and node.res <= octree.root.res:
+            assert len(node.children) <= 8
             sum_of_children_vals = 0
             for child_pos in OctNode.child_poses(*node.pos, node.res):
                 child = octree.get_node(*child_pos, node.res//2)

@@ -20,7 +20,7 @@ import sys
 import copy
 import sloop_object_search.utils.math as util
 from sloop_object_search.oopomdp.domain.state import ObjectState
-from .octree import DEFAULT_VAL, OctNode, Octree
+from .octree import DEFAULT_VAL, OctNode, Octree, verify_octree_integrity
 from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
 class OctreeDistribution(pomdp_py.GenerativeDistribution):
@@ -375,6 +375,7 @@ def update_octree_belief(octree_belief, real_observation,
             node.set_val(None, (val_t * beta)*(res**3))
         val_tp1 = node.value()
         octree_belief.octree_dist.backtrack(node)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
     return octree_belief
 
 
@@ -412,6 +413,7 @@ def verify_octree_dist_integrity(octree_dist):
         if node in _visited:
             continue
         while node is not None and node.res <= octree_dist.octree.root.res:
+            assert len(node.children) <= 8
             sum_of_children_probs = 0
             for child_pos in OctNode.child_poses(*node.pos, node.res):
                 child_prob = octree_dist.prob_at(*child_pos, node.res//2)
