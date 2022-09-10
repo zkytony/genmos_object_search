@@ -467,7 +467,6 @@ def update_hier(request, planner, action, action_finished):
                                    debug=request.debug, **proto_utils.process_observation_params(request))
         aux = {**aux_local, **aux_global}
 
-        #TODO: Update planner
         assert isinstance(planner.last_planned_global_action, slpa.StayAction)
         update_planner(planner.local_planner, planner.local_agent, observation_local, action)
         update_planner(planner.global_planner, planner.global_agent, observation_global, planner.last_planned_global_action)
@@ -480,5 +479,5 @@ def update_hier(request, planner, action, action_finished):
                             **proto_utils.process_observation_params(request))
         assert isinstance(planner.last_planned_global_action, slpa.StayAction)
         update_planner(planner.global_planner, planner.global_agent, observation_global, planner.last_planned_global_action)
-    #TODO: Update planner
+
     return aux

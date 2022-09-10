@@ -384,12 +384,7 @@ def object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8, **kw
     dimension = search_region3d.octree_dist.octree.dimensions[0]
     # obtain estimate of height increments
     region_height = search_region3d.octree_dist.region[3]
-    if not divisible_by(region_height, res):
-        region_height_world = region_height * search_region3d.search_space_resolution
-        res_world = res * search_region3d.search_space_resolution
-        raise ValueError(f"Region height {region_height} (metric: {region_height_world}) is not "\
-                         f"divisible by res {res} (metric: {res_world})")
-    height_increments = int(round(region_height / (res-0.1)))  # to deal with numerical instability in region_height
+    height_increments = int(region_height // res)  # to deal with numerical instability in region_height
 
     # compute how much we should scale a 2D value when setting it as the value at a unit of 3D region (at 'res')
     r3d = search_region3d.search_space_resolution
