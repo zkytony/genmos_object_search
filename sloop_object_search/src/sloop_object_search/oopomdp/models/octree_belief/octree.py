@@ -336,3 +336,25 @@ class Octree:
         if r1 > r2:
             raise ValueError("requires r1 <= r2")
         return (x // (r2 // r1), y // (r2 // r1), z // (r2 // r1))
+
+
+def verify_octree_integrity(octree):
+    """Checks whether every node's value equals to the sum
+    of its children in the octree."""
+    leaves = octree.get_leaves()
+    _visited = set()
+    for leaf in leaves:
+        node = leaf.parent
+        if node in _visited:
+            continue
+        while node is not None and node.res <= octree.root.res:
+            sum_of_children_vals = 0
+            for child_pos in OctNode.child_poses(*node.pos, node.res):
+                child = octree.get_node(*child_pos, node.res//2)
+                if child is not None:
+                    sum_of_children_vals += child.value()
+                else:
+                    sum_of_children_vals += node.get_val(child_pos)
+            assert math.isclose(sum_of_children_vals, node.value(), abs_tol=1e-6)
+            _visited.add(node)
+            node = node.parent

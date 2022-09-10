@@ -23,7 +23,9 @@ from pomdp_py import OOTransitionModel
 from sloop_object_search.oopomdp.models.octree_belief\
     import (OctreeBelief, OctreeDistribution, update_octree_belief,
             Octree, OctNode, DEFAULT_VAL,
-            plot_octree_belief)
+            plot_octree_belief,
+            verify_octree_dist_integrity,
+            verify_octree_integrity)
 
 from sloop_object_search.oopomdp import ObjectState
 from sloop_object_search.utils.math import approx_equal
@@ -83,6 +85,10 @@ def test_basics(octree_belief):
     assert abs(octree_belief.octree_dist.prob_at(0,0,0,8) - 1./(2**3)) <= 1e-6
     assert abs(octree_belief.octree_dist.prob_at(0,0,0,16) - 1./(1**3)) <= 1e-6
 
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
+
 def test_assign_prior1(octree_belief):
     print("** Testing Prior assignment (1)")
     print("[start]")
@@ -102,6 +108,9 @@ def test_assign_prior1(octree_belief):
     print("**** Sub test:")
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 def test_assign_prior2(octree_belief):
     print("** Testing Prior assignment (2)")
@@ -122,6 +131,9 @@ def test_assign_prior2(octree_belief):
     print("**** Sub test:")
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 def test_assign_prior3(octree_belief):
     print("** Testing Prior assignment (3) ZERO Prior")
@@ -146,6 +158,9 @@ def test_assign_prior3(octree_belief):
     print("**** Sub test:")
     test_mpe_random(octree_belief, res=2)  # MPE/random at resolution 2
     print("[end]")
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 def test_assign_prior4(octree_belief):
     """assign absolute normalized probability"""
@@ -153,6 +168,9 @@ def test_assign_prior4(octree_belief):
     prob = 0.5
     octree_belief.octree_dist.assign((5,6,7,2), prob, normalized=True)
     assert abs(octree_belief.octree_dist.prob_at(5,6,7,2) - prob) < 1e-6
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 def test_mpe_random(octree_belief, res=1):
     def test_round(octree_belief):
@@ -176,6 +194,9 @@ def test_mpe_random(octree_belief, res=1):
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = TEST_ALPHA
     test_round(octree_belief)
     octree_belief[ObjectState(1, "cube", (0,0,1), res=1)] = DEFAULT_VAL
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 def test_time(octree_belief):
     """Try setting cells to be BETA and see if it affects the
@@ -211,6 +232,9 @@ def test_abnormal_add(octree_belief_zero_prior):
     # Now, insert a ground node and assign it with some other value
     octree_belief[ObjectState(1, "cube", (9,0,10), res=1)] = 2
     assert octree_belief.octree_dist._normalizer == octree_belief.octree.root.value()
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 
 def test_visualize(octree_belief):
@@ -246,6 +270,9 @@ def test_belief_update(octree_belief):
         octree_belief, voxels_obz,
         alpha=TEST_ALPHA, beta=TEST_BETA)  # this setting is for log space
     test_visualize(octree_belief)
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)
 
 
 def test_belief_update_big_voxel(octree_belief):
@@ -267,3 +294,6 @@ def test_belief_update_big_voxel(octree_belief):
         alpha=TEST_ALPHA, beta=TEST_BETA)  # this setting is for log space
 
     test_visualize(octree_belief)
+    # verify integrity
+    verify_octree_integrity(octree_belief.octree_dist.octree)
+    verify_octree_dist_integrity(octree_belief.octree_dist)

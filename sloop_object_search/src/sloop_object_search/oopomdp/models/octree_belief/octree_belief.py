@@ -414,6 +414,24 @@ def init_octree_belief(gridworld, init_robot_state, prior=None):
     object_beliefs[gridworld.robot_id] = pomdp_py.Histogram({init_robot_state: 1.0})
     return object_beliefs
 
+def verify_octree_dist_integrity(octree_dist):
+    """Checks whether every node's probability equals to the sum
+    of its children in the octree."""
+    leaves = octree_dist.octree.get_leaves()
+    _visited = set()
+    for leaf in leaves:
+        node = leaf.parent
+        if node in _visited:
+            continue
+        while node is not None and node.res <= octree_dist.octree.root.res:
+            sum_of_children_probs = 0
+            for child_pos in OctNode.child_poses(*node.pos, node.res):
+                child_prob = octree_dist.prob_at(*child_pos, node.res//2)
+                sum_of_children_probs += child_prob
+            assert sum_of_children_probs == octree_dist.prob_at(*node.pos, node.res)
+            _visited.add(node)
+            node = node.parent
+
 
 class RegionalOctreeDistribution(OctreeDistribution):
     """
