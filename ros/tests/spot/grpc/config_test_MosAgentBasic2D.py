@@ -2,6 +2,7 @@ TEST_CONFIG = {
     'agent_config': {
         'action': {'h_rotation': 45.0},
         'agent_class': 'MosAgentBasic2D',
+        'agent_type': 'local',
         'belief': {},
         'detectable_objects': ['book'],
         'foref_model_map_name': 'honolulu',

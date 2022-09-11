@@ -222,7 +222,7 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     # Because the map represented by the point cloud could be very large,
     # or even border-less, we want to constrain the grid-map we are building
     # or updating to be of a certain size. This is the size of the square region
-    # we will build/update, in meters.
+    # we will build/update, in meters. If don't want this, set it to negative.
     region_size = kwargs.get("region_size", 10.0)
 
     # grid map name
@@ -236,8 +236,9 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     points = points[np.logical_not(low_points_filter)]  # points at or above layout cut
 
     # Filter out points beyond region_size
-    region_points_filter = in_square_multi(points[:, :2], robot_position[:2], region_size)
-    points = points[region_points_filter]
+    if region_size > 0:
+        region_points_filter = in_square_multi(points[:, :2], robot_position[:2], region_size)
+        points = points[region_points_filter]
 
     # Identify points for the floor
     xmin, ymin, zmin = np.min(points, axis=0)
@@ -271,9 +272,12 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     # Start with the floors filter, which should still apply.
     grid_floor_points = grid_points[floor_points_filter]
     # Now flood from the robot position, with radius
+    flood_region_size = None
+    if region_size > 0:
+        flood_region_size = int(round(region_size/grid_size))
     grid_floor_points = flood_fill_2d(grid_floor_points, (*grid_robot_position, 0),
                                       grid_brush_size=int(round(brush_size/grid_size)),
-                                      flood_region_size=int(round(region_size/grid_size)))
+                                      flood_region_size=flood_region_size)
 
     # Build the obstacles and free locations: grid points are just obstacles
     # grid points on the floor that are not obstacles are free locations

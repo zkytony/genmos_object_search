@@ -83,7 +83,7 @@ class UpdateSearchRegion2DTestCase:
                 brush_size = 0.5
             else:
                 layout_cut = 0.6
-                region_size = 5.0
+                region_size = -1
                 brush_size = 0.5
 
             self._sloop_client.updateSearchRegion(
