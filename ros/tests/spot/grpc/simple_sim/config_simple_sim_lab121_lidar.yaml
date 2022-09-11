@@ -9,7 +9,7 @@ agent_config:
       voxel_res: 2
   misc:
     visual:
-      res: 25
+      res: 15
   objects:
     book:
       class: book

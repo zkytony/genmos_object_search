@@ -23,6 +23,7 @@ from sloop_object_search.utils import math as math_utils
 WORLD_FRAME = "graphnav_map"
 
 REGION_POINT_CLOUD_TOPIC = "/spot_local_cloud_publisher/region_points"
+MAP_POINT_CLOUD_TOPIC = "/graphnav_map_publisher/graphnav_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
 ROBOT_POSE_TOPIC = "/simple_sim_env/robot_pose"
 ACTION_TOPIC = "/simple_sim_env/pomdp_action"
@@ -211,19 +212,13 @@ class TestSimpleEnvCase:
         if robot_id is None:
             robot_id = self.robot_id
         rospy.loginfo("Sending request to update search region (2D)")
-        if self._region_cloud_msg is None:
-            region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-                [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
-                [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-                delay=10000, verbose=True).messages
-            self._region_cloud_msg = region_cloud_msg
-        else:
-            pose_stamped_msg = ros_utils.WaitForMessages(
-                [ROBOT_POSE_TOPIC],
-                [geometry_msgs.PoseStamped],
-                delay=10000, verbose=True).messages[0]
 
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(self._region_cloud_msg)
+        region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
+            [MAP_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
+            [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
+            delay=10000, verbose=True).messages
+
+        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
@@ -231,7 +226,7 @@ class TestSimpleEnvCase:
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
                                               search_region_params_2d={"layout_cut": 0.6,
-                                                                       "region_size": 5.0,
+                                                                       "region_size": 15.0,
                                                                        "brush_size": 0.5,
                                                                        "grid_size": self.search_space_res_2d,
                                                                        "debug": False})
@@ -240,19 +235,11 @@ class TestSimpleEnvCase:
         if robot_id is None:
             robot_id = self.robot_id
         rospy.loginfo("Sending request to update search region (3D)")
-        if self._region_cloud_msg is None:
-            region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-                [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
-                [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages
-            self._region_cloud_msg = region_cloud_msg
-        else:
-            pose_stamped_msg = ros_utils.WaitForMessages(
-                [ROBOT_POSE_TOPIC],
-                [geometry_msgs.PoseStamped],
-                delay=100, verbose=True).messages[0]
-
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(self._region_cloud_msg)
+        region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
+            [REGION_POINT_CLOUD_TOPIC, ROBOT_POSE_TOPIC],
+            [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
+            delay=100, verbose=True).messages
+        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
@@ -261,7 +248,7 @@ class TestSimpleEnvCase:
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": self.search_space_res_3d,
-                                                                       "debug": False,
+                                                                       "debug": True,
                                                                        "region_size_x": 4.0,
                                                                        "region_size_y": 4.0,
                                                                        "region_size_z": 2.4})

@@ -217,7 +217,7 @@ CONFIG_HIER = {
                              'sizes': [0.14, 0.08, 0.10]}},
         'targets': ['book'],
         'misc': {
-            'visual': {'res': 25},
+            'visual': {'res': 15},
         }
     },
 

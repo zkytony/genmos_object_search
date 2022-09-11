@@ -79,7 +79,7 @@ class UpdateSearchRegion2DTestCase:
 
             if rospy.get_param('map_name') == "cit_first_floor":
                 layout_cut = 1.5
-                region_size = 12.0
+                region_size = -1
                 brush_size = 0.5
             else:
                 layout_cut = 0.6
