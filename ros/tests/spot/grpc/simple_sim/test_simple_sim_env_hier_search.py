@@ -54,6 +54,7 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
             local_robot_id = Message.forwhom(message)
             rospy.loginfo(f"will send a update search request to {local_robot_id}")
             self.update_search_region_3d(robot_id=local_robot_id)
+            self._local_robot_id = local_robot_id
 
     def __init__(self, prior="uniform"):
         super().__init__(prior=prior)
@@ -61,6 +62,7 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
         # Make the client listen to server
         ls_future = self._sloop_client.listenToServer(
             self.robot_id, self.server_message_callback)
+        self._local_robot_id = None
 
         self.update_search_region_2d()
 
@@ -147,11 +149,6 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("find action done")
 
-            rospy.loginfo("waiting for local agent creation...")
-            local_robot_id = f"{self.robot_id}_local"
-            self._sloop_client.waitForAgentCreation(local_robot_id)
-            rospy.loginfo(f"local agent {local_robot_id} created!")
-
             # Now, wait for observation
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
                                                 [KeyValObservation],
@@ -180,7 +177,8 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
             # visualize FOV and belief
             if response_observation.HasField("fovs"):
                 self.visualize_fovs_3d(response_observation)
-            self.get_and_visualize_belief_3d(robot_id=local_robot_id)
+            if self._local_robot_id is not None:
+                self.get_and_visualize_belief_3d(robot_id=self._local_robot_id)
             self.get_and_visualize_belief_2d()
 
             # Check if we are done

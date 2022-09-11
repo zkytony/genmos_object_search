@@ -201,6 +201,12 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
             robot_id, info["agent_config"], info["init_robot_loc"], info["search_region"], **kwargs)
         self._check_invariant()
 
+    def remove_agent(self, robot_id):
+        self._pending_agents.pop(robot_id)
+        self._agents.pop(robot_id)
+        self._actions_planned.pop(robot_id)
+        self._planners.pop(robot_id)
+
     def _check_invariant(self):
         for robot_id in self._agents:
             assert robot_id not in self._pending_agents

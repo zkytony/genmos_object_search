@@ -248,7 +248,7 @@ class TestSimpleEnvCase:
                                               point_cloud=cloud_pb,
                                               search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": self.search_space_res_3d,
-                                                                       "debug": True,
+                                                                       "debug": False,
                                                                        "region_size_x": 4.0,
                                                                        "region_size_y": 4.0,
                                                                        "region_size_z": 2.4})

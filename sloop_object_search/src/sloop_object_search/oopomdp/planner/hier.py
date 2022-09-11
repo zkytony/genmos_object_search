@@ -109,11 +109,12 @@ class HierPlanner(pomdp_py.Planner):
         # plan with the global agent
         subgoal = self.global_planner.plan(self._global_agent)
 
-        # DEBUGGING: JUST DO STAY
-        topo_nid = agent.belief.b(agent.robot_id).mpe().topo_nid
-        subgoal = StayAction(topo_nid)
+        # # DEBUGGING: JUST DO STAY
+        # topo_nid = agent.belief.b(agent.robot_id).mpe().topo_nid
+        # subgoal = StayAction(topo_nid)
+        # print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
+
         subgoal.robot_id = agent.robot_id
-        print(typ.bold(typ.blue(f"Subgoal planned: {subgoal})")))
 
         self.last_planned_global_action = subgoal
 
@@ -128,4 +129,10 @@ class HierPlanner(pomdp_py.Planner):
                 return subgoal
         else:
             self.planning_locally = False
+            self.clear_local()
             return subgoal
+
+    def clear_local(self):
+        self._local_agent = None
+        self.local_planner = None
+        self.last_planned_local_action = None

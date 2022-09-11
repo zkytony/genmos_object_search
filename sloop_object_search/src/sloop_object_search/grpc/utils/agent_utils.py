@@ -372,10 +372,13 @@ def plan_action(planner, agent, server):
         if planner.global_agent.robot_id != agent.robot_id:
             return False, "Expecting planning request on behalf of global agent"
 
-        if action.robot_id == agent.robot_id and isinstance(action, slpa.StayAction):
-            # The action is planned for the global agent, AND it is a Stay.
-            # Handle the creation of local search agent if needed
-            if planner.local_agent is None:
+        if action.robot_id == agent.robot_id:
+            if isinstance(action, slpa.StayAction):
+                # The action is planned for the global agent, AND it is a Stay.
+                # Handle the creation of local search agent if needed
+                assert planner.local_agent is None,\
+                    "Unexpected. Planner should output action for local agent"
+
                 # server tells client, please send over update search region request
                 local_robot_id = f"{agent.robot_id}_local"
                 server.add_message(agent.robot_id,
@@ -396,12 +399,12 @@ def plan_action(planner, agent, server):
                 # Now, we have a local agent
                 planner.set_local_agent(server.agents[local_robot_id])
                 action = planner.plan_local()
-
             else:
-                # If the local agent is not None, the hierarchical planner would
-                # not output a Stay action for the global agent. It would output
-                # an action for the local agent. So this is unexpected.
-                raise RuntimeError("Unexpected. Planner should output action for local agent")
+                # The action is a subgoal that is not a Stay. We discard
+                # the local agent, if there is one.
+                local_robot_id = f"{agent.robot_id}_local"
+                server.remove_agent(local_robot_id)
+
 
     planned_locally = False
     if isinstance(planner, HierPlanner):
