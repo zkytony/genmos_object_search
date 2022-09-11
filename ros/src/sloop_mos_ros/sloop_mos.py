@@ -150,6 +150,11 @@ class SloopMosROS:
         self._belief_2d_markers_pub = rospy.Publisher(
             "~belief_2d", MarkerArray, queue_size=10, latch=True)
 
+        # Remap these topics that we subscribe to, if needed.
+        self._search_region_2d_point_cloud_topic = "~search_region_cloud_2d"
+        self._search_region_3d_point_cloud_topic = "~search_region_cloud_3d"
+        self._robot_pose_topic = "~robot_pose"
+
         # First, create an agent
         self._sloop_client.createAgent(
             header=proto_utils.make_header(), config=self.agent_config,
