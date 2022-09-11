@@ -46,7 +46,7 @@ public:
 private:
     ros::NodeHandle nh_;
     ros::Publisher pcl_merged_pub_;
-    message_filters::Subscriber<PointCloud2> *pcl_sub_;
+    message_filters::Subscriber<PointCloud2> *pcl_subs_[8];
     CloudSync *sync_;
 
     std::string input_topics_;

@@ -32,22 +32,32 @@ void PointCloudMerger::cloudCallback(const PointCloud2 &cloud1,
 PointCloudMerger::PointCloudMerger()
     : nh_(ros::NodeHandle("~")) {
 
-    nh_.param("input_topics", input_topics_, std::string("[]"));
+    input_topics_ = nh_.param<std::string>("input_topics", std::string("[]"));
     nh_.param("output_frame_id", output_frame_id_, std::string("[]"));
 
     YAML::Node topics = YAML::Load(input_topics_);
     input_topics_size_ = topics.size();
+    std::cout << input_topics_ << std::endl;
 
-    // string global_cloud_topic = nh_.param<string>("global_cloud_topic", "global_points");
-    // string robot_pose_topic = nh_.param<string>("robot_pose_topic", "robot_pose");
-    // pcl_global_sub_ = new message_filters::Subscriber<PointCloud2>(nh_, global_cloud_topic, 10);
-    // robot_pose_sub_ = new message_filters::Subscriber<PoseStamped>(nh_, robot_pose_topic, 10);
-
-    // string region_cloud_topic = nh_.param<string>("region_cloud_topic", "region_points");
-    // pcl_local_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(region_cloud_topic, 10, true);
-
-    // sync_ = new CloudPoseSync(CloudPoseSyncPolicy(10), *pcl_global_sub_, *robot_pose_sub_);
-    // sync_->registerCallback(&PointCloudMerger::cloudPoseCallback, this);
+    if (input_topics_size_ < 2 || 8 < input_topics_size_) {
+        ROS_ERROR("The size of input_topics must be between 2 and 8");
+        ros::shutdown();
+    }
+    for (size_t i = 0; i < 8; ++i) {
+        if (i < input_topics_size_) {
+            ROS_INFO("%s", ("subscribing to " + topics[i].as<std::string>()).c_str());
+            pcl_subs_[i] =
+                new message_filters::Subscriber<PointCloud2>(nh_, topics[i].as<std::string>(), 1);
+        } else {
+            pcl_subs_[i] =
+                new message_filters::Subscriber<PointCloud2>(nh_, topics[0].as<std::string>(), 1);
+        }
+    }
+    sync_ = new CloudSync(CloudSyncPolicy(10),
+                          *pcl_subs_[0], *pcl_subs_[1], *pcl_subs_[2], *pcl_subs_[3],
+                          *pcl_subs_[4], *pcl_subs_[5], *pcl_subs_[6], *pcl_subs_[7]);
+    sync_->registerCallback(&PointCloudMerger::cloudCallback, this);
+    pcl_merged_pub_ = nh_.advertise<PointCloud2>("/points_merged", 1);
 }
 
 void PointCloudMerger::run() {
@@ -55,7 +65,9 @@ void PointCloudMerger::run() {
 }
 
 PointCloudMerger::~PointCloudMerger() {
-    delete pcl_sub_;
+    for (size_t i = 0; i < 8; ++i) {
+        delete pcl_subs_[i];
+    }
     delete sync_;
 }
 

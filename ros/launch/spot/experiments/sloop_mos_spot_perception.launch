@@ -1,0 +1,41 @@
+<launch>
+  <!-- Perception stack used for SLOOP experiments on Spot -->
+  <arg name="world_frame" value="graphnav_map"/>
+  <arg name="frontleft_depth" value="/spot/stream_image/frontleft_depth_in_visual_frame/"/>
+  <arg name="frontright_depth" value="/spot/stream_image/frontright_depth_in_visual_frame/"/>
+  <arg name="gripper_depth" value="/spot/stream_image/hand_depth_in_hand_color_frame/"/>
+
+  <!-- Nodelet manager for this pipeline -->
+  <node pkg="nodelet" type="nodelet" args="manager"
+        name="cloudify_manager" output="screen"/>
+
+  <!-- First, we collect point clouds from three camera sources, and
+       pubilsh a unified point cloud (no color) -->
+  <node name="cloudify_frontleft_depth" pkg="nodelet" type="nodelet"
+        args="load depth_image_proc/point_cloud_xyz cloudify_manager --no-bond"
+        output="screen">
+    <remap from="camera_info" to="$(arg frontleft_depth)/camera_info"/> <!--$(arg camera_info_topic)"/> -->
+    <remap from="image_rect" to="$(arg frontleft_depth)/image"/>
+    <remap from="points" to="$(arg frontleft_depth)/points"/>
+    <param name="queue_size" value="10"/>
+  </node>
+
+  <node name="cloudify_frontright_depth" pkg="nodelet" type="nodelet"
+        args="load depth_image_proc/point_cloud_xyz cloudify_manager --no-bond"
+        output="screen">
+    <remap from="camera_info" to="$(arg frontright_depth)/camera_info"/> <!--$(arg camera_info_topic)"/> -->
+    <remap from="image_rect" to="$(arg frontright_depth)/image"/>
+    <remap from="points" to="$(arg frontright_depth)/points"/>
+    <param name="queue_size" value="10"/>
+  </node>
+
+  <node name="point_cloud_merger"
+        pkg="sloop_object_search_ros" type="point_cloud_merger"
+        output="screen">
+    <param name="input_topics"
+           value="[$(arg frontright_depth)/points, $(arg frontleft_depth)/points]"
+           type="string"/>
+    <param name="output_frame_id" value="$(arg world_frame)"/>
+  </node>
+
+</launch>
