@@ -50,9 +50,6 @@ catkin_package(
 
 
 ############ Executables (Python) ##############
-catkin_install_python(PROGRAMS scripts/run_agent
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
 include_directories(
   ${catkin_INCLUDE_DIRS})
 
@@ -103,3 +100,13 @@ target_include_directories(local_cloud_publisher
   include/sloop_mos_ros/)
 target_link_libraries(local_cloud_publisher
   ${catkin_LIBRARIES})
+
+add_executable(point_cloud_merger
+  src/sloop_mos_ros/processing/point_cloud_merger.cpp)
+target_include_directories(point_cloud_merger
+  PUBLIC
+  include/sloop_mos_ros/processing
+  include/sloop_mos_ros/)
+target_link_libraries(point_cloud_merger
+  ${catkin_LIBRARIES}
+  yaml-cpp)

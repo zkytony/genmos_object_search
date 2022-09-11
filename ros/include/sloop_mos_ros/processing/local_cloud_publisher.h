@@ -44,10 +44,6 @@ private:
     double region_size_y_;
     double region_size_z_;
     double retain_ratio_;
-
-
-
 };
-
 
 #endif
