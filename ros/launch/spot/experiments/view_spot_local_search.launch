@@ -1,0 +1,3 @@
+<launch>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find sloop_object_search_ros)/rviz/spot/spot_local_search.rviz" />
+</launch>
