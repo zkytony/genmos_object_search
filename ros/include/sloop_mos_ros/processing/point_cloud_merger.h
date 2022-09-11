@@ -8,6 +8,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -48,6 +49,8 @@ private:
     ros::Publisher pcl_merged_pub_;
     message_filters::Subscriber<PointCloud2> *pcl_subs_[8];
     CloudSync *sync_;
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
 
     std::string input_topics_;
     int input_topics_size_;
