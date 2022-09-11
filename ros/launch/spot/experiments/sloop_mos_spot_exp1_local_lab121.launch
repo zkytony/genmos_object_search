@@ -1,0 +1,21 @@
+<launch>
+
+  <arg name="spot" value="002"/>
+
+  <!-- Run SLOOP object search decision making interface (POMDP planner) -->
+  <node name="sloop_ros" ns="spot_$(arg spot)"
+        pkg="sloop_object_search_ros" type="run_search.py" output="screen">
+    <!-- So strange. you can't do ~config -->
+    <rosparam param="config" command="load"
+              file="$(find sloop_object_search_ros)/config/experiments/spot_exp1_local_lab121.yaml"/>
+    <param name="robot_id" value="spot_$(arg spot)"/>
+    <param name="world_frame" value="graphnav_map"/>
+    <!-- <param name="~pomdp_name" value="sloop_mos_spot"/> -->
+    <!-- <remap from="~observation/grid_map"  to="/graphnav_gridmap"/> -->
+    <!-- <remap from="~observation/robot_pose" to="/spot_hand_pose"/> -->
+    <!-- <remap from="~observation/detection_3d" to="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/> -->
+    <!-- <remap from="~observation/spatial_lang" to="/spatial_lang"/> -->
+    <!-- <remap from="~action_status" to="/spot_action_executor/status"/> -->
+  </node>
+
+</launch>
