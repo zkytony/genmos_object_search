@@ -361,6 +361,7 @@ def plan_action(planner, agent, server):
     action = planner.plan(agent)
     if hasattr(agent, "tree") and agent.tree is not None:
         # print planning tree
+        print(pomdp_py.utils.typ.info(f"Search tree for {agent.robot_id}"))
         _dd = pomdp_py.utils.TreeDebugger(agent.tree)
         _dd.p(0)
 
@@ -404,7 +405,8 @@ def plan_action(planner, agent, server):
                 # the local agent, if there is one.
                 local_robot_id = f"{agent.robot_id}_local"
                 server.remove_agent(local_robot_id)
-
+                server.add_message(agent.robot_id,
+                                   Message.LOCAL_AGENT_REMOVED.format(local_robot_id))
 
     planned_locally = False
     if isinstance(planner, HierPlanner):
@@ -480,7 +482,6 @@ def update_hier(request, planner, action, action_finished):
             request, planner.global_agent, action=action)
         aux = update_belief(planner.global_agent, observation_global, action=action,
                             **proto_utils.process_observation_params(request))
-        assert isinstance(planner.last_planned_global_action, slpa.StayAction)
         update_planner(planner.global_planner, planner.global_agent, observation_global, planner.last_planned_global_action)
 
     return aux

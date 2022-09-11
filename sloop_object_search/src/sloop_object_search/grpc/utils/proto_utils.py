@@ -359,7 +359,7 @@ def pomdp_detection_from_proto(detection_pb, agent,
     # because the POMDP frame and the world frame are axis-aligned,
     # we only need to convert the position, not rotation.
     search_region = agent.search_region
-    if not agent.is_hierarchical and not search_region.is_3d:
+    if not search_region.is_3d:
         # agent is local 2D agent
         center_pos = (center.position.x, center.position.y)
         quat = quatproto_to_tuple(center.rotation)
@@ -416,8 +416,8 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
     robot_pose_estimate_pomdp = slpo.RobotLocalization(
         agent.robot_id, robot_pose_pomdp, robot_pose_pomdp_cov)
 
-    if not agent.search_region.is_3d and not agent.is_hierarchical:
-        # 2D local agent receives 2D observation
+    if not agent.search_region.is_3d:
+        # 2D agent receives 2D observation
         robot_pose_estimate_pomdp = robot_pose_estimate_pomdp.to_2d()
 
     # objects found

@@ -55,6 +55,12 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
             rospy.loginfo(f"will send a update search request to {local_robot_id}")
             self.update_search_region_3d(robot_id=local_robot_id)
             self._local_robot_id = local_robot_id
+        elif Message.match(message) == Message.LOCAL_AGENT_REMOVED:
+            local_robot_id = Message.forwhom(message)
+            rospy.loginfo(f"local agent {local_robot_id} removed.")
+            if local_robot_id != self._local_robot_id:
+                rospy.logerr("removed local agent has an unexpected ID")
+            self._local_robot_id = None
 
     def __init__(self, prior="uniform"):
         super().__init__(prior=prior)
@@ -179,6 +185,14 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
                 self.visualize_fovs_3d(response_observation)
             if self._local_robot_id is not None:
                 self.get_and_visualize_belief_3d(robot_id=self._local_robot_id)
+            else:
+                # clear markers
+                header = std_msgs.Header(stamp=rospy.Time.now(),
+                                         frame_id=self.world_frame)
+                clear_msg = ros_utils.clear_markers(header, ns="")
+                self._fovs_markers_pub.publish(clear_msg)
+                self._octbelief_markers_pub.publish(clear_msg)
+                self._topo_map_3d_markers_pub.publish(clear_msg)
             self.get_and_visualize_belief_2d()
 
             # Check if we are done

@@ -92,6 +92,11 @@ class HierPlanner(pomdp_py.Planner):
             self.local_planner = pomdp_py.POUCT(**local_planner_params,
                                                  rollout_policy=self._local_agent.policy_model)
         action = self.local_planner.plan(self._local_agent)
+        if hasattr(self.local_agent, "tree") and self.local_agent.tree is not None:
+            # print planning tree
+            print(pomdp_py.utils.typ.info(f"Search tree for {self.local_agent.robot_id}"))
+            _dd = pomdp_py.utils.TreeDebugger(self.local_agent.tree)
+            _dd.p(0)
         action.robot_id = self._local_agent.robot_id
         self.last_planned_local_action = action
         return action

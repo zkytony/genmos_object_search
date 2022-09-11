@@ -202,10 +202,10 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         self._check_invariant()
 
     def remove_agent(self, robot_id):
-        self._pending_agents.pop(robot_id)
-        self._agents.pop(robot_id)
-        self._actions_planned.pop(robot_id)
-        self._planners.pop(robot_id)
+        self._pending_agents.pop(robot_id, None)
+        self._agents.pop(robot_id, None)
+        self._actions_planned.pop(robot_id, None)
+        self._planners.pop(robot_id, None)
 
     def _check_invariant(self):
         for robot_id in self._agents:
@@ -291,6 +291,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         else:
             action_type, action_pb = proto_utils.pomdp_action_to_proto(action, agent, header)
         action_id = self._make_action_id(agent, action)
+        self._loginfo(f"Planning success. Action: {action}")
         self._actions_planned[agent.robot_id] = (action_id, action)
         return slpb2.PlanActionReply(header=header,
                                      status=Status.SUCCESSFUL,
