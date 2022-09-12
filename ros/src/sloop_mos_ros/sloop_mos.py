@@ -279,7 +279,7 @@ class SloopMosROS:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         robot_pose_msg, object_detections_msg = ros_utils.WaitForMessages(
             [self._robot_pose_topic, self._object_detections_topic],
-            [geometry_msgs.msg.PoseStamped, vision_msgs.Detection3DArray],
+            [geometry_msgs.PoseStamped, vision_msgs.Detection3DArray],
             delay=0.1, verbose=True).messages
 
         assert robot_pose_msg.header.frame_id == self.world_frame,\
@@ -410,13 +410,13 @@ class SloopMosROS:
         self._robot_pose_topic = "~robot_pose"
         # Note for object detections, we accept 3D bounding-box-based detections.
         self._object_detections_topic = "~object_detections"
-        self._detection_vision_info_topic = "~detection_vision_info"
+        self._detection_vision_info_topic = "~vision_info"
         self._action_done_topic = "~action_done"
 
         # Need to wait for vision info
         vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
-                                              [vision_msgs.VisionInfo], verbose=True)
-        self.detection_class_names = rospy.get_param(vinfo_msg.database_location)
+                                              [vision_msgs.VisionInfo], verbose=True).messages[0]
+        self.detection_class_names = rospy.get_param("/" + vinfo_msg.database_location)
 
         # Planning-related
         self.last_action = None
@@ -452,7 +452,7 @@ class SloopMosROS:
         rospy.loginfo("planner created!")
 
         # Send planning requests
-        for step in range(self.config["max_steps"]):
+        for step in range(self.config["task_config"]["max_steps"]):
             response_plan = self._sloop_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
             action_pb = proto_utils.interpret_planned_action(response_plan)
@@ -460,10 +460,10 @@ class SloopMosROS:
             rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
             self.last_action = action_pb
 
-            self.execute_action(action_pb)
-            ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
-                                      allow_headerless=True, verbose=True)
-            rospy.loginfo("action done.")
+            # self.execute_action(action_pb)
+            # ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
+            #                           allow_headerless=True, verbose=True)
+            # rospy.loginfo("action done.")
 
             # Now, wait for observation, and then update belief
             detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()

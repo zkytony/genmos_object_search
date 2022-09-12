@@ -341,9 +341,9 @@ def detection3darray_to_proto(d3darr_msg, robot_id, class_names,
     stamp = google.protobuf.timestamp_pb2.Timestamp(seconds=d3darr_msg.header.stamp.seconds,
                                                     nanos=d3darr_msg.header.stamp.nanos)
     if target_frame is None:
-        header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp))
+        header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp)
     else:
-        header = proto_utils.make_header(frame_id=target_frame, stamp=stamp))
+        header = proto_utils.make_header(frame_id=target_frame, stamp=stamp)
     detections_pb = []
     for d3d_msg in d3darr_msg.detections:
         det3d_pb = detection3d_to_proto(
