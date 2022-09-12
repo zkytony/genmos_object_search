@@ -276,25 +276,35 @@ class SloopMosROS:
             [geometry_msgs.msg.PoseStamped, vision_msgs.Detection3DArray],
             delay=0.1, verbose=True).messages
 
+        assert robot_pose_msg.header.frame_id == self.world_frame,\
+            f"expecting robot pose to be in world frame '{self.world_frame}'"
+        assert object_detections_msg.header.frame_id == self.world_frame,\
+            f"expecting object detections msg to be in world frame '{self.world_frame}'"
+
+        # Detection proto
         detections_pb = ros_utils.detection3darray_to_proto(
             object_detections_msg, self.robot_id, self.detection_class_names,
             target_frame=self.world_frame, tf2buf=self.tfbuffer)
 
-        # assert robot_pose_msg.header.frame_id == self.world_frame,\
-        #     f"expecting robot pose to be in world frame '{self.world_frame}'"
-        # assert object_detections_msg.header.frame_id == self.world_frame,\
-        #     f"expecting object detections msg to be in world frame '{self.world_frame}'"
-        # header = proto_utils.make_header(frame_id=self.world_frame)
-        # robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
-        # robot_pose_pb = o_pb2.RobotPose(header=header,
-        #                                 robot_id=self.robot_id,
-        #                                 pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
-        # detections = {}
+        # Objects found proto
+        # If the last action is "find", and we receive object detections
+        # that contain target objects, then these objects will be considered 'found'
+        if isinstance(self.last_action, a_pb2.Find):
+            for det_pb in detections_pb.detections:
+                if det_pb.label in self.agent_config["targets"]:
+                    self.objects_found.add(det_pb.label)
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        objects_found_pb = o_pb2.ObjectsFound(
+            header=header, robot_id=self.robot_id,
+            object_ids=sorted(list(self.objects_found)))
 
-        # # If the last action is "find", and we receive object detections
-        # # that contain target objects, then these objects will be considered 'found'
-        # if isinstance(self.last_action, a_pb2.Find):
-
+        # Robot pose proto
+        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        robot_pose_pb = o_pb2.RobotPose(
+            header=header,
+            robot_id=self.robot_id,
+            pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
+        return detections_pb, robot_pose_pb, objects_found_pb
 
     def setup(self):
         # This is an example of how to get started with using the
@@ -344,6 +354,10 @@ class SloopMosROS:
         vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
                                               [vision_msgs.VisionInfo], verbose=True)
         self.detection_class_names = rospy.get_param(vinfo_msg.database_location)
+
+        # Planning-related
+        self.last_action = None
+        self.objects_found = set()
 
 
     def run(self):
