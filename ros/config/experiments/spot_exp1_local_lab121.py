@@ -1,9 +1,5 @@
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
 CONFIG_LOCAL = {
-    "object_locations": {
-        "book": [0.0, 2.0, 0.1],
-    },
-
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
         "agent_type": "local",
@@ -21,22 +17,23 @@ CONFIG_LOCAL = {
                            'near': 0.2,
                            'occlusion_enabled': True}
             }],
-            'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+            'detectors': {'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
                                               "quality": [1e5, 0.1]}}},
             'action': {'topo': {'num_nodes': 10,
-                                'pos_importance_thres': 0.01}},
+                                'pos_importance_thres': 0.01,
+                                'sep': 0.75 }},
             "reachable": {
                 "min_height": 0.3,
                 "max_height": 1.4
             }
         },
-        'objects': {'book': {'class': 'book',
-                             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
-                             'color': [0.4, 0.7, 0.3, 0.8],
-                             'viz_type': 'cube',
-                             'sizes': [0.14, 0.08, 0.10]}},
-        'targets': ['book'],
+        'objects': {'Cat': {'class': 'Cat',
+                            'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                            'color': [0.4, 0.7, 0.3, 0.8],
+                            'viz_type': 'cube',
+                            'sizes': [0.14, 0.08, 0.10]}},
+        'targets': ['Cat'],
     },
 
     "task_config": {

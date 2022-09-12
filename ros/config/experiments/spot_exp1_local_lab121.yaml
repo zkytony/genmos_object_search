@@ -9,8 +9,8 @@ agent_config:
       step_size: 0.4
       voxel_res: 2
   objects:
-    book:
-      class: book
+    Cat:
+      class: Cat
       color:
       - 0.4
       - 0.7
@@ -28,8 +28,9 @@ agent_config:
       topo:
         num_nodes: 10
         pos_importance_thres: 0.01
+        sep: 0.75
     detectors:
-      book:
+      Cat:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
@@ -49,12 +50,7 @@ agent_config:
         near: 0.2
         occlusion_enabled: true
   targets:
-  - book
-object_locations:
-  book:
-  - 0.0
-  - 2.0
-  - 0.1
+  - Cat
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:

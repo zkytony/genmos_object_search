@@ -33,33 +33,10 @@ def create_agent(robot_id, agent_config_world, robot_localization_world, search_
     config (dict). The initial pose, in world frame, is given by
     robot_pose. The search_region can be 2D or 3D.
 
-    Fields in agent_config:
+    Fields in agent_config: see example.
 
-      General:
-        "agent_class": (str)
-        "robot": {"detectors": {<objid>: detectors_config},
-                  "id": "robot_id",
-                  "action": action_config (e.g. primitive moves),
-                  "localization_model": (str; default 'identity'),
-                  "transition":  args for robot transition model}
-        "objects": {<objid>: object_config}
-        "targets": [<objid>]
-        "no_look": (bool)
-
-      object_config
-          'color': r, g, b, a (values range 0-1)
-
-      Topo planning related:
-        "topo_map_args" (optional):  refer to agents/topo2d.py
-        "topo_trans_args" (optional):   refer to agents/topo2d.py
-
-      Spatial language related:
-        "spacy_model" (optional):  todo
-        "foref_models_dir":  todo
-        "foref_model_map_name":  todo
-        "object_symbol_map": maps from object symbol (e.g. NovelBook) to object id (e.g. book)
-
-    Note that by default, size units in agent_config that are metric.
+    Note that typically size units in agent_config that are metric.
+    See _convert_metric_fields_to_pomdp_fields.
     """
     _validate_agent_config(agent_config_world)
     agent_config_pomdp = _convert_metric_fields_to_pomdp_fields(
@@ -179,6 +156,15 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             max_height_world = agent_config_world["robot"]["reachable"]["max_height"]
             max_height_pomdp = max_height_world / search_region.search_space_resolution
             agent_config_pomdp["robot"]["reachable"]["max_height"] = max_height_pomdp
+
+    # Convert topo config
+    if "topo" in agent_config_world["robot"]["action"]:
+        topo_config_world = agent_config_world["robot"]["action"]["topo"]
+        topo_config_pomdp = agent_config_pomdp["robot"]["action"]["topo"]
+        if "sep" in agent_config_world["robot"]["action"]["topo"]:
+            sep_world = agent_config_world["robot"]["action"]["topo"]["sep"]
+            sep_pomdp = sep_world / search_region.search_space_resolution
+            agent_config_pomdp["robot"]["action"]["topo"]["sep"] = sep_pomdp
 
     return agent_config_pomdp
 
