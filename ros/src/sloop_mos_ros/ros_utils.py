@@ -9,6 +9,7 @@ import geometry_msgs
 import std_msgs
 import visualization_msgs
 import message_filters
+import vision_msgs
 
 import tf
 import tf2_ros
@@ -299,6 +300,43 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
                                 points=points_pb)
     return cloud_pb
 
+### Vision Messages ###
+def detection3d_to_proto(d3d_msg, class_names):
+    """Given vision_msgs.Detection3D, return a proto Detection3D object. because the
+    label in d3d_msg have integer id, we will need to map them to strings
+    according to indexing in 'class_names'.
+
+    If the message contains multiple object hypotheses, will only
+    consider the one with the highest score
+    """
+    hypos = {h.id: h.score for h in d3d_msg.results}
+    label_id = max(hypos, key=hypos.get)
+    label = class_names[label_id]
+    confidence = hypos[label_id]
+    center_tuple = pose_to_tuple(d3d_msg.bbox.center)
+    center_pb = proto_utils.posetuple_to_poseproto(center_tuple)
+    box = common_pb2.Box3D(center=center_pb,
+                           sizes=common_pb2.Vec3(x=d3d_msg.bbox.size.x,
+                                                 y=d3d_msg.bbox.size.y,
+                                                 z=d3d_msg.bbox.size.z))
+    return o_pb2.Detection3D(label=label,
+                             confidence=confidence,
+                             box=box)
+
+def detection3darray_to_proto(d3darr_msg, robot_id):
+    """Given a vision_msgs.Detection3DArray message,
+    return an ObjectDetectionArray proto. 'robot_id'
+    is the robot that made this detection"""
+    stamp = google.protobuf.timestamp_pb2.Timestamp(seconds=d3darr_msg.header.stamp.seconds,
+                                                    nanos=d3darr_msg.header.stamp.nanos)
+    header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp))
+    detections_pb = []
+    for d3d_msg in d3darr_msg.detections:
+        det3d_pb = detection3d_to_proto(d3d_msg)
+        detections_pb.append(det3d_pb)
+    return o_pb2.ObjectDetectionArray(header=header,
+                                      robot_id=robot_id,
+                                      detections=detections_pb)
 
 ### Visualization ###
 from visualization_msgs.msg import Marker, MarkerArray
