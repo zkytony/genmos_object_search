@@ -323,7 +323,7 @@ def detection3d_to_proto(d3d_msg, class_names):
                              confidence=confidence,
                              box=box)
 
-def detection3darray_to_proto(d3darr_msg, robot_id):
+def detection3darray_to_proto(d3darr_msg, robot_id, class_names):
     """Given a vision_msgs.Detection3DArray message,
     return an ObjectDetectionArray proto. 'robot_id'
     is the robot that made this detection"""
@@ -332,7 +332,7 @@ def detection3darray_to_proto(d3darr_msg, robot_id):
     header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp))
     detections_pb = []
     for d3d_msg in d3darr_msg.detections:
-        det3d_pb = detection3d_to_proto(d3d_msg)
+        det3d_pb = detection3d_to_proto(d3d_msg, class_names)
         detections_pb.append(det3d_pb)
     return o_pb2.ObjectDetectionArray(header=header,
                                       robot_id=robot_id,
@@ -635,8 +635,9 @@ class WaitForMessages:
     """deals with waiting for messages to arrive at multiple
     topics. Uses ApproximateTimeSynchronizer. Simply returns
     a tuple of messages that were received."""
-    def __init__(self, topics, mtypes, queue_size=10,
-                 delay=0.2, allow_headerless=False, sleep=0.5, verbose=False):
+    def __init__(self, topics, mtypes, queue_size=10, delay=0.2,
+                 allow_headerless=False, sleep=0.5, timeout=None,
+                 verbose=False):
         """
         Args:
             topics (list) List of topics
@@ -647,6 +648,9 @@ class WaitForMessages:
                 no header in the messages.
             sleep (float) the amount of time to wait before checking
                 whether messages are received
+            timeout (float or None): Time in seconds to wait. None if forever.
+                If exceeded timeout, self.messages will contain None for
+                each topic.
         """
         self.messages = None
         self.verbose = verbose
@@ -658,12 +662,18 @@ class WaitForMessages:
             self.subs, queue_size, delay, allow_headerless=allow_headerless)
         self.ts.registerCallback(self._cb)
         rate = rospy.Rate(1.0/sleep)
+        _start = rospy.Time.now()
         while not rospy.is_shutdown():
             if self.messages is not None:
                 rospy.loginfo("WaitForMessages: Received messages! Done!")
                 break
             if self.verbose:
                 rospy.loginfo("WaitForMessages: waiting for messages from {}".format(topics))
+            _dt = rospy.Time.now() - _start
+            if timeout is not None and _dt.to_sec() > timeout:
+                rospy.logerr("WaitForMessages: timeout waiting for messages")
+                self.messages = [None]*len(topics)
+                break
             rate.sleep()
 
     def _cb(self, *messages):
