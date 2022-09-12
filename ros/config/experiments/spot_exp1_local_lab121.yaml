@@ -45,8 +45,9 @@ agent_config:
     sensors:
     - name: camera
       params:
-        far: 1.75
-        fov: 61
+        aspect_ratio: 0.5
+        far: 1.5
+        fov: 50
         near: 0.2
         occlusion_enabled: true
   targets:

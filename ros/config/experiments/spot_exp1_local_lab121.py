@@ -12,9 +12,10 @@ CONFIG_LOCAL = {
             'no_look': True,
             'sensors': [{
                 'name': 'camera',
-                'params': {'fov': 61,
-                           'far': 1.75,
+                'params': {'fov': 50,
+                           'far': 1.5,
                            'near': 0.2,
+                           'aspect_ratio': 0.5,
                            'occlusion_enabled': True}
             }],
             'detectors': {'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
