@@ -62,8 +62,11 @@ class MosAgentBasic3D(MosAgent):
         """A position is reachable if it is a valid
         voxel and it is not occupied. Assume 'pos' is a
         position at the ground resolution level"""
-        return self.search_region.octree_dist.octree.valid_voxel(*pos, 1)\
-            and not self.search_region.occupied_at(pos, res=1)
+        above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
+        not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
+        valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos, 1)
+        not_occupied = not self.search_region.occupied_at(pos, res=1)
+        return above_ground and not_too_high and valid_voxel and not_occupied
 
     def _update_object_beliefs(self, observation, action=None, debug=False, **kwargs):
         assert isinstance(observation, JointObservation)
