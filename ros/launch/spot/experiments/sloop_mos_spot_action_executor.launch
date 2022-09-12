@@ -1,8 +1,9 @@
-
 <launch>
+  <arg name="spot" value="002"/>
+
   <!-- Action Executor for Spot -->
   <node name="spot_action_executor"
         pkg="sloop_object_search_ros" type="spot_action_executor.py" output="screen">
-    <remap from="~action"  to="/run_sloop_mos_spot/action"/>
+    <remap from="~action"  to="/spot_$(arg spot)/sloop_ros/action"/>
   </node>
 </launch>

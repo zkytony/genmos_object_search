@@ -4,9 +4,7 @@ import rospy
 import diagnostic_msgs
 from pomdp_py.utils import typ
 import sys
-print(sys.path)
 import sloop_object_search_ros
-print(sloop_object_search_ros.__file__)
 
 from sloop_object_search_ros.msg import KeyValAction
 from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
@@ -15,7 +13,7 @@ from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
                                                        MotionAction2D)
 from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic2D
 from sloop_object_search.utils.math import to_rad
-from sloop_mos_ros.framework import ActionExecutor
+from sloop_mos_ros.action_executor import ActionExecutor
 from actionlib_msgs.msg import GoalStatus
 
 from bosdyn.client.math_helpers import Quat
@@ -39,43 +37,6 @@ class SpotSloopActionExecutor(ActionExecutor):
         self.graphnav_client = rbd_spot.graphnav.create_client(self.conn)
         self.robot_state_client = rbd_spot.state.create_client(self.conn)
         self.command_client = rbd_spot.arm.create_client(self.conn)
-
-
-    @classmethod
-    def action_to_ros_msg(self, agent, action, goal_id):
-        print(action)
-
-        if isinstance(action, MotionActionTopo):
-            # The navigation goal is specified with respect to the global map frame.
-            goal_pos = action.dst_pose[:2]
-            goal_yaw = to_rad(action.dst_pose[2])
-            metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
-            action_msg = KeyValAction(stamp=rospy.Time.now(),
-                                      type="move_topo",
-                                      keys=["goal_x", "goal_y", "goal_yaw", "name"],
-                                      values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
-            return action_msg
-
-        elif isinstance(action, MotionAction2D):
-            # We will make the robot move its arm with body follow; The robot arm
-            # movement is specified with respect to the robot frame.
-            robot_pose_after_action = RobotTransBasic2D.transform_pose((0, 0, 0.0), action)
-
-            # note that by default the gripper is a bit forward with respect to the body origin
-            metric_pos_x = 0.65 + robot_pose_after_action[0] * agent.grid_map.grid_size
-            metric_pos_y = robot_pose_after_action[1] * agent.grid_map.grid_size
-            metric_yaw = to_rad(-robot_pose_after_action[2])  # For spot's frame, we needed to reverse the angle
-            action_msg = KeyValAction(stamp=rospy.Time.now(),
-                                      type="move_2d",
-                                      keys=["goal_x", "goal_y", "goal_yaw", "name"],
-                                      values=[str(metric_pos_x), str(metric_pos_y), str(metric_yaw), action.name])
-            return action_msg
-
-        elif isinstance(action, FindAction):
-            return KeyValAction(stamp=rospy.Time.now(),
-                                type="find",
-                                keys=[],
-                                values=[])
 
 
     def _execute_action_cb(self, msg):
@@ -172,3 +133,41 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.publish_status(GoalStatus.PENDING,
                                 "navigation command is not complete yet",
                                 action_id, stamp)
+
+
+
+    # @classmethod
+    # def action_to_ros_msg(self, agent, action, goal_id):
+    #     print(action)
+
+    #     if isinstance(action, MotionActionTopo):
+    #         # The navigation goal is specified with respect to the global map frame.
+    #         goal_pos = action.dst_pose[:2]
+    #         goal_yaw = to_rad(action.dst_pose[2])
+    #         metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
+    #         action_msg = KeyValAction(stamp=rospy.Time.now(),
+    #                                   type="move_topo",
+    #                                   keys=["goal_x", "goal_y", "goal_yaw", "name"],
+    #                                   values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
+    #         return action_msg
+
+    #     elif isinstance(action, MotionAction2D):
+    #         # We will make the robot move its arm with body follow; The robot arm
+    #         # movement is specified with respect to the robot frame.
+    #         robot_pose_after_action = RobotTransBasic2D.transform_pose((0, 0, 0.0), action)
+
+    #         # note that by default the gripper is a bit forward with respect to the body origin
+    #         metric_pos_x = 0.65 + robot_pose_after_action[0] * agent.grid_map.grid_size
+    #         metric_pos_y = robot_pose_after_action[1] * agent.grid_map.grid_size
+    #         metric_yaw = to_rad(-robot_pose_after_action[2])  # For spot's frame, we needed to reverse the angle
+    #         action_msg = KeyValAction(stamp=rospy.Time.now(),
+    #                                   type="move_2d",
+    #                                   keys=["goal_x", "goal_y", "goal_yaw", "name"],
+    #                                   values=[str(metric_pos_x), str(metric_pos_y), str(metric_yaw), action.name])
+    #         return action_msg
+
+    #     elif isinstance(action, FindAction):
+    #         return KeyValAction(stamp=rospy.Time.now(),
+    #                             type="find",
+    #                             keys=[],
+    #                             values=[])

@@ -29,6 +29,14 @@ from sloop_object_search.utils.misc import import_class
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
+def make_nav_action(pos, orien, goal_id=100):
+    goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]
+    goal_values = [*pos, *orien]
+    nav_action = KeyValAction(stamp=rospy.Time.now(),
+                              type="nav",
+                              keys=["goal_id"] + goal_keys,
+                              values=list(map(str, [goal_id] + goal_values)))
+    return nav_action
 
 class SloopMosROS:
     def __init__(self, name="sloop_ros"):
@@ -312,51 +320,31 @@ class SloopMosROS:
             pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
         return detections_pb, robot_pose_pb, objects_found_pb
 
-    def execute_action(self, action_pb):
-        # Now, we need to execute the action, and receive observation
-        # from SimpleEnv. First, convert the dest_3d in action to
-        # a KeyValAction message
+    def wait_for_robot_pose(self):
+        robot_pose_msg = ros_utils.WaitForMessages(
+            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True).messages[0]
+        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        return robot_pose_tuple
+
+    def execute_action(self, action_pb, step_count):
+        """All viewpoint movement actions specify a goal pose
+        the robot should move its end-effector to, and publish
+        that as a KeyValAction."""
         if isinstance(action_pb, a_pb2.MoveViewpoint):
             if action_pb.HasField("dest_3d"):
                 dest = proto_utils.poseproto_to_posetuple(action_pb.dest_3d)
-
             elif action_pb.HasField("dest_2d"):
-                robot_pose = np.asarray(wait_for_robot_pose())
+                robot_pose = np.asarray(self.wait_for_robot_pose())
                 dest_2d = proto_utils.poseproto_to_posetuple(action_pb.dest_2d)
                 x, y, thz = dest_2d
                 z = robot_pose[2]
                 thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
                 dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
-
-            elif action_pb.HasField("motion_3d"):
-                robot_pose = np.asarray(wait_for_robot_pose())
-                robot_pose[0] += action_pb.motion_3d.dpos.x
-                robot_pose[1] += action_pb.motion_3d.dpos.y
-                robot_pose[2] += action_pb.motion_3d.dpos.z
-
-                thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
-                dthx = action_pb.motion_3d.drot_euler.x
-                dthy = action_pb.motion_3d.drot_euler.y
-                dthz = action_pb.motion_3d.drot_euler.z
-                robot_pose[3:] = np.asarray(math_utils.euler_to_quat(
-                    thx + dthx, thy + dthy, thz + dthz))
-                dest = robot_pose
-
-            elif action_pb.HasField("motion_2d"):
-                forward = action_pb.motion_2d.forward
-                angle = action_pb.motion_2d.dth
-                robot_pose = np.asarray(wait_for_robot_pose())
-                rx, ry, rz = robot_pose[:3]
-                thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
-                thz = (thz + angle) % 360
-                rx = rx + forward*math.cos(math_utils.to_rad(thz))
-                ry = ry + forward*math.sin(math_utils.to_rad(thz))
-                dest = (rx, ry, rz, *math_utils.euler_to_quat(thx, thy, thz))
-
             else:
                 raise NotImplementedError("Not implemented action_pb.")
 
-            nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
+            nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step_count)
             self._action_pub.publish(nav_action)
             rospy.loginfo("published nav action for execution")
 
@@ -365,7 +353,6 @@ class SloopMosROS:
                                        type="find")
             self._action_pub.publish(find_action)
             rospy.loginfo("published find action for execution")
-
 
     def setup(self):
         # This is an example of how to get started with using the
@@ -464,10 +451,10 @@ class SloopMosROS:
             rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
             self.last_action = action_pb
 
-            # self.execute_action(action_pb)
-            # ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
-            #                           allow_headerless=True, verbose=True)
-            # rospy.loginfo("action done.")
+            self.execute_action(action_pb, step)
+            ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
+                                      allow_headerless=True, verbose=True)
+            rospy.loginfo("action done.")
 
             # Now, wait for observation, and then update belief
             detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
