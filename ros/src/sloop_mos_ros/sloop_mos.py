@@ -72,6 +72,16 @@ class SloopMosROS:
             point_cloud=cloud_pb,
             search_region_params_2d=search_region_params_2d)
 
+    @property
+    def search_space_res_2d(self):
+        search_region_config = self.agent_config.get("search_region", {}).get("2d", {})
+        return search_region_config.get("res", SEARCH_SPACE_RESOLUTION_2D)
+
+    @property
+    def search_space_res_3d(self):
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        return search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D)
+
     def update_search_region_3d(self, robot_id=None):
         if robot_id is None:
             robot_id = self.robot_id
@@ -116,11 +126,142 @@ class SloopMosROS:
             raise ValueError("Unexpected agent type: {}"\
                              .format(self.agent_config["agent_type"]))
 
+    def visualize_fovs_3d(self, response):
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._fovs_markers_pub.publish(clear_msg)
+
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        fovs = json.loads(response.fovs.decode('utf-8'))
+        markers = []
+        for objid in fovs:
+            free_color = np.array(self.agent_config["objects"][objid].get(
+                "color", [0.8, 0.4, 0.8]))[:3]
+            hit_color = lighter(free_color*255, -0.25)/255
+
+            obstacles_hit = set(map(tuple, fovs[objid]['obstacles_hit']))
+            for voxel in fovs[objid]['visible_volume']:
+                voxel = tuple(voxel)
+                if voxel in obstacles_hit:
+                    continue
+                m = ros_utils.make_viz_marker_for_voxel(
+                    voxel, header, color=free_color, ns="fov",
+                    lifetime=0, alpha=0.7)
+                markers.append(m)
+            for voxel in obstacles_hit:
+                m = ros_utils.make_viz_marker_for_voxel(
+                    voxel, header, color=hit_color, ns="fov",
+                    lifetime=0, alpha=0.7)
+                markers.append(m)
+        self._fovs_markers_pub.publish(MarkerArray(markers))
+
+    def get_and_visualize_belief_3d(self, robot_id=None, o3dviz=True):
+        if robot_id is None:
+            robot_id = self.robot_id
+
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._octbelief_markers_pub.publish(clear_msg)
+        self._topo_map_3d_markers_pub.publish(clear_msg)
+
+        response = self._sloop_client.getObjectBeliefs(
+            robot_id, header=proto_utils.make_header(self.world_frame))
+        if response.status != Status.SUCCESSFUL:
+            print("Failed to get 3D belief")
+            return
+        rospy.loginfo("got belief")
+
+        # visualize the belief
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        markers = []
+        for bobj_pb in response.object_beliefs:
+            msg = ros_utils.make_octree_belief_proto_markers_msg(
+                bobj_pb, header, alpha_scaling=20.0)
+            markers.extend(msg.markers)
+        self._octbelief_markers_pub.publish(MarkerArray(markers))
+
+        rospy.loginfo("belief visualized")
+
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, self.search_space_res_3d,
+                node_color=[0.82, 0.01, 0.08, 0.8],
+                edge_color=[0.24, 0.82, 0.01, 0.8],
+                node_thickness=self.search_space_res_3d)
+            markers.extend(msg.markers)
+        self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
+        rospy.loginfo("belief visualized")
+
+    def get_and_visualize_belief_2d(self):
+        # First, clear existing belief messages
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._belief_2d_markers_pub.publish(clear_msg)
+        self._topo_map_2d_markers_pub.publish(clear_msg)
+
+        response = self._sloop_client.getObjectBeliefs(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        assert response.status == Status.SUCCESSFUL
+        rospy.loginfo("got belief")
+
+        # visualize object belief
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        markers = []
+        for bobj_pb in response.object_beliefs:
+            color = self.agent_config["objects"][bobj_pb.object_id].get(
+                "color", [0.2, 0.7, 0.2])[:3]
+            msg = ros_utils.make_object_belief2d_proto_markers_msg(
+                bobj_pb, header, self.search_space_res_2d,
+                color=color)
+            markers.extend(msg.markers)
+        self._belief_2d_markers_pub.publish(MarkerArray(markers))
+
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, self.search_space_res_2d)
+            markers.extend(msg.markers)
+        self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
+        rospy.loginfo("belief visualized")
+
+    def get_and_visualize_belief(self):
+        if self.agent_config["agent_type"] == "local":
+            if self.agent_config["agent_class"].endswith("3D"):
+                self.get_and_visualize_belief_3d()
+            else:
+                self.get_and_visualize_belief_2d()
+        elif self.agent_config["agent_type"] == "hierarchical":
+            # local agent in hierarchical planning will get its search region
+            # through server-client communication. Here, the client only needs
+            # to send over the search region info for the global agent.
+            if self._local_robot_id is not None:
+                self.get_and_visualize_belief_3d(robot_id=self._local_robot_id)
+            self.get_and_visualize_belief_2d()
+        else:
+            raise ValueError("Unexpected agent type: {}"\
+                             .format(self.agent_config["agent_type"]))
+
 
     def main(self):
-                 # o3dviz=False, prior="uniform",
-                 # search_space_res_3d=SEARCH_SPACE_RESOLUTION_3D,
-                 # search_space_res_2d=SEARCH_SPACE_RESOLUTION_2D):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node(self.name)
@@ -129,6 +270,7 @@ class SloopMosROS:
         self._sloop_client = SloopObjectSearchClient()
         config = rospy.get_param("~config")  # access parameters together as a dictionary
         self.agent_config = config["agent_config"]
+        self.planner_config = config["planner_config"]
         self.robot_id = rospy.get_param("~robot_id")
         if self.robot_id != self.agent_config["robot"]["id"]:
             rospy.logwarn("robot id {} in rosparam overrides that in config {}"\
@@ -167,3 +309,18 @@ class SloopMosROS:
 
         # Update search region
         self.update_search_region()
+
+        # wait for agent creation
+        rospy.loginfo("waiting for sloop agent creation...")
+        self._sloop_client.waitForAgentCreation(self.robot_id)
+        rospy.loginfo("agent created!")
+
+        # visualize initial belief
+        self.get_and_visualize_belief()
+
+        # create planner
+        response = self._sloop_client.createPlanner(config=self.planner_config,
+                                                    header=proto_utils.make_header(),
+                                                    robot_id=self.robot_id)
+        rospy.loginfo("planner created!")
+        rospy.spin()
