@@ -320,7 +320,7 @@ def detection3d_to_proto(d3d_msg, class_names,
     if target_frame is not None:
         if tf2buf is None:
             tf2buf = tf2_ros.Buffer()
-        bbox_center_stamped = PoseStamped(header=d3d_msg.header, pose=bbox_center)
+        bbox_center_stamped = geometry_msgs.msg.PoseStamped(header=d3d_msg.header, pose=bbox_center)
         bbox_center_stamped_T_target = tf2_transform(tf2buf, bbox_center_stamped, target_frame)
         bbox_center = bbox_center_stamped_T_target.pose
     center_tuple = pose_to_tuple(d3d_msg.bbox.center)
@@ -338,8 +338,8 @@ def detection3darray_to_proto(d3darr_msg, robot_id, class_names,
     """Given a vision_msgs.Detection3DArray message,
     return an ObjectDetectionArray proto. 'robot_id'
     is the robot that made this detetcion"""
-    stamp = google.protobuf.timestamp_pb2.Timestamp(seconds=d3darr_msg.header.stamp.seconds,
-                                                    nanos=d3darr_msg.header.stamp.nanos)
+    stamp = google.protobuf.timestamp_pb2.Timestamp(seconds=d3darr_msg.header.stamp.secs,
+                                                    nanos=d3darr_msg.header.stamp.nsecs)
     if target_frame is None:
         header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp)
     else:

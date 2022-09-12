@@ -277,15 +277,15 @@ class SloopMosROS:
 
         Returns:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
+        # robot pose may be much higher in frequency than object detection.
         robot_pose_msg, object_detections_msg = ros_utils.WaitForMessages(
             [self._robot_pose_topic, self._object_detections_topic],
             [geometry_msgs.PoseStamped, vision_msgs.Detection3DArray],
-            delay=0.1, verbose=True).messages
+            queue_size=self.obqueue_size, delay=self.obdelay, verbose=True).messages
 
-        assert robot_pose_msg.header.frame_id == self.world_frame,\
-            f"expecting robot pose to be in world frame '{self.world_frame}'"
-        assert object_detections_msg.header.frame_id == self.world_frame,\
-            f"expecting object detections msg to be in world frame '{self.world_frame}'"
+        if robot_pose_msg.header.frame_id != self.world_frame:
+            # Need to convert robot pose to world frame
+            robot_pose_msg = ros_utils.tf2_transform(self.tfbuffer, robot_pose_msg, self.world_frame)
 
         # Detection proto
         detections_pb = ros_utils.detection3darray_to_proto(
@@ -412,6 +412,10 @@ class SloopMosROS:
         self._object_detections_topic = "~object_detections"
         self._detection_vision_info_topic = "~vision_info"
         self._action_done_topic = "~action_done"
+
+        # additional parameters
+        self.obqueue_size = rospy.get_param("~obs_queue_size", 200)
+        self.obdelay = rospy.get_param("~obs_delay", 0.5)
 
         # Need to wait for vision info
         vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
