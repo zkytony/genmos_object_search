@@ -323,7 +323,7 @@ def detection3d_to_proto(d3d_msg, class_names,
         bbox_center_stamped = geometry_msgs.msg.PoseStamped(header=d3d_msg.header, pose=bbox_center)
         bbox_center_stamped_T_target = tf2_transform(tf2buf, bbox_center_stamped, target_frame)
         bbox_center = bbox_center_stamped_T_target.pose
-    center_tuple = pose_to_tuple(d3d_msg.bbox.center)
+    center_tuple = pose_to_tuple(bbox_center)
     center_pb = proto_utils.posetuple_to_poseproto(center_tuple)
     box = common_pb2.Box3D(center=center_pb,
                            sizes=common_pb2.Vec3(x=d3d_msg.bbox.size.x,
