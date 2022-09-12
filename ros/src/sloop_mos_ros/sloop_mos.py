@@ -1,12 +1,14 @@
+import rospy
+import tf2_ros
 import math
 import numpy as np
 import time
-import rospy
 import pickle
 import json
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
+import vision_msgs.msg as vision_msgs
 from visualization_msgs.msg import Marker, MarkerArray
 from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -21,9 +23,12 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.grpc.constants import Message
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
+from sloop_object_search.utils.misc import import_class
+
 
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
+
 
 class SloopMosROS:
     def __init__(self, name="sloop_ros"):
@@ -260,16 +265,38 @@ class SloopMosROS:
             raise ValueError("Unexpected agent type: {}"\
                              .format(self.agent_config["agent_type"]))
 
-    def wait_for_robot_pose(self):
-        pass
+    def wait_for_observation(self):
+        """We wait for the robot pose (PoseStamped) and the
+        object detections (vision_msgs.Detection3DArray)
 
-    def wait_for_observation_pose(self):
-        pass
+        Returns:
+            a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
+        robot_pose_msg, object_detections_msg = ros_utils.WaitForMessages(
+            [self._robot_pose_topic, self._object_detections_topic],
+            [geometry_msgs.msg.PoseStamped, vision_msgs.Detection3DArray],
+            delay=0.1, verbose=True).messages
 
-    def make_nav_action(self):
-        pass
+        detections_pb = ros_utils.detection3darray_to_proto(
+            object_detections_msg, self.robot_id, self.detection_class_names,
+            target_frame=self.world_frame, tf2buf=self.tfbuffer)
 
-    def main(self):
+        # assert robot_pose_msg.header.frame_id == self.world_frame,\
+        #     f"expecting robot pose to be in world frame '{self.world_frame}'"
+        # assert object_detections_msg.header.frame_id == self.world_frame,\
+        #     f"expecting object detections msg to be in world frame '{self.world_frame}'"
+        # header = proto_utils.make_header(frame_id=self.world_frame)
+        # robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        # robot_pose_pb = o_pb2.RobotPose(header=header,
+        #                                 robot_id=self.robot_id,
+        #                                 pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
+        # detections = {}
+
+        # # If the last action is "find", and we receive object detections
+        # # that contain target objects, then these objects will be considered 'found'
+        # if isinstance(self.last_action, a_pb2.Find):
+
+
+    def setup(self):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node(self.name)
@@ -300,12 +327,26 @@ class SloopMosROS:
         self._belief_2d_markers_pub = rospy.Publisher(
             "~belief_2d", MarkerArray, queue_size=10, latch=True)
 
+        # tf; need to create listener early enough before looking up to let tf propagate into buffer
+        # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
+        self.tfbuffer = tf2_ros.Buffer()
+        self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
+
         # Remap these topics that we subscribe to, if needed.
         self._search_region_2d_point_cloud_topic = "~search_region_cloud_2d"
         self._search_region_3d_point_cloud_topic = "~search_region_cloud_3d"
         self._robot_pose_topic = "~robot_pose"
+        # Note for object detections, we accept 3D bounding-box-based detections.
         self._object_detections_topic = "~object_detections"
+        self._detection_vision_info_topic = "~detection_vision_info"
 
+        # Need to wait for vision info
+        vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
+                                              [vision_msgs.VisionInfo], verbose=True)
+        self.detection_class_names = rospy.get_param(vinfo_msg.database_location)
+
+
+    def run(self):
         # First, create an agent
         self._sloop_client.createAgent(
             header=proto_utils.make_header(), config=self.agent_config,
@@ -334,14 +375,13 @@ class SloopMosROS:
         rospy.loginfo("planner created!")
         rospy.spin()
 
-        # # Send planning requests
-        # for step in range(config["max_steps"]):
-
-        #     response_plan = self._sloop_client.planAction(
-        #         self.robot_id, header=proto_utils.make_header(self.world_frame))
-        #     action = proto_utils.interpret_planned_action(response_plan)
-        #     action_id = response_plan.action_id
-        #     rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+        # Send planning requests
+        for step in range(config["max_steps"]):
+            response_plan = self._sloop_client.planAction(
+                self.robot_id, header=proto_utils.make_header(self.world_frame))
+            action = proto_utils.interpret_planned_action(response_plan)
+            action_id = response_plan.action_id
+            rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
 
         #     # Now, we need to execute the action, and receive observation
         #     # from SimpleEnv. First, convert the dest_3d in action to
@@ -403,12 +443,12 @@ class SloopMosROS:
         #                                   allow_headerless=True, verbose=True)
         #         rospy.loginfo("find action done")
 
-        #     # Now, wait for observation
-        #     obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
-        #                                         [KeyValObservation],
-        #                                         verbose=True, allow_headerless=True).messages[0]
-        #     detections_pb, robot_pose_pb, objects_found_pb =\
-        #         observation_msg_to_proto(self.world_frame, obs_msg)
+            # Now, wait for observation
+            obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+                                                [KeyValObservation],
+                                                verbose=True, allow_headerless=True).messages[0]
+            detections_pb, robot_pose_pb, objects_found_pb =\
+                observation_msg_to_proto(self.world_frame, obs_msg)
 
         #     # Now, send obseravtions for belief update
         #     header = proto_utils.make_header(frame_id=self.world_frame)

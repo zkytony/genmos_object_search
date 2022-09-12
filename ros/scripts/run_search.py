@@ -10,7 +10,8 @@ from sloop_mos_ros import SloopMosROS
 
 def main():
     sr = SloopMosROS()
-    sr.main()
+    sr.setup()
+    sr.run()
 
 if __name__ == "__main__":
     main()

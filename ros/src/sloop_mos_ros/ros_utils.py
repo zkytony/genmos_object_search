@@ -301,7 +301,8 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
     return cloud_pb
 
 ### Vision Messages ###
-def detection3d_to_proto(d3d_msg, class_names):
+def detection3d_to_proto(d3d_msg, class_names,
+                         target_frame=None, tf2buf=None):
     """Given vision_msgs.Detection3D, return a proto Detection3D object. because the
     label in d3d_msg have integer id, we will need to map them to strings
     according to indexing in 'class_names'.
@@ -313,6 +314,15 @@ def detection3d_to_proto(d3d_msg, class_names):
     label_id = max(hypos, key=hypos.get)
     label = class_names[label_id]
     confidence = hypos[label_id]
+    bbox_center = d3d_msg.bbox.center  # a Pose msg
+
+    # transform pose to target frame if wanted
+    if target_frame is not None:
+        if tf2buf is None:
+            tf2buf = tf2_ros.Buffer()
+        bbox_center_stamped = PoseStamped(header=d3d_msg.header, pose=bbox_center)
+        bbox_center_stamped_T_target = tf2_transform(tf2buf, bbox_center_stamped, target_frame)
+        bbox_center = bbox_center_stamped_T_target.pose
     center_tuple = pose_to_tuple(d3d_msg.bbox.center)
     center_pb = proto_utils.posetuple_to_poseproto(center_tuple)
     box = common_pb2.Box3D(center=center_pb,
@@ -323,16 +333,21 @@ def detection3d_to_proto(d3d_msg, class_names):
                              confidence=confidence,
                              box=box)
 
-def detection3darray_to_proto(d3darr_msg, robot_id, class_names):
+def detection3darray_to_proto(d3darr_msg, robot_id, class_names,
+                              target_frame=None, tf2buf=None):
     """Given a vision_msgs.Detection3DArray message,
     return an ObjectDetectionArray proto. 'robot_id'
-    is the robot that made this detection"""
+    is the robot that made this detetcion"""
     stamp = google.protobuf.timestamp_pb2.Timestamp(seconds=d3darr_msg.header.stamp.seconds,
                                                     nanos=d3darr_msg.header.stamp.nanos)
-    header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp))
+    if target_frame is None:
+        header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp))
+    else:
+        header = proto_utils.make_header(frame_id=target_frame, stamp=stamp))
     detections_pb = []
     for d3d_msg in d3darr_msg.detections:
-        det3d_pb = detection3d_to_proto(d3d_msg, class_names)
+        det3d_pb = detection3d_to_proto(
+            d3d_msg, class_names, target_frame=target_frame, tf2buf=tf2buf)
         detections_pb.append(det3d_pb)
     return o_pb2.ObjectDetectionArray(header=header,
                                       robot_id=robot_id,
