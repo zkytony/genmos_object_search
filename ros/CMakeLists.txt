@@ -22,13 +22,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   KeyValAction.msg
-  KeyValObservation.msg
-  DefaultObservation.msg
-  DefaultBelief.msg
-  Loc.msg
-  GridMap2d.msg
-  GridMapLoc.msg
-  GridMapPose2d.msg)
+  KeyValObservation.msg)
 
 # Adding the action file for PlanAction
 add_action_files(
