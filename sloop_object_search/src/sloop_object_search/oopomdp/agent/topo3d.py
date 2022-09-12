@@ -82,16 +82,20 @@ class MosAgentTopo3D(MosAgentBasic3D):
         return self.agent_config["robot"]["action"].get("topo", {})
 
     def reachable(self, pos):
-        """A position is reachable if it is a valid
-        voxel and it is not occupied. Assume 'pos' is a
-        position at the ground resolution level"""
+        """Returns True if a position is reachable. Assume 'pos' is a position at the
+        ground resolution level
+        """
+        above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
+        not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
         # res_buf: blows up the voxel at pos to keep some distance to obstacles
         # It will affect where the topological graph nodes are placed with respect
         # to obstacles.
         res = self.topo_config.get("res_buf", 4)
         pos = Octree.increase_res(pos, 1, res)
-        return self.search_region.octree_dist.octree.valid_voxel(*pos, res)\
-            and not self.search_region.occupied_at(pos, res=res)
+        valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos, res)
+        not_occupied = not self.search_region.occupied_at(pos, res=res)
+        return above_ground and not_too_high and valid_voxel and not_occupied
+
 
     def _update_robot_belief(self, observation, action=None, **kwargs):
         """observation should be RobotObservation"""

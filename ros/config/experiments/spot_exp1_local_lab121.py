@@ -28,6 +28,10 @@ CONFIG_LOCAL = {
                        'params': {'step_size': 0.2,
                                   'rotation': 90.0,
                                   'scheme': 'axis'}},
+            "reachable": {
+                "min_height": 0.3,
+                "max_height": 1.4
+            }
         },
         'objects': {'book': {'class': 'book',
                              'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},

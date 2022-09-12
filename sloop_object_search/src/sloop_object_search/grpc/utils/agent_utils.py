@@ -169,6 +169,17 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             step_size_pomdp = step_size_world / search_region.search_space_resolution
             agent_config_pomdp["robot"]["action"]["params"]["step_size"] = step_size_pomdp
 
+    # Convert reachable parameters
+    if "reachable" in agent_config_world["robot"]:
+        if "min_height" in agent_config_world["robot"]["reachable"]:
+            min_height_world = agent_config_world["robot"]["reachable"]["min_height"]
+            min_height_pomdp = min_height_world / search_region.search_space_resolution
+            agent_config_pomdp["robot"]["reachable"]["min_height"] = min_height_pomdp
+        if "max_height" in agent_config_world["robot"]["reachable"]:
+            max_height_world = agent_config_world["robot"]["reachable"]["max_height"]
+            max_height_pomdp = max_height_world / search_region.search_space_resolution
+            agent_config_pomdp["robot"]["reachable"]["max_height"] = max_height_pomdp
+
     return agent_config_pomdp
 
 def voxel_to_world(v, search_region):
