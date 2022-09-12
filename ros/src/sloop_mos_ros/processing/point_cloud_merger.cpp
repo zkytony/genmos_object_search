@@ -61,9 +61,11 @@ void PointCloudMerger::cloudCallback(const PointCloud2 &cloud1,
     }
 
     // publsh points
-    pcl_cloud_merged->header = pcl_conversions::toPCL(cloud_msgs[0].header);
-    pcl_cloud_merged->header.frame_id = output_frame_id_;
-    pcl_merged_pub_.publish(pcl_cloud_merged);
+    sensor_msgs::PointCloud2 pcl_merged_msg;
+    pcl::toROSMsg(*pcl_cloud_merged, pcl_merged_msg);
+    pcl_merged_msg.header.frame_id = output_frame_id_;
+    pcl_merged_msg.header.stamp = ros::Time::now();
+    pcl_merged_pub_.publish(pcl_merged_msg);
     std::cout << "Published merged cloud!" << std::endl;
 }
 
