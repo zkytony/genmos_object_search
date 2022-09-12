@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import time
 import rospy
@@ -23,7 +24,6 @@ from sloop_object_search.utils import math as math_utils
 
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
-
 
 class SloopMosROS:
     def __init__(self, name="sloop_ros"):
@@ -260,6 +260,14 @@ class SloopMosROS:
             raise ValueError("Unexpected agent type: {}"\
                              .format(self.agent_config["agent_type"]))
 
+    def wait_for_robot_pose(self):
+        pass
+
+    def wait_for_observation_pose(self):
+        pass
+
+    def make_nav_action(self):
+        pass
 
     def main(self):
         # This is an example of how to get started with using the
@@ -296,6 +304,7 @@ class SloopMosROS:
         self._search_region_2d_point_cloud_topic = "~search_region_cloud_2d"
         self._search_region_3d_point_cloud_topic = "~search_region_cloud_3d"
         self._robot_pose_topic = "~robot_pose"
+        self._object_detections_topic = "~object_detections"
 
         # First, create an agent
         self._sloop_client.createAgent(
@@ -324,3 +333,118 @@ class SloopMosROS:
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
         rospy.spin()
+
+        # # Send planning requests
+        # for step in range(config["max_steps"]):
+
+        #     response_plan = self._sloop_client.planAction(
+        #         self.robot_id, header=proto_utils.make_header(self.world_frame))
+        #     action = proto_utils.interpret_planned_action(response_plan)
+        #     action_id = response_plan.action_id
+        #     rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+
+        #     # Now, we need to execute the action, and receive observation
+        #     # from SimpleEnv. First, convert the dest_3d in action to
+        #     # a KeyValAction message
+        #     if isinstance(action, a_pb2.MoveViewpoint):
+        #         if action.HasField("dest_3d"):
+        #             dest = proto_utils.poseproto_to_posetuple(action.dest_3d)
+
+        #         elif action.HasField("dest_2d"):
+        #             robot_pose = np.asarray(wait_for_robot_pose())
+        #             dest_2d = proto_utils.poseproto_to_posetuple(action.dest_2d)
+        #             x, y, thz = dest_2d
+        #             z = robot_pose[2]
+        #             thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
+        #             dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
+
+        #         elif action.HasField("motion_3d"):
+        #             robot_pose = np.asarray(wait_for_robot_pose())
+        #             robot_pose[0] += action.motion_3d.dpos.x
+        #             robot_pose[1] += action.motion_3d.dpos.y
+        #             robot_pose[2] += action.motion_3d.dpos.z
+
+        #             thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
+        #             dthx = action.motion_3d.drot_euler.x
+        #             dthy = action.motion_3d.drot_euler.y
+        #             dthz = action.motion_3d.drot_euler.z
+        #             robot_pose[3:] = np.asarray(math_utils.euler_to_quat(
+        #                 thx + dthx, thy + dthy, thz + dthz))
+        #             dest = robot_pose
+
+        #         elif action.HasField("motion_2d"):
+        #             forward = action.motion_2d.forward
+        #             angle = action.motion_2d.dth
+        #             robot_pose = np.asarray(wait_for_robot_pose())
+        #             rx, ry, rz = robot_pose[:3]
+        #             thx, thy, thz = math_utils.quat_to_euler(*robot_pose[3:])
+        #             thz = (thz + angle) % 360
+        #             rx = rx + forward*math.cos(math_utils.to_rad(thz))
+        #             ry = ry + forward*math.sin(math_utils.to_rad(thz))
+        #             dest = (rx, ry, rz, *math_utils.euler_to_quat(thx, thy, thz))
+
+        #         else:
+        #             raise NotImplementedError("Not implemented action.")
+
+        #         nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step)
+        #         self._action_pub.publish(nav_action)
+        #         rospy.loginfo("published nav action for execution")
+        #         # wait for navigation done
+        #         ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+        #                                   allow_headerless=True, verbose=True)
+        #         rospy.loginfo("nav action done.")
+
+        #     elif isinstance(action, a_pb2.Find):
+        #         find_action = KeyValAction(stamp=rospy.Time.now(),
+        #                                    type="find")
+        #         self._action_pub.publish(find_action)
+        #         rospy.loginfo("published find action for execution")
+        #         ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
+        #                                   allow_headerless=True, verbose=True)
+        #         rospy.loginfo("find action done")
+
+        #     # Now, wait for observation
+        #     obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
+        #                                         [KeyValObservation],
+        #                                         verbose=True, allow_headerless=True).messages[0]
+        #     detections_pb, robot_pose_pb, objects_found_pb =\
+        #         observation_msg_to_proto(self.world_frame, obs_msg)
+
+        #     # Now, send obseravtions for belief update
+        #     header = proto_utils.make_header(frame_id=self.world_frame)
+        #     response_observation = self._sloop_client.processObservation(
+        #         self.robot_id, robot_pose_pb,
+        #         object_detections=detections_pb,
+        #         objects_found=objects_found_pb,
+        #         header=header, return_fov=True,
+        #         action_id=action_id, action_finished=True, debug=False)
+        #     response_robot_belief = self._sloop_client.getRobotBelief(
+        #         self.robot_id, header=proto_utils.make_header(self.world_frame))
+
+        #     print(f"Step {step} robot belief:")
+        #     robot_belief_pb = response_robot_belief.robot_belief
+        #     objects_found = set(robot_belief_pb.objects_found.object_ids)
+        #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+        #     print(f"  objects found: {objects_found}")
+        #     print("-----------")
+
+        #     # visualize FOV and belief
+        #     if response_observation.HasField("fovs"):
+        #         self.visualize_fovs_3d(response_observation)
+        #     if self._local_robot_id is not None:
+        #         self.get_and_visualize_belief_3d(robot_id=self._local_robot_id)
+        #     else:
+        #         # clear markers
+        #         header = std_msgs.Header(stamp=rospy.Time.now(),
+        #                                  frame_id=self.world_frame)
+        #         clear_msg = ros_utils.clear_markers(header, ns="")
+        #         self._fovs_markers_pub.publish(clear_msg)
+        #         self._octbelief_markers_pub.publish(clear_msg)
+        #         self._topo_map_3d_markers_pub.publish(clear_msg)
+        #     self.get_and_visualize_belief_2d()
+
+        #     # Check if we are done
+        #     if objects_found == set(self.agent_config["targets"]):
+        #         rospy.loginfo("Done!")
+        #         break
+        #     time.sleep(1)

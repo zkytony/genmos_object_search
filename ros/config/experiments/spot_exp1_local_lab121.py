@@ -24,10 +24,8 @@ CONFIG_LOCAL = {
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
                                               "quality": [1e5, 0.1]}}},
-            'action': {'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
-                       'params': {'step_size': 0.2,
-                                  'rotation': 90.0,
-                                  'scheme': 'axis'}},
+            'action': {'topo': {'num_nodes': 10,
+                                'pos_importance_thres': 0.01}},
             "reachable": {
                 "min_height": 0.3,
                 "max_height": 1.4

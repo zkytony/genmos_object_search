@@ -221,8 +221,8 @@ def _sample_topo_graph3d(init_object_beliefs,
     # for estimating score at that position.
     zone_res = topo_config.get("zone_res", 8)
     # Determines if a position sample is important enough. Example: if
-    # set to 0.3, that means a sample is discarded if the probability
-    # estimated at that position is lies within 30% from the the maximum
+    # set to 0.3, that means a sample is considered if the probability
+    # estimated at that position lies within 30% from the the maximum
     # probability (obtained over all sampled positions).
     pos_importance_thres = topo_config.get("pos_importance_thres", 0.3)
 

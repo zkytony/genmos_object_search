@@ -25,11 +25,9 @@ agent_config:
       viz_type: cube
   robot:
     action:
-      func: sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d
-      params:
-        rotation: 90.0
-        scheme: axis
-        step_size: 0.2
+      topo:
+        num_nodes: 10
+        pos_importance_thres: 0.01
     detectors:
       book:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
@@ -40,6 +38,9 @@ agent_config:
           sensor: camera
     id: robot0
     no_look: true
+    reachable:
+      max_height: 1.4
+      min_height: 0.3
     sensors:
     - name: camera
       params:
