@@ -140,12 +140,14 @@ def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_
     # Note: if the voxels are bigger, this shouldn't be that slow.
     # we will label voxels that
     voxels = {}  # maps from voxel to label
-    overlapped = True
+    overlapped = False
+    detected = False
     for voxel in visible_volume:
         # voxel should by (x,y,z,r)
         if detection.pose == ObjectDetection.NULL:
             voxels[voxel] = Voxel(voxel, Voxel.FREE)
         else:
+            detected = True
             x,y,z,r = voxel
             bbox = detection.bbox_axis_aligned()
             voxel_box = ((x*r, y*r, z*r), r, r, r)
@@ -155,8 +157,9 @@ def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_
             else:
                 voxels[voxel] = Voxel(voxel, Voxel.FREE)
 
-    if not overlapped:
-        print(f"Warning: detected object {objid} but it is not in agent's FOV model.")
+    if detected and not overlapped:
+        print(f"Warning: detected object {detection.id} at {detection.loc} "\
+              "but it is not in agent's FOV model.")
 
     return FovVoxels(voxels), visible_volume, obstacles_hit
 
