@@ -33,7 +33,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 belief_config=self.agent_config["belief"],
                 **args_init_object_beliefs)
         robot_pose = init_robot_pose_dist.mean
-        self.topo_map = self.generate_topo_map(init_object_beliefs)
+        self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose)
 
         init_topo_nid = self.topo_map.closest_node(robot_pose[:3])
         init_robot_belief = belief.init_robot_belief(
