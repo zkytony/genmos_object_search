@@ -33,7 +33,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 belief_config=self.agent_config["belief"],
                 **args_init_object_beliefs)
         robot_pose = init_robot_pose_dist.mean
-        self.topo_map = self.generate_topo_map(init_object_beliefs, robot_pose, debug=True)
+        self.topo_map = self.generate_topo_map(init_object_beliefs)
 
         init_topo_nid = self.topo_map.closest_node(robot_pose[:3])
         init_robot_belief = belief.init_robot_belief(
@@ -69,7 +69,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
                                        no_look=self.no_look)
         return transition_model, policy_model
 
-    def generate_topo_map(self, object_beliefs, robot_pose, debug=False):
+    def generate_topo_map(self, object_beliefs, robot_pose):
         """object_beliefs: objid->OctreeBelief.
         robot_pose: a 7-tuple"""
         # grid map used for reachability check
@@ -82,7 +82,8 @@ class MosAgentTopo3D(MosAgentBasic3D):
         inflated_cells = (grid_map.free_locations - shrunk_free_cells)
         self.obstacles2d = grid_map.obstacles | inflated_cells
 
-        if debug:
+        _debug = self.topo_config.get("debug", False)
+        if _debug:
             from sloop_object_search.utils.visual2d import GridMap2Visualizer
             viz = GridMap2Visualizer(grid_map=grid_map, res=15)
             img = viz.render()
@@ -95,7 +96,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
                                         self.search_region,
                                         self.reachable,
                                         self.topo_config)
-        if debug:
+        if _debug:
             open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
                                            object_beliefs=object_beliefs)
         return topo_map
