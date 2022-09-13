@@ -7,9 +7,9 @@
   <arg name="graphnav_map_points" value="/graphnav_map_publisher/graphnav_points"/>
 
   <!-- local region size -->
-  <arg name="region_size_x" default="2.5"/>
-  <arg name="region_size_y" default="2.5"/>
-  <arg name="region_size_z" default="1.8"/>
+  <arg name="region_size_x" default="4.0"/>
+  <arg name="region_size_y" default="4.0"/>
+  <arg name="region_size_z" default="2.0"/>
   <arg name="retain_ratio" default="0.2"/>
 
   <!-- ########################################################################## -->

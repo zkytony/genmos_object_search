@@ -8,7 +8,10 @@ CONFIG_LOCAL = {
                                              "voxel_res": 2},
                    "init_params": {"num_samples": 3000}},
                                    # "prior_from_occupancy": True}},
-        "search_region": {"3d": {"res": 0.07}},
+        "search_region": {"3d": {"res": 0.07,
+                                 "region_size_x": 2.5,
+                                 "region_size_y": 2.5,
+                                 "region_size_z": 1.8}},
         'robot': {
             'id': 'robot0',
             'no_look': True,
@@ -57,7 +60,7 @@ CONFIG_LOCAL = {
             "num_sims": 200,
             "show_progress": True
         }
-    }
+    },
 }
 
 CONFIG = CONFIG_LOCAL

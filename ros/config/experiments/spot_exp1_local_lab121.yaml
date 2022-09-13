@@ -60,6 +60,9 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
+      region_size_x: 2.5
+      region_size_y: 2.5
+      region_size_z: 1.8
       res: 0.07
   targets:
   - Cat
