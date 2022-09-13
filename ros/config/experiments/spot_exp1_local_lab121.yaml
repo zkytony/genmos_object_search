@@ -50,6 +50,9 @@ agent_config:
         fov: 50
         near: 0.2
         occlusion_enabled: true
+  search_region:
+    3d:
+      res: 0.07
   targets:
   - Cat
 planner_config:

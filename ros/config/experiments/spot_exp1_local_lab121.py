@@ -7,6 +7,7 @@ CONFIG_LOCAL = {
                                              "step_size": 0.4,
                                              "voxel_res": 2},
                    "init_params": {"num_samples": 3000}},
+        "search_region": {"3d": {"res": 0.07}},
         'robot': {
             'id': 'robot0',
             'no_look': True,
