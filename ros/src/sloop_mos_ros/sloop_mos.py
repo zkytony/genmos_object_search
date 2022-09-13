@@ -115,9 +115,9 @@ class SloopMosROS:
         search_region_params_3d = dict(
             octree_size=search_region_config.get("octree_size", 32),
             search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
-            region_size_x=search_region_config.get("region_size_x", 4.0),
-            region_size_y=search_region_config.get("region_size_y", 4.0),
-            region_size_z=search_region_config.get("region_size_z", 2.0),
+            region_size_x=search_region_config.get("region_size_x"),
+            region_size_y=search_region_config.get("region_size_y"),
+            region_size_z=search_region_config.get("region_size_z"),
             debug=search_region_config.get("debug", False)
         )
         self._sloop_client.updateSearchRegion(
