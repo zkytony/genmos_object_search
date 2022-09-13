@@ -27,6 +27,7 @@ from bosdyn.client.math_helpers import Quat
 from bosdyn.api.graph_nav import graph_nav_pb2
 from bosdyn.api import robot_command_pb2
 from bosdyn.api.geometry_pb2 import Vec2, Vec3, SE2VelocityLimit, SE2Velocity, Quaternion
+import bosdyn.client.exceptions.InvalidRequestError
 import rbd_spot
 
 # distance between hand and body frame origin
@@ -134,9 +135,13 @@ class SpotSloopActionExecutor(ActionExecutor):
         cur_thz = math_utils.quat_to_euler(*current_pose[3:])[2]
         duration = 0.75
         v_rot = math_utils.to_rad((thz - cur_thz) / duration)
-        import pdb; pdb.set_trace()
-        rbd_spot.body.velocityCommand(
-            self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
+        try:
+            rbd_spot.body.velocityCommand(
+                self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
+        except bosdyn.client.exceptions.InvalidRequestError as ex:
+            # this is ok. we don't have to rotate
+            rospy.logwarn(str(ex))
+            pass
 
         # Then, we use moveEE with body follow to move the camera to the goal pose.
         # Note that moveEEToWithBodyFollow takes in a pose relative to the
