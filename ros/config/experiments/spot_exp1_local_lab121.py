@@ -1,3 +1,29 @@
+DETECTORS = {
+    'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                                   'params': {"sensor": "camera",
+                                              "quality": [1e6, 0.1]}},
+}
+
+OBJECTS = {
+    {'Cat': {'class': 'Cat',
+             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+             'color': [0.4, 0.7, 0.3, 0.8],
+             'viz_type': 'cube',
+             'sizes': [0.14, 0.08, 0.10]}}
+}
+
+def make_objects(*objects):
+    result = {}
+    for obj in objects:
+        result[obj] = OBJECTS[obj]
+    return result
+
+def make_detectors(*objects):
+    result = {}
+    for obj in objects:
+        result[obj] = DETECTORS[obj]
+    return result
+
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
 CONFIG_LOCAL = {
     "agent_config": {
@@ -6,8 +32,8 @@ CONFIG_LOCAL = {
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
-                   "init_params": {"num_samples": 3000}},
-                                   # "prior_from_occupancy": True}},
+                   "init_params": {"num_samples": 3000,
+                                   "prior_from_occupancy": True}},
         "search_region": {"3d": {"res": 0.07,
                                  "region_size_x": 2.5,
                                  "region_size_y": 2.5,
@@ -23,9 +49,7 @@ CONFIG_LOCAL = {
                            'aspect_ratio': 0.5,
                            'occlusion_enabled': True}
             }],
-            'detectors': {'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
-                                   'params': {"sensor": "camera",
-                                              "quality": [1e5, 0.1]}}},
+            'detectors': make_detectors("Cat"),
             'action': {'topo': {'num_nodes': 10,
                                 'pos_importance_thres': 0.01,
                                 'sep': 0.75,
@@ -40,11 +64,7 @@ CONFIG_LOCAL = {
                 "max_height": 1.2
             }
         },
-        'objects': {'Cat': {'class': 'Cat',
-                            'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
-                            'color': [0.4, 0.7, 0.3, 0.8],
-                            'viz_type': 'cube',
-                            'sizes': [0.14, 0.08, 0.10]}},
+        'objects': make_objects("Cat"),
         'targets': ['Cat'],
     },
 
