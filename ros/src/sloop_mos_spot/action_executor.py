@@ -159,64 +159,14 @@ class SpotSloopActionExecutor(ActionExecutor):
                 self.publish_status(GoalStatus.ABORTED,
                                     typ.error("move viewpoint failed"),
                                     action_id, msg.stamp, pub_done=True)
-        # if msg.type == "move_topo":
-        #     goal_x = float(kv["goal_x"])
-        #     goal_y = float(kv["goal_y"])
-        #     goal_yaw = float(kv["goal_yaw"])
-        #     goal = (goal_x, goal_y, goal_yaw)
-        #     self.publish_status(GoalStatus.ACTIVE,
-        #                         typ.info(f"executing navigation goal {kv['name']}"),
-        #                         action_id, msg.stamp)
-        #     rbd_spot.arm.close_gripper(self.conn, self.command_client)
-        #     rbd_spot.arm.stow(self.conn, self.command_client)
-        #     nav_feedback_code = rbd_spot.graphnav.navigateTo(
-        #         self.conn, self.graphnav_client, goal,
-        #         tolerance=(0.25, 0.25, 0.15),
-        #         speed=None,
-        #         travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
-        #                                                  disable_alternate_route_finding=True))
-        #     self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
-
-        # elif msg.type == "move_2d":
-        #     goal_x = float(kv["goal_x"])
-        #     goal_y = float(kv["goal_y"])
-        #     goal_z = 0.25  # fixed height (2d)
-        #     goal_yaw = float(kv["goal_yaw"])
-        #     goal_quat = Quat.from_yaw(goal_yaw)
-        #     goal = (goal_x, goal_y, goal_z, goal_quat.x,
-        #             goal_quat.y, goal_quat.z, goal_quat.w)
-        #     self.publish_status(GoalStatus.ACTIVE,
-        #                         typ.info(f"executing {kv['name']} with moveEE with body follow"),
-        #                         action_id, msg.stamp)
-        #     rbd_spot.arm.open_gripper(self.conn, self.command_client)
-        #     cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
-        #         self.conn, self.command_client, self.robot_state_client, goal)
-        #     # also, rotate the body a little bit; TODO: ad-hoc
-        #     if "TurnLeft" in kv['name']:
-        #         rbd_spot.body.velocityCommand(
-        #             self.conn, self.command_client, 0.0, 0.0, 0.5, duration=1.0)  # 1s is roughtly ~<45deg
-        #     elif "TurnRight" in kv['name']:
-        #         rbd_spot.body.velocityCommand(
-        #             self.conn, self.command_client, 0.0, 0.0, -0.5, duration=1.0)
-        #     if cmd_success:
-        #         self.publish_status(GoalStatus.SUCCEEDED,
-        #                             typ.success("arm movement succeeded"),
-        #                             action_id, msg.stamp)
-        #     else:
-        #         self.publish_status(GoalStatus.ABORTED,
-        #                             typ.error("arm movement failed"),
-        #                             action_id, msg.stamp)
 
         elif msg.type == "find":
-            # signal find action by closing and opening gripper
-
-            # # signal find action with a bit of arm motion and then stow.
-            # rbd_spot.arm.moveEETo(
-            #     self.conn, self.command_client, self.robot_state_client, (0.65, 0.0, 0.35))
-            # rbd_spot.arm.stow(self.conn, self.command_client)
-            # self.publish_status(GoalStatus.SUCCEEDED,
-            #                     typ.success("find action succeeded"),
-            #                     action_id, msg.stamp)
+            # signal find action by moving forward a little bit
+            cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
+                self.conn, self.command_client, self.robot_state_client, (0.1, 0.0, 0.0))
+            self.publish_status(GoalStatus.SUCCEEDED,
+                                typ.success("find action succeeded"),
+                                action_id, msg.stamp)
 
 
     def publish_nav_status(self, nav_feedback_code, action_id, stamp):
