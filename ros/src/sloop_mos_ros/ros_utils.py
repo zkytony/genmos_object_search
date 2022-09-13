@@ -232,6 +232,9 @@ def tf2_lookup_transform(tf2buf, target_frame, source_frame, timestamp):
         rospy.logerr("Error looking up transform from {} to {}"\
                      .format(target_frame, source_frame))
 
+def tf2_do_transform(pose_stamped, trans):
+    return tf2_geometry_msgs.do_transform_pose(pose_stamped, trans)
+
 ### Mathematics ###
 def quat_diff(q1, q2):
     """returns the quaternion space difference between two

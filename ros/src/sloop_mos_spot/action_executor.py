@@ -52,8 +52,6 @@ class SpotSloopActionExecutor(ActionExecutor):
         self.body_frame = rospy.get_param("~body_frame")
         self.tfbuffer = tf2_ros.Buffer()
         self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
-        rospy.loginfo("waiting for tf transforms to propagate into buffer")
-        rospy.sleep(2)
 
         self._goal_viz_pub = rospy.Publisher(
             "~goal_markers", MarkerArray, queue_size=10, latch=True)
@@ -83,15 +81,9 @@ class SpotSloopActionExecutor(ActionExecutor):
         nav_goal_msg = ros_utils.pose_tuple_to_pose_stamped(nav_goal, self.world_frame)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
 
-        while True:
-            try:
-                rospy.loginfo("waiting for transform")
-                goal_pose_body_msg = ros_utils.tf2_transform(
-                    self.tfbuffer, goal_pose_msg, self.body_frame)
-                break
-            finally:
-                rospy.sleep(1.0)
-
+        goal_pose_body_msg = None
+        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.world_frame, rospy.Time(0))
+        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
         goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
 
         # Publish visualization markers
@@ -100,7 +92,7 @@ class SpotSloopActionExecutor(ActionExecutor):
                                                             frame_id=self.world_frame), ns="")
         self._goal_viz_pub.publish(clear_msg)
         # then make the markers for goals
-        _marker_scale = geometry_msgs.msg.Vector3(x=0.4, y=0.05, z=0.05)
+        _marker_scale = geometry_msgs.Vector3(x=0.4, y=0.05, z=0.05)
         _nav_goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
             self.robot_id, nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
@@ -111,31 +103,31 @@ class SpotSloopActionExecutor(ActionExecutor):
                                                 _goal_marker_msg]))
         import pdb; pdb.set_trace()
 
-        # Navigate to navigation pose
-        nav_feedback_code = rbd_spot.graphnav.navigateTo(
-            self.conn, self.graphnav_client, nav_goal,
-            tolerance=(0.25, 0.25, 0.15),
-            speed="medium",
-            travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
-                                                     disable_alternate_route_finding=True))
-        nav_success = self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
-        rate = rospy.Rate(2.0)
-        while nav_success is None:
-            nav_success = self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
-            rate.sleep()
-        if not nav_success:
-            return False
+        # # Navigate to navigation pose
+        # nav_feedback_code = rbd_spot.graphnav.navigateTo(
+        #     self.conn, self.graphnav_client, nav_goal,
+        #     tolerance=(0.25, 0.25, 0.15),
+        #     speed="medium",
+        #     travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
+        #                                              disable_alternate_route_finding=True))
+        # nav_success = self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
+        # rate = rospy.Rate(2.0)
+        # while nav_success is None:
+        #     nav_success = self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
+        #     rate.sleep()
+        # if not nav_success:
+        #     return False
 
-        # Then, we use moveEE with body follow to move the camera to the goal pose.
-        # Note that moveEEToWithBodyFollow takes in a pose relative to the
-        # current body frame, while our goal_pose is in the world frame.
-        # open gripper to better see
-        rbd_spot.arm.open_gripper(self.conn, self.command_client)
+        # # Then, we use moveEE with body follow to move the camera to the goal pose.
+        # # Note that moveEEToWithBodyFollow takes in a pose relative to the
+        # # current body frame, while our goal_pose is in the world frame.
+        # # open gripper to better see
+        # rbd_spot.arm.open_gripper(self.conn, self.command_client)
 
-        # get goal pose in body frame
-        cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
-            self.conn, self.command_client, self.robot_state_client, goal_pose_body)
-        return cmd_success
+        # # get goal pose in body frame
+        # cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
+        #     self.conn, self.command_client, self.robot_state_client, goal_pose_body)
+        # return cmd_success
 
 
     def _execute_action_cb(self, msg):

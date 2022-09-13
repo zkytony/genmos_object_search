@@ -5,11 +5,14 @@ import numpy as np
 import time
 import pickle
 import json
+from pomdp_py.utils import typ
+
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 import vision_msgs.msg as vision_msgs
 from visualization_msgs.msg import Marker, MarkerArray
+
 from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
@@ -449,13 +452,13 @@ class SloopMosROS:
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
             action_pb = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
-            rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
+            rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
             self.last_action = action_pb
 
             self.execute_action(action_id, action_pb)
             ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
-            rospy.loginfo("action done.")
+            rospy.loginfo(typ.success("action done."))
 
             # Now, wait for observation, and then update belief
             detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
@@ -487,3 +490,5 @@ class SloopMosROS:
                 rospy.loginfo("Done!")
                 break
             time.sleep(1)
+            break
+        rospy.spin()
