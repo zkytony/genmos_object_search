@@ -66,7 +66,7 @@ OBJECTS = {
 }
 
 
-def make_objects(local_or_global, *objects):
+def make_objects(*objects):
     result = {}
     for obj in objects:
         result[obj] = OBJECTS[obj]
@@ -153,7 +153,6 @@ CONFIG_HIER = {
         }
     }
 }
-
 
 CONFIG = CONFIG_LOCAL
 
