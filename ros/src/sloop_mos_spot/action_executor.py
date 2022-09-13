@@ -134,11 +134,17 @@ class SpotSloopActionExecutor(ActionExecutor):
         current_pose = ros_utils.pose_to_tuple(current_pose_msg.pose)
         cur_thz = math_utils.quat_to_euler(*current_pose[3:])[2]
         duration = 0.75
-        v_rot = math_utils.to_rad((thz - cur_thz) / duration)
+        adiff = math_utils.angle_diff_relative(thz, cur_thz)
+        v_rot = math_utils.to_rad(adiff / duration)
         try:
-            rbd_spot.body.velocityCommand(
-                self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
+            if thz - cur_thz < 0:
+                rbd_spot.body.velocityCommand(
+                    self.conn, self.command_client, 0.0, 0.0, -v_rot, duration=duration)  # 1s is roughtly ~<45deg
+            else:
+                rbd_spot.body.velocityCommand(
+                    self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
         except InvalidRequestError as ex:
+            import pdb; pdb.set_trace()
             return False
 
         # Then, we use moveEE with body follow to move the camera to the goal pose.
