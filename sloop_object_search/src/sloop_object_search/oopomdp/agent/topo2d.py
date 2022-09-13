@@ -18,7 +18,7 @@ from .basic2d import MosAgentBasic2D
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils import visual2d
 from sloop_object_search.utils.algo import PriorityQueue
-
+from sloop_object_search.utils import grid_map_utils
 
 class MosAgentTopo2D(MosAgentBasic2D):
     """This agent will have a topological graph-based action space."""
@@ -68,20 +68,39 @@ class MosAgentTopo2D(MosAgentBasic2D):
                                        no_look=self.no_look)
         return transition_model, policy_model
 
-    def generate_topo_map(self, object_beliefs, robot_pose, debug=True):
+    def _inflate_obstacles(self):
+        if not hasattr(self, "obstacles2d"):
+            grid_map = self.search_region.grid_map
+            # we want to inflate the obstacles
+            inflation = int(round(self.topo_config.get("inflation", 1)))
+            shrunk_free_cells = grid_map_utils.cells_with_minimum_distance_from_obstacles(grid_map, dist=inflation)
+            inflated_cells = (grid_map.free_locations - shrunk_free_cells)
+            self.obstacles2d = grid_map.obstacles | inflated_cells
+            _debug = self.topo_config.get("debug", False)
+            if _debug:
+                from sloop_object_search.utils.visual2d import GridMap2Visualizer
+                viz = GridMap2Visualizer(grid_map=grid_map, res=15)
+                img = viz.render()
+                img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
+                viz.show_img(img)
+                time.sleep(3)
+
+    def generate_topo_map(self, object_beliefs, robot_pose):
         """Given 'combined_dist', a distribution that maps
         location to the sum of prob over all objects, and
         the current 'robot_pose', sample a topological graph
         based on this distribution.
         """
-        topo_map_args = self.agent_config.get("topo_map_args", {})
+        self._inflate_obstacles()  # affects 'reachable' function
+
         print("Sampling topological graph...")
         topo_map = _sample_topo_map(object_beliefs,
                                     robot_pose,
                                     self.search_region,
                                     self.reachable,
                                     self.topo_config)
-        if debug:
+        _debug = self.topo_config.get("debug", False)
+        if _debug:
             viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
                                     grid_map=self.search_region.grid_map,
                                     res=self.visual_config.get("res", 10))
@@ -92,6 +111,9 @@ class MosAgentTopo2D(MosAgentBasic2D):
             time.sleep(2)
             viz.on_cleanup()
         return topo_map
+
+    def reachable(self, pos):
+        return pos not in self.obstacles2d
 
     @property
     def topo_config(self):
