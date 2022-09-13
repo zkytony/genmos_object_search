@@ -11,7 +11,7 @@ SEARCH_REGION_3D = {"res": 0.07,
                     "region_size_z": 1.8}
 
 SEARCH_REGION_2D = {"res": 0.3,
-                    "region_size": 3.0,
+                    "region_size": 4.0,
                     "layout_cut": 0.4,
                     "floor_cut": 0.15,
                     "brush_size": 0.5,

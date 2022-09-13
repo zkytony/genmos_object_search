@@ -178,7 +178,7 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     # Because the map represented by the point cloud could be very large,
     # or even border-less, we want to constrain the grid-map we are building
     # or updating to be of a certain size. This is the size of the square region
-    # we will build/update, in meters. If don't want this, set it to negative.
+    # we will build/update, in meters. IF DON'T WANT THIS, SET IT TO NEGATIVE.
     region_size = kwargs.get("region_size", 10.0)
 
     # Search region init options

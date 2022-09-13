@@ -89,7 +89,7 @@ agent_config:
       expansion_width: 0.0
       floor_cut: 0.15
       layout_cut: 0.4
-      region_size: 3.0
+      region_size: 4.0
       res: 0.3
     3d:
       region_size_x: 2.5
