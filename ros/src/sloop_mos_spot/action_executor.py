@@ -115,10 +115,10 @@ class SpotSloopActionExecutor(ActionExecutor):
         goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
 
         # This is for safety: because we have already moved x, y, yaw,
-        # we will set those fields to be zero.
+        # we will set those fields to be zero. Also, we don't do roll.
         thx, thy, thz = math_utils.quat_to_euler(*goal_pose_body[3:])
         goal_pose_body = (SPOT_HAND_TO_BODY_DISTANCE, 0, goal_pose_body[2],
-                          *math_utils.euler_to_quat(thx, thy, 0))
+                          *math_utils.euler_to_quat(0, thy, 0))
 
         # Then, we use moveEE with body follow to move the camera to the goal pose.
         # Note that moveEEToWithBodyFollow takes in a pose relative to the
