@@ -30,10 +30,10 @@ agent_config:
       topo:
         3d_proj_2d:
           brush_size: 0.2
-          debug: true
-          floor_cut: 0.01
-          inflation: 0.5
-          layout_cut: 0.05
+          debug: false
+          floor_cut: 0.15
+          inflation: 0.25
+          layout_cut: 0.4
         num_nodes: 10
         pos_importance_thres: 0.01
         sep: 0.75

@@ -69,13 +69,18 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     of the search region will be discarded, but its origin is kept.
     """
     points_array = pointcloudproto_to_array(point_cloud)
-    origin = np.min(points_array, axis=0)
 
     # size of the search region (in meters)
-    default_sizes = np.max(points_array, axis=0) - origin  # size of the search region in each axis
+    default_sizes = np.max(points_array, axis=0) - np.min(points_array, axis=0)  # size of the search region in each axis
     region_size_x = kwargs.get("region_size_x", default_sizes[0])
     region_size_y = kwargs.get("region_size_y", default_sizes[1])
     region_size_z = kwargs.get("region_size_z", default_sizes[2])
+
+    # robot position will be the center of the search region
+    origin = np.array([robot_position[0] - region_size_x/2,
+                       robot_position[1] - region_size_y/2,
+                       robot_position[2] - region_size_z/2])
+
     sizes = np.array([region_size_x, region_size_y, region_size_z])
 
     # Size of one dimension of the space that the octree covers
