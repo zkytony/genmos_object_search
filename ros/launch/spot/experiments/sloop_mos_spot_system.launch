@@ -1,17 +1,20 @@
 <launch>
   <arg name="map_name"/>  <!-- Map name, a folder under rbd_spot_perception/maps e.g. lab121_no_lidar -->
   <arg name="world_frame" default="graphnav_map"/>
-  <arg name="frontleft_depth" default="/spot/stream_image/frontleft_depth_in_visual_frame/"/>
-  <arg name="frontright_depth" default="/spot/stream_image/frontright_depth_in_visual_frame/"/>
-  <arg name="hand_depth" default="/spot/stream_image/hand_depth_in_hand_color_frame/"/>
+  <arg name="frontleft_depth" default="/spot/stream_image/frontleft_depth_in_visual_frame"/>
+  <arg name="frontright_depth" default="/spot/stream_image/frontright_depth_in_visual_frame"/>
+  <arg name="hand_depth" default="/spot/stream_image/hand_depth_in_hand_color_frame"/>
+  <arg name="graphnav_map_points" value="/graphnav_map_publisher/graphnav_points"/>
+
   <!-- local region size -->
   <arg name="region_size_x" default="2.5"/>
   <arg name="region_size_y" default="2.5"/>
   <arg name="region_size_z" default="1.8"/>
   <arg name="retain_ratio" default="0.2"/>
-  <arg name="graphnav_map_points" value="/graphnav_map_publisher/graphnav_points"/>
 
+  <!-- ########################################################################## -->
   <!-- Localization (with graphnav map & waypoint publishing -->
+  <!-- ########################################################################## -->
   <include file="$(find rbd_spot_perception)/launch/graphnav_map_publisher_with_localization.launch">
     <arg name="map_name" value="$(arg map_name)"/>
     <arg name="output" value="screen"/>
@@ -19,39 +22,61 @@
   <node pkg="rbd_spot_perception" type="stream_hand_pose.py"
         name="spot_stream_hand_pose"></node> <!-- stream hand pose -->
 
+  <!-- ########################################################################## -->
   <!-- Local region points, obtained by merging graph points and points from hand -->
-  <node name="hand_image_streamer"
-        pkg="rbd_spot_perception" type="stream_gripper_camera.sh" output="screen"/>
-  <!-- First, convert hand depth to points -->
+  <!-- ########################################################################## -->
   <node name="cloudify_manager"
         pkg="nodelet" type="nodelet" args="manager" output="screen"/>
-  <node name="cloudify_hand_depth" pkg="nodelet" type="nodelet"
+
+  <!-- Stream camera images from spot -->
+  <node name="front_image_streamer"
+        pkg="rbd_spot_perception" type="stream_front_camerasets.sh" output="screen"/>
+
+  <!-- <!-\- Now, obtain cloud for hand -\-> -->
+  <!-- <node name="cloudify_hand_depth" pkg="nodelet" type="nodelet" -->
+  <!--       args="load depth_image_proc/point_cloud_xyz cloudify_manager -\-no-bond" -->
+  <!--       output="screen"> -->
+  <!--   <remap from="camera_info" to="$(arg hand_depth)/camera_info"/> <!-\-$(arg camera_info_topic)"/> -\-> -->
+  <!--   <remap from="image_rect" to="$(arg hand_depth)/image"/> -->
+  <!--   <remap from="points" to="$(arg hand_depth)/points"/> -->
+  <!--   <param name="queue_size" value="10"/> -->
+  <!-- </node> -->
+  <!-- <!-\- Need to filter out some annoying points due to gripper shell -\-> -->
+  <!-- <node pkg="nodelet" type="nodelet" -->
+  <!--       name="cloudify_hand_depth_filter" -->
+  <!--       args="load pcl/PassThrough cloudify_manager"> -->
+  <!--   <param name="filter_field_name" value="z" /> -->
+  <!--   <param name="filter_limit_min" value="0.25" /> -->
+  <!--   <param name="filter_limit_max" value="3.0" /> -->
+  <!--   <param name="filter_limit_negative" value="False" /> -->
+  <!--   <remap from="~input" to="$(arg hand_depth)/points"/> -->
+  <!--   <remap from="~output" to="$(arg hand_depth)/points_filtered"/> -->
+  <!-- </node> -->
+
+  <!-- Now, obtain cloud for front cameras -->
+  <node name="cloudify_frontleft_depth" pkg="nodelet" type="nodelet"
         args="load depth_image_proc/point_cloud_xyz cloudify_manager --no-bond"
         output="screen">
-    <remap from="camera_info" to="$(arg hand_depth)/camera_info"/> <!--$(arg camera_info_topic)"/> -->
-    <remap from="image_rect" to="$(arg hand_depth)/image"/>
-    <remap from="points" to="$(arg hand_depth)/points"/>
+    <remap from="camera_info" to="$(arg frontleft_depth)/camera_info"/> <!--$(arg camera_info_topic)"/> -->
+    <remap from="image_rect" to="$(arg frontleft_depth)/image"/>
+    <remap from="points" to="$(arg frontleft_depth)/points"/>
     <param name="queue_size" value="10"/>
   </node>
-  <!-- Need to filter out some annoying points due to gripper shell -->
-  <node pkg="nodelet" type="nodelet"
-        name="cloudify_hand_depth_filter"
-        args="load pcl/PassThrough cloudify_manager">
-    <param name="filter_field_name" value="z" />
-    <param name="filter_limit_min" value="0.25" />
-    <param name="filter_limit_max" value="3.0" />
-    <param name="filter_limit_negative" value="False" />
-    <remap from="~input" to="$(arg hand_depth)/points"/>
-    <remap from="~output" to="$(arg hand_depth)/points_filtered"/>
+  <node name="cloudify_frontright_depth" pkg="nodelet" type="nodelet"
+        args="load depth_image_proc/point_cloud_xyz cloudify_manager --no-bond"
+        output="screen">
+    <remap from="camera_info" to="$(arg frontright_depth)/camera_info"/> <!--$(arg camera_info_topic)"/> -->
+    <remap from="image_rect" to="$(arg frontright_depth)/image"/>
+    <remap from="points" to="$(arg frontright_depth)/points"/>
+    <param name="queue_size" value="10"/>
   </node>
-
 
   <!-- Then, merge the points -->
   <node name="point_cloud_merger"
         pkg="sloop_object_search_ros" type="point_cloud_merger"
         output="screen">
     <param name="input_topics"
-           value="[$(arg graphnav_map_points), $(arg hand_depth)/points_filtered]"
+           value="[$(arg graphnav_map_points), $(arg frontleft_depth)/points, $(arg frontright_depth)/points]"
            type="string"/>
     <param name="output_frame_id" value="$(arg world_frame)"/>
     <remap from="/points_merged" to="/spot/local_region/input_points"/>
@@ -67,7 +92,9 @@
     <arg name="retain_ratio" value="$(arg retain_ratio)"/>
   </include>
 
+  <!-- ########################################################################## -->
   <!-- Object detection -->
+  <!-- ########################################################################## -->
   <node pkg="rbd_spot_perception" type="stream_yolov5_detections.py"
         name="stream_detections" args="--pub"></node>
 
