@@ -131,9 +131,10 @@ class SpotSloopActionExecutor(ActionExecutor):
             [self._robot_pose_topic], [geometry_msgs.PoseStamped],
             verbose=True).messages[0]
         current_pose = ros_utils.pose_to_tuple(current_pose_msg.pose)
-        cur_thz = math_utils.quat_to_euler(*current_pose[3:])
+        cur_thz = math_utils.quat_to_euler(*current_pose[3:])[2]
         duration = 0.75
-        v_rot = (thz - cur_thz) / duration
+        v_rot = math_utils.to_rad((thz - cur_thz) / duration)
+        import pdb; pdb.set_trace()
         rbd_spot.body.velocityCommand(
             self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
 
