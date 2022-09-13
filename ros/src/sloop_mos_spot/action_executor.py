@@ -52,6 +52,8 @@ class SpotSloopActionExecutor(ActionExecutor):
         self.body_frame = rospy.get_param("~body_frame")
         self.tfbuffer = tf2_ros.Buffer()
         self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
+        rospy.loginfo("waiting for tf transforms to propagate into buffer")
+        rospy.sleep(2)
 
         self._goal_viz_pub = rospy.Publisher(
             "~goal_markers", MarkerArray, queue_size=10, latch=True)
@@ -61,7 +63,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         # To navigate to this pose, we first navigate to a pose
         # at the same position, with the same yaw, but a set height,
         # and zero in other rotations.
-        robot_pose_msg = ros_utils.WaitForMessagaes(
+        robot_pose_msg = ros_utils.WaitForMessages(
             [self._robot_pose_topic], [geometry_msgs.PoseStamped],
             verbose=True).messages[0]
         current_pose = ros_utils.pose_to_tuple(robot_pose_msg.pose)
@@ -74,13 +76,22 @@ class SpotSloopActionExecutor(ActionExecutor):
 
         # Compute navigation goal and the final goal
         nav_pos = ()
-        thx, thy, thz = math_utils.quat_to_euler(goal_pose[3:])
+        thx, thy, thz = math_utils.quat_to_euler(*goal_pose[3:])
         nav_quat = Quat.from_yaw(thz)
         nav_goal = (goal_pose[0], goal_pose[1], NAV_HEIGHT,
                     nav_quat.x, nav_quat.y, nav_quat.z, nav_quat.w)
         nav_goal_msg = ros_utils.pose_tuple_to_pose_stamped(nav_goal, self.world_frame)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
-        goal_pose_body_msg = ros_utils.tf2_transform(self.tfbuffer, goal_pose_msg, self.body_frame)
+
+        while True:
+            try:
+                rospy.loginfo("waiting for transform")
+                goal_pose_body_msg = ros_utils.tf2_transform(
+                    self.tfbuffer, goal_pose_msg, self.body_frame)
+                break
+            finally:
+                rospy.sleep(1.0)
+
         goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
 
         # Publish visualization markers
@@ -133,7 +144,7 @@ class SpotSloopActionExecutor(ActionExecutor):
 
         kv = {msg.keys[i]: msg.values[i] for i in range(len(msg.keys))}
         # used to identify this action as a goal for execution
-        action_id = ActionExecutor.action_id(msg)
+        action_id = kv["action_id"]
         rospy.loginfo("received action to execute")
 
         if msg.type == "nav":
@@ -144,7 +155,6 @@ class SpotSloopActionExecutor(ActionExecutor):
             goal_qy = float(kv["goal_qy"])
             goal_qz = float(kv["goal_qz"])
             goal_qw = float(kv["goal_qw"])
-            action_id = kv["action_id"]
             self.publish_status(GoalStatus.ACTIVE,
                                 typ.info(f"executing {kv['action_id']}..."),
                                 action_id, msg.stamp)
