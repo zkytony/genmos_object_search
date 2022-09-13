@@ -177,9 +177,9 @@ class SpotSloopActionExecutor(ActionExecutor):
                                     action_id, msg.stamp, pub_done=True)
 
         elif msg.type == "find":
-            # signal find action by moving forward a little bit
-            cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
-                self.conn, self.command_client, self.robot_state_client, (0.1, 0.0, 0.0))
+            # signal find action by closing and opening gripper
+            rbd_spot.arm.close_gripper(self.conn, self.command_client)
+            rbd_spot.arm.open_gripper(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
                                 typ.success("find action succeeded"),
                                 action_id, msg.stamp, pub_done=True)
