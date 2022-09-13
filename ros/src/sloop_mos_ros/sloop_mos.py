@@ -142,6 +142,13 @@ class SloopMosROS:
             raise ValueError("Unexpected agent type: {}"\
                              .format(self.agent_config["agent_type"]))
 
+    def clear_fovs_markers(self):
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._fovs_markers_pub.publish(clear_msg)
+
     def visualize_fovs_3d(self, response):
         # Clear markers
         header = std_msgs.Header(stamp=rospy.Time.now(),
@@ -457,6 +464,7 @@ class SloopMosROS:
             rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
             self.last_action = action_pb
 
+            self.clear_fovs_markers()  # clear fovs markers before executing action
             self.execute_action(action_id, action_pb)
             ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
