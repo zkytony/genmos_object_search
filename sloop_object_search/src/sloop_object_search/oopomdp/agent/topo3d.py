@@ -69,6 +69,10 @@ class MosAgentTopo3D(MosAgentBasic3D):
     def generate_topo_map(self, object_beliefs, robot_pose, debug=False):
         """object_beliefs: objid->OctreeBelief.
         robot_pose: a 7-tuple"""
+        # grid map used for reachability check
+        grid_map = self.search_region.octree_dist.to_grid_map(
+            robot_pose[:2], **self.topo_config.get("to_grid_map"))
+        self.obstacles2d = grid_map.obstacles
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
                                         self.search_region,
@@ -89,13 +93,15 @@ class MosAgentTopo3D(MosAgentBasic3D):
         """
         above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
         not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
+        pos2d = (int(round(pos[0])), int(round(pos[1])))
         # res_buf: blows up the voxel at pos to keep some distance to obstacles
         # It will affect where the topological graph nodes are placed with respect
         # to obstacles.
         res = self.topo_config.get("res_buf", 4)
-        pos = Octree.increase_res(pos, 1, res)
-        valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos, res)
-        not_occupied = not self.search_region.occupied_at(pos, res=res)
+        pos_res = Octree.increase_res(pos, 1, res)
+        valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
+        not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
+            and pos2d not in self.obstacles2d
         return above_ground and not_too_high and valid_voxel and not_occupied
 
 
@@ -242,7 +248,6 @@ def _sample_topo_graph3d(init_object_beliefs,
     # The overall idea: sample robot positions from within the search region,
     # and rank them based on object beliefs, and only keep <= X number of nodes
     # that have normalized scores above some threshold
-    # TODO: handle non-rectangular region
     region = search_region.octree_dist.region
     origin, w, l, h = region
     candidate_positions = set([init_robot_pose[:3]])
@@ -254,7 +259,7 @@ def _sample_topo_graph3d(init_object_beliefs,
         x = rnd.uniform(origin[0], origin[0]+w)
         y = rnd.uniform(origin[1], origin[1]+l)
         z = rnd.uniform(origin[2], origin[2]+h)
-        pos = (x,y,z)
+        pos = (int(round(x)), int(round(y)), int(round(z)))
         added = False
         if reachable_func(pos):
             if len(candidate_positions) == 0:

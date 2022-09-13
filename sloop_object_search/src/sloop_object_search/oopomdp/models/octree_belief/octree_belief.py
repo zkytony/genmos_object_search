@@ -15,13 +15,18 @@
 import pomdp_py
 import math
 import random
+import time
 import numpy as np
 import sys
 import copy
 import sloop_object_search.utils.math as util
 from sloop_object_search.oopomdp.domain.state import ObjectState
 from .octree import DEFAULT_VAL, OctNode, Octree, verify_octree_integrity
+from ..grid_map2 import GridMap2
 from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
+from sloop_object_search.utils.algo import flood_fill_2d
+
+
 
 class OctreeDistribution(pomdp_py.GenerativeDistribution):
     """A distribution over 3D grid cells. A random variable X
@@ -572,3 +577,61 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
     are ignored."""
     def __init__(self, dimensions, region=None):
         super().__init__(dimensions, region=region, default_region_val=0)
+
+    def to_grid_map(self, seed_pos, **kwargs):
+        """Uses an algorithm similar to
+        search_region_processing.py/points_to_search_region_2d
+        Note that the parameters should have POMDP units.
+        seed_pos is the position (in POMDP frame) for flooding."""
+        # The height above which the points indicate nicely the layout of the room
+        # while preserving big obstacles like tables.
+        layout_cut = kwargs.get("layout_cut", self.dimensions[0]*0.65)
+
+        # We will regard points with z within layout_cut +/- floor_cut
+        # to be the points that represent the floor.
+        floor_cut = kwargs.get("floor_cut", self.dimensions[0]*0.15)
+
+        # flood brush size: When flooding, we use a brush. If the brush
+        # doesn't fit (it hits an obstacle), then the flood won't continue there.
+        # 'brush_size' is the length of the square brush in meters. Intuitively,
+        # this defines the width of the minimum pathway the robot can go through.
+        brush_size = kwargs.get("brush_size", self.dimensions[0]*0.05)
+
+        # grid map name
+        name = kwargs.get("name", "grid_map2")
+
+        # whether to debug (show a visualiation)
+        debug = kwargs.get("debug", False)
+
+        # first, obtain all leaves -- they are the occupied locations
+        leaves = self.octree.get_leaves()
+        points = np.array([n.pos for n in leaves])
+
+        # Remove points below layout cut
+        low_points_filter = np.less(points[:, 2], layout_cut)  # points below layout cut: will discard
+        points = points[np.logical_not(low_points_filter)]  # points at or above layout cut p
+
+        # Identify points for the floor
+        xmin, ymin, zmin = np.min(points, axis=0)
+        floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
+        floor_points = points[floor_points_filter]
+        dimension = self.octree_dist.octree.dimensions[0]
+        floor_points = flood_fill_2d(floor_points, (*seed_pos, 0),
+                                     grid_brush_size=int(round(brush_size)),
+                                     flood_region_size=dimension)
+
+        obstacles = set((gp[0], gp[1]) for gp in points
+                        if (0 <= gp[0] < dimension\
+                            and 0 <= gp[1] < dimension))
+        free_locations = set((gp[0], gp[1]) for gp in floor_points
+                             if (gp not in obstacles\
+                                 and (0 <= gp[0] < dimension\
+                                      and 0 <= gp[1] < dimension)))
+        grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)
+        if debug:
+            from sloop_object_search.utils.visual import GridMap2Visualizer
+            viz = GridMap2Visualizer(grid_map=grid_map, res=15)
+            img = viz.render()
+            viz.show_img(img)
+            time.sleep(5)
+        return grid_map
