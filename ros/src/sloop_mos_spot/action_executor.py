@@ -27,7 +27,7 @@ from bosdyn.client.math_helpers import Quat
 from bosdyn.api.graph_nav import graph_nav_pb2
 from bosdyn.api import robot_command_pb2
 from bosdyn.api.geometry_pb2 import Vec2, Vec3, SE2VelocityLimit, SE2Velocity, Quaternion
-import bosdyn.client.exceptions.InvalidRequestError
+from bosdyn.client.exceptions import InvalidRequestError
 import rbd_spot
 
 # distance between hand and body frame origin
@@ -138,7 +138,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         try:
             rbd_spot.body.velocityCommand(
                 self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
-        except bosdyn.client.exceptions.InvalidRequestError as ex:
+        except InvalidRequestError as ex:
             # this is ok. we don't have to rotate
             rospy.logwarn(str(ex))
             pass

@@ -346,6 +346,8 @@ class Graph(EdgeNodeSet):
         # Uses BFS to find connected components
         copy_graph = self.copy()
         to_cover = set(copy_graph.nodes.keys())
+        if len(to_cover) == 1:
+            return [copy_graph]
         components = []
         while len(to_cover) > 0:
             start_nid = random.sample(to_cover, 1)[0]

@@ -296,6 +296,7 @@ def _sample_topo_graph3d(init_object_beliefs,
             norm_score = prob_pos
         if norm_score > pos_importance_thres:
             pq.push(pos, -norm_score)
+
     while not pq.isEmpty() and len(positions) < num_nodes:
         positions.append(pq.pop())
 
