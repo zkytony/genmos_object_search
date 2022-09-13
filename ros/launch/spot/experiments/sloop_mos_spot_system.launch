@@ -33,13 +33,25 @@
     <remap from="points" to="$(arg hand_depth)/points"/>
     <param name="queue_size" value="10"/>
   </node>
+  <!-- Need to filter out some annoying points due to gripper shell -->
+  <node pkg="nodelet" type="nodelet"
+        name="pass_through_z"
+        args="load pcl/PassThrough cloudify_hand_manager">
+    <param name="filter_field_name" value="z" />
+    <param name="filter_limit_min" value="0.25" />
+    <param name="filter_limit_max" value="3.0" />
+    <param name="filter_limit_negative" value="False" />
+    <remap from="~input" to="$(arg hand_depth)/points"/>
+    <remap from="~output" to="$(arg hand_depth)/points_filtered"/>
+  </node>
+
 
   <!-- Then, merge the points -->
   <node name="point_cloud_merger"
         pkg="sloop_object_search_ros" type="point_cloud_merger"
         output="screen">
     <param name="input_topics"
-           value="[$(arg graphnav_map_points), $(arg hand_depth)/points]"
+           value="[$(arg graphnav_map_points), $(arg hand_depth)/points_filtered]"
            type="string"/>
     <param name="output_frame_id" value="$(arg world_frame)"/>
     <remap from="/points_merged" to="/spot/local_region/input_points"/>
