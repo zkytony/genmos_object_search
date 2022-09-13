@@ -124,6 +124,19 @@ class SpotSloopActionExecutor(ActionExecutor):
         if not nav_success:
             return False
 
+        # The robot sometimes doesn't rotate, because it starts out too close
+        # to the navigation goal position and already satisfies it . So we will
+        # fulfill the yaw in goal by rotating manually
+        current_pose_msg = ros_utils.WaitForMessages(
+            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True).messages[0]
+        current_pose = ros_utils.pose_to_tuple(current_pose_msg.pose)
+        cur_thz = math_utils.quat_to_euler(*current_pose[3:])
+        duration = 0.75
+        v_rot = (thz - cur_thz) / duration
+        rbd_spot.body.velocityCommand(
+            self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
+
         # Then, we use moveEE with body follow to move the camera to the goal pose.
         # Note that moveEEToWithBodyFollow takes in a pose relative to the
         # current body frame, while our goal_pose is in the world frame.
