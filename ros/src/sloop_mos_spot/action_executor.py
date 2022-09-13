@@ -81,12 +81,8 @@ class SpotSloopActionExecutor(ActionExecutor):
         goal_quat = math_utils.euler_to_quat(0, thy, thz)
         goal_pose = (*goal_pose[:3], *goal_quat)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
-        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
-        goal_pose_hand_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
         _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
-        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_hand_msg, _trans)
-
-        goal_pose_hand = ros_utils.pose_tuple_from_pose_stamped(goal_pose_hand_msg)
+        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
         goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
 
         # Publish visualization markers
@@ -100,7 +96,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.robot_id + "_nav", nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
         _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, goal_pose_hand, std_msgs.Header(frame_id=self.hand_frame, stamp=rospy.Time.now()),
+            self.robot_id, goal_pose, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.12, 0.89, 0.95, 0.9], lifetime=0)
         self._goal_viz_pub.publish(MarkerArray([_nav_goal_marker_msg,
                                                 _goal_marker_msg]))
