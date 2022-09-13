@@ -614,7 +614,10 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
         points = points[np.logical_not(low_points_filter)]  # points at or above layout cut p
 
         # Identify points for the floor
-        xmin, ymin, zmin = np.min(points, axis=0)
+        if len(points) > 0:
+            zmin = np.min(points, axis=0)[2]
+        else:
+            zmin = 0
         floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
         floor_points = points[floor_points_filter]
         floor_points = flood_fill_2d(floor_points, (*seed_pos, 0),
