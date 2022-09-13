@@ -184,6 +184,12 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
                 inflation_pomdp = inflation_world / search_region.search_space_resolution
                 topo_config_pomdp["3d_proj_2d"]["inflation"] = inflation_pomdp
 
+        # inflation for topo2d
+        if "inflation" in topo_config_world:
+            inflation_world = topo_config_world["inflation"]
+            inflation_pomdp = inflation_world / search_region.search_space_resolution
+            topo_config_pomdp["inflation"] = inflation_pomdp
+
     return agent_config_pomdp
 
 def voxel_to_world(v, search_region):
@@ -338,7 +344,8 @@ def make_local_agent_config(hier_agent_config, belief_config=None):
             "detectors": hier_agent_config["robot"]["detectors_local"],
             "sensors": hier_agent_config["robot"]["sensors_local"],
             "action": hier_agent_config["robot"]["action_local"],
-            "color": hier_agent_config["robot"]["color"]
+            "reachable": hier_agent_config["robot"].get("reachable_local", {}),
+            "color": hier_agent_config["robot"].get("color", [0.8, 0.2, 0.2]),
         },
         "objects": hier_agent_config["objects"],
         "targets": hier_agent_config["targets"]

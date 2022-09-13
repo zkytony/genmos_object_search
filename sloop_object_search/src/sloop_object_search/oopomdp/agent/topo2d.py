@@ -69,6 +69,7 @@ class MosAgentTopo2D(MosAgentBasic2D):
         return transition_model, policy_model
 
     def _inflate_obstacles(self):
+        inflated_cells = None
         if not hasattr(self, "obstacles2d"):
             grid_map = self.search_region.grid_map
             # we want to inflate the obstacles
@@ -76,14 +77,7 @@ class MosAgentTopo2D(MosAgentBasic2D):
             shrunk_free_cells = grid_map_utils.cells_with_minimum_distance_from_obstacles(grid_map, dist=inflation)
             inflated_cells = (grid_map.free_locations - shrunk_free_cells)
             self.obstacles2d = grid_map.obstacles | inflated_cells
-            _debug = self.topo_config.get("debug", False)
-            if _debug:
-                from sloop_object_search.utils.visual2d import GridMap2Visualizer
-                viz = GridMap2Visualizer(grid_map=grid_map, res=15)
-                img = viz.render()
-                img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
-                viz.show_img(img)
-                time.sleep(3)
+        return inflated_cells
 
     def generate_topo_map(self, object_beliefs, robot_pose):
         """Given 'combined_dist', a distribution that maps
@@ -91,7 +85,7 @@ class MosAgentTopo2D(MosAgentBasic2D):
         the current 'robot_pose', sample a topological graph
         based on this distribution.
         """
-        self._inflate_obstacles()  # affects 'reachable' function
+        inflated_cells = self._inflate_obstacles()  # affects 'reachable' function
 
         print("Sampling topological graph...")
         topo_map = _sample_topo_map(object_beliefs,
@@ -100,12 +94,15 @@ class MosAgentTopo2D(MosAgentBasic2D):
                                     self.reachable,
                                     self.topo_config)
         _debug = self.topo_config.get("debug", False)
+        import pdb; pdb.set_trace()
         if _debug:
             viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
                                     grid_map=self.search_region.grid_map,
                                     res=self.visual_config.get("res", 10))
             img = viz.render(topo_map, object_beliefs,
                              self.robot_id, robot_pose)
+            if inflated_cells is not None:
+                img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
             # flip horizotnally is necessary so that +x is right, +y is up.
             viz.show_img(img, flip_horizontally=True)
             time.sleep(2)

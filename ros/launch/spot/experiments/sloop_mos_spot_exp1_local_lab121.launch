@@ -11,6 +11,7 @@
     <param name="robot_id" value="spot_$(arg spot)"/>
     <param name="world_frame" value="graphnav_map"/>
     <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
+    <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
     <remap from="~robot_pose" to="/spot_hand_pose"/>
     <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/>
     <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/>
