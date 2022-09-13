@@ -25,7 +25,7 @@ from .octree import DEFAULT_VAL, OctNode, Octree, verify_octree_integrity
 from ..grid_map2 import GridMap2
 from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 from sloop_object_search.utils.algo import flood_fill_2d
-
+from sloop_object_search.utils import grid_map_utils
 
 
 class OctreeDistribution(pomdp_py.GenerativeDistribution):
@@ -627,10 +627,4 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
                              if (util.in_box2d_origin(gp[:2], region_2d)
                                  and tuple(gp[:2]) not in obstacles))
         grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)
-        if debug:
-            from sloop_object_search.utils.visual2d import GridMap2Visualizer
-            viz = GridMap2Visualizer(grid_map=grid_map, res=15)
-            img = viz.render()
-            viz.show_img(img)
-            time.sleep(5)
         return grid_map

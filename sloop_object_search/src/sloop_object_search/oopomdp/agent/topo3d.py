@@ -3,6 +3,7 @@ topo graph-based action space.
 """
 import random
 import pomdp_py
+import time
 
 from .basic3d import MosAgentBasic3D
 from ..domain.state import RobotStateTopo
@@ -74,10 +75,19 @@ class MosAgentTopo3D(MosAgentBasic3D):
         # grid map used for reachability check
         grid_map = self.search_region.octree_dist.to_grid_map(
             robot_pose[:2], **self.topo_config.get("3d_proj_2d"))
+
         # we want to inflate the obstacles
-        inflation = self.topo_config.get("inflation", 1)
-        grid_map_utils.obstacles_around_free_locations(grid_map, dist=inflation)
-        self.obstacles2d = grid_map.obstacles
+        inflation = self.topo_config.get("3d_proj_2d").get("inflation", 1)
+        inflated_cells = grid_map_utils.obstacles_around_free_locations(grid_map, dist=inflation)
+        self.obstacles2d = grid_map.obstacles | inflated_cells
+
+        if debug:
+            from sloop_object_search.utils.visual2d import GridMap2Visualizer
+            viz = GridMap2Visualizer(grid_map=grid_map, res=15)
+            img = viz.render()
+            img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
+            viz.show_img(img)
+            time.sleep(3)
 
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,

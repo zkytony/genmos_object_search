@@ -29,7 +29,7 @@ CONFIG_LOCAL = {
                                 '3d_proj_2d': {'layout_cut': 0.05,
                                                'floor_cut': 0.01,
                                                'brush_size': 0.2,
-                                               'debug': False,
+                                               'debug': True,
                                                'inflation': 0.5}},
                        'policy': {'cost_scaling_factor': 1.0}},
             "reachable": {
