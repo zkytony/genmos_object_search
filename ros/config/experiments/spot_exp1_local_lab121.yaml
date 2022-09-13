@@ -29,14 +29,15 @@ agent_config:
       policy:
         cost_scaling_factor: 1.0
       topo:
-        num_nodes: 10
-        pos_importance_thres: 0.01
-        sep: 0.75
-        to_grid_map:
+        3d_proj_2d:
           brush_size: 0.2
           debug: true
           floor_cut: 0.15
+          inflation: 0.25
           layout_cut: 0.65
+        num_nodes: 10
+        pos_importance_thres: 0.01
+        sep: 0.75
     detectors:
       Cat:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
