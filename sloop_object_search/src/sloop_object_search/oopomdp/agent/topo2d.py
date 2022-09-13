@@ -94,7 +94,6 @@ class MosAgentTopo2D(MosAgentBasic2D):
                                     self.reachable,
                                     self.topo_config)
         _debug = self.topo_config.get("debug", False)
-        import pdb; pdb.set_trace()
         if _debug:
             viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
                                     grid_map=self.search_region.grid_map,
