@@ -35,8 +35,8 @@
   </node>
   <!-- Need to filter out some annoying points due to gripper shell -->
   <node pkg="nodelet" type="nodelet"
-        name="pass_through_z"
-        args="load pcl/PassThrough cloudify_hand_manager">
+        name="cloudify_hand_depth_filter"
+        args="load pcl/PassThrough cloudify_manager">
     <param name="filter_field_name" value="z" />
     <param name="filter_limit_min" value="0.25" />
     <param name="filter_limit_max" value="3.0" />
