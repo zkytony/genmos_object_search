@@ -69,9 +69,8 @@ class SpotSloopActionExecutor(ActionExecutor):
         # Compute navigation goal and the final goal. Note that the goal is
         # for the hand (though in world frame), but navigateTo controls the body. We will account for this.
         thx, thy, thz = math_utils.quat_to_euler(*goal_pose[3:])
-        nav_quat = Quat.from_yaw(math_utils.to_rad(thz))
-        nav_goal = (goal_pose[0], goal_pose[1], NAV_HEIGHT,
-                    nav_quat.x, nav_quat.y, nav_quat.z, nav_quat.w)
+        nav_quat = math_utils.euler_to_quat(0, 0, thz)
+        nav_goal = (goal_pose[0], goal_pose[1], NAV_HEIGHT, *nav_quat)
         nav_goal_stamped = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
         _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
         nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_stamped, _trans)
@@ -132,7 +131,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         rbd_spot.arm.open_gripper(self.conn, self.command_client)
         rbd_spot.arm.unstow(self.conn, self.command_client)
 
-        cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
+        cmd_success = rbd_spot.arm.moveEETo(
             self.conn, self.command_client, self.robot_state_client, goal_pose_body)
         return cmd_success
 
