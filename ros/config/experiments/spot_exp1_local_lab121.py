@@ -24,7 +24,8 @@ CONFIG_LOCAL = {
                                               "quality": [1e5, 0.1]}}},
             'action': {'topo': {'num_nodes': 10,
                                 'pos_importance_thres': 0.01,
-                                'sep': 0.75 }},
+                                'sep': 0.75 },
+                       'policy': {'cost_scaling_factor': 1.5}},
             "reachable": {
                 "min_height": 0.3,
                 "max_height": 1.4

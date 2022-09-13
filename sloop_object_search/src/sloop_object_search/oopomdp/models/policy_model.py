@@ -139,6 +139,7 @@ class PolicyModelTopo(PolicyModel):
                  robot_trans_model,
                  no_look=True,
                  can_stay=True,
+                 cost_scaling_factor=1.0,
                  num_visits_init=10,
                  val_init=100):
         assert no_look is True,\
@@ -149,6 +150,7 @@ class PolicyModelTopo(PolicyModel):
                          num_visits_init=10, val_init=100)
         self.target_ids = target_ids
         self.can_stay = can_stay
+        self._cost_scaling_factor = cost_scaling_factor
         self._legal_moves = {}
         self.action_prior = PolicyModelTopo.ActionPriorTopo(
             num_visits_init, val_init, self)
@@ -172,6 +174,7 @@ class PolicyModelTopo(PolicyModel):
                 valid_moves.add(
                     action.MotionActionTopo(
                         srobot.nid, nb_id, topo_map_hashcode=self.topo_map.hashcode,
+                        cost_scaling_factor=self._cost_scaling_factor,
                         distance=self.topo_map.edges[eid].nav_length))
             self._legal_moves[srobot] = valid_moves
             return valid_moves

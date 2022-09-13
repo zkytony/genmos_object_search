@@ -25,6 +25,8 @@ agent_config:
       viz_type: cube
   robot:
     action:
+      policy:
+        cost_scaling_factor: 1.5
       topo:
         num_nodes: 10
         pos_importance_thres: 0.01

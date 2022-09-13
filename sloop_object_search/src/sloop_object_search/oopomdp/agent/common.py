@@ -235,6 +235,10 @@ class MosAgent(pomdp_py.Agent):
     def reachable_config(self):
         return self.agent_config["robot"].get("reachable", {})
 
+    @property
+    def policy_config(self):
+        return self.agent_config["robot"]["action"].get("policy", {})
+
     def update_belief(self, observation, action=None, debug=False, **kwargs):
         """
         update belief given observation.  We can accept two kinds of observations:

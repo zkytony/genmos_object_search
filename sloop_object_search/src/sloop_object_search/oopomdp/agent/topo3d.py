@@ -59,8 +59,10 @@ class MosAgentTopo3D(MosAgentBasic3D):
             **init_object_transition_models(self.agent_config)}
         transition_model = pomdp_py.OOTransitionModel(object_transition_models)
 
+        costscalf = self.policy_config.get("cost_scaling_factor", 1.0)
         policy_model = PolicyModelTopo(target_ids,
                                        robot_trans_model,
+                                       cost_scaling_factor=costscalf,
                                        no_look=self.no_look)
         return transition_model, policy_model
 
