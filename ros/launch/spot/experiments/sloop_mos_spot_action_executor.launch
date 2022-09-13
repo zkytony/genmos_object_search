@@ -6,6 +6,7 @@
         pkg="sloop_object_search_ros" type="spot_action_executor.py" output="screen">
     <param name="robot_id" value="spot_$(arg spot)"/>
     <param name="world_frame" value="graphnav_map"/>
+    <param name="check_before_execute" value="False" type="bool"/>
     <remap from="~action"  to="/spot_$(arg spot)/sloop_ros/action"/>
     <remap from="~robot_pose" to="/spot_hand_pose"/>
   </node>

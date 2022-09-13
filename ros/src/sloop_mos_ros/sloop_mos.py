@@ -490,5 +490,3 @@ class SloopMosROS:
                 rospy.loginfo("Done!")
                 break
             time.sleep(1)
-            break
-        rospy.spin()
