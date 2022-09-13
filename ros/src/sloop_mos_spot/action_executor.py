@@ -32,7 +32,7 @@ import rbd_spot
 
 # distance between hand and body frame origin
 SPOT_HAND_TO_BODY_DISTANCE = 0.65
-LONG_NAV_DISTANCE = 1.5
+NAV_DISTANCE_VERY_SHORT = 0.25
 NAV_HEIGHT = 0.25
 
 class SpotSloopActionExecutor(ActionExecutor):
@@ -61,60 +61,96 @@ class SpotSloopActionExecutor(ActionExecutor):
 
 
     def move_viewpoint(self, action_id, goal_pose):
-        robot_pose_msg = ros_utils.WaitForMessages(
-            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
-            verbose=True).messages[0]
-        current_pose = ros_utils.pose_to_tuple(robot_pose_msg.pose)
-
-        # If the distance between the two positions is long,
-        # the robot should stow its arm
-        if math_utils.euclidean_dist(current_pose[:3], goal_pose[:3])*2 >= LONG_NAV_DISTANCE:
-            rbd_spot.arm.close_gripper(self.conn, self.command_client)
-            rbd_spot.arm.stow(self.conn, self.command_client)
-
-        # Compute navigation goal and the final goal. Note that the goal is
-        # for the hand (though in world frame), but navigateTo controls the body. We will account for this.
-        thx, thy, thz = math_utils.quat_to_euler(*goal_pose[3:])
-        nav_quat = Quat.from_yaw(math_utils.to_rad(thz))
-        nav_goal = (goal_pose[0], goal_pose[1], NAV_HEIGHT,
-                    nav_quat.x, nav_quat.y, nav_quat.z, nav_quat.w)
-        nav_goal_stamped = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
-        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
-        nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_stamped, _trans)
-        nav_goal_body = ros_utils.pose_tuple_from_pose_stamped(nav_goal_body_stamped)
-
-        # will always set the goal pose's roll to 0. Just pitch and yaw is enough!
-        goal_quat = math_utils.euler_to_quat(thx, thy, thz)
-        goal_pose = (*goal_pose[:3], *goal_quat)
-        goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
-        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
-        goal_pose_hand_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
-        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
-        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_hand_msg, _trans)
-
-        goal_pose_hand = ros_utils.pose_tuple_from_pose_stamped(goal_pose_hand_msg)
-        goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
-
-        # Publish visualization markers
+        """move the robot's end effector to the goal pose"""
+        # Visualize the goal.
         # clear markers first
         clear_msg = ros_utils.clear_markers(std_msgs.Header(stamp=rospy.Time.now(),
                                                             frame_id=self.world_frame), ns="")
         self._goal_viz_pub.publish(clear_msg)
+
         # then make the markers for goals; We will still visualize hand messages (that's what we care about)
         _marker_scale = geometry_msgs.Vector3(x=0.4, y=0.05, z=0.05)
-        _nav_goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id + "_nav", nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
-            scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
         _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, goal_pose_hand, std_msgs.Header(frame_id=self.hand_frame, stamp=rospy.Time.now()),
-            scale=_marker_scale, color=[0.12, 0.89, 0.95, 0.9], lifetime=0)
-        self._goal_viz_pub.publish(MarkerArray([_nav_goal_marker_msg,
-                                                _goal_marker_msg]))
+            self.robot_id + "_goal", goal_pose, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
+            scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
+        self._goal_viz_pub.publish(MarkerArray([_goal_marker_msg]))
 
+        # Check if the user wants to execute
         if self.check_before_execute:
             if not confirm_yes("Execute change viewpoint action?"):
                 rospy.loginfo(typ.warning("User terminates action execution"))
                 return False
+
+        # Navigate to a 2D pose first. Note that because the goal_pose is
+        # the hand pose in world frame, while for navigation, we control
+        # the body pose. We will move the robot back slightly after done.
+        _, _, yaw = math_utils.quat_to_euler(*goal_pose[3:])
+        x, y = goal_pose[:2]
+        nav_feedback_code = rbd_spot.graphnav.navigateTo(
+            self.conn, self.graphnav_client, (x, y, math_utils.to_rad(yaw)),
+            tolerance=(0.08, 0.08, 0.15),
+            speed="medium",
+            travel_params=graph_nav_pb2.TravelParams(disable_alternate_route_finding=True))
+        nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
+        rate = rospy.Rate(2.0)
+        while nav_success is None:
+            nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
+            rate.sleep()
+        if not nav_success:
+            return False
+
+        return True
+
+
+        # robot_pose_msg = ros_utils.WaitForMessages(
+        #     [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+        #     verbose=True).messages[0]
+        # current_pose = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+
+        # # If the distance between the two positions is long,
+        # # the robot should stow its arm
+        # if math_utils.euclidean_dist(current_pose[:3], goal_pose[:3])*2 >= LONG_NAV_DISTANCE:
+        #     rbd_spot.arm.close_gripper(self.conn, self.command_client)
+        #     rbd_spot.arm.stow(self.conn, self.command_client)
+
+        # # Compute navigation goal and the final goal. Note that the goal is
+        # # for the hand (though in world frame), but navigateTo controls the body. We will account for this.
+        # thx, thy, thz = math_utils.quat_to_euler(*goal_pose[3:])
+        # nav_quat = Quat.from_yaw(math_utils.to_rad(thz))
+        # nav_goal = (goal_pose[0], goal_pose[1], NAV_HEIGHT,
+        #             nav_quat.x, nav_quat.y, nav_quat.z, nav_quat.w)
+        # nav_goal_stamped = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
+        # _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
+        # nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_stamped, _trans)
+        # nav_goal_body = ros_utils.pose_tuple_from_pose_stamped(nav_goal_body_stamped)
+
+        # # will always set the goal pose's roll to 0. Just pitch and yaw is enough!
+        # goal_quat = math_utils.euler_to_quat(0, thy, thz)
+        # goal_pose = (*goal_pose[:3], *goal_quat)
+        # goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
+        # _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
+        # goal_pose_hand_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
+        # _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
+        # goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_hand_msg, _trans)
+
+        # goal_pose_hand = ros_utils.pose_tuple_from_pose_stamped(goal_pose_hand_msg)
+        # goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
+
+        # # Publish visualization markers
+        # # clear markers first
+        # clear_msg = ros_utils.clear_markers(std_msgs.Header(stamp=rospy.Time.now(),
+        #                                                     frame_id=self.world_frame), ns="")
+        # self._goal_viz_pub.publish(clear_msg)
+        # # then make the markers for goals; We will still visualize hand messages (that's what we care about)
+        # _marker_scale = geometry_msgs.Vector3(x=0.4, y=0.05, z=0.05)
+        # _nav_goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
+        #     self.robot_id + "_nav", nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
+        #     scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
+        # _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
+        #     self.robot_id, goal_pose_hand, std_msgs.Header(frame_id=self.hand_frame, stamp=rospy.Time.now()),
+        #     scale=_marker_scale, color=[0.12, 0.89, 0.95, 0.9], lifetime=0)
+        # self._goal_viz_pub.publish(MarkerArray([_nav_goal_marker_msg,
+        #                                         _goal_marker_msg]))
 
         # # Navigate to navigation pose
         # nav_feedback_code = rbd_spot.graphnav.navigateTo(
