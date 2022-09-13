@@ -29,13 +29,13 @@ from sloop_object_search.utils.misc import import_class
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
-def make_nav_action(pos, orien, goal_id=100):
+def make_nav_action(pos, orien, action_id):
     goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]
     goal_values = [*pos, *orien]
     nav_action = KeyValAction(stamp=rospy.Time.now(),
                               type="nav",
-                              keys=["goal_id"] + goal_keys,
-                              values=list(map(str, [goal_id] + goal_values)))
+                              keys=["action_id"] + goal_keys,
+                              values=list(map(str, [action_id] + goal_values)))
     return nav_action
 
 class SloopMosROS:
@@ -327,13 +327,14 @@ class SloopMosROS:
         robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
         return robot_pose_tuple
 
-    def execute_action(self, action_pb, step_count):
+    def execute_action(self, action_id, action_pb):
         """All viewpoint movement actions specify a goal pose
         the robot should move its end-effector to, and publish
         that as a KeyValAction."""
         if isinstance(action_pb, a_pb2.MoveViewpoint):
             if action_pb.HasField("dest_3d"):
                 dest = proto_utils.poseproto_to_posetuple(action_pb.dest_3d)
+
             elif action_pb.HasField("dest_2d"):
                 robot_pose = np.asarray(self.wait_for_robot_pose())
                 dest_2d = proto_utils.poseproto_to_posetuple(action_pb.dest_2d)
@@ -344,7 +345,7 @@ class SloopMosROS:
             else:
                 raise NotImplementedError("Not implemented action_pb.")
 
-            nav_action = make_nav_action(dest[:3], dest[3:], goal_id=step_count)
+            nav_action = make_nav_action(dest[:3], dest[3:], action_id)
             self._action_pub.publish(nav_action)
             rospy.loginfo("published nav action for execution")
 
@@ -451,7 +452,7 @@ class SloopMosROS:
             rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
             self.last_action = action_pb
 
-            self.execute_action(action_pb, step)
+            self.execute_action(action_id, action_pb)
             ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
             rospy.loginfo("action done.")

@@ -55,7 +55,7 @@ class ActionExecutor:
         """Handles action execution"""
         raise NotImplementedError
 
-    def publish_status(self, status, text, action_id, stamp):
+    def publish_status(self, status, text, action_id, stamp, pub_done=False):
         status = GoalStatus(status=status,
                             text=text)
         status.goal_id.id = action_id
@@ -63,7 +63,10 @@ class ActionExecutor:
         if status == GoalStatus.ABORTED or status == GoalStatus.REJECTED:
             rospy.logerr(text)
         else:
-            # status is success - we are done for this action
-            self._done_pub.publish(std_msgs.String(f"{action_id} done"))
             rospy.loginfo(text)
         self._status_pub.publish(status)
+
+        if pub_done:
+            if status == GoalStatus.ABORTED or status == GoalStatus.REJECTED:
+                # We are done - whether we succeeded or not
+                self._done_pub.publish(std_msgs.String(f"{action_id} done"))
