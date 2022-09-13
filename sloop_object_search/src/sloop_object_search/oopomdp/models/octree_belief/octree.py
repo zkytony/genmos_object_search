@@ -306,7 +306,7 @@ class Octree:
                               node.pos[1]*node.res,
                               node.pos[2]*node.res,
                               node.res,
-                              node.value()))
+                              node.value() / (node.res**3)))  # we want value per unit voxel
         else:
             for pos in OctNode.child_poses(*node.pos, node.res):
                 if pos not in node.children\
@@ -316,7 +316,7 @@ class Octree:
                                           pos[1]*res,
                                           pos[2]*res,
                                           res,
-                                          node.get_val(pos)))  # child pos and resolution
+                                          node.get_val(pos) / (res**3)))  # child pos and resolution
                 else:
                     child = node.children[pos][1]
                     self._collect_plotting_voxels_helper(child, collector)
