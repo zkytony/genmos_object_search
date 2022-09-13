@@ -166,6 +166,20 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             sep_pomdp = sep_world / search_region.search_space_resolution
             agent_config_pomdp["robot"]["action"]["topo"]["sep"] = sep_pomdp
 
+        if "to_grid_map" in topo_config_world:
+            if "layout_cut" in topo_config_world["to_grid_map"]:
+                layout_cut_world = topo_config_world["to_grid_map"]["layout_cut"]
+                layout_cut_pomdp = layout_cut_world / search_region.search_space_resolution
+                topo_config_pomdp["to_grid_map"]["layout_cut"] = layout_cut_pomdp
+            if "floor_cut" in topo_config_world["to_grid_map"]:
+                floor_cut_world = topo_config_world["to_grid_map"]["floor_cut"]
+                floor_cut_pomdp = floor_cut_world / search_region.search_space_resolution
+                topo_config_pomdp["to_grid_map"]["floor_cut"] = floor_cut_pomdp
+            if "brush_size" in topo_config_world["to_grid_map"]:
+                brush_size_world = topo_config_world["to_grid_map"]["brush_size"]
+                brush_size_pomdp = brush_size_world / search_region.search_space_resolution
+                topo_config_pomdp["to_grid_map"]["brush_size"] = brush_size_pomdp
+
     return agent_config_pomdp
 
 def voxel_to_world(v, search_region):

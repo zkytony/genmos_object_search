@@ -26,7 +26,9 @@ CONFIG_LOCAL = {
             'action': {'topo': {'num_nodes': 10,
                                 'pos_importance_thres': 0.01,
                                 'sep': 0.75,
-                                'res_buf': 8},
+                                'to_grid_map': {'layout_cut': 0.65,
+                                                'floor_cut': 0.15,
+                                                'brush_size': 0.2}},
                        'policy': {'cost_scaling_factor': 1.0}},
             "reachable": {
                 "min_height": 0.5,
