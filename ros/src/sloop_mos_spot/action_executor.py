@@ -85,7 +85,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_stamped, _trans)
         nav_goal_body = ros_utils.pose_tuple_from_pose_stamped(nav_goal_body_stamped)
 
-        # will always set the goal pose's roll to 0. Just pitch and yaw is enough
+        # will always set the goal pose's roll to 0. Just pitch and yaw is enough!
         goal_quat = math_utils.euler_to_quat(0, thy, thz)
         goal_pose = (*goal_pose[:3], *goal_quat)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
