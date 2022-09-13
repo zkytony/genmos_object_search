@@ -26,11 +26,11 @@ CONFIG_LOCAL = {
             'action': {'topo': {'num_nodes': 10,
                                 'pos_importance_thres': 0.01,
                                 'sep': 0.75,
-                                '3d_proj_2d': {'layout_cut': 0.1,
+                                '3d_proj_2d': {'layout_cut': 0.05,
                                                'floor_cut': 0.01,
                                                'brush_size': 0.2,
                                                'debug': False,
-                                               'inflation': 0.25}},
+                                               'inflation': 0.5}},
                        'policy': {'cost_scaling_factor': 1.0}},
             "reachable": {
                 "min_height": 0.5,

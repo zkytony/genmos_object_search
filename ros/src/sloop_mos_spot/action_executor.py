@@ -139,9 +139,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             rbd_spot.body.velocityCommand(
                 self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
         except InvalidRequestError as ex:
-            # this is ok. we don't have to rotate
-            rospy.logwarn(str(ex))
-            pass
+            return False
 
         # Then, we use moveEE with body follow to move the camera to the goal pose.
         # Note that moveEEToWithBodyFollow takes in a pose relative to the

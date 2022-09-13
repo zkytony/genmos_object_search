@@ -33,8 +33,8 @@ agent_config:
           brush_size: 0.2
           debug: false
           floor_cut: 0.01
-          inflation: 0.25
-          layout_cut: 0.1
+          inflation: 0.5
+          layout_cut: 0.05
         num_nodes: 10
         pos_importance_thres: 0.01
         sep: 0.75
