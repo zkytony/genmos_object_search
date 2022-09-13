@@ -40,6 +40,11 @@ def init_object_beliefs_2d(target_objects, search_region, belief_config={}, **kw
     object_beliefs = {}
     if prior is None:
         prior = {}
+    init_params = belief_config.get("init_params", {})
+    prior_from_occupancy = init_params.get("prior_from_occupancy", False)
+
+    if prior_from_occupancy:
+        obstacles = search_region.grid_map.obstacles
     for objid in target_objects:
         target = target_objects[objid]
         loc_dist = LocDist2D(search_region)
@@ -48,7 +53,13 @@ def init_object_beliefs_2d(target_objects, search_region, belief_config={}, **kw
             state = ObjectState(objid, target["class"], loc)
             # TODO: make 'normalized' configurable
             object_belief.assign(state, prob, normalized=True)
+
+        if prior_from_occupancy:
+            for obst in obstacles:
+                state = ObjectState(objid, target["class"], obst)
+                object_belief.assign(obst, 100)
         object_beliefs[objid] = object_belief
+
     return object_beliefs
 
 def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kwargs):
