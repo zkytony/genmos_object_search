@@ -6,7 +6,8 @@ CONFIG_LOCAL = {
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
-                   "init_params": {"num_samples": 3000}},
+                   "init_params": {"num_samples": 3000,
+                                   "prior_from_occupancy": True}},
         "search_region": {"3d": {"res": 0.07}},
         'robot': {
             'id': 'robot0',
@@ -24,8 +25,9 @@ CONFIG_LOCAL = {
                                               "quality": [1e5, 0.1]}}},
             'action': {'topo': {'num_nodes': 10,
                                 'pos_importance_thres': 0.01,
-                                'sep': 0.75 },
-                       'policy': {'cost_scaling_factor': 1.5}},
+                                'sep': 0.75,
+                                'res_buf': 8},
+                       'policy': {'cost_scaling_factor': 1.0}},
             "reachable": {
                 "min_height": 0.5,
                 "max_height": 1.2
