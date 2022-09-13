@@ -60,8 +60,11 @@ class SpotSloopActionExecutor(ActionExecutor):
             "~goal_markers", MarkerArray, queue_size=10, latch=True)
 
 
-    def move_viewpoint(self, action_id, goal_pose):
+    def move_viewpoint(self, action_id, nav_type, goal_pose):
         """move the robot's end effector to the goal pose"""
+        if nav_type not in {"2d", "3d"}:
+            raise ValueError("nav_type should be '2d' or '3d'")
+
         # Visualize the goal.
         # clear markers first
         clear_msg = ros_utils.clear_markers(std_msgs.Header(stamp=rospy.Time.now(),
@@ -108,6 +111,10 @@ class SpotSloopActionExecutor(ActionExecutor):
         command_id, _ = rbd_spot.body.velocityCommand(
             self.conn, self.command_client, -vx, 0.0, 0.0, duration=SPOT_HAND_TO_BODY_DISTANCE/vx)
 
+        # If the navigation is 2D, then we are done.
+        if nav_type == "2d":
+            return True
+
         # Now, move the end effector. Get the goal pose from world frame to body frame.
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
         _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.world_frame, rospy.Time(0))
@@ -146,10 +153,11 @@ class SpotSloopActionExecutor(ActionExecutor):
             goal_qy = float(kv["goal_qy"])
             goal_qz = float(kv["goal_qz"])
             goal_qw = float(kv["goal_qw"])
+            nav_type = float(kv["nav_type"])
             self.publish_status(GoalStatus.ACTIVE,
                                 typ.info(f"executing {kv['action_id']}..."),
                                 action_id, msg.stamp)
-            success = self.move_viewpoint(action_id,
+            success = self.move_viewpoint(action_id, nav_type,
                                           (goal_x, goal_y, goal_z,
                                            goal_qx, goal_qy, goal_qz, goal_qw))
             if success:

@@ -32,14 +32,18 @@ from sloop_object_search.utils.misc import import_class
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
-def make_nav_action(pos, orien, action_id):
+
+def make_nav_action(pos, orien, action_id, nav_type):
+    if nav_type not in {"2d", "3d"}:
+        raise ValueError("nav_type should be '2d' or '3d'")
     goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]
     goal_values = [*pos, *orien]
     nav_action = KeyValAction(stamp=rospy.Time.now(),
                               type="nav",
-                              keys=["action_id"] + goal_keys,
-                              values=list(map(str, [action_id] + goal_values)))
+                              keys=["action_id"] + goal_keys + ["nav_type"],
+                              values=list(map(str, [action_id] + goal_values + [nav_type])))
     return nav_action
+
 
 class SloopMosROS:
     def __init__(self, name="sloop_ros"):
@@ -344,6 +348,7 @@ class SloopMosROS:
         if isinstance(action_pb, a_pb2.MoveViewpoint):
             if action_pb.HasField("dest_3d"):
                 dest = proto_utils.poseproto_to_posetuple(action_pb.dest_3d)
+                nav_type = "3d"
 
             elif action_pb.HasField("dest_2d"):
                 robot_pose = np.asarray(self.wait_for_robot_pose())
@@ -352,10 +357,12 @@ class SloopMosROS:
                 z = robot_pose[2]
                 thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
                 dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
+                nav_type = "2d"
+
             else:
                 raise NotImplementedError("Not implemented action_pb.")
 
-            nav_action = make_nav_action(dest[:3], dest[3:], action_id)
+            nav_action = make_nav_action(dest[:3], dest[3:], action_id, nav_type)
             self._action_pub.publish(nav_action)
             rospy.loginfo("published nav action for execution")
 
