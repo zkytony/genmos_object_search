@@ -506,16 +506,22 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
     which is a Histogram, make a MarkerArray message for it."""
     markers = []
     hist_pb = octree_belief_pb.dist
-    prob_max = max(hist_pb.probs)
-    prob_min = min(hist_pb.probs)
-    if prob_min == prob_max:
-        prob_min -= 0.00001  # avoid nan
+    probs = []
+    voxels = []
     for i in range(hist_pb.length):
         voxel = common_pb2.Voxel3D()
         hist_pb.values[i].Unpack(voxel)
-
+        prob = hist_pb.probs[i] / (voxel.res**3)  # we want value per unit voxel
+        probs.append(prob)
+        voxels.append(voxel)
+    prob_max = max(probs)
+    prob_min = min(probs)
+    if prob_min == prob_max:
+        prob_min -= 1e-12  # avoid nan
+    for i in range(hist_pb.length):
+        voxel = voxels[i]
         pos = [voxel.pos.x, voxel.pos.y, voxel.pos.z]
-        prob = hist_pb.probs[i]
+        prob = probs[i]
         color = color_map(prob, [prob_min, prob_max], cmap)
         alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
         marker = make_octnode_marker_msg(
