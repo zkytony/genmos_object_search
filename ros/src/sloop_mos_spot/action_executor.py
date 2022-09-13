@@ -116,10 +116,10 @@ class SpotSloopActionExecutor(ActionExecutor):
             speed="medium",
             travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
                                                      disable_alternate_route_finding=True))
-        nav_success = self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
+        nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
         rate = rospy.Rate(2.0)
         while nav_success is None:
-            nav_success = self.publish_nav_status(nav_feedback_code, action_id, msg.stamp)
+            nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
             rate.sleep()
         if not nav_success:
             return False

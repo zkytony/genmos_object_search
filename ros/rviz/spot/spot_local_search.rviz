@@ -353,8 +353,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.6539994478225708
-        Min Value: -0.7659510970115662
+        Max Value: 0.7026417851448059
+        Min Value: -0.6329565048217773
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -439,7 +439,7 @@ Visualization Manager:
       Marker Topic: /spot_002/sloop_ros/topo_map_3d
       Name: topo3d
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -456,6 +456,14 @@ Visualization Manager:
       Name: belief2d
       Namespaces:
         {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /spot_002/action_executor/goal_markers
+      Name: viewpoint goal
+      Namespaces:
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -486,7 +494,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.20194149017334
+      Distance: 4.787091255187988
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -494,17 +502,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.9851499795913696
-        Y: -0.7272922396659851
-        Z: -0.6602087020874023
+        X: 3.2555859088897705
+        Y: -1.6210249662399292
+        Z: -1.300432801246643
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.59979647397995
+      Pitch: 0.9897977113723755
       Target Frame: <Fixed Frame>
-      Yaw: 3.895397901535034
+      Yaw: 4.34038782119751
     Saved: ~
 Window Geometry:
   Displays:
@@ -522,7 +530,7 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1655
-  X: 332
-  Y: 96
+  X: 265
+  Y: 59
   yolov5_img:
     collapsed: false
