@@ -354,7 +354,9 @@ class SloopMosROS:
 
         elif isinstance(action_pb, a_pb2.Find):
             find_action = KeyValAction(stamp=rospy.Time.now(),
-                                       type="find")
+                                       type="find",
+                                       keys=["action_id"],
+                                       values=[action_id])
             self._action_pub.publish(find_action)
             rospy.loginfo("published find action for execution")
 

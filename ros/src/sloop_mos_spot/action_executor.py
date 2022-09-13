@@ -116,31 +116,32 @@ class SpotSloopActionExecutor(ActionExecutor):
                 rospy.loginfo(typ.warning("User terminates action execution"))
                 return False
 
-        # Navigate to navigation pose
-        nav_feedback_code = rbd_spot.graphnav.navigateTo(
-            self.conn, self.graphnav_client, nav_goal_body,
-            tolerance=(0.25, 0.25, 0.15),
-            speed="medium",
-            travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
-                                                     disable_alternate_route_finding=True))
-        nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
-        rate = rospy.Rate(2.0)
-        while nav_success is None:
-            nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
-            rate.sleep()
-        if not nav_success:
-            return False
+        # # Navigate to navigation pose
+        # nav_feedback_code = rbd_spot.graphnav.navigateTo(
+        #     self.conn, self.graphnav_client, nav_goal_body,
+        #     tolerance=(0.25, 0.25, 0.15),
+        #     speed="medium",
+        #     travel_params=graph_nav_pb2.TravelParams(max_distance=0.15,   # more lenient
+        #                                              disable_alternate_route_finding=True))
+        # nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
+        # rate = rospy.Rate(2.0)
+        # while nav_success is None:
+        #     nav_success = self.publish_nav_status(nav_feedback_code, action_id, rospy.Time.now())
+        #     rate.sleep()
+        # if not nav_success:
+        #     return False
 
-        # Then, we use moveEE with body follow to move the camera to the goal pose.
-        # Note that moveEEToWithBodyFollow takes in a pose relative to the
-        # current body frame, while our goal_pose is in the world frame.
-        # open gripper to better see
-        rbd_spot.arm.open_gripper(self.conn, self.command_client)
-        rbd_spot.arm.unstow(self.conn, self.command_client)
+        # # Then, we use moveEE with body follow to move the camera to the goal pose.
+        # # Note that moveEEToWithBodyFollow takes in a pose relative to the
+        # # current body frame, while our goal_pose is in the world frame.
+        # # open gripper to better see
+        # rbd_spot.arm.open_gripper(self.conn, self.command_client)
+        # rbd_spot.arm.unstow(self.conn, self.command_client)
 
-        cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
-            self.conn, self.command_client, self.robot_state_client, goal_pose_body)
-        return cmd_success
+        # cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
+        #     self.conn, self.command_client, self.robot_state_client, goal_pose_body)
+        # return cmd_success
+        return True
 
 
     def _execute_action_cb(self, msg):
