@@ -46,6 +46,8 @@ class SpotSloopActionExecutor(ActionExecutor):
         self.robot_state_client = rbd_spot.state.create_client(self.conn)
         self.command_client = rbd_spot.arm.create_client(self.conn)
 
+        self._robot_pose_topic = "~robot_pose"
+        self.robot_id = rospy.get_param("~robot_id")
         self.world_frame = rospy.get_param("~world_frame")
         self.hand_frame = "hand"
         self.body_frame = "body"
