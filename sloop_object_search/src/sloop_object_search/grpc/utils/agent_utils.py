@@ -166,19 +166,23 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             sep_pomdp = sep_world / search_region.search_space_resolution
             agent_config_pomdp["robot"]["action"]["topo"]["sep"] = sep_pomdp
 
-        if "to_grid_map" in topo_config_world:
-            if "layout_cut" in topo_config_world["to_grid_map"]:
-                layout_cut_world = topo_config_world["to_grid_map"]["layout_cut"]
+        if "3d_proj_2d" in topo_config_world:
+            if "layout_cut" in topo_config_world["3d_proj_2d"]:
+                layout_cut_world = topo_config_world["3d_proj_2d"]["layout_cut"]
                 layout_cut_pomdp = layout_cut_world / search_region.search_space_resolution
-                topo_config_pomdp["to_grid_map"]["layout_cut"] = layout_cut_pomdp
-            if "floor_cut" in topo_config_world["to_grid_map"]:
-                floor_cut_world = topo_config_world["to_grid_map"]["floor_cut"]
+                topo_config_pomdp["3d_proj_2d"]["layout_cut"] = layout_cut_pomdp
+            if "floor_cut" in topo_config_world["3d_proj_2d"]:
+                floor_cut_world = topo_config_world["3d_proj_2d"]["floor_cut"]
                 floor_cut_pomdp = floor_cut_world / search_region.search_space_resolution
-                topo_config_pomdp["to_grid_map"]["floor_cut"] = floor_cut_pomdp
-            if "brush_size" in topo_config_world["to_grid_map"]:
-                brush_size_world = topo_config_world["to_grid_map"]["brush_size"]
+                topo_config_pomdp["3d_proj_2d"]["floor_cut"] = floor_cut_pomdp
+            if "brush_size" in topo_config_world["3d_proj_2d"]:
+                brush_size_world = topo_config_world["3d_proj_2d"]["brush_size"]
                 brush_size_pomdp = brush_size_world / search_region.search_space_resolution
-                topo_config_pomdp["to_grid_map"]["brush_size"] = brush_size_pomdp
+                topo_config_pomdp["3d_proj_2d"]["brush_size"] = brush_size_pomdp
+            if "inflation" in topo_config_world["3d_proj_2d"]:
+                inflation_world = topo_config_world["3d_proj_2d"]["inflation"]
+                inflation_pomdp = inflation_world / search_region.search_space_resolution
+                topo_config_pomdp["3d_proj_2d"]["inflation"] = inflation_pomdp
 
     return agent_config_pomdp
 

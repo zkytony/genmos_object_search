@@ -17,6 +17,8 @@ from .common import MosAgent, SloopMosAgent, init_object_transition_models
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue
 from sloop_object_search.utils import open3d_utils
+from sloop_object_search.utils import grid_map_utils
+
 
 class MosAgentTopo3D(MosAgentBasic3D):
     """A 3D MosAgent whose action space is not basic axis-based
@@ -71,8 +73,12 @@ class MosAgentTopo3D(MosAgentBasic3D):
         robot_pose: a 7-tuple"""
         # grid map used for reachability check
         grid_map = self.search_region.octree_dist.to_grid_map(
-            robot_pose[:2], **self.topo_config.get("to_grid_map"))
+            robot_pose[:2], **self.topo_config.get("3d_proj_2d"))
+        # we want to inflate the obstacles
+        inflation = self.topo_config.get("inflation", 1)
+        grid_map_utils.obstacles_around_free_locations(grid_map, dist=inflation)
         self.obstacles2d = grid_map.obstacles
+
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
                                         self.search_region,
