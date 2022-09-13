@@ -6,7 +6,7 @@ CONFIG_LOCAL = {
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
-                   "init_params": {"num_samples": 3000},
+                   "init_params": {"num_samples": 3000,
                                    "prior_from_occupancy": True}},
         "search_region": {"3d": {"res": 0.07}},
         'robot': {
@@ -29,7 +29,7 @@ CONFIG_LOCAL = {
                                 '3d_proj_2d': {'layout_cut': 0.1,
                                                'floor_cut': 0.01,
                                                'brush_size': 0.2,
-                                               'debug': True,
+                                               'debug': False,
                                                'inflation': 0.25}},
                        'policy': {'cost_scaling_factor': 1.0}},
             "reachable": {
