@@ -1,5 +1,6 @@
 import time
 from sloop_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
+from sloop_object_search.utils import grid_map_utils
 from .octree_belief import (OccupancyOctreeDistribution,
                             RegionalOctreeDistribution, DEFAULT_VAL, Octree)
 
@@ -144,14 +145,34 @@ class SearchRegion2D(SearchRegion):
     """The 2D search region is represented as a GridMap.
     For now, the free locations on the grid map are potential
     object locations. TODO: change this to be label-based?"""
-    def __init__(self, grid_map, region_origin=None, grid_size=None):
+    def __init__(self, grid_map, region_origin=None,
+                 grid_size=None, **init_options):
         """
         Args:
-            grid_map (GridMap2):
+            grid_map (GridMap2)
+            kwargs: used to initialize possible locations in the search region.
         """
         super().__init__(grid_map,
                          region_origin=region_origin,
                          search_space_resolution=grid_size)
+        self._init_options = init_options
+        self.possible_locations = self._init_possible_locations(grid_map)
+
+    def _init_possible_locations(self, grid_map):
+        possible_locations = set()
+        if self._init_options.get("include_free", True):
+            possible_locations.update(grid_map.free_locations)
+        expansion_width = self._init_options.get("expansion_width", 0.0)
+        if expansion_width > 0:
+            # This parameter has metric unit
+            expansion_width_grid = int(round(expansion_width / self.grid_size))
+            additional_locations = grid_map_utils.obstacles_around_free_locations(grid_map, dist=expansion_width_grid)
+            possible_locations.update(additional_locations)
+        return possible_locations
+
+    def update(self, obstacles, free_locations):
+        self.grid_map.update_region(obstacles, free_locations)
+        self.possible_locations = self._init_possible_locations()
 
     @property
     def is_3d(cls):
@@ -169,13 +190,13 @@ class SearchRegion2D(SearchRegion):
         return self.to_pomdp_pos(world_point)
 
     def __iter__(self):
-        return iter(self.grid_map.free_locations)
+        return iter(self.possible_locations)
 
     def __len__(self):
-        return len(self.grid_map.free_locations)
+        return len(self.possible_locations)
 
     def __contains__(self, pos):
-        return pos in self.grid_map.free_locations
+        return pos in self.possible_locations
 
     def pos_to_voxel(self, pos, z3d, search_region3d, res=1):
         """Project a POMDP pos in 2D to a 3D voxel at a given resolution
@@ -184,6 +205,7 @@ class SearchRegion2D(SearchRegion):
         pos3d_plane = search_region3d.to_pomdp_pos((*pos_world2d, 0))
         pos3d = (*pos3d_plane[:2], z3d)
         return (*Octree.increase_res(pos3d, 1, res), res)
+
 
 class SearchRegion3D(SearchRegion):
     """The 3D search region is represented as an octree_dist
@@ -210,6 +232,9 @@ class SearchRegion3D(SearchRegion):
     @octree_dist.setter
     def octree_dist(self, octree_dist):
         self._region_repr = octree_dist
+
+    def update(self, octree_dist):
+        self.octree_dist = octree_dist
 
     def to_octree_pos(self, world_point):
         return self.to_pomdp_pos(world_point)

@@ -105,7 +105,7 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     if existing_search_region is not None:
         # the octree of the search region will be discarded, but its origin is kept.
         search_region = existing_search_region
-        search_region.octree_dist = octree_dist
+        search_region.update(octree_dist)
     else:
         search_region = SearchRegion3D(
             octree_dist, region_origin=origin,
@@ -243,7 +243,7 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
 
     # Update existing map, or build new map
     if existing_search_region is not None:
-        existing_search_region.grid_map.update_region(obstacles, free_locations)
+        existing_search_region.update(obstacles, free_locations)
         return_search_region = existing_search_region
     else:
         grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)
