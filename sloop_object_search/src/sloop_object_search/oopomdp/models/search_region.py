@@ -162,6 +162,8 @@ class SearchRegion2D(SearchRegion):
         possible_locations = set()
         if self._init_options.get("include_free", True):
             possible_locations.update(grid_map.free_locations)
+        if self._init_options.get("include_obstacles", True):
+            possible_locations.update(grid_map.obstacles)
         expansion_width = self._init_options.get("expansion_width", 0.0)
         if expansion_width > 0:
             # This parameter has metric unit

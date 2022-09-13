@@ -83,6 +83,9 @@ class SloopMosROS:
             layout_cut=search_region_config.get("layout_cut", 0.6),
             grid_size=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_2D),
             brush_size=search_region_config.get("brush_size", 0.5),
+            include_free=search_region_config.get("include_free", True),
+            include_obstacles=search_region_config.get("include_obstacles", True),
+            expansion_width=search_region_config.get("expansion_width", 0.5),
             debug=search_region_config.get("debug", False)
         )
         self._sloop_client.updateSearchRegion(

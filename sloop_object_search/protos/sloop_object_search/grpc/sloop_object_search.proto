@@ -248,6 +248,9 @@ message SearchRegionParams2D {
   optional double brush_size = 4;
   optional double region_size = 5;
   optional bool debug = 6;
+  optional bool include_free = 7;
+  optional bool include_obstacles = 8;
+  optional double expansion_width = 9;
 }
 
 message SearchRegionParams3D {

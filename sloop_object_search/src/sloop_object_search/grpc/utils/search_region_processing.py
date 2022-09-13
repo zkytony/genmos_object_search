@@ -181,6 +181,11 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
     # we will build/update, in meters. If don't want this, set it to negative.
     region_size = kwargs.get("region_size", 10.0)
 
+    # Search region init options
+    init_options = dict(include_free=kwargs.get("include_free", True),
+                        include_obstacles=kwargs.get("include_obstacles", False),
+                        expansion_width=kwargs.get("expansion_width", 0.5))
+
     # grid map name
     name = kwargs.get("name", "grid_map2")
 
@@ -249,7 +254,8 @@ def points_to_search_region_2d(points, robot_position, existing_search_region=No
         grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)
         return_search_region = SearchRegion2D(grid_map,
                                               region_origin=origin,
-                                              grid_size=grid_size)
+                                              grid_size=grid_size,
+                                              **init_options)
 
     ## Debugging
     if debug:

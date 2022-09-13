@@ -39,6 +39,12 @@ def process_search_region_params_2d(search_region_params_2d_pb):
         params["brush_size"] = search_region_params_2d_pb.brush_size
     if search_region_params_2d_pb.HasField('region_size'):
         params["region_size"] = search_region_params_2d_pb.region_size
+    if search_region_params_2d_pb.HasField('include_free'):
+        params["include_free"] = search_region_params_2d_pb.include_free
+    if search_region_params_2d_pb.HasField('include_obstacles'):
+        params["include_obstacles"] = search_region_params_2d_pb.include_obstacles
+    if search_region_params_2d_pb.HasField('expansion_width'):
+        params["expansion_width"] = search_region_params_2d_pb.expansion_width
     if search_region_params_2d_pb.HasField('debug'):
         params["debug"] = search_region_params_2d_pb.debug
     return params
