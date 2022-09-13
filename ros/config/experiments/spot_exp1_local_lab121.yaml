@@ -42,8 +42,8 @@ agent_config:
     id: robot0
     no_look: true
     reachable:
-      max_height: 1.4
-      min_height: 0.3
+      max_height: 1.2
+      min_height: 0.5
     sensors:
     - name: camera
       params:

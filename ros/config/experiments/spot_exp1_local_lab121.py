@@ -27,8 +27,8 @@ CONFIG_LOCAL = {
                                 'sep': 0.75 },
                        'policy': {'cost_scaling_factor': 1.5}},
             "reachable": {
-                "min_height": 0.3,
-                "max_height": 1.4
+                "min_height": 0.5,
+                "max_height": 1.2
             }
         },
         'objects': {'Cat': {'class': 'Cat',
