@@ -4,7 +4,6 @@ agent_config:
   belief:
     init_params:
       num_samples: 3000
-      prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
       step_size: 0.4
@@ -32,9 +31,9 @@ agent_config:
         3d_proj_2d:
           brush_size: 0.2
           debug: true
-          floor_cut: 0.15
+          floor_cut: 0.01
           inflation: 0.25
-          layout_cut: 0.65
+          layout_cut: 0.1
         num_nodes: 10
         pos_importance_thres: 0.01
         sep: 0.75
