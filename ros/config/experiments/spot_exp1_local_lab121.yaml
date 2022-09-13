@@ -9,21 +9,7 @@ agent_config:
       num_rays: 150
       step_size: 0.4
       voxel_res: 2
-  objects:
-    Cat:
-      class: Cat
-      color:
-      - 0.4
-      - 0.7
-      - 0.3
-      - 0.8
-      sizes:
-      - 0.14
-      - 0.08
-      - 0.1
-      transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
-      viz_type: cube
+  objects: {}
   robot:
     action:
       policy:
@@ -43,16 +29,16 @@ agent_config:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 100000.0
+          - 1000000.0
           - 0.1
-          sensor: camera
+          sensor: hand_camera
     id: robot0
     no_look: true
     reachable:
       max_height: 1.2
       min_height: 0.5
     sensors:
-    - name: camera
+    - name: hand_camera
       params:
         aspect_ratio: 0.5
         far: 1.5

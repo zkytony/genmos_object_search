@@ -17,10 +17,10 @@ HAND_CAMERA = {'name': 'hand_camera',
                           'aspect_ratio': 0.5,
                           'occlusion_enabled': True}}
 
-HAND_FAN = {{"name": 'hand_fan',
-             'params': {'fov': 50,
-                        'min_range': 0.2,
-                        'max_range': 1.5}}}
+HAND_FAN = {"name": 'hand_fan',
+            'params': {'fov': 50,
+                       'min_range': 0.2,
+                       'max_range': 1.5}}
 
 LOCAL_TOPO = {'num_nodes': 10,
               'pos_importance_thres': 0.01,
@@ -58,13 +58,12 @@ GLOBAL_DETECTORS = {
 }
 
 OBJECTS = {
-    {'Cat': {'class': 'Cat',
-             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
-             'color': [0.4, 0.7, 0.3, 0.8],
-             'viz_type': 'cube',
-             'sizes': [0.14, 0.08, 0.10]}}
+    'Cat': {'class': 'Cat',
+            'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+            'color': [0.4, 0.7, 0.3, 0.8],
+            'viz_type': 'cube',
+            'sizes': [0.14, 0.08, 0.10]}
 }
-
 
 
 def make_objects(local_or_global, *objects):
