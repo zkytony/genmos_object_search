@@ -623,7 +623,7 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
 
         obstacles = set(tuple(gp[:2]) for gp in points
                         if util.in_box2d_origin(gp[:2], region_2d))
-        free_locations = set(tuple(gp[:2]) for gp in points
+        free_locations = set(tuple(gp[:2]) for gp in floor_points
                              if (util.in_box2d_origin(gp[:2], region_2d)
                                  and tuple(gp[:2]) not in obstacles))
         grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)

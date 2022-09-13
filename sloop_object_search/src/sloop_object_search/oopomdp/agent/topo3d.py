@@ -93,17 +93,19 @@ class MosAgentTopo3D(MosAgentBasic3D):
         """
         above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
         not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
-        pos2d = (int(round(pos[0])), int(round(pos[1])))
-        # res_buf: blows up the voxel at pos to keep some distance to obstacles
-        # It will affect where the topological graph nodes are placed with respect
-        # to obstacles.
-        res = self.topo_config.get("res_buf", 4)
-        pos_res = Octree.increase_res(pos, 1, res)
-        valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
-        not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
-            and pos2d not in self.obstacles2d
-        return above_ground and not_too_high and valid_voxel and not_occupied
-
+        if above_ground and not_too_high:
+            pos2d = (int(round(pos[0])), int(round(pos[1])))
+            # res_buf: blows up the voxel at pos to keep some distance to obstacles
+            # It will affect where the topological graph nodes are placed with respect
+            # to obstacles.
+            res = self.topo_config.get("res_buf", 4)
+            pos_res = Octree.increase_res(pos, 1, res)
+            valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
+            if valid_voxel:
+                not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
+                    and pos2d not in self.obstacles2d
+                return not_occupied
+        return False
 
     def _update_robot_belief(self, observation, action=None, **kwargs):
         """observation should be RobotObservation"""
