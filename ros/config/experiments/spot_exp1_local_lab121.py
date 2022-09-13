@@ -6,9 +6,16 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                 "prior_from_occupancy": True}}
 
 SEARCH_REGION_3D = {"res": 0.07,
-                           "region_size_x": 2.5,
-                           "region_size_y": 2.5,
-                           "region_size_z": 1.8}
+                    "region_size_x": 2.5,
+                    "region_size_y": 2.5,
+                    "region_size_z": 1.8}
+
+SEARCH_REGION_2D = {"res": 0.3,
+                    "region_size": 3.0,
+                    "layout_cut": 0.4,
+                    "floor_cut": 0.15,
+                    "brush_size": 0.5,
+                    "expansion_width": 0.0}
 
 HAND_CAMERA = {'name': 'hand_camera',
                'params': {'fov': 50,
@@ -116,6 +123,8 @@ CONFIG_HIER = {
         "agent_type": "hierarchical",  # 'hierarchical' or 'local'
         "belief": {"init_params": {"prior_from_occupancy": False}},
         "belief_local": LOCAL_BELIEF,
+        "search_region": {"3d": SEARCH_REGION_3D,
+                          "2d": SEARCH_REGION_2D},
         "robot": {
             "id": "robot0",
             "no_look": True,
@@ -123,11 +132,13 @@ CONFIG_HIER = {
             "sensors": [HAND_FAN],
             "action": {"topo": {
                 "inflation": 0.25,
+                "debug": True
             }},
             #### Below are specific to hierarchical type agents ####
             "sensors_local": [HAND_CAMERA],
             "detectors_local": make_detectors("local", "Cat"),
-            "action_local": LOCAL_ACTION
+            "action_local": LOCAL_ACTION,
+            "reachable_local": LOCAL_REACHABLE,
         },
         'objects': make_objects("Cat"),
         'targets': ['Cat'],
@@ -154,7 +165,7 @@ CONFIG_HIER = {
     }
 }
 
-CONFIG = CONFIG_LOCAL
+CONFIG = CONFIG_HIER
 
 import yaml
 def main():
