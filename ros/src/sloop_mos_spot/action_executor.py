@@ -81,6 +81,16 @@ class SpotSloopActionExecutor(ActionExecutor):
                 rospy.loginfo(typ.warning("User terminates action execution"))
                 return False
 
+        # If the distance between the two positions is not short
+        # the robot should stow its arm
+        robot_pose_msg = ros_utils.WaitForMessages(
+            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True).messages[0]
+        current_pose = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        if math_utils.euclidean_dist(current_pose[:2], goal_pose[:2]) > NAV_DISTANCE_VERY_SHORT:
+            rbd_spot.arm.close_gripper(self.conn, self.command_client)
+            rbd_spot.arm.stow(self.conn, self.command_client)
+
         # Navigate to a 2D pose first. Note that because the goal_pose is
         # the hand pose in world frame, while for navigation, we control
         # the body pose. We will move the robot back slightly after done.
@@ -99,8 +109,32 @@ class SpotSloopActionExecutor(ActionExecutor):
         if not nav_success:
             return False
 
-        return True
+        # Move backwards a little bit
+        vx = 0.75
+        rbd_spot.body.velocityCommand(
+            self.conn, self.command_client, -vx, 0.0, 0.0, duration=SPOT_HAND_TO_BODY_DISTANCE/vx)
 
+        # Now, move the end effector. Get the goal pose from world frame to body frame.
+        # # will always set the goal pose's roll to 0. Just pitch and yaw is enough!
+        # goal_quat = math_utils.euler_to_quat(0, thy, thz)
+        # goal_pose = (*goal_pose[:3], *goal_quat)
+        # _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.world_frame, rospy.Time(0))
+        # goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_hand_msg, _trans)
+        goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
+        goal_pose_body_msg = ros_utils.tf2_transform(self.tfbuffer, goal_pose_msg, self.body_frame)
+        goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
+
+        # Then, we use moveEE with body follow to move the camera to the goal pose.
+        # Note that moveEEToWithBodyFollow takes in a pose relative to the
+        # current body frame, while our goal_pose is in the world frame.
+        # open gripper to better see
+        rbd_spot.arm.open_gripper(self.conn, self.command_client)
+        rbd_spot.arm.unstow(self.conn, self.command_client)
+        cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
+            self.conn, self.command_client, self.robot_state_client, goal_pose_body)
+        return cmd_success
+
+        # return True
 
         # robot_pose_msg = ros_utils.WaitForMessages(
         #     [self._robot_pose_topic], [geometry_msgs.PoseStamped],
