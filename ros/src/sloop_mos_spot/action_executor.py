@@ -77,13 +77,19 @@ class SpotSloopActionExecutor(ActionExecutor):
         nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_stamped, _trans)
         nav_goal_body = ros_utils.pose_tuple_from_pose_stamped(nav_goal_body_stamped)
 
-        # will always set the goal pose's roll to 0. Just pitch and yaw is enough!
-        goal_quat = math_utils.euler_to_quat(0, thy, thz)
-        goal_pose = (*goal_pose[:3], *goal_quat)
-        goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
-        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
-        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
-        goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
+        # # Here, we get
+        # # will always set the goal pose's roll to 0. Just pitch and yaw is enough!
+        # goal_quat = math_utils.euler_to_quat(0, thy, 0)
+        # goal_pose = (0, 0, goal_pose[2], *goal_quat)
+        # goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
+        # _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
+        # goal_pose_hand_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
+        # _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
+        # goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_hand_msg, _trans)
+
+        # goal_pose_hand = ros_utils.pose_tuple_from_pose_stamped(goal_pose_hand_msg)
+        # goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
+        # import pdb; pdb.set_trace()
 
         # Publish visualization markers
         # clear markers first
@@ -95,11 +101,11 @@ class SpotSloopActionExecutor(ActionExecutor):
         _nav_goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
             self.robot_id + "_nav", nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
-        _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, goal_pose, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
-            scale=_marker_scale, color=[0.12, 0.89, 0.95, 0.9], lifetime=0)
-        self._goal_viz_pub.publish(MarkerArray([_nav_goal_marker_msg,
-                                                _goal_marker_msg]))
+        # _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
+        #     self.robot_id, goal_pose_hand, std_msgs.Header(frame_id=self.hand_frame, stamp=rospy.Time.now()),
+        #     scale=_marker_scale, color=[0.12, 0.89, 0.95, 0.9], lifetime=0)
+        self._goal_viz_pub.publish(MarkerArray([_nav_goal_marker_msg]))
+                                                # _goal_marker_msg]))
 
         if self.check_before_execute:
             if not confirm_yes("Execute change viewpoint action?"):
@@ -129,30 +135,30 @@ class SpotSloopActionExecutor(ActionExecutor):
             verbose=True).messages[0]
         current_pose = ros_utils.pose_to_tuple(current_pose_msg.pose)
         cur_thz = math_utils.quat_to_euler(*current_pose[3:])[2]
-        duration = 0.75
         adiff = math_utils.angle_diff_relative(thz, cur_thz)
-        v_rot = math_utils.to_rad(adiff / duration)
+        v_rot = 0.5
+        duration = min(math_utils.to_rad(adiff / v_rot), 3.0)
+        thz = thz % 360
+        cur_thz = cur_thz % 360
+        if (cur_thz + 180) % 360 < thz:
+            v_rot = -v_rot
         try:
-            if thz - cur_thz < 0:
-                rbd_spot.body.velocityCommand(
-                    self.conn, self.command_client, 0.0, 0.0, -v_rot, duration=duration)  # 1s is roughtly ~<45deg
-            else:
-                rbd_spot.body.velocityCommand(
-                    self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)  # 1s is roughtly ~<45deg
+            rbd_spot.body.velocityCommand(
+                self.conn, self.command_client, 0.0, 0.0, v_rot, duration=duration)
         except InvalidRequestError as ex:
             import pdb; pdb.set_trace()
             return False
+        # # Then, we use moveEE with body follow to move the camera to the goal pose.
+        # # Note that moveEEToWithBodyFollow takes in a pose relative to the
+        # # current body frame, while our goal_pose is in the world frame.
+        # # open gripper to better see
+        # rbd_spot.arm.open_gripper(self.conn, self.command_client)
+        # rbd_spot.arm.unstow(self.conn, self.command_client)
 
-        # Then, we use moveEE with body follow to move the camera to the goal pose.
-        # Note that moveEEToWithBodyFollow takes in a pose relative to the
-        # current body frame, while our goal_pose is in the world frame.
-        # open gripper to better see
-        rbd_spot.arm.open_gripper(self.conn, self.command_client)
-        rbd_spot.arm.unstow(self.conn, self.command_client)
-
-        cmd_success = rbd_spot.arm.moveEETo(
-            self.conn, self.command_client, self.robot_state_client, goal_pose_body)
-        return cmd_success
+        # cmd_success = rbd_spot.arm.moveEETo(
+        #     self.conn, self.command_client, self.robot_state_client, goal_pose_body)
+        # return cmd_success
+        return True
 
 
     def _execute_action_cb(self, msg):

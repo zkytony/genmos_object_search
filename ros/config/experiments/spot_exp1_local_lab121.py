@@ -6,8 +6,8 @@ CONFIG_LOCAL = {
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
-                   "init_params": {"num_samples": 3000,
-                                   "prior_from_occupancy": True}},
+                   "init_params": {"num_samples": 3000}},
+                                   # "prior_from_occupancy": True}},
         "search_region": {"3d": {"res": 0.07}},
         'robot': {
             'id': 'robot0',

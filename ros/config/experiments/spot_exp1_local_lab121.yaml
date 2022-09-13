@@ -4,7 +4,6 @@ agent_config:
   belief:
     init_params:
       num_samples: 3000
-      prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
       step_size: 0.4
