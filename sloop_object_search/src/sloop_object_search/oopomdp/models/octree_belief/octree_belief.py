@@ -583,19 +583,21 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
         search_region_processing.py/points_to_search_region_2d
         Note that the parameters should have POMDP units.
         seed_pos is the position (in POMDP frame) for flooding."""
+        region_origin, w, l, h = self.region
+        region_2d = (region_origin[:2], w, l)
         # The height above which the points indicate nicely the layout of the room
         # while preserving big obstacles like tables.
-        layout_cut = kwargs.get("layout_cut", self.dimensions[0]*0.65)
+        layout_cut = kwargs.get("layout_cut", h*0.65)
 
         # We will regard points with z within layout_cut +/- floor_cut
         # to be the points that represent the floor.
-        floor_cut = kwargs.get("floor_cut", self.dimensions[0]*0.15)
+        floor_cut = kwargs.get("floor_cut", h*0.15)
 
         # flood brush size: When flooding, we use a brush. If the brush
         # doesn't fit (it hits an obstacle), then the flood won't continue there.
         # 'brush_size' is the length of the square brush in meters. Intuitively,
         # this defines the width of the minimum pathway the robot can go through.
-        brush_size = kwargs.get("brush_size", self.dimensions[0]*0.05)
+        brush_size = kwargs.get("brush_size", w*0.05)
 
         # grid map name
         name = kwargs.get("name", "grid_map2")
@@ -615,21 +617,18 @@ class OccupancyOctreeDistribution(RegionalOctreeDistribution):
         xmin, ymin, zmin = np.min(points, axis=0)
         floor_points_filter = np.isclose(points[:,2], zmin, atol=floor_cut)
         floor_points = points[floor_points_filter]
-        dimension = self.octree_dist.octree.dimensions[0]
         floor_points = flood_fill_2d(floor_points, (*seed_pos, 0),
                                      grid_brush_size=int(round(brush_size)),
-                                     flood_region_size=dimension)
+                                     flood_region_size=min(w, l))
 
-        obstacles = set((gp[0], gp[1]) for gp in points
-                        if (0 <= gp[0] < dimension\
-                            and 0 <= gp[1] < dimension))
-        free_locations = set((gp[0], gp[1]) for gp in floor_points
-                             if (gp not in obstacles\
-                                 and (0 <= gp[0] < dimension\
-                                      and 0 <= gp[1] < dimension)))
+        obstacles = set(tuple(gp[:2]) for gp in points
+                        if util.in_box2d_origin(gp[:2], region_2d))
+        free_locations = set(tuple(gp[:2]) for gp in points
+                             if (util.in_box2d_origin(gp[:2], region_2d)
+                                 and tuple(gp[:2]) not in obstacles))
         grid_map = GridMap2(name=name, obstacles=obstacles, free_locations=free_locations)
         if debug:
-            from sloop_object_search.utils.visual import GridMap2Visualizer
+            from sloop_object_search.utils.visual2d import GridMap2Visualizer
             viz = GridMap2Visualizer(grid_map=grid_map, res=15)
             img = viz.render()
             viz.show_img(img)

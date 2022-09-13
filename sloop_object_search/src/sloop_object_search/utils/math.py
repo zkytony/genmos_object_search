@@ -527,12 +527,21 @@ def in_box3d_origin(p, box):
     are dimensions along x, y, z axes, respectively."""
     if len(p) != 3:
         raise ValueError("Requires point to be 3D")
-    center, lx, ly, lz = box
+    origin, lx, ly, lz = box
     px, py, pz = p
-    ox, oy, oz = center
+    ox, oy, oz = origin
     return 0 <= px - ox <= lx\
         and 0 <= py - oy <= ly\
         and 0 <= pz - oz <= lz
+
+def in_box2d_origin(p, box):
+    if len(p) != 2:
+        raise ValueError("Requires point to be 2D")
+    origin, lx, ly = box
+    px, py = p
+    ox, oy = origin
+    return 0 <= px - ox <= lx\
+        and 0 <= py - oy <= ly
 
 def boxes_overlap3d_origin(box1, box2):
     """Return True if the two origin-based boxes overlap
