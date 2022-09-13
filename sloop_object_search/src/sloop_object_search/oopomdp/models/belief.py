@@ -63,9 +63,12 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
         f"search_region should be a SearchRegion3D but its {type(search_region)}"
     prior = belief_config.get("prior", {})
     init_params = belief_config.get("init_params", {})
+    prior_from_occupancy = init_params.get("prior_from_occupancy", False)
+
     object_beliefs = {}
     dimension = search_region.octree_dist.octree.dimensions[0]
-    # leaves = search_region.octree_dist.octree.get_leaves()
+    if prior_from_occupancy:
+        leaves = search_region.octree_dist.octree.get_leaves()
     for objid in target_objects:
         target = target_objects[objid]
         if kwargs.get("for_local_hierarchical", False):
@@ -87,11 +90,12 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
                 # TODO: make 'normalized' configurable
                 octree_belief.assign(state, prob,
                                      normalized=kwargs.get("normalized", True))
-        # for leaf in leaves:
-        #     x,y,z = leaf.pos
-        #     r = leaf.res
-        #     state = ObjectState(objid, target["class"], (x,y,z), res=r)
-        #     octree_belief.assign(state, 100)
+        if prior_from_occupancy:
+            for leaf in leaves:
+                x,y,z = leaf.pos
+                r = leaf.res
+                state = ObjectState(objid, target["class"], (x,y,z), res=r)
+                octree_belief.assign(state, 100)
 
         object_beliefs[objid] = octree_belief
     return object_beliefs
