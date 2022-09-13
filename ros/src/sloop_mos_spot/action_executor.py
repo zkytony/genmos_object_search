@@ -50,7 +50,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         self._robot_pose_topic = "~robot_pose"
         self.robot_id = rospy.get_param("~robot_id")
         self.world_frame = rospy.get_param("~world_frame")
-        self.body_frame = rospy.get_param("~body_frame")
+        self.hand_frame = rospy.get_param("~hand_frame")
         self.check_before_execute = rospy.get_param("~check_before_execute", True)
         self.tfbuffer = tf2_ros.Buffer()
         self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
@@ -83,10 +83,10 @@ class SpotSloopActionExecutor(ActionExecutor):
         nav_goal_msg = ros_utils.pose_tuple_to_pose_stamped(nav_goal, self.world_frame)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
 
-        goal_pose_body_msg = None
-        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.world_frame, rospy.Time(0))
-        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
-        goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
+        goal_pose_hand_msg = None
+        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
+        goal_pose_hand_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
+        goal_pose_hand = ros_utils.pose_tuple_from_pose_stamped(goal_pose_hand_msg)
 
         # Publish visualization markers
         # clear markers first
@@ -99,7 +99,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             self.robot_id + "_nav", nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
         _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id, goal_pose_body, std_msgs.Header(frame_id=self.body_frame, stamp=rospy.Time.now()),
+            self.robot_id, goal_pose_hand, std_msgs.Header(frame_id=self.hand_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.12, 0.89, 0.95, 0.9], lifetime=0)
         self._goal_viz_pub.publish(MarkerArray([_nav_goal_marker_msg,
                                                 _goal_marker_msg]))
@@ -130,9 +130,8 @@ class SpotSloopActionExecutor(ActionExecutor):
         # open gripper to better see
         rbd_spot.arm.open_gripper(self.conn, self.command_client)
 
-        # get goal pose in body frame
         cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
-            self.conn, self.command_client, self.robot_state_client, goal_pose_body)
+            self.conn, self.command_client, self.robot_state_client, goal_pose_hand)
         return cmd_success
 
 
@@ -204,41 +203,3 @@ class SpotSloopActionExecutor(ActionExecutor):
                                 "navigation command is not complete yet",
                                 action_id, stamp)
             return None
-
-
-
-    # @classmethod
-    # def action_to_ros_msg(self, agent, action, goal_id):
-    #     print(action)
-
-    #     if isinstance(action, MotionActionTopo):
-    #         # The navigation goal is specified with respect to the global map frame.
-    #         goal_pos = action.dst_pose[:2]
-    #         goal_yaw = to_rad(action.dst_pose[2])
-    #         metric_pos = agent.grid_map.to_metric_pos(*goal_pos)
-    #         action_msg = KeyValAction(stamp=rospy.Time.now(),
-    #                                   type="move_topo",
-    #                                   keys=["goal_x", "goal_y", "goal_yaw", "name"],
-    #                                   values=[str(metric_pos[0]), str(metric_pos[1]), str(goal_yaw), action.name])
-    #         return action_msg
-
-    #     elif isinstance(action, MotionAction2D):
-    #         # We will make the robot move its arm with body follow; The robot arm
-    #         # movement is specified with respect to the robot frame.
-    #         robot_pose_after_action = RobotTransBasic2D.transform_pose((0, 0, 0.0), action)
-
-    #         # note that by default the gripper is a bit forward with respect to the body origin
-    #         metric_pos_x = 0.65 + robot_pose_after_action[0] * agent.grid_map.grid_size
-    #         metric_pos_y = robot_pose_after_action[1] * agent.grid_map.grid_size
-    #         metric_yaw = to_rad(-robot_pose_after_action[2])  # For spot's frame, we needed to reverse the angle
-    #         action_msg = KeyValAction(stamp=rospy.Time.now(),
-    #                                   type="move_2d",
-    #                                   keys=["goal_x", "goal_y", "goal_yaw", "name"],
-    #                                   values=[str(metric_pos_x), str(metric_pos_y), str(metric_yaw), action.name])
-    #         return action_msg
-
-    #     elif isinstance(action, FindAction):
-    #         return KeyValAction(stamp=rospy.Time.now(),
-    #                             type="find",
-    #                             keys=[],
-    #                             values=[])
