@@ -63,16 +63,8 @@ class SpotSloopActionExecutor(ActionExecutor):
         # To navigate to this pose, we first navigate to a pose
         # at the same position, with the same yaw, but a set height,
         # and zero in other rotations.
-        robot_pose_msg = ros_utils.WaitForMessages(
-            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
-            verbose=True).messages[0]
-        current_pose = ros_utils.pose_to_tuple(robot_pose_msg.pose)
-
-        # If the distance between the two positions is long,
-        # the robot should stow its arm
-        if math_utils.euclidean_dist(current_pose[:3], goal_pose[:3]) >= LONG_NAV_DISTANCE:
-            rbd_spot.arm.close_gripper(self.conn, self.command_client)
-            rbd_spot.arm.stow(self.conn, self.command_client)
+        rbd_spot.arm.close_gripper(self.conn, self.command_client)
+        rbd_spot.arm.stow(self.conn, self.command_client)
 
         # Compute navigation goal and the final goal. Note that the goal is
         # for the hand (though in world frame), but navigateTo controls the body. We will account for this.
