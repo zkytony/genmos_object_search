@@ -89,10 +89,13 @@ class SpotSloopActionExecutor(ActionExecutor):
         goal_quat = math_utils.euler_to_quat(0, thy, thz)
         goal_pose = (*goal_pose[:3], *goal_quat)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
-        goal_pose_hand_msg = None
         _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
         goal_pose_hand_msg = ros_utils.tf2_do_transform(goal_pose_msg, _trans)
+        _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
+        goal_pose_body_msg = ros_utils.tf2_do_transform(goal_pose_hand_msg, _trans)
+
         goal_pose_hand = ros_utils.pose_tuple_from_pose_stamped(goal_pose_hand_msg)
+        goal_pose_body = ros_utils.pose_tuple_from_pose_stamped(goal_pose_body_msg)
 
         # Publish visualization markers
         # clear markers first
@@ -138,7 +141,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         rbd_spot.arm.unstow(self.conn, self.command_client)
 
         cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
-            self.conn, self.command_client, self.robot_state_client, goal_pose_hand)
+            self.conn, self.command_client, self.robot_state_client, goal_pose_body)
         return cmd_success
 
 

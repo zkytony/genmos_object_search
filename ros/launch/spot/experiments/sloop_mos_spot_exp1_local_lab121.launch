@@ -9,6 +9,7 @@
               file="$(find sloop_object_search_ros)/config/experiments/spot_exp1_local_lab121.yaml"/>
     <param name="robot_id" value="spot_$(arg spot)"/>
     <param name="world_frame" value="graphnav_map"/>
+    <param name="check_before_execute" value="False"/>
     <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
     <remap from="~robot_pose" to="/spot_hand_pose"/>
     <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/>
