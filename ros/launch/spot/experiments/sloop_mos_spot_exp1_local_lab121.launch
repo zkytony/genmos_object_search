@@ -13,6 +13,7 @@
     <remap from="~robot_pose" to="/spot_hand_pose"/>
     <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/>
     <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/>
+    <remap from="~action_done" to="/spot_$(arg spot)/action_executor/done"/>
   </node>
 
 </launch>
