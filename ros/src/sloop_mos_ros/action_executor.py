@@ -44,7 +44,7 @@ class ActionExecutor:
         self._status_pub = rospy.Publisher(self._status_topic,
                                            GoalStatus,
                                            queue_size=10, latch=True)
-        self._done_sub = rospy.Publisher(self._done_topic,
+        self._done_pub = rospy.Publisher(self._done_topic,
                                          std_msgs.String,
                                          queue_size=10, latch=True)
         self._action_sub = rospy.Subscriber(self._action_topic,
@@ -60,13 +60,14 @@ class ActionExecutor:
                             text=text)
         status.goal_id.id = action_id
         status.goal_id.stamp = stamp
-        if status == GoalStatus.ABORTED or status == GoalStatus.REJECTED:
+        if status.status == GoalStatus.ABORTED or status.status == GoalStatus.REJECTED:
             rospy.logerr(text)
         else:
             rospy.loginfo(text)
         self._status_pub.publish(status)
 
         if pub_done:
-            if status == GoalStatus.ABORTED or status == GoalStatus.REJECTED:
+            if status.status == GoalStatus.ABORTED or status.status == GoalStatus.REJECTED\
+               or status.status == GoalStatus.SUCCEEDED:
                 # We are done - whether we succeeded or not
                 self._done_pub.publish(std_msgs.String(f"{action_id} done"))

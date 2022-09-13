@@ -26,7 +26,7 @@ from sloop_object_search.utils.misc import confirm_yes
 from bosdyn.client.math_helpers import Quat
 from bosdyn.api.graph_nav import graph_nav_pb2
 from bosdyn.api import robot_command_pb2
-from bosdyn.api.geometry_pb2 import Vec2, Vec3, SE2VelocityLimit, SE2Velocity
+from bosdyn.api.geometry_pb2 import Vec2, Vec3, SE2VelocityLimit, SE2Velocity, Quaternion
 import rbd_spot
 
 # distance between hand and body frame origin
@@ -75,16 +75,19 @@ class SpotSloopActionExecutor(ActionExecutor):
             rbd_spot.arm.stow(self.conn, self.command_client)
 
         # Compute navigation goal and the final goal. Note that the goal is
-        # for the hand, but navigateTo controls the body. We will account for this.
+        # for the hand (though in world frame), but navigateTo controls the body. We will account for this.
         thx, thy, thz = math_utils.quat_to_euler(*goal_pose[3:])
-        nav_quat = Quat.from_yaw(thz)
-        nav_goal_hand = (goal_pose[0], goal_pose[1], NAV_HEIGHT,
-                         nav_quat.x, nav_quat.y, nav_quat.z, nav_quat.w)
-        nav_goal_hand_stamped = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
+        nav_quat = Quat.from_yaw(math_utils.to_rad(thz))
+        nav_goal = (goal_pose[0], goal_pose[1], NAV_HEIGHT,
+                    nav_quat.x, nav_quat.y, nav_quat.z, nav_quat.w)
+        nav_goal_stamped = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
         _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.body_frame, self.hand_frame, rospy.Time(0))
-        nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_hand_stamped, _trans)
+        nav_goal_body_stamped = ros_utils.tf2_do_transform(nav_goal_stamped, _trans)
         nav_goal_body = ros_utils.pose_tuple_from_pose_stamped(nav_goal_body_stamped)
 
+        # will always set the goal pose's roll to 0. Just pitch and yaw is enough
+        goal_quat = math_utils.euler_to_quat(0, thy, thz)
+        goal_pose = (*goal_pose[:3], *goal_quat)
         goal_pose_msg = ros_utils.pose_tuple_to_pose_stamped(goal_pose, self.world_frame)
         goal_pose_hand_msg = None
         _trans = ros_utils.tf2_lookup_transform(self.tfbuffer, self.hand_frame, self.world_frame, rospy.Time(0))
@@ -99,7 +102,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         # then make the markers for goals; We will still visualize hand messages (that's what we care about)
         _marker_scale = geometry_msgs.Vector3(x=0.4, y=0.05, z=0.05)
         _nav_goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
-            self.robot_id + "_nav", nav_goal_hand, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
+            self.robot_id + "_nav", nav_goal, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
             scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
         _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
             self.robot_id, goal_pose_hand, std_msgs.Header(frame_id=self.hand_frame, stamp=rospy.Time.now()),
@@ -132,6 +135,7 @@ class SpotSloopActionExecutor(ActionExecutor):
         # current body frame, while our goal_pose is in the world frame.
         # open gripper to better see
         rbd_spot.arm.open_gripper(self.conn, self.command_client)
+        rbd_spot.arm.unstow(self.conn, self.command_client)
 
         cmd_success = rbd_spot.arm.moveEEToWithBodyFollow(
             self.conn, self.command_client, self.robot_state_client, goal_pose_hand)
@@ -176,7 +180,7 @@ class SpotSloopActionExecutor(ActionExecutor):
                 self.conn, self.command_client, self.robot_state_client, (0.1, 0.0, 0.0))
             self.publish_status(GoalStatus.SUCCEEDED,
                                 typ.success("find action succeeded"),
-                                action_id, msg.stamp)
+                                action_id, msg.stamp, pub_done=True)
 
 
     def publish_nav_status(self, nav_feedback_code, action_id, stamp):
