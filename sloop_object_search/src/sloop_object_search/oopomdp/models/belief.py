@@ -56,8 +56,9 @@ def init_object_beliefs_2d(target_objects, search_region, belief_config={}, **kw
 
         if prior_from_occupancy:
             for obst in obstacles:
-                state = ObjectState(objid, target["class"], obst)
-                object_belief.assign(state, 100)
+                if obst in search_region:
+                    state = ObjectState(objid, target["class"], obst)
+                    object_belief.assign(state, 100)
         object_beliefs[objid] = object_belief
 
     return object_beliefs

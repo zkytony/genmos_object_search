@@ -56,7 +56,7 @@ agent_config:
         params:
           quality:
           - 100000.0
-          - 0.8
+          - 1.0
           sensor: hand_fan
     detectors_local:
       Cat:
@@ -64,7 +64,7 @@ agent_config:
         params:
           quality:
           - 1000000.0
-          - 0.5
+          - 1.0
           sensor: hand_camera
     id: robot0
     no_look: true

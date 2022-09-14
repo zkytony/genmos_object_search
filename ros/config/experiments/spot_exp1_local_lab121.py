@@ -55,13 +55,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 LOCAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "hand_camera",
-                       "quality": [1e6, 0.5]}},
+                       "quality": [1e6, 1.0]}},
 }
 
 GLOBAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
             'params': {"sensor": "hand_fan",
-                       "quality": [1e5, 0.8]}},
+                       "quality": [1e5, 1.0]}},
 }
 
 OBJECTS = {
