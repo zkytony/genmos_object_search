@@ -124,6 +124,8 @@ class PolicyModelBasic2D(PolicyModel):
             for move in self.policy_model.valid_moves(state):
                 srobot_next = self.policy_model.robot_trans_model.sample(state, move)
                 for target_id in self.policy_model.target_ids:
+                    if target_id in srobot.objects_found:
+                        continue
                     starget = state.s(target_id)
                     # (1) 'move' brings the robot closer to target
                     if euclidean_dist(srobot_next.loc, starget.loc)\
@@ -218,6 +220,8 @@ class PolicyModelTopo(PolicyModel):
                 fake_next_state = pomdp_py.OOState({robot_id: srobot_next,
                                                **s_all_targets})
                 for target_id in self.policy_model.target_ids:
+                    if target_id in srobot.objects_found:
+                        continue
                     starget = state.s(target_id)
                     # (1) 'move' brings the robot closer to target
                     if euclidean_dist(srobot_next.loc, starget.loc)\
@@ -284,6 +288,8 @@ class PolicyModelBasic3D(PolicyModel):
             for move in self.policy_model.valid_moves(state):
                 srobot_next = self.policy_model.robot_trans_model.sample(state, move)
                 for target_id in self.policy_model.target_ids:
+                    if target_id in srobot.objects_found:
+                        continue
                     starget = state.s(target_id)
                     # (1) 'move' brings the robot closer to target
                     if euclidean_dist(srobot_next.loc, starget.loc)\
