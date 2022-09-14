@@ -452,7 +452,7 @@ class SloopMosROS:
 
         # additional parameters
         self.obqueue_size = rospy.get_param("~obs_queue_size", 200)
-        self.obdelay = rospy.get_param("~obs_delay", 0.5)
+        self.obdelay = rospy.get_param("~obs_delay", 1.0)
 
         # Need to wait for vision info
         vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
