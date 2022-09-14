@@ -268,14 +268,14 @@ class SloopMosROS:
                                  frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
-            if bobj_pb.object_id in self.objects_found:
-                continue
             color = self.agent_config["objects"][bobj_pb.object_id].get(
                 "color", [0.2, 0.7, 0.2])[:3]
             msg = ros_utils.make_object_belief2d_proto_markers_msg(
                 bobj_pb, header, self.search_space_res_2d,
                 color=color, pos_z=_pos_z)
             markers.extend(msg.markers)
+            if bobj_pb.object_id not in self.objects_found:
+                break  # just visualize one, unless it's found
         self._belief_2d_markers_pub.publish(MarkerArray(markers))
 
         # visualize topo map in robot belief
