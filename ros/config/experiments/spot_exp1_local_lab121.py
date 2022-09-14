@@ -4,9 +4,9 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": True,
-                                "occupancy_height_thres": 0.01,
-                                "occupancy_blow_up_res": 4,
-                                "occupancy_fill_height": True}}
+                                "occupancy_height_thres": 0.05,
+                                "occupancy_blow_up_res": 2,
+                                "occupancy_fill_height": False}}
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 

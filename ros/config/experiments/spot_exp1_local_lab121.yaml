@@ -4,8 +4,9 @@ agent_config:
   belief:
     init_params:
       num_samples: 3000
-      occupancy_blow_up_res: 4
-      occupancy_height_thres: 0.01
+      occupancy_blow_up_res: 2
+      occupancy_fill_height: false
+      occupancy_height_thres: 0.05
       prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150

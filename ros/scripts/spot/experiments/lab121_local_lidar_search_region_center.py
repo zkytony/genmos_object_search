@@ -8,7 +8,7 @@ def main():
     rospy.init_node("local_search_center_publisher")
     x = -0.17396485805511475
     y = -0.1354684829711914
-    z = 0.5
+    z = 0.25
     qx = 0.0
     qy = 0.0
     qz = 0.9992697136539744

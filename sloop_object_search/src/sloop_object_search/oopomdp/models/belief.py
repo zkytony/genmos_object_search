@@ -86,9 +86,9 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
         leaves = search_region.octree_dist.octree.get_leaves()
         leaf_voxels = {(*leaf.pos, leaf.res) for leaf in leaves}
         occupied_voxels = set()
-        if occupancy_fill_height:
-            for voxel in leaf_voxels:
-                occupied_voxels.add(voxel)
+        for voxel in leaf_voxels:
+            occupied_voxels.add(voxel)
+            if occupancy_fill_height:
                 x, y, z, r = voxel
                 for zn in range(z-1, 0-1, -1):
                     occupied_voxels.add((x, y, zn,r))
