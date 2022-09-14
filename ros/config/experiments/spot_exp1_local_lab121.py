@@ -24,10 +24,10 @@ SEARCH_REGION_2D = {"res": 0.3,
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 HAND_CAMERA = {'name': 'hand_camera',
-               'params': {'fov': 50,
+               'params': {'fov': 53,
                           'far': 1.5,
                           'near': 0.2,
-                          'aspect_ratio': 0.5,
+                          'aspect_ratio': 0.7,
                           'occlusion_enabled': True}}
 
 HAND_FAN = {"name": 'hand_fan',

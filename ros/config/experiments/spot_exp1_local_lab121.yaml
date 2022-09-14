@@ -58,9 +58,9 @@ agent_config:
     sensors:
     - name: hand_camera
       params:
-        aspect_ratio: 0.5
+        aspect_ratio: 0.7
         far: 1.5
-        fov: 50
+        fov: 53
         near: 0.2
         occlusion_enabled: true
   search_region:
