@@ -148,12 +148,12 @@ CONFIG_LOCAL = {
             'id': 'robot0',
             'no_look': True,
             'sensors': [HAND_CAMERA],
-            'detectors': make_detectors("local", "Cat"),
+            'detectors': make_detectors("local", "Cat", "ToyPlane", "Columbia Book"),
             'action': LOCAL_ACTION,
             "reachable": LOCAL_REACHABLE,
         },
-        'objects': make_objects("Cat"),
-        'targets': ['Cat'],
+        'objects': make_objects("Cat", "ToyPlane", "Columbia Book"),
+        'targets': ['Cat', "ToyPlane", "Columbia Book"],
     },
 
     "task_config": {
