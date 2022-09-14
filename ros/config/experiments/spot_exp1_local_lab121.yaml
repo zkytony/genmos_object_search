@@ -73,28 +73,28 @@ agent_config:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 1000000.0
+          - 10000000.0
           - 0.2
           sensor: hand_camera
       Lyzol:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 1000000.0
+          - 10000000.0
           - 0.2
           sensor: hand_camera
       Pringles:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 1000000.0
+          - 10000000.0
           - 0.2
           sensor: hand_camera
       ToyPlane:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 1000000.0
+          - 10000000.0
           - 0.2
           sensor: hand_camera
     id: robot0
