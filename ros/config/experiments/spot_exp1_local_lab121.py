@@ -15,7 +15,7 @@ SEARCH_REGION_2D = {"res": 0.3,
                     "layout_cut": 0.4,
                     "floor_cut": 0.15,
                     "brush_size": 0.5,
-                    "expansion_width": 0.0}
+                    "expansion_width": 0.5}
 
 HAND_CAMERA = {'name': 'hand_camera',
                'params': {'fov': 50,
