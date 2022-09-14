@@ -541,6 +541,8 @@ class FanModelAlphaBeta(FanModel):
             return 1.0
 
     def sample(self, si, srobot, return_event=False):
+        if si.id in srobot.objects_found:
+            return ObjectLoc(self.objid, ObjectLoc.NO_LOC, "found")
         loc = ObjectLoc(self.objid, ObjectLoc.NO_LOC, ObjectLoc.UNKNOWN)
         if srobot.in_range(self.sensor, si):
             if FrustumCamera.sensor_functioning(
@@ -614,6 +616,8 @@ class FrustumVoxelAlphaBeta(FrustumModel):
             return octree.DEFAULT_VAL
 
     def sample(self, si, srobot, return_event=False):
+        if si.id in srobot.objects_found:
+            return ObjectVoxel(self.objid, Voxel.NO_POSE, "found")
         voxel = ObjectVoxel(self.objid, Voxel.NO_POSE, Voxel.UNKNOWN)
         if srobot.in_range(self.sensor, si):
             voxel = ObjectVoxel(self.objid, si.loc, Voxel.UNKNOWN)

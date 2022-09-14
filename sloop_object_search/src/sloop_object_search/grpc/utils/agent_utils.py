@@ -449,18 +449,23 @@ def update_planner(planner, agent, observation, action):
     # at the ground resolution level. So we need to convert ObjectDetection
     # into a Voxel. For 2D agents, we need to convert it to ObjectLoc.
     planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
+    objects_found = agent.belief.b(agent.robot_id).mpe().objects_found
     for objid in observation:
         if objid == agent.robot_id:
             continue
         zobj = observation.z(objid)
         if isinstance(zobj, slpo.ObjectDetection):
             if agent.search_region.is_3d:
+                if objid in objects_found:
+                    planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE, "found")
                 if zobj.loc is not None:
                     planning_zobj = slpo.ObjectVoxel(objid, zobj.loc, objid)
                 else:
                     planning_zobj = slpo.ObjectVoxel(objid, slpo.Voxel.NO_POSE,
                                                      slpo.Voxel.UNKNOWN)
             else:
+                if objid in objects_found:
+                    planning_zobj = slpo.ObjectLoc(objid, slpo.ObjectLoc.NO_LOC, "found")
                 if zobj.loc is not None:
                     planning_zobj = slpo.ObjectLoc(objid, zobj.loc[:2], objid)
                 else:
