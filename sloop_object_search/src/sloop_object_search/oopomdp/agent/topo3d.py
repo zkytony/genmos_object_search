@@ -302,7 +302,9 @@ def _sample_topo_graph3d(init_object_beliefs,
             max_prob = max(max_prob, prob_pos)
 
     pq = PriorityQueue()
-    positions = [init_robot_pose[:3]]
+    positions = []
+    if reachable_func(init_robot_pose[:3]):
+        positions.append(init_robot_pose[:3])
     for pos, prob_pos in candidate_scores:
         if max_prob - min_prob > 0:
             norm_score = (prob_pos - min_prob) / (max_prob - min_prob)

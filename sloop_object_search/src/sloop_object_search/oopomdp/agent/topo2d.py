@@ -288,7 +288,9 @@ def _sample_topo_map(init_object_beliefs,
             max_prob = max(max_prob, prob_pos)
 
     pq = PriorityQueue()
-    positions = [init_robot_pose[:2]]
+    positions = []
+    if reachable_func(init_robot_pose[:2]):
+        positions.append(init_robot_pose[:2])
     for pos, prob_pos in candidate_scores:
         norm_score = (prob_pos - min_prob) / (max_prob - min_prob)
         if norm_score > pos_importance_thres:
