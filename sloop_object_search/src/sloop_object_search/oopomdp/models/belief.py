@@ -78,11 +78,21 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
     prior_from_occupancy = init_params.get("prior_from_occupancy", False)
     occupancy_height_thres = init_params.get("occupancy_height_thres", None)
     occupancy_blow_up_res = init_params.get("occupancy_blow_up_res", None)
+    occupancy_fill_height = init_params.get("occupancy_fill_height", False)
 
     object_beliefs = {}
     dimension = search_region.octree_dist.octree.dimensions[0]
     if prior_from_occupancy:
         leaves = search_region.octree_dist.octree.get_leaves()
+        leaf_voxels = {(*leaf.pos, leaf.res) for leaf in leaves}
+        occupied_voxels = set()
+        if occupancy_fill_height:
+            for voxel in leaf_voxels:
+                occupied_voxels.add(voxel)
+                x, y, z, r = voxel
+                for zn in range(z-1, 0-1, -1):
+                    occupied_voxels.add((x, y, zn,r))
+
     for objid in target_objects:
         target = target_objects[objid]
         if kwargs.get("for_local_hierarchical", False):
@@ -105,9 +115,8 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
                 octree_belief.assign(state, prob,
                                      normalized=kwargs.get("normalized", True))
         if prior_from_occupancy:
-            for leaf in leaves:
-                x,y,z = leaf.pos
-                r = leaf.res
+            for voxel in occupied_voxels:
+                x, y, z, r = voxel
                 if occupancy_height_thres is not None:
                     if z*r < occupancy_height_thres:
                         continue
@@ -115,12 +124,14 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
                     if occupancy_blow_up_res > r:
                         x, y, z = Octree.increase_res((x,y,z), r, occupancy_blow_up_res)
                         r = occupancy_blow_up_res
+                init_val = 100 * (r**3)
                 state = ObjectState(objid, target["class"], (x,y,z), res=r)
-                octree_belief.assign(state, 100)
-
-
+                octree_belief.assign(state, init_val)
         object_beliefs[objid] = octree_belief
     return object_beliefs
+
+
+
 
 def init_object_beliefs(target_objects, search_region, belief_config={}, **kwargs):
     if isinstance(search_region, SearchRegion2D):
