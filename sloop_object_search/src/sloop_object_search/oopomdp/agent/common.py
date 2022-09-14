@@ -1,3 +1,4 @@
+import logging
 import pomdp_py
 import numpy as np
 from sloop.agent import SloopAgent
@@ -151,6 +152,7 @@ class MosAgent(pomdp_py.Agent):
                                for target_id in self.agent_config["targets"]}
 
         # Belief
+        logging.info("initializing belief")
         init_belief = self.init_belief(
             init_robot_pose_dist, init_object_beliefs,
             **args_init_object_beliefs)

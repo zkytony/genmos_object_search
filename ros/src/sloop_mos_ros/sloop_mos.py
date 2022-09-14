@@ -224,7 +224,7 @@ class SloopMosROS:
         for bobj_pb in response.object_beliefs:
             alpha_scaling = 1.0
             if bobj_pb.object_id in self.objects_found:
-                alpha_scaling = 5.0
+                alpha_scaling = 20.0
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=alpha_scaling)
             markers.extend(msg.markers)
@@ -342,7 +342,6 @@ class SloopMosROS:
         # If the last action is "find", and we receive object detections
         # that contain target objects, then these objects will be considered 'found'
         if isinstance(self.last_action, a_pb2.Find):
-            import pdb; pdb.set_trace()
             for det_pb in detections_pb.detections:
                 if det_pb.label in self.agent_config["targets"]:
                     self.objects_found.add(det_pb.label)
