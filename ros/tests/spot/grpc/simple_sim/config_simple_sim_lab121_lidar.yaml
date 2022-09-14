@@ -1,15 +1,13 @@
 agent_config:
-  agent_class: MosAgentTopo2D
-  agent_type: hierarchical
-  belief: {}
-  belief_local:
+  agent_class: MosAgentTopo3D
+  agent_type: local
+  belief:
+    init_params:
+      num_samples: 3000
     visible_volume_params:
       num_rays: 150
       step_size: 0.4
       voxel_res: 2
-  misc:
-    visual:
-      res: 15
   objects:
     book:
       class: book
@@ -27,23 +25,12 @@ agent_config:
       viz_type: cube
   robot:
     action:
-      topo: {}
-    action_local:
-      topo: {}
-    color:
-    - 0.9
-    - 0.1
-    - 0.1
-    - 0.9
+      func: sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d
+      params:
+        rotation: 90.0
+        scheme: axis
+        step_size: 0.2
     detectors:
-      book:
-        class: sloop_object_search.oopomdp.FanModelAlphaBeta
-        params:
-          quality:
-          - 100000.0
-          - 0.05
-          sensor: fan
-    detectors_local:
       book:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
@@ -54,12 +41,6 @@ agent_config:
     id: robot0
     no_look: true
     sensors:
-    - name: fan
-      params:
-        fov: 61
-        max_range: 1.75
-        min_range: 0.2
-    sensors_local:
     - name: camera
       params:
         far: 1.75
@@ -78,17 +59,11 @@ object_locations:
   - 0.1
   - 0.5
 planner_config:
-  planner: sloop_object_search.oopomdp.planner.hier.HierPlanner
+  planner: pomdp_py.POUCT
   planner_params:
-    global:
-      exploration_const: 1000
-      max_depth: 8
-      num_sims: 400
-      show_progress: true
-    local:
-      exploration_const: 1000
-      max_depth: 8
-      num_sims: 400
-      show_progress: true
+    exploration_const: 1000
+    max_depth: 8
+    num_sims: 200
+    show_progress: true
 task_config:
   max_steps: 100

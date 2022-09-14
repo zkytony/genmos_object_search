@@ -73,14 +73,16 @@ class MosAgentTopo3D(MosAgentBasic3D):
         """object_beliefs: objid->OctreeBelief.
         robot_pose: a 7-tuple"""
         # grid map used for reachability check
-        grid_map = self.search_region.octree_dist.to_grid_map(
-            robot_pose[:2], **self.topo_config.get("3d_proj_2d"))
+        self.obstacles2d = set()
+        if self.topo_config.get("3d_proj_2d") is not None:
+            grid_map = self.search_region.octree_dist.to_grid_map(
+                robot_pose[:2], **self.topo_config.get("3d_proj_2d"))
 
-        # we want to inflate the obstacles
-        inflation = int(round(self.topo_config.get("3d_proj_2d").get("inflation", 1)))
-        shrunk_free_cells = grid_map_utils.cells_with_minimum_distance_from_obstacles(grid_map, dist=inflation)
-        inflated_cells = (grid_map.free_locations - shrunk_free_cells)
-        self.obstacles2d = grid_map.obstacles | inflated_cells
+            # we want to inflate the obstacles
+            inflation = int(round(self.topo_config.get("3d_proj_2d", {}).get("inflation", 1)))
+            shrunk_free_cells = grid_map_utils.cells_with_minimum_distance_from_obstacles(grid_map, dist=inflation)
+            inflated_cells = (grid_map.free_locations - shrunk_free_cells)
+            self.obstacles2d = grid_map.obstacles | inflated_cells
 
         _debug = self.topo_config.get("debug", False)
         if _debug:
