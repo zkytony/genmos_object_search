@@ -233,6 +233,7 @@ class SloopMosROS:
                 msg = ros_utils.make_octree_belief_proto_markers_msg(
                     bobj_pb, header, alpha_scaling=1.0)
                 markers.extend(msg.markers)
+                break
         self._octbelief_markers_pub.publish(MarkerArray(markers))
 
         rospy.loginfo("belief visualized")
