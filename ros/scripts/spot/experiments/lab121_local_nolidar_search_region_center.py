@@ -6,12 +6,12 @@ from sloop_object_search.utils.math import euler_to_quat
 
 def main():
     rospy.init_node("local_search_center_publisher")
-    x = 3.5135116577148438
-    y = -1.6887924671173096
-    z = 0.5
+    x = 3.7577287769317627
+    y = -1.2946953773498535
+    z = 0.15
     qx = 0.0
     qy = 0.0
-    qz = -0.07592851270639481
+    qz = -0.02592851270639481
     qw = 0.9971132638563158
     world_frame = "graphnav_map"
     pose_pub = rospy.Publisher("/local_region_center", PoseStamped, queue_size=10, latch=True)
