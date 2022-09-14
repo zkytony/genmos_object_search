@@ -6,9 +6,9 @@ agent_config:
       num_samples: 3000
       prior_from_occupancy: false
     visible_volume_params:
-      num_rays: 150
-      step_size: 0.4
-      voxel_res: 2
+      num_rays: 180
+      step_size: 0.2
+      voxel_res: 1
   objects:
     Cat:
       class: Cat

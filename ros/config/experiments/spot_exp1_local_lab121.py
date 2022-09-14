@@ -1,7 +1,7 @@
 ######### COMMON CONFIGURATIONS ######
-LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
-                                          "step_size": 0.4,
-                                          "voxel_res": 2},
+LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 180,
+                                          "step_size": 0.2,
+                                          "voxel_res": 1},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": False}}
 
@@ -19,6 +19,7 @@ SEARCH_REGION_2D = {"res": 0.3,
                     "brush_size": 0.5,
                     "expansion_width": 0.5}
 
+# Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 HAND_CAMERA = {'name': 'hand_camera',
                'params': {'fov': 50,
                           'far': 1.5,
