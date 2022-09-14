@@ -3,7 +3,9 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                                  "step_size": 0.4,
                                                  "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
-                                "prior_from_occupancy": True}}
+                                "prior_from_occupancy": False}}
+
+GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
 SEARCH_REGION_3D = {"res": 0.07,
                     "region_size_x": 2.5,
@@ -55,13 +57,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 LOCAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "hand_camera",
-                       "quality": [1e6, 1.0]}},
+                       "quality": [1e6, 0.4]}},
 }
 
 GLOBAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
             'params': {"sensor": "hand_fan",
-                       "quality": [1e5, 1.0]}},
+                       "quality": [1e5, 0.8]}},
 }
 
 OBJECTS = {
@@ -121,7 +123,7 @@ CONFIG_HIER = {
     "agent_config": {
         "agent_class": "MosAgentTopo2D",
         "agent_type": "hierarchical",  # 'hierarchical' or 'local'
-        "belief": {"init_params": {"prior_from_occupancy": True}},
+        "belief": GLOBAL_BELIEF,
         "belief_local": LOCAL_BELIEF,
         "search_region": {"3d": SEARCH_REGION_3D,
                           "2d": SEARCH_REGION_2D},
