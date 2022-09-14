@@ -61,6 +61,7 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
+      octree_size: 32
       region_size_x: 3.0
       region_size_y: 3.0
       region_size_z: 1.5

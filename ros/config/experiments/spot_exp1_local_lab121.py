@@ -11,6 +11,7 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
 SEARCH_REGION_3D = {"res": 0.1,
+                    "octree_size": 32,
                     "region_size_x": 3.0,
                     "region_size_y": 3.0,
                     "region_size_z": 1.5}
