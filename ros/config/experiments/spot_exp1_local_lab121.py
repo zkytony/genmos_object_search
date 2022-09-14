@@ -80,6 +80,9 @@ LOCAL_DETECTORS = {
     'ToyPlane': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                  'params': {"sensor": "hand_camera",
                             "quality": [1e6, 0.2]}},
+    'Lyzol': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                 'params': {"sensor": "hand_camera",
+                            "quality": [1e6, 0.2]}},
 }
 
 GLOBAL_DETECTORS = {
@@ -94,7 +97,10 @@ GLOBAL_DETECTORS = {
                                  "quality": [1e5, 0.4]}},
     'ToyPlane': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
                  'params': {"sensor": "hand_fan",
-                            "quality": [1e5, 0.4]}}
+                            "quality": [1e5, 0.4]}},
+    'Lyzol': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+              'params': {"sensor": "hand_fan",
+                         "quality": [1e5, 0.4]}}
 }
 
 OBJECTS = {
@@ -116,7 +122,12 @@ OBJECTS = {
     'ToyPlane': {'class': 'ToyPlane',
                  'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
                  'color': [0.01, 0.76, 0.85, 0.8],
-                 'viz_type': 'cube'}
+                 'viz_type': 'cube'},
+
+    'Lyzol': {'class': 'Lyzol',
+              'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+              'color': [0.8, 0.75, 0.54, 0.8],
+              'viz_type': 'cube'}
 }
 
 
@@ -148,12 +159,12 @@ CONFIG_LOCAL = {
             'id': 'robot0',
             'no_look': True,
             'sensors': [HAND_CAMERA],
-            'detectors': make_detectors("local", "Cat", "ToyPlane", "Columbia Book", "Bowl"),
+            'detectors': make_detectors("local", "Cat")#, "ToyPlane", "Columbia Book", "Bowl"),
             'action': LOCAL_ACTION,
             "reachable": LOCAL_REACHABLE,
         },
-        'objects': make_objects("Cat", "ToyPlane", "Columbia Book", "Bowl"),
-        'targets': ['Cat', "ToyPlane", "Columbia Book", "Bowl"],
+        'objects': make_objects("Cat")#, "ToyPlane", "Columbia Book", "Bowl"),
+        'targets': ['Cat']#, "ToyPlane", "Columbia Book", "Bowl"],
     },
 
     "task_config": {
