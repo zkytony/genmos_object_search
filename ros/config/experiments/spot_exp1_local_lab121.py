@@ -55,13 +55,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 LOCAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "hand_camera",
-                       "quality": [1e6, 0.1]}},
+                       "quality": [1e6, 0.5]}},
 }
 
 GLOBAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
             'params': {"sensor": "hand_fan",
-                       "quality": [1e5, 0.1]}},
+                       "quality": [1e5, 0.8]}},
 }
 
 OBJECTS = {
@@ -121,7 +121,7 @@ CONFIG_HIER = {
     "agent_config": {
         "agent_class": "MosAgentTopo2D",
         "agent_type": "hierarchical",  # 'hierarchical' or 'local'
-        "belief": {"init_params": {"prior_from_occupancy": False}},
+        "belief": {"init_params": {"prior_from_occupancy": True}},
         "belief_local": LOCAL_BELIEF,
         "search_region": {"3d": SEARCH_REGION_3D,
                           "2d": SEARCH_REGION_2D},

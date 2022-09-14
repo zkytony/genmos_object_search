@@ -3,7 +3,7 @@ agent_config:
   agent_type: hierarchical
   belief:
     init_params:
-      prior_from_occupancy: false
+      prior_from_occupancy: true
   belief_local:
     init_params:
       num_samples: 3000
@@ -56,7 +56,7 @@ agent_config:
         params:
           quality:
           - 100000.0
-          - 0.1
+          - 0.8
           sensor: hand_fan
     detectors_local:
       Cat:
@@ -64,7 +64,7 @@ agent_config:
         params:
           quality:
           - 1000000.0
-          - 0.1
+          - 0.5
           sensor: hand_camera
     id: robot0
     no_look: true
