@@ -1,5 +1,6 @@
 <launch>
   <arg name="spot" value="002"/>
+  <arg name="map_type" default="lidar"/>
   <arg name="exp_name" value="spot_exp1_local_lab121"/>
   <arg name="local_search" default="false"/>
 
@@ -10,7 +11,7 @@
     <!-- publish region center -->
     <node name="local_search_center_publisher"
           pkg="sloop_object_search_ros"
-          type="lab121_local_lidar_search_region_center.py" output="screen"></node>
+          type="lab121_local_$(arg map_type)_search_region_center.py" output="screen"></node>
 
     <!-- Run SLOOP object search decision making interface (POMDP planner) -->
     <node name="sloop_ros" ns="spot_$(arg spot)"
