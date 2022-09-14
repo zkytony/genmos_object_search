@@ -70,7 +70,7 @@ class SloopMosROS:
         rospy.loginfo("Sending request to update search region (2D)")
 
         region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-            [self._search_region_2d_point_cloud_topic, self._robot_pose_topic],
+            [self._search_region_2d_point_cloud_topic, self._search_region_center_topic],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=10000, verbose=True).messages
 
@@ -111,7 +111,7 @@ class SloopMosROS:
             robot_id = self.robot_id
         rospy.loginfo("Sending request to update search region (3D)")
         region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-            [self._search_region_3d_point_cloud_topic, self._robot_pose_topic],
+            [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=100, verbose=True).messages
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
@@ -435,6 +435,7 @@ class SloopMosROS:
         # Remap these topics that we subscribe to, if needed.
         self._search_region_2d_point_cloud_topic = "~search_region_cloud_2d"
         self._search_region_3d_point_cloud_topic = "~search_region_cloud_3d"
+        self._search_region_center_topic = "~search_region_center"
         self._robot_pose_topic = "~robot_pose"
         # Note for object detections, we accept 3D bounding-box-based detections.
         self._object_detections_topic = "~object_detections"

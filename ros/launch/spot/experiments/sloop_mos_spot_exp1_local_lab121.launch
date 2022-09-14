@@ -1,6 +1,14 @@
 <launch>
   <arg name="spot" value="002"/>
   <arg name="exp_name" value="spot_exp1_local_lab121"/>
+  <arg name="local_search" default="false"/>
+
+  <group if="$(arg local_search)">
+    <arg name="search_region_center" value="/local_region_center" />
+  </group>
+  <group unless="$(arg local_search)">
+    <arg name="search_region_center" value="/spot_hand_pose" />
+  </group>
 
   <!-- Run SLOOP object search decision making interface (POMDP planner) -->
   <node name="sloop_ros" ns="spot_$(arg spot)"
@@ -12,6 +20,7 @@
     <param name="world_frame" value="graphnav_map"/>
     <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
     <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
+    <remap from="~search_region_center" to="$(arg search_region_center)"/>
     <remap from="~robot_pose" to="/spot_hand_pose"/>
     <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/>
     <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/>
