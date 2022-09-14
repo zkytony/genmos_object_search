@@ -257,7 +257,9 @@ def _sample_topo_map(init_object_beliefs,
     # and rank them based on object beliefs, and only keep <= X number of nodes
     # that have normalized scores above some threshold
     grid_map = search_region.grid_map  # should be GridMap2
-    candidate_positions = set([init_robot_pose[:2]])
+    candidate_positions = set()
+    if reachable_func(init_robot_pose[:2]):
+        candidate_positions.add(init_robot_pose[:2])
     candidate_scores = []
     min_prob = float("inf")
     max_prob = float("-inf")

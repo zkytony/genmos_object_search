@@ -270,7 +270,9 @@ def _sample_topo_graph3d(init_object_beliefs,
     # that have normalized scores above some threshold
     region = search_region.octree_dist.region
     origin, w, l, h = region
-    candidate_positions = set([init_robot_pose[:3]])
+    candidate_positions = set()
+    if reachable_func(init_robot_pose[:3]):
+        candidate_positions.add(init_robot_pose[:3])
     candidate_scores = []  # list of (pos, score) tuples
     min_prob = float("inf")
     max_prob = float("-inf")
