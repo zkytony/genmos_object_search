@@ -512,9 +512,6 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
         voxel = common_pb2.Voxel3D()
         hist_pb.values[i].Unpack(voxel)
         prob = hist_pb.probs[i] / (voxel.res**3)
-        if prob_thres is not None:
-            if prob < prob_thres:
-                continue
         probs.append(prob)
         voxels.append(voxel)
     prob_max = max(probs)
@@ -525,6 +522,9 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
         voxel = voxels[i]
         pos = [voxel.pos.x, voxel.pos.y, voxel.pos.z]
         prob = probs[i]
+        if prob_thres is not None:
+            if prob < prob_thres:
+                continue
         color = color_map(prob, [prob_min, prob_max], cmap)
         alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
         marker = make_octnode_marker_msg(
