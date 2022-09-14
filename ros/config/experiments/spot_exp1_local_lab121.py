@@ -84,6 +84,15 @@ LOCAL_DETECTORS = {
     'Lyzol': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                  'params': {"sensor": "hand_camera",
                             "quality": [1e6, 0.2]}},
+    'BlackPump': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                 'params': {"sensor": "hand_camera",
+                            "quality": [1e6, 0.2]}},
+    'Pringles': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                 'params': {"sensor": "hand_camera",
+                            "quality": [1e6, 0.2]}},
+    'Robot Book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                 'params': {"sensor": "hand_camera",
+                            "quality": [1e6, 0.2]}},
 }
 
 GLOBAL_DETECTORS = {
@@ -101,7 +110,16 @@ GLOBAL_DETECTORS = {
                             "quality": [1e5, 0.4]}},
     'Lyzol': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
               'params': {"sensor": "hand_fan",
-                         "quality": [1e5, 0.4]}}
+                         "quality": [1e5, 0.4]}},
+    'BlackPump': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+                  'params': {"sensor": "hand_fan",
+                             "quality": [1e5, 0.4]}},
+    'Pringles': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+                 'params': {"sensor": "hand_fan",
+                            "quality": [1e5, 0.4]}},
+    'Robot Book': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+                 'params': {"sensor": "hand_fan",
+                            "quality": [1e5, 0.4]}},
 }
 
 OBJECTS = {
@@ -128,7 +146,23 @@ OBJECTS = {
     'Lyzol': {'class': 'Lyzol',
               'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
               'color': [0.8, 0.75, 0.54, 0.8],
-              'viz_type': 'cube'}
+              'viz_type': 'cube'},
+
+    'BlackPump': {'class': 'BlackPump',
+                  'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                  'color': [0.34, 0.34, 0.35, 0.8],
+                  'viz_type': 'cube'},
+
+    'Pringles': {'class': 'Pringles',
+                 'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                 'color': [0.25, 0.72, 0.01, 0.8],
+                 'viz_type': 'cube'},
+
+    'Robot Book': {'class': 'Robot Book',
+                 'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                 'color': [0.5, 0.28, 0.05, 0.8],
+                 'viz_type': 'cube'},
+
 }
 
 
@@ -169,7 +203,7 @@ CONFIG_LOCAL = {
     },
 
     "task_config": {
-        "max_steps": 100
+        "max_steps": 200
     },
 
     "planner_config": LOCAL_PLANNER_CONFIG
