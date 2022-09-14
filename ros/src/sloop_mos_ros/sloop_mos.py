@@ -176,6 +176,8 @@ class SloopMosROS:
         fovs = json.loads(response.fovs.decode('utf-8'))
         markers = []
         for objid in fovs:
+            if objid in self.objects_found:
+                continue
             free_color = np.array(self.agent_config["objects"][objid].get(
                 "color", [0.8, 0.4, 0.8]))[:3]
             hit_color = lighter(free_color*255, -0.25)/255
@@ -219,6 +221,8 @@ class SloopMosROS:
                                  frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id in self.objects_found:
+                continue
             msg = ros_utils.make_octree_belief_proto_markers_msg(
                 bobj_pb, header, alpha_scaling=1.0)
             markers.extend(msg.markers)
@@ -263,6 +267,8 @@ class SloopMosROS:
                                  frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id in self.objects_found:
+                continue
             color = self.agent_config["objects"][bobj_pb.object_id].get(
                 "color", [0.2, 0.7, 0.2])[:3]
             msg = ros_utils.make_object_belief2d_proto_markers_msg(
@@ -515,6 +521,7 @@ class SloopMosROS:
             print(f"Step {step} robot belief:")
             robot_belief_pb = response_robot_belief.robot_belief
             objects_found = set(robot_belief_pb.objects_found.object_ids)
+            self.objects_found.update(objects_found)
             print(f"  pose: {robot_belief_pb.pose.pose_3d}")
             print(f"  objects found: {objects_found}")
             print("-----------")
