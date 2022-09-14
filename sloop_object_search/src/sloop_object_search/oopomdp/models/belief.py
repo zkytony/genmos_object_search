@@ -77,6 +77,7 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
     init_params = belief_config.get("init_params", {})
     prior_from_occupancy = init_params.get("prior_from_occupancy", False)
     occupancy_height_thres = init_params.get("occupancy_height_thres", None)
+    occupancy_blow_up_res = init_params.get("occupancy_blow_up_res", None)
 
     object_beliefs = {}
     dimension = search_region.octree_dist.octree.dimensions[0]
@@ -110,8 +111,13 @@ def init_object_beliefs_3d(target_objects, search_region, belief_config={}, **kw
                 if occupancy_height_thres is not None:
                     if z*r < occupancy_height_thres:
                         continue
+                if occupancy_blow_up_res is not None:
+                    if occupancy_blow_up_res > r:
+                        x, y, z = Octree.increase_res((x,y,z), r, occupancy_blow_up_res)
+                        r = occupancy_blow_up_res
                 state = ObjectState(objid, target["class"], (x,y,z), res=r)
                 octree_belief.assign(state, 100)
+
 
         object_beliefs[objid] = octree_belief
     return object_beliefs

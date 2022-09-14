@@ -4,7 +4,8 @@ agent_config:
   belief:
     init_params:
       num_samples: 3000
-      occupancy_height_thres: 0.05
+      occupancy_blow_up_res: 4
+      occupancy_height_thres: 0.01
       prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
@@ -33,7 +34,7 @@ agent_config:
         3d_proj_2d:
           brush_size: 0.2
           floor_cut: 0.15
-          inflation: 0.4
+          inflation: 0.5
           layout_cut: 0.4
         debug: false
         num_nodes: 10

@@ -4,7 +4,8 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": True,
-                                "occupancy_height_thres": 0.05}}
+                                "occupancy_height_thres": 0.01,
+                                "occupancy_blow_up_res": 4}}
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
@@ -41,7 +42,7 @@ LOCAL_TOPO = {'num_nodes': 10,
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
-                             'inflation': 0.4}}
+                             'inflation': 0.5}}
 
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
