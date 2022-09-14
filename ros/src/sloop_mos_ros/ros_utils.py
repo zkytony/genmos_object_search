@@ -458,10 +458,10 @@ def _fill_viz_marker(marker, action=Marker.ADD, viz_type=Marker.CUBE,
     color = std_msgs.msg.ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
     marker.color = color
 
-def make_viz_marker_for_voxel(voxel, header, ns="voxel", **kwargs):
+def make_viz_marker_for_voxel(objid, voxel, header, ns="voxel", **kwargs):
     """voxel is (x,y,z,r), where x,y,z is a point in world frame and
     r is the size in meters."""
-    return make_octnode_marker_msg(voxel[:3], voxel[3], header, ns=ns, **kwargs)
+    return make_octnode_marker_msg(objid, voxel[:3], voxel[3], header, ns=ns, **kwargs)
 
 def make_octnode_marker_msg(objid, pos, res, header, alpha=1.0,
                             lifetime=1.0, color=[0.0, 0.8, 0.0], ns="octnode"):

@@ -188,12 +188,12 @@ class SloopMosROS:
                 if voxel in obstacles_hit:
                     continue
                 m = ros_utils.make_viz_marker_for_voxel(
-                    voxel, header, color=free_color, ns="fov",
+                    objid, voxel, header, color=free_color, ns="fov",
                     lifetime=0, alpha=0.7)
                 markers.append(m)
             for voxel in obstacles_hit:
                 m = ros_utils.make_viz_marker_for_voxel(
-                    voxel, header, color=hit_color, ns="fov",
+                    objid, voxel, header, color=hit_color, ns="fov",
                     lifetime=0, alpha=0.7)
                 markers.append(m)
             break  # just visualize one
