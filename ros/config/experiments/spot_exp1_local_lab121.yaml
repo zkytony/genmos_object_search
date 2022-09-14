@@ -1,22 +1,14 @@
 agent_config:
-  agent_class: MosAgentTopo2D
-  agent_type: hierarchical
+  agent_class: MosAgentTopo3D
+  agent_type: local
   belief:
     init_params:
-      prior_from_occupancy: true
-  belief_local:
-    init_params:
       num_samples: 3000
-      prior_from_occupancy: true
+      prior_from_occupancy: false
     visible_volume_params:
       num_rays: 150
       step_size: 0.4
       voxel_res: 2
-  misc:
-    ros_visual:
-      marker2d_z: -0.65
-    visual:
-      res: 15
   objects:
     Cat:
       class: Cat
@@ -34,10 +26,6 @@ agent_config:
       viz_type: cube
   robot:
     action:
-      topo:
-        debug: true
-        inflation: 0.25
-    action_local:
       policy:
         cost_scaling_factor: 1.0
       topo:
@@ -52,32 +40,18 @@ agent_config:
         sep: 0.75
     detectors:
       Cat:
-        class: sloop_object_search.oopomdp.FanModelAlphaBeta
-        params:
-          quality:
-          - 100000.0
-          - 0.8
-          sensor: hand_fan
-    detectors_local:
-      Cat:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 1000000.0
-          - 0.4
+          - 0.2
           sensor: hand_camera
     id: robot0
     no_look: true
-    reachable_local:
+    reachable:
       max_height: 1.2
       min_height: 0.5
     sensors:
-    - name: hand_fan
-      params:
-        fov: 50
-        max_range: 1.5
-        min_range: 0.2
-    sensors_local:
     - name: hand_camera
       params:
         aspect_ratio: 0.5
@@ -86,13 +60,6 @@ agent_config:
         near: 0.2
         occlusion_enabled: true
   search_region:
-    2d:
-      brush_size: 0.5
-      expansion_width: 0.5
-      floor_cut: 0.15
-      layout_cut: 0.4
-      region_size: 4.0
-      res: 0.3
     3d:
       region_size_x: 2.5
       region_size_y: 2.5
@@ -101,17 +68,11 @@ agent_config:
   targets:
   - Cat
 planner_config:
-  planner: sloop_object_search.oopomdp.planner.hier.HierPlanner
+  planner: pomdp_py.POUCT
   planner_params:
-    global:
-      exploration_const: 1000
-      max_depth: 8
-      num_sims: 400
-      show_progress: true
-    local:
-      exploration_const: 1000
-      max_depth: 8
-      num_sims: 200
-      show_progress: true
+    exploration_const: 1000
+    max_depth: 8
+    num_sims: 200
+    show_progress: true
 task_config:
   max_steps: 100

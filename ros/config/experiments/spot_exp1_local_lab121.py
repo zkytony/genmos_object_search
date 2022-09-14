@@ -1,7 +1,7 @@
 ######### COMMON CONFIGURATIONS ######
 LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
-                                                 "step_size": 0.4,
-                                                 "voxel_res": 2},
+                                          "step_size": 0.4,
+                                          "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": False}}
 
@@ -57,13 +57,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 LOCAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "hand_camera",
-                       "quality": [1e6, 0.4]}},
+                       "quality": [1e6, 0.2]}},
 }
 
 GLOBAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
             'params': {"sensor": "hand_fan",
-                       "quality": [1e5, 0.8]}},
+                       "quality": [1e5, 0.4]}},
 }
 
 OBJECTS = {
@@ -168,7 +168,7 @@ CONFIG_HIER = {
     }
 }
 
-CONFIG = CONFIG_HIER
+CONFIG = CONFIG_LOCAL
 
 import yaml
 def main():
