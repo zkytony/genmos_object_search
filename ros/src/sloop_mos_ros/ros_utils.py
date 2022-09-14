@@ -501,7 +501,7 @@ def _compute_alpha(p, vmin, vmax):
         return 0.7
 
 def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.COLOR_MAP_JET,
-                                         alpha_scaling=1.0):
+                                         alpha_scaling=1.0, prob_thres=None):
     """given an octree belief's protobuf representation,
     which is a Histogram, make a MarkerArray message for it."""
     markers = []
@@ -512,6 +512,9 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
         voxel = common_pb2.Voxel3D()
         hist_pb.values[i].Unpack(voxel)
         prob = hist_pb.probs[i] / (voxel.res**3)
+        if prob_thres is not None:
+            if prob < prob_thres:
+                continue
         probs.append(prob)
         voxels.append(voxel)
     prob_max = max(probs)

@@ -221,13 +221,18 @@ class SloopMosROS:
         header = std_msgs.Header(stamp=rospy.Time.now(),
                                  frame_id=self.world_frame)
         markers = []
+        # First, visualize the belief of detected objects
         for bobj_pb in response.object_beliefs:
-            alpha_scaling = 1.0
             if bobj_pb.object_id in self.objects_found:
-                alpha_scaling = 20.0
-            msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=alpha_scaling)
-            markers.extend(msg.markers)
+                msg = ros_utils.make_octree_belief_proto_markers_msg(
+                    bobj_pb, header, alpha_scaling=2.0, prob_thres=0.5)
+                markers.extend(msg.markers)
+        # For the other objects, just visualize one is enough.
+        for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id not in self.objects_found:
+                msg = ros_utils.make_octree_belief_proto_markers_msg(
+                    bobj_pb, header, alpha_scaling=1.0)
+                markers.extend(msg.markers)
         self._octbelief_markers_pub.publish(MarkerArray(markers))
 
         rospy.loginfo("belief visualized")
