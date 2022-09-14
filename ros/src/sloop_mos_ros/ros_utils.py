@@ -533,7 +533,8 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
 def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
                                            search_space_resolution,
                                            color=[0.2, 0.7, 0.2],
-                                           alpha_scaling=1.0, pos_z=0):
+                                           alpha_scaling=1.0, pos_z=0,
+                                           alpha_max=0.7):
     """search_space_resolution: should be the size of a grid cell"""
     markers = []
     object_id = object_belief2d_pb.object_id
@@ -550,7 +551,7 @@ def make_object_belief2d_proto_markers_msg(object_belief2d_pb, header,
 
     last_val = -1
     if len(color) == 3:
-        color = [*color, 1.0]
+        color = [*color, alpha_max]
     i = 0
     for pos in reversed(sorted(hist, key=hist.get)):
         if last_val != -1:

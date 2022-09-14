@@ -13,6 +13,8 @@ agent_config:
       step_size: 0.4
       voxel_res: 2
   misc:
+    ros_visual:
+      marker2d_z: -0.65
     visual:
       res: 15
   objects:

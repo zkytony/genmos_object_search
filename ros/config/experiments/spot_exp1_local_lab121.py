@@ -144,6 +144,7 @@ CONFIG_HIER = {
         'targets': ['Cat'],
         'misc': {
             'visual': {'res': 15},
+            'ros_visual': {'marker2d_z': -0.65}
         }
     },
 

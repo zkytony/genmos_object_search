@@ -248,6 +248,9 @@ class SloopMosROS:
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got belief")
 
+        # height for 2d markers
+        _pos_z = self.ros_visual_config.get("marker2d_z", 0.1)
+
         # visualize object belief
         header = std_msgs.Header(stamp=rospy.Time.now(),
                                  frame_id=self.world_frame)
@@ -257,7 +260,7 @@ class SloopMosROS:
                 "color", [0.2, 0.7, 0.2])[:3]
             msg = ros_utils.make_object_belief2d_proto_markers_msg(
                 bobj_pb, header, self.search_space_res_2d,
-                color=color)
+                color=color, pos_z=_pos_z)
             markers.extend(msg.markers)
         self._belief_2d_markers_pub.publish(MarkerArray(markers))
 
@@ -269,7 +272,9 @@ class SloopMosROS:
         if robot_belief_pb.HasField("topo_map"):
             msg = ros_utils.make_topo_map_proto_markers_msg(
                 robot_belief_pb.topo_map,
-                header, self.search_space_res_2d)
+                header, self.search_space_res_2d,
+                node_thickness=0.05,
+                pos_z=_pos_z + 0.05)
             markers.extend(msg.markers)
         self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
         rospy.loginfo("belief visualized")
@@ -377,6 +382,10 @@ class SloopMosROS:
                                        values=[action_id])
             self._action_pub.publish(find_action)
             rospy.loginfo("published find action for execution")
+
+    @property
+    def ros_visual_config(self):
+        return self.agent_config.get("misc", {}).get("ros_visual", {})
 
     def setup(self):
         # This is an example of how to get started with using the
