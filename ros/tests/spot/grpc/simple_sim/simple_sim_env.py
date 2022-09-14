@@ -22,7 +22,6 @@ from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
 from tf2_ros import TransformBroadcaster
 
 from sloop_mos_ros import ros_utils
-from sloop_mos_ros.framework import ActionExecutor
 from sloop_object_search.oopomdp.domain.state import ObjectState, RobotState
 from sloop_object_search.oopomdp.domain.action import MotionAction3D, FindAction
 from sloop_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation

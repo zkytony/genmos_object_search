@@ -174,7 +174,7 @@ class SearchRegion2D(SearchRegion):
 
     def update(self, obstacles, free_locations):
         self.grid_map.update_region(obstacles, free_locations)
-        self.possible_locations = self._init_possible_locations()
+        self.possible_locations = self._init_possible_locations(self.grid_map)
 
     @property
     def is_3d(cls):
