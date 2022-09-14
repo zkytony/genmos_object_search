@@ -6,9 +6,9 @@ agent_config:
       num_samples: 3000
       prior_from_occupancy: false
     visible_volume_params:
-      num_rays: 180
+      num_rays: 150
       step_size: 0.2
-      voxel_res: 1
+      voxel_res: 2
   objects:
     Cat:
       class: Cat
@@ -37,6 +37,7 @@ agent_config:
         debug: false
         num_nodes: 10
         pos_importance_thres: 0.01
+        resample_thres: 0.18
         sep: 0.75
     detectors:
       Cat:

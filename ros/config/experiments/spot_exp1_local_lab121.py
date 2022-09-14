@@ -1,7 +1,7 @@
 ######### COMMON CONFIGURATIONS ######
-LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 180,
+LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "step_size": 0.2,
-                                          "voxel_res": 1},
+                                          "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": False}}
 
@@ -36,6 +36,7 @@ LOCAL_TOPO = {'num_nodes': 10,
               'pos_importance_thres': 0.01,
               'sep': 0.75,
               'debug': False,
+              'resample_thres': 0.18,
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
