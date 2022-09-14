@@ -278,9 +278,9 @@ def _sample_topo_graph3d(init_object_beliefs,
     max_prob = float("-inf")
     for i in range(num_node_samples):
         # uniformly sample candidate positions
-        x = rnd.uniform(origin[0], origin[0]+w)
-        y = rnd.uniform(origin[1], origin[1]+l)
-        z = rnd.uniform(origin[2], origin[2]+h)
+        x = rnd.uniform(origin[0]+0.5, origin[0]+w-0.5)
+        y = rnd.uniform(origin[1]+0.5, origin[1]+l-0.5)
+        z = rnd.uniform(origin[2]+0.5, origin[2]+h-0.5)
         pos = (int(round(x)), int(round(y)), int(round(z)))
         added = False
         if reachable_func(pos):
