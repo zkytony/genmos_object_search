@@ -196,6 +196,7 @@ class SloopMosROS:
                     voxel, header, color=hit_color, ns="fov",
                     lifetime=0, alpha=0.7)
                 markers.append(m)
+            break  # just visualize one
         self._fovs_markers_pub.publish(MarkerArray(markers))
 
     def get_and_visualize_belief_3d(self, robot_id=None, o3dviz=True):
