@@ -10,10 +10,10 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
-SEARCH_REGION_3D = {"res": 0.07,
+SEARCH_REGION_3D = {"res": 0.06,
                     "octree_size": 64,
                     "region_size_x": 4.0,
-                    "region_size_y": 2.5,
+                    "region_size_y": 3.2,
                     "region_size_z": 2.0}
 
 SEARCH_REGION_2D = {"res": 0.3,
