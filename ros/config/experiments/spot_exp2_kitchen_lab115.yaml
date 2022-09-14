@@ -97,9 +97,9 @@ agent_config:
     3d:
       octree_size: 64
       region_size_x: 4.0
-      region_size_y: 2.5
+      region_size_y: 3.2
       region_size_z: 2.0
-      res: 0.07
+      res: 0.06
   targets:
   - Bowl
   - Cat
