@@ -13,16 +13,6 @@ agent_config:
       step_size: 0.2
       voxel_res: 2
   objects:
-    Bowl:
-      class: Bowl
-      color:
-      - 0.82
-      - 0.61
-      - 0.01
-      - 0.8
-      transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
-      viz_type: cube
     Cat:
       class: Cat
       color:
@@ -39,6 +29,16 @@ agent_config:
       - 0.8
       - 0.75
       - 0.54
+      - 0.8
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      viz_type: cube
+    Pringles:
+      class: Pringles
+      color:
+      - 0.25
+      - 0.72
+      - 0.01
       - 0.8
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
@@ -69,13 +69,6 @@ agent_config:
         resample_thres: 0.4
         sep: 0.75
     detectors:
-      Bowl:
-        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
-        params:
-          quality:
-          - 1000000.0
-          - 0.2
-          sensor: hand_camera
       Cat:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
@@ -84,6 +77,13 @@ agent_config:
           - 0.2
           sensor: hand_camera
       Lyzol:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 1000000.0
+          - 0.2
+          sensor: hand_camera
+      Pringles:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
@@ -117,11 +117,11 @@ agent_config:
       region_size_y: 3.0
       region_size_z: 1.5
       res: 0.1
-  targets:
-  - Cat
-  - ToyPlane
-  - Lyzol
-  - Bowl
+  targets: !!set
+    Cat: null
+    Lyzol: null
+    Pringles: null
+    ToyPlane: null
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
@@ -130,4 +130,4 @@ planner_config:
     num_sims: 400
     show_progress: true
 task_config:
-  max_steps: 100
+  max_steps: 200
