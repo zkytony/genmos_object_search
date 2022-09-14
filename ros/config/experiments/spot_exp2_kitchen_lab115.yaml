@@ -5,13 +5,13 @@ agent_config:
     init_params:
       num_samples: 3000
       occupancy_blow_up_res: 4
-      occupancy_fill_height: false
+      occupancy_fill_height: true
       occupancy_height_thres: 0.6
       prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
       step_size: 0.4
-      voxel_res: 4
+      voxel_res: 2
   objects:
     BlackPump:
       class: BlackPump
@@ -95,11 +95,11 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
-      octree_size: 32
+      octree_size: 64
       region_size_x: 4.0
-      region_size_y: 3.0
+      region_size_y: 2.5
       region_size_z: 2.0
-      res: 0.15
+      res: 0.07
   targets:
   - Bowl
   - Cat

@@ -1,19 +1,19 @@
 ######### COMMON CONFIGURATIONS ######
 LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "step_size": 0.4,
-                                          "voxel_res": 4},
+                                          "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": True,
                                 "occupancy_height_thres": 0.6,
                                 "occupancy_blow_up_res": 4,
-                                "occupancy_fill_height": False}}
+                                "occupancy_fill_height": True}}
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
-SEARCH_REGION_3D = {"res": 0.15,
-                    "octree_size": 32,
+SEARCH_REGION_3D = {"res": 0.07,
+                    "octree_size": 64,
                     "region_size_x": 4.0,
-                    "region_size_y": 3.0,
+                    "region_size_y": 2.5,
                     "region_size_z": 2.0}
 
 SEARCH_REGION_2D = {"res": 0.3,
