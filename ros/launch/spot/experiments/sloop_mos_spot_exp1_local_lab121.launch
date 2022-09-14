@@ -7,6 +7,11 @@
        at /local_region_center; Otherwise, it is spot's hand pose -->
   <group if="$(arg local_search)">
 
+    <!-- publish region center -->
+    <node name="local_search_center_publisher"
+          pkg="sloop_object_search_ros"
+          type="lab121_local_lidar_search_region_center.py" output="screen"></node>
+
     <!-- Run SLOOP object search decision making interface (POMDP planner) -->
     <node name="sloop_ros" ns="spot_$(arg spot)"
           pkg="sloop_object_search_ros" type="run_search.py" output="screen">
