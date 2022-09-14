@@ -82,7 +82,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
             inflation = int(round(self.topo_config.get("3d_proj_2d", {}).get("inflation", 1)))
             shrunk_free_cells = grid_map_utils.cells_with_minimum_distance_from_obstacles(grid_map, dist=inflation)
             inflated_cells = (grid_map.free_locations - shrunk_free_cells)
-            self.obstacles2d = grid_map.obstacles | inflated_cells
+            self.obstacles2d = grid_map.obstacles | inflated_cells | grid_map.unknown
 
         _debug = self.topo_config.get("debug", False)
         if _debug:

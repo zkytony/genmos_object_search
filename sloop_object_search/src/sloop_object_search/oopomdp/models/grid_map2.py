@@ -177,6 +177,12 @@ class GridMap2:
             and loc[1] in self.lrange
 
     @property
+    def unknown(self):
+        all_cells = set((x,y) for x in self.wrange
+                        for y in self.lrange)
+        return all_cells - self.obstacles - self.free_locations
+
+    @property
     def min_corner(self):
         """The (x,y) location with the minimum x, and minimum y;
         This is the corner grid, which, combined with 'width' and
