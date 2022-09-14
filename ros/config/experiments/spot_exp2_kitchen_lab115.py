@@ -10,10 +10,10 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
-SEARCH_REGION_3D = {"res": 0.06,
-                    "octree_size": 64,
-                    "region_size_x": 4.0,
-                    "region_size_y": 3.2,
+SEARCH_REGION_3D = {"res": 0.1,
+                    "octree_size": 32,
+                    "region_size_x": 3.2,
+                    "region_size_y": 2.8,
                     "region_size_z": 2.0}
 
 SEARCH_REGION_2D = {"res": 0.3,
@@ -50,7 +50,7 @@ LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
 LOCAL_REACHABLE = {"min_height": 0.5,
-                   "max_height": 1.2}
+                   "max_height": 1.75}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
@@ -71,28 +71,28 @@ GLOBAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 LOCAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "hand_camera",
-                       "quality": [1e7, 0.2]}},
+                       "quality": [1e8, 0.2]}},
     'Bowl': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
              'params': {"sensor": "hand_camera",
-                        "quality": [1e7, 0.2]}},
+                        "quality": [1e8, 0.2]}},
     'Columbia Book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                       'params': {"sensor": "hand_camera",
-                                 "quality": [1e7, 0.2]}},
+                                 "quality": [1e8, 0.2]}},
     'ToyPlane': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                  'params': {"sensor": "hand_camera",
-                            "quality": [1e7, 0.2]}},
+                            "quality": [1e8, 0.2]}},
     'Lyzol': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                  'params': {"sensor": "hand_camera",
-                            "quality": [1e7, 0.2]}},
+                            "quality": [1e8, 0.2]}},
     'BlackPump': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                  'params': {"sensor": "hand_camera",
-                            "quality": [1e7, 0.2]}},
+                            "quality": [1e8, 0.2]}},
     'Pringles': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                  'params': {"sensor": "hand_camera",
-                            "quality": [1e7, 0.2]}},
+                            "quality": [1e8, 0.2]}},
     'Robot Book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                    'params': {"sensor": "hand_camera",
-                            "quality": [1e7, 0.2]}},
+                            "quality": [1e8, 0.2]}},
 }
 
 GLOBAL_DETECTORS = {
@@ -183,7 +183,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Bowl", "Cat", "BlackPump"]
+target_objects = ["Cat"] #"Bowl", "BlackPump"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
@@ -198,7 +198,7 @@ CONFIG_LOCAL = {
             'action': LOCAL_ACTION,
             "reachable": LOCAL_REACHABLE,
         },
-        'objects': make_objects("Cat", *target_objects),
+        'objects': make_objects(*target_objects),
         'targets': target_objects
     },
 
