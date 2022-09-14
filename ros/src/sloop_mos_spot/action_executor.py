@@ -170,6 +170,10 @@ class SpotSloopActionExecutor(ActionExecutor):
                                     action_id, msg.stamp, pub_done=True)
 
         elif msg.type == "find":
+            # Move backwards a little bit
+            vx = 0.4
+            command_id, _ = rbd_spot.body.velocityCommand(
+            self.conn, self.command_client, -vx, 0.0, 0.0, duration=0.15/vx)
             # signal find action by closing and opening gripper
             rbd_spot.arm.close_gripper(self.conn, self.command_client)
             rbd_spot.arm.open_gripper(self.conn, self.command_client)
