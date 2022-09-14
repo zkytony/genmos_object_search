@@ -71,20 +71,52 @@ LOCAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "hand_camera",
                        "quality": [1e6, 0.2]}},
+    'Bowl': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+             'params': {"sensor": "hand_camera",
+                        "quality": [1e6, 0.2]}},
+    'Columbia Book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                      'params': {"sensor": "hand_camera",
+                                 "quality": [1e6, 0.2]}},
+    'ToyPlane': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+                 'params': {"sensor": "hand_camera",
+                            "quality": [1e6, 0.2]}},
 }
 
 GLOBAL_DETECTORS = {
     'Cat': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
             'params': {"sensor": "hand_fan",
                        "quality": [1e5, 0.4]}},
+    'Bowl': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+             'params': {"sensor": "hand_fan",
+                        "quality": [1e5, 0.4]}},
+    'Columbia Book': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+                      'params': {"sensor": "hand_fan",
+                                 "quality": [1e5, 0.4]}},
+    'ToyPlane': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
+                 'params': {"sensor": "hand_fan",
+                            "quality": [1e5, 0.4]}}
 }
 
 OBJECTS = {
     'Cat': {'class': 'Cat',
             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
-            'color': [0.4, 0.7, 0.3, 0.8],
-            'viz_type': 'cube',
-            'sizes': [0.14, 0.08, 0.10]}
+            'color': [0.67, 0.61, 0.15, 0.8],
+            'viz_type': 'cube'},
+
+    'Bowl': {'class': 'Bowl',
+             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+             'color': [0.82, 0.61, 0.01, 0.8],
+             'viz_type': 'cube'},
+
+    'Columbia Book': {'class': 'Columbia Book',
+                      'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                      'color': [0.01, 0.5, 0.81, 0.8],
+                      'viz_type': 'cube'},
+
+    'ToyPlane': {'class': 'ToyPlane',
+                 'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+                 'color': [0.01, 0.76, 0.85, 0.8],
+                 'viz_type': 'cube'}
 }
 
 

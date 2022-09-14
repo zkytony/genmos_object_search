@@ -16,14 +16,10 @@ agent_config:
     Cat:
       class: Cat
       color:
-      - 0.4
-      - 0.7
-      - 0.3
+      - 0.67
+      - 0.61
+      - 0.15
       - 0.8
-      sizes:
-      - 0.14
-      - 0.08
-      - 0.1
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
