@@ -6,7 +6,7 @@ agent_config:
       num_samples: 3000
       occupancy_blow_up_res: 4
       occupancy_fill_height: true
-      occupancy_height_thres: 0.52
+      occupancy_height_thres: 0.6
       prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
@@ -63,7 +63,7 @@ agent_config:
           floor_cut: 0.15
           inflation: 0.5
           layout_cut: 0.4
-        debug: false
+        debug: true
         num_nodes: 10
         pos_importance_thres: 0.01
         resample_thres: 0.4
