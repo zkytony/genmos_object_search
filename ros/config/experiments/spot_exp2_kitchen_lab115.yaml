@@ -1,0 +1,125 @@
+agent_config:
+  agent_class: MosAgentTopo3D
+  agent_type: local
+  belief:
+    init_params:
+      num_samples: 3000
+      occupancy_blow_up_res: 4
+      occupancy_fill_height: true
+      occupancy_height_thres: 0.2
+      prior_from_occupancy: true
+    visible_volume_params:
+      num_rays: 150
+      step_size: 0.4
+      voxel_res: 4
+  objects:
+    BlackPump:
+      class: BlackPump
+      color:
+      - 0.34
+      - 0.34
+      - 0.35
+      - 0.8
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      viz_type: cube
+    Bowl:
+      class: Bowl
+      color:
+      - 0.82
+      - 0.61
+      - 0.01
+      - 0.8
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      viz_type: cube
+    Cat:
+      class: Cat
+      color:
+      - 0.67
+      - 0.61
+      - 0.15
+      - 0.8
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      viz_type: cube
+    Robot Book:
+      class: Robot Book
+      color:
+      - 0.5
+      - 0.28
+      - 0.05
+      - 0.8
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      viz_type: cube
+  robot:
+    action:
+      policy:
+        cost_scaling_factor: 1.0
+      topo:
+        3d_proj_2d:
+          brush_size: 0.2
+          floor_cut: 0.15
+          inflation: 0.5
+          layout_cut: 0.4
+        debug: false
+        num_nodes: 10
+        pos_importance_thres: 0.01
+        resample_thres: 0.4
+        sep: 0.75
+    detectors:
+      BlackPump:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 10000000.0
+          - 0.2
+          sensor: hand_camera
+      Bowl:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 10000000.0
+          - 0.2
+          sensor: hand_camera
+      Robot Book:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 10000000.0
+          - 0.2
+          sensor: hand_camera
+    id: robot0
+    no_look: true
+    reachable:
+      max_height: 1.2
+      min_height: 0.5
+    sensors:
+    - name: hand_camera
+      params:
+        aspect_ratio: 0.7
+        far: 1.5
+        fov: 53
+        near: 0.2
+        occlusion_enabled: true
+  search_region:
+    3d:
+      octree_size: 32
+      region_size_x: 4.0
+      region_size_y: 3.0
+      region_size_z: 2.0
+      res: 0.15
+  targets:
+  - Bowl
+  - Robot Book
+  - BlackPump
+planner_config:
+  planner: pomdp_py.POUCT
+  planner_params:
+    exploration_const: 1000
+    max_depth: 6
+    num_sims: 400
+    show_progress: true
+task_config:
+  max_steps: 200
