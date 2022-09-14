@@ -5,7 +5,7 @@ agent_config:
     init_params:
       num_samples: 3000
       occupancy_height_thres: 0.05
-      prior_from_occupancy: false
+      prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
       step_size: 0.2

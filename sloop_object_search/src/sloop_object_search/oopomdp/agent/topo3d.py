@@ -162,7 +162,6 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 robot_pose = robot_observation.pose
                 topo_map = self.generate_topo_map(
                     object_beliefs, robot_pose)
-                import pdb; pdb.set_trace()
                 self._update_topo_map(topo_map, robot_observation, action=action)
         return _aux
 
