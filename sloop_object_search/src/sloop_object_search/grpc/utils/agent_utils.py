@@ -193,9 +193,9 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
     # Additional belief params
     if "init_params" in agent_config_world["belief"]:
         if "occupancy_height_thres" in agent_config_world["belief"]["init_params"]:
-            oht_world = topo_config_world["3d_proj_2d"]["inflation"]["occupancy_height_thres"]
+            oht_world = agent_config_world["belief"]["init_params"]["occupancy_height_thres"]
             oht_pomdp = oht_world / search_region.search_space_resolution
-            agent_config_pomdp["belief"]["init_params"]["oht_pomdp"] = oht_pomdp
+            agent_config_pomdp["belief"]["init_params"]["occupancy_height_thres"] = oht_pomdp
 
     return agent_config_pomdp
 
