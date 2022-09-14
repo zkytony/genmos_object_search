@@ -5,7 +5,7 @@ agent_config:
     init_params:
       num_samples: 3000
       occupancy_blow_up_res: 4
-      occupancy_fill_height: true
+      occupancy_fill_height: false
       occupancy_height_thres: 0.6
       prior_from_occupancy: true
     visible_volume_params:
@@ -43,16 +43,6 @@ agent_config:
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
-    Robot Book:
-      class: Robot Book
-      color:
-      - 0.5
-      - 0.28
-      - 0.05
-      - 0.8
-      transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
-      viz_type: cube
   robot:
     action:
       policy:
@@ -61,7 +51,7 @@ agent_config:
         3d_proj_2d:
           brush_size: 0.2
           floor_cut: 0.15
-          inflation: 0.53
+          inflation: 0.3
           layout_cut: 0.4
         debug: false
         num_nodes: 10
@@ -83,7 +73,7 @@ agent_config:
           - 10000000.0
           - 0.2
           sensor: hand_camera
-      Robot Book:
+      Cat:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
@@ -112,7 +102,7 @@ agent_config:
       res: 0.15
   targets:
   - Bowl
-  - Robot Book
+  - Cat
   - BlackPump
 planner_config:
   planner: pomdp_py.POUCT

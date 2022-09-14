@@ -6,7 +6,7 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                 "prior_from_occupancy": True,
                                 "occupancy_height_thres": 0.6,
                                 "occupancy_blow_up_res": 4,
-                                "occupancy_fill_height": True}}
+                                "occupancy_fill_height": False}}
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
@@ -183,7 +183,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Bowl", "Robot Book", "BlackPump"]
+target_objects = ["Bowl", "Cat", "BlackPump"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
