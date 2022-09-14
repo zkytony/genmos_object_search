@@ -63,7 +63,7 @@ agent_config:
           floor_cut: 0.15
           inflation: 0.5
           layout_cut: 0.4
-        debug: true
+        debug: false
         num_nodes: 10
         pos_importance_thres: 0.01
         resample_thres: 0.4
