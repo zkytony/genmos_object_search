@@ -511,7 +511,7 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
     for i in range(hist_pb.length):
         voxel = common_pb2.Voxel3D()
         hist_pb.values[i].Unpack(voxel)
-        prob = hist_pb.probs[i] / (voxel.res**3)  # we want value per unit voxel
+        prob = hist_pb.probs[i]
         probs.append(prob)
         voxels.append(voxel)
     prob_max = max(probs)

@@ -126,7 +126,7 @@ def draw_search_region3d(search_region, octree_dist=None, points=None, viz=True,
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]  # resolutions
     probs = [octree_dist.prob_at(
-        *Octree.increase_res(v[:3], 1, v[3]), v[3]) / (v[3]**3)
+        *Octree.increase_res(v[:3], 1, v[3]), v[3])
              for v in voxels]
     for i in range(len(vp)):
         pos = search_region.to_world_pos(vp[i])
@@ -154,7 +154,7 @@ def draw_octree_dist(octree_dist, viz=True, color_by_prob=True,
     vp = [v[:3] for v in voxels]
     vr = [v[3] for v in voxels]  # resolutions
     probs = [octree_dist.prob_at(
-        *Octree.increase_res(v[:3], 1, v[3]), v[3]) / (v[3]**3)
+        *Octree.increase_res(v[:3], 1, v[3]), v[3])
              for v in voxels]
     for i in range(len(vp)):
         if color_by_prob:
