@@ -368,8 +368,8 @@ def make_viz_marker_for_object(objid, pose, header, **kwargs):
     """
     marker = Marker(header=header)
     marker.ns = "object"
-    _id = kwargs.pop("id", hash16(objid))
-    marker.id = _id
+    _id = kwargs.pop("id", objid)
+    marker.id = hash16((_id, pose))
     loc = pose[:3]
     rot = pose[3:]
     marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
@@ -463,7 +463,7 @@ def make_viz_marker_for_voxel(voxel, header, ns="voxel", **kwargs):
     r is the size in meters."""
     return make_octnode_marker_msg(voxel[:3], voxel[3], header, ns=ns, **kwargs)
 
-def make_octnode_marker_msg(pos, res, header, alpha=1.0,
+def make_octnode_marker_msg(objid, pos, res, header, alpha=1.0,
                             lifetime=1.0, color=[0.0, 0.8, 0.0], ns="octnode"):
     """
     Creates an rviz marker for a OctNode, specified
@@ -474,7 +474,7 @@ def make_octnode_marker_msg(pos, res, header, alpha=1.0,
     marker = Marker()
     marker.header = header
     marker.ns = ns
-    marker.id = hash16((*pos, res))
+    marker.id = hash16((objid, *pos, res))
     marker.type = Marker.CUBE
     marker.pose.position = geometry_msgs.msg.Point(x=pos[0] + res/2,
                                                    y=pos[1] + res/2,
@@ -525,7 +525,7 @@ def make_octree_belief_proto_markers_msg(octree_belief_pb, header, cmap=cmaps.CO
         color = color_map(prob, [prob_min, prob_max], cmap)
         alpha = _compute_alpha(prob, prob_min, prob_max) * alpha_scaling
         marker = make_octnode_marker_msg(
-            pos, voxel.res, header, lifetime=0,  # 0 is forever
+            octree_belief_pb.object_id, pos, voxel.res, header, lifetime=0,  # 0 is forever
             color=color, alpha=alpha)
         markers.append(marker)
     return MarkerArray(markers)
