@@ -117,11 +117,11 @@ agent_config:
       region_size_y: 3.0
       region_size_z: 1.5
       res: 0.1
-  targets: !!set
-    Cat: null
-    Lyzol: null
-    Pringles: null
-    ToyPlane: null
+  targets:
+  - Cat
+  - ToyPlane
+  - Lyzol
+  - Pringles
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
