@@ -190,6 +190,13 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             inflation_pomdp = inflation_world / search_region.search_space_resolution
             topo_config_pomdp["inflation"] = inflation_pomdp
 
+    # Additional belief params
+    if "init_params" in agent_config_world["belief"]:
+        if "occupancy_height_thres" in agent_config_world["belief"]["init_params"]:
+            oht_world = topo_config_world["3d_proj_2d"]["inflation"]["occupancy_height_thres"]
+            oht_pomdp = oht_world / search_region.search_space_resolution
+            agent_config_pomdp["belief"]["init_params"]["oht_pomdp"] = oht_pomdp
+
     return agent_config_pomdp
 
 def voxel_to_world(v, search_region):

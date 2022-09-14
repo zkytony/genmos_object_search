@@ -37,7 +37,7 @@ agent_config:
         debug: false
         num_nodes: 10
         pos_importance_thres: 0.01
-        resample_thres: 0.18
+        resample_thres: 0.21
         sep: 0.75
     detectors:
       Cat:
