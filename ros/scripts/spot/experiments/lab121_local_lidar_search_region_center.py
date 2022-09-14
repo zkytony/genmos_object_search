@@ -15,7 +15,7 @@ def main():
     qw = 0.038210461576692244
     world_frame = "graphnav_map"
     pose_pub = rospy.Publisher("/local_region_center", PoseStamped, queue_size=10, latch=True)
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(5)
     print("Publishing local region center")
     while not rospy.is_shutdown():
         msg = ros_utils.pose_tuple_to_pose_stamped(
