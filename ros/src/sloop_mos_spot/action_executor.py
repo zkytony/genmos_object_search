@@ -153,7 +153,7 @@ class SpotSloopActionExecutor(ActionExecutor):
             goal_qy = float(kv["goal_qy"])
             goal_qz = float(kv["goal_qz"])
             goal_qw = float(kv["goal_qw"])
-            nav_type = float(kv["nav_type"])
+            nav_type = kv["nav_type"]
             self.publish_status(GoalStatus.ACTIVE,
                                 typ.info(f"executing {kv['action_id']}..."),
                                 action_id, msg.stamp)

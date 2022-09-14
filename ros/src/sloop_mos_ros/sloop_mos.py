@@ -157,6 +157,13 @@ class SloopMosROS:
         clear_msg = ros_utils.clear_markers(header, ns="")
         self._fovs_markers_pub.publish(clear_msg)
 
+    def clear_octree_markers(self):
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._octbelief_markers_pub.publish(clear_msg)
+
     def visualize_fovs_3d(self, response):
         # Clear markers
         header = std_msgs.Header(stamp=rospy.Time.now(),
@@ -367,6 +374,7 @@ class SloopMosROS:
                 thx, thy, _ = math_utils.quat_to_euler(*robot_pose[3:])
                 dest = (x, y, z, *math_utils.euler_to_quat(thx, thy, thz))
                 nav_type = "2d"
+                self.clear_octree_markers()  # 2d action means there's no 3D belief.
 
             else:
                 raise NotImplementedError("Not implemented action_pb.")
