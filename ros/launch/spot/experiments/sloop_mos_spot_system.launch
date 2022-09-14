@@ -83,17 +83,16 @@
     <remap from="/points_merged" to="/spot/local_region/input_points"/>
   </node>
 
-  <!-- If we are doing local search, then the search region center is published
-       at /local_region_center; Otherwise, it is spot's hand pose -->
-  <group if="$(arg local_search)">
-    <arg name="search_region_center" value="/local_region_center" />
-  </group>
-  <group unless="$(arg local_search)">
-    <arg name="search_region_center" value="/spot_hand_pose" />
-  </group>
   <!-- Finally, publish local region -->
   <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
-    <arg name="robot_pose_topic" value="$(arg search_region_center)"/>
+    <!-- If we are doing local search, then the search region center is published
+         at /local_region_center; Otherwise, it is spot's hand pose -->
+    <group if="$(arg local_search)">
+      <arg name="robot_pose_topic" value="/local_region_center"/>
+    </group>
+    <group unless="$(arg local_search)">
+      <arg name="robot_pose_topic" value="/spot_hand_pose"/>
+    </group>
     <arg name="global_cloud_topic" value="/spot/local_region/input_points"/>
     <arg name="region_size_x" value="$(arg region_size_x)"/>
     <arg name="region_size_y" value="$(arg region_size_y)"/>
