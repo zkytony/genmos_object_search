@@ -8,9 +8,9 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
-SEARCH_REGION_3D = {"res": 0.07,
-                    "region_size_x": 2.75,
-                    "region_size_y": 2.75,
+SEARCH_REGION_3D = {"res": 0.1,
+                    "region_size_x": 3.0,
+                    "region_size_y": 3.0,
                     "region_size_z": 1.5}
 
 SEARCH_REGION_2D = {"res": 0.3,
@@ -41,7 +41,7 @@ LOCAL_TOPO = {'num_nodes': 10,
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
-                             'inflation': 0.25}}
+                             'inflation': 0.4}}
 
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
@@ -52,9 +52,17 @@ LOCAL_REACHABLE = {"min_height": 0.5,
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
                             "exploration_const": 1000,
-                            "max_depth": 8,
-                            "num_sims": 200,
+                            "max_depth": 6,
+                            "num_sims": 400,
                             "show_progress": True}}
+
+GLOBAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
+                         "planner_params": {
+                             "exploration_const": 1000,
+                             "max_depth": 8,
+                             "num_sims": 400,
+                             "show_progress": True
+                         }}
 
 ######### DETECTORS AND OBJECTS ######
 LOCAL_DETECTORS = {
@@ -160,12 +168,7 @@ CONFIG_HIER = {
     "planner_config": {
         "planner": "sloop_object_search.oopomdp.planner.hier.HierPlanner",
         "planner_params": {
-            "global": {
-                "exploration_const": 1000,
-                "max_depth": 8,
-                "num_sims": 400,
-                "show_progress": True
-            },
+            "global": GLOBAL_PLANNER_CONFIG["planner_params"],
             "local": LOCAL_PLANNER_CONFIG["planner_params"]
         }
     }

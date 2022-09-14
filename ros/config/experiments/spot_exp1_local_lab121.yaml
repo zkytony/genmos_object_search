@@ -33,7 +33,7 @@ agent_config:
         3d_proj_2d:
           brush_size: 0.2
           floor_cut: 0.15
-          inflation: 0.25
+          inflation: 0.4
           layout_cut: 0.4
         debug: false
         num_nodes: 10
@@ -63,18 +63,18 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
-      region_size_x: 2.75
-      region_size_y: 2.75
+      region_size_x: 3.0
+      region_size_y: 3.0
       region_size_z: 1.5
-      res: 0.07
+      res: 0.1
   targets:
   - Cat
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
     exploration_const: 1000
-    max_depth: 8
-    num_sims: 200
+    max_depth: 6
+    num_sims: 400
     show_progress: true
 task_config:
   max_steps: 100
