@@ -170,8 +170,8 @@ class MosAgentTopo2D(MosAgentBasic2D):
                                      topo_map_hashcode=self.topo_map.hashcode)
 
     def should_resample_topo_map(self, object_beliefs):
-        zone_res = self.topo_config.get("sampling", {}).get("zone_res", 8)
-        resample_prob_thres = self.topo_config.get("sampling", {}).get("zone_res", 0.3)
+        zone_res = self.topo_config.get("zone_res", 8)
+        resample_prob_thres = self.topo_config.get("resample_thres", 0.3)
         total_prob = 0
         zones_covered = set()  # set of zones whose area's probability has been considered
         for nid in self.topo_map.nodes:
