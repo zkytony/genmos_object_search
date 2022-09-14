@@ -4,7 +4,7 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "voxel_res": 4},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": True,
-                                "occupancy_height_thres": 0.2,
+                                "occupancy_height_thres": 0.52,
                                 "occupancy_blow_up_res": 4,
                                 "occupancy_fill_height": True}}
 
