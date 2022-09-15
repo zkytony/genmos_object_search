@@ -6,7 +6,7 @@ from sloop_object_search.utils.math import euler_to_quat
 
 def main():
     rospy.init_node("local_search_center_publisher")
-    x = 0.745233416557312
+    x = 1.045233416557312
     y = 1.10294508934021
     z = 0.25
     qx = 0.0

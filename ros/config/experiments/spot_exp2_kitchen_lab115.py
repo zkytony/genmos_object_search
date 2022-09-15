@@ -4,16 +4,16 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": True,
-                                "occupancy_height_thres": 0.6,
+                                "occupancy_height_thres": 0.7,
                                 "occupancy_blow_up_res": 4,
-                                "occupancy_fill_height": True}}
+                                "occupancy_fill_height": False}}
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
 SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
-                    "region_size_x": 3.2,
-                    "region_size_y": 2.8,
+                    "region_size_x": 2.5,
+                    "region_size_y": 3.0,
                     "region_size_z": 2.0}
 
 SEARCH_REGION_2D = {"res": 0.3,
@@ -54,8 +54,8 @@ LOCAL_ACTION = {'topo': LOCAL_TOPO,
 #                    "max_height": 1.75}
 
 # Another test
-LOCAL_REACHABLE = {"min_height": 1.0,
-                   "max_height": 1.5}
+LOCAL_REACHABLE = {"min_height": 1.3,
+                   "max_height": 1.6}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
@@ -188,7 +188,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Cat", "Bowl", "Pringles"]
+target_objects = ["Cat"]#, "Bowl", "Pringles", "Robot Book"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
