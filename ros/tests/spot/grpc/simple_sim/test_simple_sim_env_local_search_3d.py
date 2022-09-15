@@ -222,18 +222,16 @@ def main():
     prior = "groundtruth"
     name = f"{prior}-32x32x32"
 
-    test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior)
-    save_report(name, test.report)
-    test.reset()
-    print("--------------------------------------------------------------")
-    print("--------------------------------------------------------------")
-    print("--------------------------------------------------------------")
-    print("--------------------------------------------------------------")
-    print("--------------------------------------------------------------")
+    for i in range(10):
+        test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior)
+        save_report(name, test.report)
+        test.reset()
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
 
-    test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior)
-    save_report(name, test.report)
-    test.reset()
 
 if __name__ == "__main__":
     main()

@@ -89,3 +89,4 @@ planner_config:
     show_progress: true
 task_config:
   max_steps: 100
+  max_time: 120

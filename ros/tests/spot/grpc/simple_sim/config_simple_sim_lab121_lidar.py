@@ -47,7 +47,8 @@ CONFIG_LOCAL = {
     },
 
     "task_config": {
-        "max_steps": 100
+        "max_steps": 100,
+        "max_time": 120
     },
 
     "planner_config": {
