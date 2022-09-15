@@ -163,6 +163,11 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 def main():
     test = TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
     test.reset()
+    print("--------------------------------------------------------------")
+    print("--------------------------------------------------------------")
+    print("--------------------------------------------------------------")
+    print("--------------------------------------------------------------")
+    print("--------------------------------------------------------------")
     test = TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
 
 if __name__ == "__main__":

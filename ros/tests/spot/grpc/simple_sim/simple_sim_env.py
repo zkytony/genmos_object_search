@@ -232,6 +232,12 @@ class SimpleSimEnvROSNode:
     def _reset_cb(self, msg):
         self.env = SimpleSimEnv(self._init_config)
         self._navigating = False
+        # First, clear existing belief messages
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self.state_markers_pub.publish(clear_msg)
+        rospy.loginfo("======================= RESET =========================")
 
     def publish_observation(self):
         observation = self.env.provide_observation()

@@ -309,5 +309,5 @@ class TestSimpleEnvCase:
         self._sloop_client.reset()
         rospy.loginfo("Server reset done.")
         self._reset_pub.publish(std_msgs.String("reset"))
-        time.sleep(0.5)
+        time.sleep(2)
         rospy.loginfo("Simple env reset done.")
