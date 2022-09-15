@@ -67,7 +67,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
         self.update_search_region_3d()
 
-        self.report = {"steps": [], "total_time": 0}
+        self.report = {"steps": [], "total_time": 0, "success": False}
 
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
@@ -172,6 +172,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             # Check if we are done
             if objects_found == set(AGENT_CONFIG["targets"]):
                 rospy.loginfo("Done!")
+                self.report["success"] = True
                 break
             self.report["total_time"] += _planning_time + _action_time + _observation_and_belief_update_time
             if self.report["total_time"] > TASK_CONFIG.get("max_time", float('inf')):
@@ -179,6 +180,31 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 break
             time.sleep(1)
         self.report["total_time"] = time.time() - _start_time
+
+import os
+import pandas as pd
+import datetime
+def save_report(name, report):
+    os.makedirs("./report", exist_ok=True)
+    length = 0
+    for i in range(1, len(report["steps"])):
+        prev_s = report["steps"][i-1]
+        s = report["steps"][i]
+        length += math_utils.euclidean_dist(
+            prev_s["robot_pose"][:3], s["robot_pose"][:3])
+
+    planning_time = 0
+    for i in range(len(report["steps"])):
+        planning_time += report["steps"][i]["planning_time"]
+
+    ct = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    df = pd.DataFrame({"name": name,
+                       "timestamp": ct,
+                       "length": length,
+                       "planning_time": planning_time,
+                       "total_time": report["total_time"],
+                       "success": report["success"]})
+    df.to_csv(os.path.join("report", f"report_{name}_{ct}.csv"))
 
 
 def main():
