@@ -256,7 +256,7 @@ CONFIG_HIER = {
     }
 }
 
-CONFIG = CONFIG_LOCAL
+CONFIG = CONFIG_HIER
 
 import yaml
 def main():
