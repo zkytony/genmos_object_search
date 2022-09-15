@@ -20,8 +20,8 @@
   <!-- <arg name="retain_ratio" default="0.2"/> -->
 
   <!-- local region size (cit1f) -->
-  <arg name="region_size_x" default="5.0"/>
-  <arg name="region_size_y" default="5.0"/>
+  <arg name="region_size_x" default="10.0"/>
+  <arg name="region_size_y" default="10.0"/>
   <arg name="region_size_z" default="2.0"/>
   <arg name="retain_ratio" default="0.2"/>
 

@@ -9,9 +9,9 @@ GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
 SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
-                    "region_size_x": 2.5,
+                    "region_size_x": 3.0,
                     "region_size_y": 3.0,
-                    "region_size_z": 2.2}
+                    "region_size_z": 1.5}
 
 SEARCH_REGION_2D = {"res": 0.35,
                     "region_size": 10.0,
@@ -51,8 +51,8 @@ LOCAL_ACTION = {'topo': LOCAL_TOPO,
 #                    "max_height": 1.75}
 
 # Another test
-LOCAL_REACHABLE = {"min_height": 1.3,
-                   "max_height": 1.6}
+LOCAL_REACHABLE = {"min_height": 0.5,
+                   "max_height": 1.3}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
