@@ -188,7 +188,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Cat"] #"Bowl", "BlackPump"]
+target_objects = ["Cat", "Bowl", "Pringles"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
