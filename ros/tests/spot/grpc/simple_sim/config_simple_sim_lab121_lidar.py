@@ -222,7 +222,8 @@ CONFIG_HIER = {
     },
 
     "task_config": {
-        "max_steps": 100
+        "max_steps": 100,
+        "max_time": 5
     },
 
     "planner_config": {

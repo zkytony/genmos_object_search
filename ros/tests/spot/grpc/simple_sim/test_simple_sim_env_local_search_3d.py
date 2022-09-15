@@ -67,6 +67,8 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
         self.update_search_region_3d()
 
+        self.report = {"steps": [], "total_time": 0}
+
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
         self._sloop_client.waitForAgentCreation(self.robot_id)
@@ -81,10 +83,16 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
 
+        _start_time = time.time()
+
         # Send planning requests
         for step in range(TASK_CONFIG["max_steps"]):
+            _time = time.time()
             response_plan = self._sloop_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
+            _planning_time = time.time() - _time
+
+            _time = time.time()
             action = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
             rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
@@ -123,8 +131,10 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("find action done")
+            _action_time = time.time() - _time
 
             # Now, wait for observation
+            _time = time.time()
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
                                                 [KeyValObservation],
                                                 verbose=True, allow_headerless=True).messages[0]
@@ -139,6 +149,8 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 objects_found=objects_found_pb,
                 header=header, return_fov=True,
                 action_id=action_id, action_finished=True, debug=False)
+            _observation_and_belief_update_time = time.time() - _time
+
             response_robot_belief = self._sloop_client.getRobotBelief(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
 
@@ -149,6 +161,10 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             print(f"  objects found: {objects_found}")
             print("-----------")
 
+            # Report
+            self.report["steps"].append({"robot_pose": proto_utils.robot_pose_from_proto(robot_pose_pb),
+                                         "planning_time": _planning_time})
+
             # visualize FOV and belief
             self.visualize_fovs_3d(response_observation)
             self.get_and_visualize_belief_3d(o3dviz=o3dviz)
@@ -157,7 +173,12 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             if objects_found == set(AGENT_CONFIG["targets"]):
                 rospy.loginfo("Done!")
                 break
+            self.report["total_time"] += _planning_time + _action_time + _observation_and_belief_update_time
+            if self.report["total_time"] > TASK_CONFIG.get("max_time", float('inf')):
+                rospy.loginfo("Time out!")
+                break
             time.sleep(1)
+        self.report["total_time"] = time.time() - _start_time
 
 
 def main():
