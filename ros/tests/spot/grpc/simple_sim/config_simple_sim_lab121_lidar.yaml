@@ -23,6 +23,20 @@ agent_config:
       transition:
         class: sloop_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
+    cup:
+      class: cup
+      color:
+      - 0.89
+      - 0.6
+      - 0.05
+      - 0.8
+      sizes:
+      - 0.12
+      - 0.12
+      - 0.12
+      transition:
+        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+      viz_type: cube
   robot:
     action:
       func: sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d
@@ -35,7 +49,14 @@ agent_config:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 100000.0
+          - 1000000.0
+          - 0.1
+          sensor: camera
+      cup:
+        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 1000000.0
           - 0.1
           sensor: camera
     id: robot0
@@ -49,6 +70,7 @@ agent_config:
         occlusion_enabled: true
   targets:
   - book
+  - cup
 object_locations:
   book:
   - 0.0
