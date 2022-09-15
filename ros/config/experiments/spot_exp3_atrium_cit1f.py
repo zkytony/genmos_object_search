@@ -260,7 +260,7 @@ CONFIG = CONFIG_LOCAL
 
 import yaml
 def main():
-    with open("spot_exp2_kitchen_lab115.yaml", "w") as f:
+    with open("spot_exp3_atrium_cit1f.yaml", "w") as f:
         yaml.dump(CONFIG, f, default_flow_style=False)
 
 if __name__ == "__main__":
