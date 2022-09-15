@@ -160,7 +160,6 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             time.sleep(1)
 
 
-
 def main():
     TestSimpleEnvLocalSearch(o3dviz=False, prior="uniform")
 

@@ -27,6 +27,7 @@ MAP_POINT_CLOUD_TOPIC = "/graphnav_map_publisher/graphnav_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
 ROBOT_POSE_TOPIC = "/simple_sim_env/robot_pose"
 ACTION_TOPIC = "/simple_sim_env/pomdp_action"
+RESET_TOPIC = "/simple_sim_env/reset"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
@@ -265,6 +266,7 @@ class TestSimpleEnvCase:
 
         # Initialize ROS stuff
         self._action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
+        self._reset_pub = rospy.Publisher(RESET_TOPIC, std_msgs.String, queue_size=10)
         self._octbelief_markers_pub = rospy.Publisher(
             "~octree_belief", MarkerArray, queue_size=10, latch=True)
         self._fovs_markers_pub = rospy.Publisher(
@@ -302,3 +304,10 @@ class TestSimpleEnvCase:
 
         self._region_cloud_msg = None
         # the rest is determined by the child class
+
+    def reset(self):
+        self._sloop_client.reset()
+        rospy.loginfo("Server reset done.")
+        self._reset_pub.publish(std_msgs.String("reset"))
+        time.sleep(0.5)
+        rospy.loginfo("Simple env reset done.")
