@@ -49,8 +49,13 @@ LOCAL_TOPO = {'num_nodes': 10,
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 0.5,
-                   "max_height": 1.75}
+# Find cat under couch
+# LOCAL_REACHABLE = {"min_height": 0.5,
+#                    "max_height": 1.75}
+
+# Another test
+LOCAL_REACHABLE = {"min_height": 1.0,
+                   "max_height": 1.5}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
