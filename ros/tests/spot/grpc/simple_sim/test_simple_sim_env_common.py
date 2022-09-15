@@ -293,6 +293,9 @@ class TestSimpleEnvCase:
         self.robot_id = AGENT_CONFIG["robot"]["id"]
         self.world_frame = WORLD_FRAME
 
+        # For bookkeeping
+        self.report = {}
+
         if prior == "groundtruth":
             AGENT_CONFIG["belief"]["prior"] = {}
             for objid in AGENT_CONFIG["targets"]:
@@ -306,6 +309,7 @@ class TestSimpleEnvCase:
         # the rest is determined by the child class
 
     def reset(self):
+        self.report = {}  # clear report
         self._sloop_client.reset()
         rospy.loginfo("Server reset done.")
         self._reset_pub.publish(std_msgs.String("reset"))
