@@ -3,10 +3,7 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "step_size": 0.4,
                                           "voxel_res": 2},
                 "init_params": {"num_samples": 3000,
-                                "prior_from_occupancy": True,
-                                "occupancy_height_thres": 0.7,
-                                "occupancy_blow_up_res": 4,
-                                "occupancy_fill_height": False}}
+                                "prior_from_occupancy": False}}
 
 GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
@@ -16,12 +13,12 @@ SEARCH_REGION_3D = {"res": 0.1,
                     "region_size_y": 3.0,
                     "region_size_z": 2.2}
 
-SEARCH_REGION_2D = {"res": 0.3,
-                    "region_size": 4.0,
+SEARCH_REGION_2D = {"res": 0.35,
+                    "region_size": 10.0,
                     "layout_cut": 0.4,
                     "floor_cut": 0.15,
                     "brush_size": 0.5,
-                    "expansion_width": 0.5}
+                    "expansion_width": 0.35}
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 HAND_CAMERA = {'name': 'hand_camera',
@@ -188,7 +185,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Cat", "Bowl", "Pringles"]#, "Robot Book"]
+target_objects = ["Cat"]#, "Bowl", "Pringles"]#, "Robot Book"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
@@ -226,7 +223,7 @@ CONFIG_HIER = {
         "robot": {
             "id": "robot0",
             "no_look": True,
-            "detectors": make_detectors("global", "Cat"),
+            "detectors": make_detectors("local", *target_objects),
             "sensors": [HAND_FAN],
             "action": {"topo": {
                 "inflation": 0.25,
@@ -234,14 +231,14 @@ CONFIG_HIER = {
             }},
             #### Below are specific to hierarchical type agents ####
             "sensors_local": [HAND_CAMERA],
-            "detectors_local": make_detectors("local", "Cat"),
+            "detectors_local": make_detectors("local", *target_objects),
             "action_local": LOCAL_ACTION,
             "reachable_local": LOCAL_REACHABLE,
         },
-        'objects': make_objects("Cat"),
-        'targets': ['Cat'],
+        'objects': make_objects(*target_objects),
+        'targets': target_objects,
         'misc': {
-            'visual': {'res': 15},
+            'visual': {'res': 5},
             'ros_visual': {'marker2d_z': -0.65}
         }
     },
