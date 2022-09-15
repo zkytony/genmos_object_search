@@ -186,6 +186,12 @@ import pandas as pd
 import datetime
 def save_report(name, report):
     os.makedirs("./report", exist_ok=True)
+
+    report_name = f"report_{name}"
+    df = None
+    if os.path.exists(f"report/{report_name}.csv"):
+        df = pd.read_csv(f"report/{report_name}.csv")
+
     length = 0
     for i in range(1, len(report["steps"])):
         prev_s = report["steps"][i-1]
@@ -198,24 +204,36 @@ def save_report(name, report):
         planning_time += report["steps"][i]["planning_time"]
 
     ct = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    df = pd.DataFrame({"name": name,
-                       "timestamp": ct,
-                       "length": length,
-                       "planning_time": planning_time,
-                       "total_time": report["total_time"],
-                       "success": report["success"]})
-    df.to_csv(os.path.join("report", f"report_{name}_{ct}.csv"))
+
+    columns = ["name", "timestamp", "length", "planning_time", "total_time", "success"]
+    row = [name, ct, length, planning_time, report["total_time"], report["success"]]
+
+    if df is None:
+        df = pd.DataFrame(data=[row],
+                          columns=columns)
+    else:
+        df.loc[len(df)] = row
+
+    df.to_csv(os.path.join(f"report/{report_name}.csv"), index=False)
+    print("report saved")
 
 
 def main():
-    test = TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
+    prior = "groundtruth"
+    name = f"{prior}-32x32x32"
+
+    test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior)
+    save_report(name, test.report)
     test.reset()
     print("--------------------------------------------------------------")
     print("--------------------------------------------------------------")
     print("--------------------------------------------------------------")
     print("--------------------------------------------------------------")
     print("--------------------------------------------------------------")
-    test = TestSimpleEnvLocalSearch(o3dviz=False, prior="groundtruth")
+
+    test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior)
+    save_report(name, test.report)
+    test.reset()
 
 if __name__ == "__main__":
     main()
