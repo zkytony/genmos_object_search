@@ -172,3 +172,8 @@ class SloopObjectSearchClient:
         for response in response_iterator:
             logging.info(f"Received message from server: {response.message}")
             callback(response.message)
+
+    def reset(self, **kwargs):
+        timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
+        request = slpb2.ResetRequest(header=proto_utils.make_header())
+        return self.call(self.stub.Reset, request, timeout=timeout)

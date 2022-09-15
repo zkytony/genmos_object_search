@@ -465,6 +465,22 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
         """adds a message in the queue to be sent to a client"""
         self._messages_for_client.append((robot_id, message))
 
+    def Reset(self, request, context):
+        # Just clear everything.
+        self._agents = {}
+        self._pending_agents = {}
+        self._planners = {}
+        self._actions_planned = {}
+        self._actions_finished = {}
+        self._action_seq = 0
+        self._messages_for_client = deque()
+        self._tmp_client_provided_info = {}
+        return slpb2.ResetReply(
+            header=proto_utils.make_header(),
+            status=Status.SUCCESSFUL,
+            message=self._loginfo(f"Server reset"))
+
+
 
 ###########################################################################
 def serve(port=50051, max_message_length=MAX_MESSAGE_LENGTH):

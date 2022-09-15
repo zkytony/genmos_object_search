@@ -37,6 +37,9 @@ service SloopObjectSearch {
 
   // receives messages from server
   rpc ListenServer(ListenServerRequest) returns (stream ListenServerReply) {}
+
+  // reset
+  rpc Reset(ResetRequest) returns (ResetReply) {}
 }
 
 
@@ -234,6 +237,17 @@ message ListenServerRequest {
 message ListenServerReply {
   Header header = 1;
   string robot_id = 2;
+  string message = 3;
+}
+
+//// For Reset rpc ////
+message ResetRequest {
+  Header header = 1;
+}
+
+message ResetReply {
+  Header header = 1;
+  Status status = 2;
   string message = 3;
 }
 
