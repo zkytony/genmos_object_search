@@ -223,7 +223,7 @@ CONFIG_HIER = {
         "robot": {
             "id": "robot0",
             "no_look": True,
-            "detectors": make_detectors("local", *target_objects),
+            "detectors": make_detectors("global", *target_objects),
             "sensors": [HAND_FAN],
             "action": {"topo": {
                 "inflation": 0.25,

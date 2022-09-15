@@ -48,15 +48,21 @@ agent_config:
         resample_thres: 0.4
         sep: 0.75
     detectors:
-      Cat: &id001
+      Cat:
+        class: sloop_object_search.oopomdp.FanModelAlphaBeta
+        params:
+          quality:
+          - 100000.0
+          - 0.4
+          sensor: hand_fan
+    detectors_local:
+      Cat:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 100000000.0
           - 0.2
           sensor: hand_camera
-    detectors_local:
-      Cat: *id001
     id: robot0
     no_look: true
     reachable_local:
