@@ -249,7 +249,7 @@ class TestSimpleEnvCase:
                                               robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
-                                              search_region_params_3d={"octree_size": 64,
+                                              search_region_params_3d={"octree_size": 32,
                                                                        "search_space_resolution": self.search_space_res_3d,
                                                                        "debug": False,
                                                                        "region_size_x": 4.0,
