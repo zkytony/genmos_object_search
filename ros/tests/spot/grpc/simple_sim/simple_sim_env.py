@@ -170,6 +170,7 @@ class SimpleSimEnvROSNode:
 
     Subscribes:
       ~pomdp_action (KeyValAction)
+      ~reset (String)
     Publishes:
       ~robot_pose (PoseStamped)
       ~state_markers (MarkerArray)
@@ -179,17 +180,20 @@ class SimpleSimEnvROSNode:
         self.name = "simple_sim_env"
         rospy.init_node(self.name)
         config = rospy.get_param("~config")  # access parameters together as a dictionary
+        self._init_config = config
         state_pub_rate = rospy.get_param("~state_pub_rate", 10)
         observation_pub_rate = rospy.get_param("~observation_pub_rate", 3)
         self.world_frame = rospy.get_param("~world_frame")  # fixed frame of the world
         self.br = TransformBroadcaster()
 
         action_topic = "~pomdp_action"
+        reset_topic = "~reset"
         state_markers_topic = "~state_markers"
         robot_pose_topic = "~robot_pose"
         observation_topic = "~pomdp_observation"
         self.env = SimpleSimEnv(config)
         self.action_sub = rospy.Subscriber(action_topic, KeyValAction, self._action_cb)
+        self.reset_sub = rospy.Subscriber(reset_topic, String, self._reset_cb)
 
         self.state_markers_pub = rospy.Publisher(state_markers_topic, MarkerArray, queue_size=10)
         self.state_pub_rate = state_pub_rate
@@ -224,6 +228,16 @@ class SimpleSimEnvROSNode:
             for t in tf2_msgs:
                 self.br.sendTransform(t)
             rate.sleep()
+
+    def _reset_cb(self, msg):
+        self.env = SimpleSimEnv(self._init_config)
+        self._navigating = False
+        # First, clear existing belief messages
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self.state_markers_pub.publish(clear_msg)
+        rospy.loginfo("======================= RESET =========================")
 
     def publish_observation(self):
         observation = self.env.provide_observation()

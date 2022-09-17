@@ -7,7 +7,7 @@
 # 2. run in a terminal 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/init_robot_pose'
 # 3. run in a terminal 'roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
 # 4. run in a terminal 'python -m sloop_object_search.grpc.server'
-# 5. run in a terminal 'python test_simple_sim_env_local_search.py'
+# 5. run in a terminal 'python test_simple_sim_env_local_search_3d.py groundtruth 32 config_simple_sim_lab121_lidar.yaml
 # 6. run in a terminal 'roslaunch sloop_object_search_ros view_simple_sim.launch'
 # 7. to monitor CPU temperature: 'watch -n 1 -x sensors'
 # ------------------
@@ -32,6 +32,8 @@ import time
 import rospy
 import pickle
 import json
+import yaml
+import argparse
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
@@ -62,10 +64,12 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
-    def __init__(self, o3dviz=False, prior="uniform"):
-        super().__init__(o3dviz=o3dviz, prior=prior)
+    def __init__(self, o3dviz=False, prior="uniform", agent_config=None):
+        super().__init__(o3dviz=o3dviz, prior=prior, agent_config=agent_config)
 
         self.update_search_region_3d()
+
+        self.report = {"steps": [], "total_time": 0, "success": False}
 
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
@@ -81,10 +85,16 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
 
+        _start_time = time.time()
+
         # Send planning requests
         for step in range(TASK_CONFIG["max_steps"]):
+            _time = time.time()
             response_plan = self._sloop_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
+            _planning_time = time.time() - _time
+
+            _time = time.time()
             action = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
             rospy.loginfo("plan action finished. Action ID: {}".format(action_id))
@@ -123,8 +133,10 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True)
                 rospy.loginfo("find action done")
+            _action_time = time.time() - _time
 
             # Now, wait for observation
+            _time = time.time()
             obs_msg = ros_utils.WaitForMessages([OBSERVATION_TOPIC],
                                                 [KeyValObservation],
                                                 verbose=True, allow_headerless=True).messages[0]
@@ -139,6 +151,8 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 objects_found=objects_found_pb,
                 header=header, return_fov=True,
                 action_id=action_id, action_finished=True, debug=False)
+            _observation_and_belief_update_time = time.time() - _time
+
             response_robot_belief = self._sloop_client.getRobotBelief(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
 
@@ -149,6 +163,10 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             print(f"  objects found: {objects_found}")
             print("-----------")
 
+            # Report
+            self.report["steps"].append({"robot_pose": proto_utils.robot_pose_from_proto(robot_pose_pb),
+                                         "planning_time": _planning_time})
+
             # visualize FOV and belief
             self.visualize_fovs_3d(response_observation)
             self.get_and_visualize_belief_3d(o3dviz=o3dviz)
@@ -156,13 +174,101 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             # Check if we are done
             if objects_found == set(AGENT_CONFIG["targets"]):
                 rospy.loginfo("Done!")
+                self.report["success"] = True
+                break
+            self.report["total_time"] += _planning_time + _action_time + _observation_and_belief_update_time
+            if self.report["total_time"] > TASK_CONFIG.get("max_time", float('inf')):
+                rospy.loginfo("Time out!")
                 break
             time.sleep(1)
+        self.report["total_time"] = time.time() - _start_time
 
+import os
+import pandas as pd
+import datetime
+def save_report(name, report):
+    os.makedirs("./report", exist_ok=True)
+
+    report_name = f"report_{name}"
+    df = None
+    if os.path.exists(f"report/{report_name}.csv"):
+        df = pd.read_csv(f"report/{report_name}.csv")
+
+    length = 0
+    for i in range(1, len(report["steps"])):
+        prev_s = report["steps"][i-1]
+        s = report["steps"][i]
+        length += math_utils.euclidean_dist(
+            prev_s["robot_pose"][:3], s["robot_pose"][:3])
+
+    planning_time = 0
+    for i in range(len(report["steps"])):
+        planning_time += report["steps"][i]["planning_time"]
+
+    ct = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+    columns = ["name", "timestamp", "length", "planning_time", "total_time", "success"]
+    row = [name, ct, length, planning_time, report["total_time"], report["success"]]
+
+    if df is None:
+        df = pd.DataFrame(data=[row],
+                          columns=columns)
+    else:
+        df.loc[len(df)] = row
+
+    df.to_csv(os.path.join(f"report/{report_name}.csv"), index=False)
+    print("report saved")
 
 
 def main():
-    TestSimpleEnvLocalSearch(o3dviz=False, prior="uniform")
+    parser = argparse.ArgumentParser(description='3D Local Search in Simulation.')
+    parser.add_argument('prior', type=str,
+                        choices=['uniform', 'groundtruth', 'occupancy'],
+                        help='prior type')
+    parser.add_argument('octree_size', type=int,
+                        help="octree size. e.g. 16, 32, 64")
+    parser.add_argument('config_file', type=str,
+                        help='path to .yaml config file')
+    parser.add_argument('--res', type=float, default=0.1,
+                        help="resolution (side length, in meters). e.g. 0.1")
+    args = parser.parse_args()
+
+    with open(args.config_file) as f:
+        config = yaml.safe_load(f)
+        agent_config = config["agent_config"]
+
+    if args.prior == "groundtruth":
+        prior = "groundtruth"
+    else:
+        prior = "uniform"   # occupancy is also uniform
+
+    if args.prior == "occupancy":
+        agent_config["belief"]["init_params"].update(
+            {"prior_from_occupancy": True,
+             "occupancy_height_thres": 0.2,
+             "occupancy_blow_up_res": 4,
+             "occupancy_fill_height": True})
+
+    agent_config["search_region"]["3d"] = {
+        "res": args.res,
+        "octree_size": args.octree_size,
+        "region_size_x": 4.0,
+        "region_size_y": 4.0,
+        "region_size_z": 2.4
+    }
+
+    name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
+    for i in range(30):
+        test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
+                                        agent_config=agent_config)
+        save_report(name, test.report)
+        test.reset()
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+        print("--------------------------------------------------------------")
+
 
 if __name__ == "__main__":
     main()

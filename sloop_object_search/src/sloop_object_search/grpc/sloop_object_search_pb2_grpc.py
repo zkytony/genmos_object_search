@@ -59,6 +59,11 @@ class SloopObjectSearchStub(object):
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerReply.FromString,
                 )
+        self.Reset = channel.unary_unary(
+                '/sloop_object_search.grpc.SloopObjectSearch/Reset',
+                request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetRequest.SerializeToString,
+                response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetReply.FromString,
+                )
 
 
 class SloopObjectSearchServicer(object):
@@ -127,6 +132,13 @@ class SloopObjectSearchServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Reset(self, request, context):
+        """reset
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SloopObjectSearchServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -174,6 +186,11 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
                     servicer.ListenServer,
                     request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerRequest.FromString,
                     response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerReply.SerializeToString,
+            ),
+            'Reset': grpc.unary_unary_rpc_method_handler(
+                    servicer.Reset,
+                    request_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetRequest.FromString,
+                    response_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -335,5 +352,22 @@ class SloopObjectSearch(object):
         return grpc.experimental.unary_stream(request, target, '/sloop_object_search.grpc.SloopObjectSearch/ListenServer',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Reset(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/Reset',
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetRequest.SerializeToString,
+            sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

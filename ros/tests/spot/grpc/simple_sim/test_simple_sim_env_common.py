@@ -27,6 +27,7 @@ MAP_POINT_CLOUD_TOPIC = "/graphnav_map_publisher/graphnav_points"
 INIT_ROBOT_POSE_TOPIC = "/simple_sim_env/init_robot_pose"
 ROBOT_POSE_TOPIC = "/simple_sim_env/robot_pose"
 ACTION_TOPIC = "/simple_sim_env/pomdp_action"
+RESET_TOPIC = "/simple_sim_env/reset"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
@@ -188,7 +189,7 @@ class TestSimpleEnvCase:
                                  frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
-            color = AGENT_CONFIG["objects"][bobj_pb.object_id].get(
+            color = self.agent_config["objects"][bobj_pb.object_id].get(
                 "color", [0.2, 0.7, 0.2])[:3]
             msg = ros_utils.make_object_belief2d_proto_markers_msg(
                 bobj_pb, header, self.search_space_res_2d,
@@ -244,19 +245,24 @@ class TestSimpleEnvCase:
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        search_region_params_3d = dict(
+            octree_size=search_region_config.get("octree_size", 32),
+            search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
+            region_size_x=search_region_config.get("region_size_x", 4.0),
+            region_size_y=search_region_config.get("region_size_y", 4.0),
+            region_size_z=search_region_config.get("region_size_z", 2.4),
+            debug=search_region_config.get("debug", False)
+        )
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
-                                              search_region_params_3d={"octree_size": 64,
-                                                                       "search_space_resolution": self.search_space_res_3d,
-                                                                       "debug": False,
-                                                                       "region_size_x": 4.0,
-                                                                       "region_size_y": 4.0,
-                                                                       "region_size_z": 2.4})
+                                              search_region_params_3d=search_region_params_3d)
 
     def __init__(self, name="test_simple_env_search",
                  o3dviz=False, prior="uniform",
+                 agent_config=None,
                  search_space_res_3d=SEARCH_SPACE_RESOLUTION_3D,
                  search_space_res_2d=SEARCH_SPACE_RESOLUTION_2D):
         # This is an example of how to get started with using the
@@ -265,6 +271,7 @@ class TestSimpleEnvCase:
 
         # Initialize ROS stuff
         self._action_pub = rospy.Publisher(ACTION_TOPIC, KeyValAction, queue_size=10, latch=True)
+        self._reset_pub = rospy.Publisher(RESET_TOPIC, std_msgs.String, queue_size=10)
         self._octbelief_markers_pub = rospy.Publisher(
             "~octree_belief", MarkerArray, queue_size=10, latch=True)
         self._fovs_markers_pub = rospy.Publisher(
@@ -279,26 +286,34 @@ class TestSimpleEnvCase:
         self.search_space_res_3d = search_space_res_3d
         self.search_space_res_2d = search_space_res_2d
 
-        # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
-        self.agent_config = AGENT_CONFIG
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
-        self.world_frame = WORLD_FRAME
+        # For bookkeeping
+        self.report = {}
 
-        # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
-        self.agent_config = AGENT_CONFIG
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
-        self.world_frame = WORLD_FRAME
-
+        # Agent config
+        if agent_config is None:
+            agent_config = AGENT_CONFIG
+        self.agent_config = agent_config
         if prior == "groundtruth":
-            AGENT_CONFIG["belief"]["prior"] = {}
-            for objid in AGENT_CONFIG["targets"]:
-                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+            self.agent_config["belief"]["prior"] = {}
+            for objid in agent_config["targets"]:
+                self.agent_config["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+
+        # Initialize grpc client
+        self._sloop_client = SloopObjectSearchClient()
+        self.robot_id = self.agent_config["robot"]["id"]
+        self.world_frame = WORLD_FRAME
 
         # First, create an agent
-        self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
+        self._sloop_client.createAgent(header=proto_utils.make_header(), config=self.agent_config,
                                        robot_id=self.robot_id)
 
         self._region_cloud_msg = None
         # the rest is determined by the child class
+
+    def reset(self):
+        self.report = {}  # clear report
+        self._sloop_client.reset()
+        rospy.loginfo("Server reset done.")
+        self._reset_pub.publish(std_msgs.String("reset"))
+        time.sleep(2)
+        rospy.loginfo("Simple env reset done.")

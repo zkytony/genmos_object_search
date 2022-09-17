@@ -22,13 +22,10 @@ def main():
         (x,y,z,qx,qy,qz,qw), world_frame)
     pose_pub.publish(msg)
     print("Published initial pose")
-    print(msg)
+    rospy.Timer(rospy.Duration(1/10),
+                lambda event: pose_pub.publish(ros_utils.pose_tuple_to_pose_stamped(
+                    (x,y,z,qx,qy,qz,qw), world_frame)))
     rospy.spin()
-
-    # To publish repeatedly
-    # rospy.Timer(rospy.Duration(1/10),
-    #             lambda event: pose_pub.publish(ros_utils.pose_tuple_to_pose_stamped(
-    #                 (x,y,z,qx,qy,qz,qw), world_frame)))
 
 if __name__ == "__main__":
     main()
