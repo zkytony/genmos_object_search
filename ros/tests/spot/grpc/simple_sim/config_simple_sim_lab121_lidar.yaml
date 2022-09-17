@@ -68,6 +68,7 @@ agent_config:
         fov: 61
         near: 0.2
         occlusion_enabled: true
+  search_region: {}
   targets:
   - book
   - cup

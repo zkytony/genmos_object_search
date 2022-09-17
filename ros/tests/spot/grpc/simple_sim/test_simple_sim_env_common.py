@@ -245,19 +245,24 @@ class TestSimpleEnvCase:
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        search_region_params_3d = dict(
+            octree_size=search_region_config.get("octree_size", 32),
+            search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
+            region_size_x=search_region_config.get("region_size_x", 4.0),
+            region_size_y=search_region_config.get("region_size_y", 4.0),
+            region_size_z=search_region_config.get("region_size_z", 2.4),
+            debug=search_region_config.get("debug", False)
+        )
         self._sloop_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
-                                              search_region_params_3d={"octree_size": 32,
-                                                                       "search_space_resolution": self.search_space_res_3d,
-                                                                       "debug": False,
-                                                                       "region_size_x": 4.0,
-                                                                       "region_size_y": 4.0,
-                                                                       "region_size_z": 2.4})
+                                              search_region_params_3d=search_region_params_3d)
 
     def __init__(self, name="test_simple_env_search",
                  o3dviz=False, prior="uniform",
+                 agent_config=None,
                  search_space_res_3d=SEARCH_SPACE_RESOLUTION_3D,
                  search_space_res_2d=SEARCH_SPACE_RESOLUTION_2D):
         # This is an example of how to get started with using the
@@ -281,25 +286,22 @@ class TestSimpleEnvCase:
         self.search_space_res_3d = search_space_res_3d
         self.search_space_res_2d = search_space_res_2d
 
-        # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
-        self.agent_config = AGENT_CONFIG
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
-        self.world_frame = WORLD_FRAME
-
-        # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
-        self.agent_config = AGENT_CONFIG
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
-        self.world_frame = WORLD_FRAME
-
         # For bookkeeping
         self.report = {}
 
+        # Agent config
+        if agent_config is None:
+            agent_config = AGENT_CONFIG
+        self.agent_config = agent_config
         if prior == "groundtruth":
-            AGENT_CONFIG["belief"]["prior"] = {}
-            for objid in AGENT_CONFIG["targets"]:
-                AGENT_CONFIG["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+            agent_config["belief"]["prior"] = {}
+            for objid in agent_config["targets"]:
+                agent_config["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+
+        # Initialize grpc client
+        self._sloop_client = SloopObjectSearchClient()
+        self.robot_id = AGENT_CONFIG["robot"]["id"]
+        self.world_frame = WORLD_FRAME
 
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,

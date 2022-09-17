@@ -7,7 +7,7 @@
 # 2. run in a terminal 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/init_robot_pose'
 # 3. run in a terminal 'roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
 # 4. run in a terminal 'python -m sloop_object_search.grpc.server'
-# 5. run in a terminal 'python test_simple_sim_env_local_search.py'
+# 5. run in a terminal 'python test_simple_sim_env_local_search_3d.py groundtruth 32 config_simple_sim_lab121_lidar.yaml
 # 6. run in a terminal 'roslaunch sloop_object_search_ros view_simple_sim.launch'
 # 7. to monitor CPU temperature: 'watch -n 1 -x sensors'
 # ------------------
@@ -32,6 +32,8 @@ import time
 import rospy
 import pickle
 import json
+import yaml
+import argparse
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
@@ -62,8 +64,8 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
-    def __init__(self, o3dviz=False, prior="uniform"):
-        super().__init__(o3dviz=o3dviz, prior=prior)
+    def __init__(self, o3dviz=False, prior="uniform", agent_config=None):
+        super().__init__(o3dviz=o3dviz, prior=prior, agent_config=agent_config)
 
         self.update_search_region_3d()
 
@@ -219,11 +221,46 @@ def save_report(name, report):
 
 
 def main():
-    prior = "groundtruth"
-    name = f"{prior}-32x32x32"
+    parser = argparse.ArgumentParser(description='3D Local Search in Simulation.')
+    parser.add_argument('prior', type=str,
+                        choices=['uniform', 'groundtruth', 'occupancy'],
+                        help='prior type')
+    parser.add_argument('octree_size', type=int,
+                        help="octree size. e.g. 16, 32, 64")
+    parser.add_argument('config_file', type=str,
+                        help='path to .yaml config file')
+    parser.add_argument('--res', type=float, default=0.1,
+                        help="resolution (side length, in meters). e.g. 0.1")
 
-    for i in range(10):
-        test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior)
+    args = parser.parse_args()
+    with open(args.config_file) as f:
+        config = yaml.safe_load(f)
+        agent_config = config["agent_config"]
+
+    if args.prior == "groundtruth":
+        prior = "groundtruth"
+    else:
+        prior = "uniform"   # occupancy is also uniform
+
+    if args.prior == "occupancy":
+        agent_config["belief"]["init_params"].update(
+            {"prior_from_occupancy": True,
+             "occupancy_height_thres": 0.2,
+             "occupancy_blow_up_res": 4,
+             "occupancy_fill_height": True})
+
+    agent_config["search_region"]["3d"] = {
+        "res": args.res,
+        "octree_size": args.octree_size,
+        "region_size_x": 4.0,
+        "region_size_y": 4.0,
+        "region_size_z": 2.4
+    }
+
+    name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
+    for i in range(30):
+        test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
+                                        agent_config=agent_config)
         save_report(name, test.report)
         test.reset()
         print("--------------------------------------------------------------")
