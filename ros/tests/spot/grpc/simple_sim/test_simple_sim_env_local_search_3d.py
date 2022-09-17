@@ -231,8 +231,8 @@ def main():
                         help='path to .yaml config file')
     parser.add_argument('--res', type=float, default=0.1,
                         help="resolution (side length, in meters). e.g. 0.1")
-
     args = parser.parse_args()
+
     with open(args.config_file) as f:
         config = yaml.safe_load(f)
         agent_config = config["agent_config"]

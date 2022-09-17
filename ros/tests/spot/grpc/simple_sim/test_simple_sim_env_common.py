@@ -294,9 +294,9 @@ class TestSimpleEnvCase:
             agent_config = AGENT_CONFIG
         self.agent_config = agent_config
         if prior == "groundtruth":
-            agent_config["belief"]["prior"] = {}
+            self.agent_config["belief"]["prior"] = {}
             for objid in agent_config["targets"]:
-                agent_config["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+                self.agent_config["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
 
         # Initialize grpc client
         self._sloop_client = SloopObjectSearchClient()
