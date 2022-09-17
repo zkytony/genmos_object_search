@@ -189,7 +189,7 @@ class TestSimpleEnvCase:
                                  frame_id=self.world_frame)
         markers = []
         for bobj_pb in response.object_beliefs:
-            color = AGENT_CONFIG["objects"][bobj_pb.object_id].get(
+            color = self.agent_config["objects"][bobj_pb.object_id].get(
                 "color", [0.2, 0.7, 0.2])[:3]
             msg = ros_utils.make_object_belief2d_proto_markers_msg(
                 bobj_pb, header, self.search_space_res_2d,
@@ -300,11 +300,11 @@ class TestSimpleEnvCase:
 
         # Initialize grpc client
         self._sloop_client = SloopObjectSearchClient()
-        self.robot_id = AGENT_CONFIG["robot"]["id"]
+        self.robot_id = self.agent_config["robot"]["id"]
         self.world_frame = WORLD_FRAME
 
         # First, create an agent
-        self._sloop_client.createAgent(header=proto_utils.make_header(), config=AGENT_CONFIG,
+        self._sloop_client.createAgent(header=proto_utils.make_header(), config=self.agent_config,
                                        robot_id=self.robot_id)
 
         self._region_cloud_msg = None
