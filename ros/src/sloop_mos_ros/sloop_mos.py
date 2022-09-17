@@ -46,9 +46,12 @@ def make_nav_action(pos, orien, action_id, nav_type):
 
 
 class SloopMosROS:
-    def __init__(self, name="sloop_ros"):
+    def __init__(self, options=None, name="sloop_ros"):
         self.name = name
         self._sloop_client = None
+        self.options = options
+        if options is None:
+            self.options = {}
 
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
@@ -470,6 +473,30 @@ class SloopMosROS:
         self.objects_found = set()
 
 
+    def plan_action(self):
+        response_plan = self._sloop_client.planAction(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        action_pb = proto_utils.interpret_planned_action(response_plan)
+        action_id = response_plan.action_id
+        rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
+        self.last_action = action_pb
+        return action_id, action_pb
+
+    def wait_observation_and_update_belief(self, action_id):
+        # Now, wait for observation, and then update belief
+        detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
+        # send obseravtions for belief update
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        response_observation = self._sloop_client.processObservation(
+            self.robot_id, robot_pose_pb,
+            object_detections=detections_pb,
+            objects_found=objects_found_pb,
+            header=header, return_fov=True,
+            action_id=action_id, action_finished=True, debug=False)
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        return response_observation, response_robot_belief
+
     def run(self):
         # First, create an agent
         self._sloop_client.createAgent(
@@ -500,32 +527,15 @@ class SloopMosROS:
 
         # Send planning requests
         for step in range(self.config["task_config"]["max_steps"]):
-            response_plan = self._sloop_client.planAction(
-                self.robot_id, header=proto_utils.make_header(self.world_frame))
-            action_pb = proto_utils.interpret_planned_action(response_plan)
-            action_id = response_plan.action_id
-            rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
-            self.last_action = action_pb
-
+            action_id, action_pb = self.plan_action()
             self.clear_fovs_markers()  # clear fovs markers before executing action
             self.execute_action(action_id, action_pb)
             ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
             rospy.loginfo(typ.success("action done."))
 
-            # Now, wait for observation, and then update belief
-            detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
-            # send obseravtions for belief update
-            header = proto_utils.make_header(frame_id=self.world_frame)
-            response_observation = self._sloop_client.processObservation(
-                self.robot_id, robot_pose_pb,
-                object_detections=detections_pb,
-                objects_found=objects_found_pb,
-                header=header, return_fov=True,
-                action_id=action_id, action_finished=True, debug=False)
-            response_robot_belief = self._sloop_client.getRobotBelief(
-                self.robot_id, header=proto_utils.make_header(self.world_frame))
-
+            response_observation, response_robot_belief =\
+                self.wait_observation_and_update_belief(action_id)
             print(f"Step {step} robot belief:")
             robot_belief_pb = response_robot_belief.robot_belief
             objects_found = set(robot_belief_pb.objects_found.object_ids)
