@@ -46,12 +46,9 @@ def make_nav_action(pos, orien, action_id, nav_type):
 
 
 class SloopMosROS:
-    def __init__(self, options=None, name="sloop_ros"):
+    def __init__(self, name="sloop_ros"):
         self.name = name
         self._sloop_client = None
-        self.options = options
-        if options is None:
-            self.options = {}
 
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
@@ -462,6 +459,7 @@ class SloopMosROS:
         # additional parameters
         self.obqueue_size = rospy.get_param("~obs_queue_size", 200)
         self.obdelay = rospy.get_param("~obs_delay", 1.0)
+        self.dynamic_update = rospy.get_param("~dynamic_update", False)
 
         # Need to wait for vision info
         vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
@@ -533,6 +531,9 @@ class SloopMosROS:
             ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
             rospy.loginfo(typ.success("action done."))
+
+            if self.dynamic_update:
+                self.update_search_region()
 
             response_observation, response_robot_belief =\
                 self.wait_observation_and_update_belief(action_id)
