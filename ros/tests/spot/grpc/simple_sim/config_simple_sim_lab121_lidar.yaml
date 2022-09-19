@@ -78,9 +78,9 @@ object_locations:
   - 2.0
   - 0.1
   cup:
-  - 1.2
+  - 1.35
   - 0.1
-  - 0.5
+  - 0.25
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:

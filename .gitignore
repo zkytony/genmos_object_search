@@ -104,3 +104,6 @@ ros/models/*foref*
 
 # test data
 *sloop_object_search/tests/**/*data*
+
+# sim test report
+ros/tests/spot/grpc/simple_sim/report/

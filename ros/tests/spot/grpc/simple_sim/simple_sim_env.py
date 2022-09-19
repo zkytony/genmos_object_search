@@ -283,6 +283,7 @@ class SimpleSimEnvROSNode:
                 rospy.loginfo(f"navigation to {goal}")
                 self._navigating = True
                 self.navigate_to(goal)
+                rospy.loginfo(f"navigation done")
                 self._navigating = False
                 self._action_done_pub.publish(String(data=f"nav to {goal_id} done."))
 
@@ -293,6 +294,7 @@ class SimpleSimEnvROSNode:
             self.find()
             time.sleep(0.1)
             self._action_done_pub.publish(String(data=f"find action is done."))
+
 
     def _make_state_messages_for_pub(self, state):
         markers = []
