@@ -1,17 +1,8 @@
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-LOCAL_TOPO = {'num_nodes': 10,
-              'pos_importance_thres': 0.01,
-              'sep': 0.75,
-              'debug': False,
-              'resample_thres': 0.4,
-              '3d_proj_2d': {'layout_cut': 0.4,
-                             'floor_cut': 0.15,
-                             'brush_size': 0.2,
-                             'inflation': 0.5}}
 CONFIG_LOCAL = {
     "object_locations": {
         "book": [0.0, 2.0, 0.1],
-        "cup": [1.35, 0.1, 0.25]
+        "cup": [1.35, 0.1, 0.4]
     },
 
     "agent_config": {
@@ -38,8 +29,7 @@ CONFIG_LOCAL = {
                           'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
                                               "quality": [1e6, 0.1]}}},
-            'action': {'topo': LOCAL_TOPO,
-                       # Below is not relevant if you are using Topo3D
+            'action': {# Below is not relevant if you are using Topo3D
                        'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
                        'params': {'step_size': 0.2,
                                   'rotation': 90.0,

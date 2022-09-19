@@ -44,17 +44,6 @@ agent_config:
         rotation: 90.0
         scheme: axis
         step_size: 0.2
-      topo:
-        3d_proj_2d:
-          brush_size: 0.2
-          floor_cut: 0.15
-          inflation: 0.5
-          layout_cut: 0.4
-        debug: false
-        num_nodes: 10
-        pos_importance_thres: 0.01
-        resample_thres: 0.4
-        sep: 0.75
     detectors:
       book:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
@@ -91,7 +80,7 @@ object_locations:
   cup:
   - 1.35
   - 0.1
-  - 0.25
+  - 0.4
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
