@@ -123,7 +123,8 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 rospy.loginfo("published nav action for execution")
                 # wait for navigation done
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                          allow_headerless=True, verbose=True)
+                                          allow_headerless=True, verbose=True,
+                                          timeout=60)
                 rospy.loginfo("nav action done.")
             elif isinstance(action, a_pb2.Find):
                 find_action = KeyValAction(stamp=rospy.Time.now(),
@@ -131,7 +132,8 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 self._action_pub.publish(find_action)
                 rospy.loginfo("published find action for execution")
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                          allow_headerless=True, verbose=True)
+                                          allow_headerless=True, verbose=True,
+                                          timeout=60)
                 rospy.loginfo("find action done")
             _action_time = time.time() - _time
 
