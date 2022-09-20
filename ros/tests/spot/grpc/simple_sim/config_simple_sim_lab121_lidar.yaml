@@ -74,13 +74,13 @@ agent_config:
   - cup
 object_locations:
   book:
-  - 0.0
-  - 2.0
-  - 0.1
+  - - 0.0
+    - 2.0
+    - 0.1
   cup:
-  - 1.35
-  - 0.1
-  - 0.4
+  - - 1.35
+    - 0.1
+    - 0.4
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:

@@ -88,7 +88,7 @@ class SimpleSimEnv(pomdp_py.Environment):
                 N = len(object_locations[objid])
             else:
                 assert N == len(object_locations[objid]),\
-                    "there should be an equal number of locations for every object"
+                    "there should be an equal number of location configs for every object"
         self._num_objloc_configs = N
         self._objloc_index = objloc_index if objloc_index is not None else 0
         for objid in objects:

@@ -264,7 +264,8 @@ class TestSimpleEnvCase:
                  o3dviz=False, prior="uniform",
                  agent_config=None,
                  search_space_res_3d=SEARCH_SPACE_RESOLUTION_3D,
-                 search_space_res_2d=SEARCH_SPACE_RESOLUTION_2D):
+                 search_space_res_2d=SEARCH_SPACE_RESOLUTION_2D,
+                 objloc_index=None):
         # This is an example of how to get started with using the
         # sloop_object_search grpc-based package.
         rospy.init_node(name)
@@ -293,10 +294,22 @@ class TestSimpleEnvCase:
         if agent_config is None:
             agent_config = AGENT_CONFIG
         self.agent_config = agent_config
+
+        # objloc index for different configurations, useful only for groundtruth prior
+        self._objloc_index = objloc_index if objloc_index is not None else 0
+        self._num_objloc_configs = -1
+
+        # groundtruth prior, if wanted
         if prior == "groundtruth":
             self.agent_config["belief"]["prior"] = {}
             for objid in agent_config["targets"]:
-                self.agent_config["belief"]["prior"][objid] = [[OBJECT_LOCATIONS[objid], 0.99]]
+                self.agent_config["belief"]["prior"][objid]\
+                    = [[OBJECT_LOCATIONS[objid][self._objloc_index], 0.99]]
+                if self._num_objloc_configs == -1:
+                    self._num_objloc_configs = len(OBJECT_LOCATIONS[objid])
+                else:
+                    assert len(OBJECT_LOCATIONS[objid]) = self._num_objloc_configs,\
+                        "there should be an equal number of location configs for every object"
 
         # Initialize grpc client
         self._sloop_client = SloopObjectSearchClient()
@@ -309,6 +322,10 @@ class TestSimpleEnvCase:
 
         self._region_cloud_msg = None
         # the rest is determined by the child class
+
+    def bump_objloc_index(self):
+        self._objloc_index = (self._objloc_index + 1) % self._num_objloc_configs
+        return self._objloc_index
 
     def reset(self):
         self.report = {}  # clear report

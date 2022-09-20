@@ -64,8 +64,9 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
-    def __init__(self, o3dviz=False, prior="uniform", agent_config=None):
-        super().__init__(o3dviz=o3dviz, prior=prior, agent_config=agent_config)
+    def __init__(self, o3dviz=False, prior="uniform", agent_config=None, objloc_index=None):
+        super().__init__(o3dviz=o3dviz, prior=prior, agent_config=agent_config,
+                         objloc_index=objloc_index)
 
         self.update_search_region_3d()
 
@@ -256,17 +257,17 @@ def main():
 
     agent_config["search_region"]["3d"] = {
         "res": args.res,
-        "octree_size": args.octree_size,
-        "region_size_x": 4.0,
-        "region_size_y": 4.0,
-        "region_size_z": 2.4
+        "octree_size": args.octree_size
     }
 
     name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
+    objloc_index = 0
     for i in range(50):
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
-                                        agent_config=agent_config)
+                                        agent_config=agent_config,
+                                        objloc_index=objloc_index)
         save_report(name, test.report)
+        objloc_index = test.bump_objloc_index()
         test.reset()
         print("--------------------------------------------------------------")
         print("--------------------------------------------------------------")
