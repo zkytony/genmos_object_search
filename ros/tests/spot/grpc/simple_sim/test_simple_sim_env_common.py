@@ -316,21 +316,24 @@ class TestSimpleEnvCase:
         self.robot_id = self.agent_config["robot"]["id"]
         self.world_frame = WORLD_FRAME
 
+    def run(self):
         # First, create an agent
         self._sloop_client.createAgent(header=proto_utils.make_header(), config=self.agent_config,
                                        robot_id=self.robot_id)
-
-        self._region_cloud_msg = None
         # the rest is determined by the child class
 
     def bump_objloc_index(self):
         self._objloc_index = (self._objloc_index + 1) % self._num_objloc_configs
         return self._objloc_index
 
-    def reset(self):
+    def reset(self, reset_index=False):
         self.report = {}  # clear report
         self._sloop_client.reset()
         rospy.loginfo("Server reset done.")
-        self._reset_pub.publish(std_msgs.String("reset"))
+        if reset_index:
+            # we want to start from objloc_index = 0
+            self._reset_pub.publish(std_msgs.String("reset [reset index]"))
+        else:
+            self._reset_pub.publish(std_msgs.String("reset"))
         time.sleep(2)
         rospy.loginfo("Simple env reset done.")

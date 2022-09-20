@@ -64,7 +64,8 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
-    def run(self):
+    def run(self, o3dviz=False):
+        super().run()
         self.update_search_region_3d()
 
         self.report = {"steps": [], "total_time": 0, "success": False}
@@ -263,6 +264,10 @@ def main():
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
                                         agent_config=agent_config,
                                         objloc_index=objloc_index)
+        if i == 0:
+            # we need to make sure the SimpleSim environment's objloc is reset to 0
+            test.reset(reset_index=True)
+
         try:
             test.run()
             save_report(name, test.report, test._objloc_index)

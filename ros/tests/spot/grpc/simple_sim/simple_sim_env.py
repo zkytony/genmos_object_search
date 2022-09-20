@@ -137,6 +137,10 @@ class SimpleSimEnv(pomdp_py.Environment):
         self._objloc_index = (self._objloc_index + 1) % self._num_objloc_configs
         return self._objloc_index
 
+    def reset_objloc_index(self):
+        self._objloc_index = 0
+        return self._objloc_index
+
     def reachable(self, pos):
         return True  # the real world has no bound
 
@@ -251,7 +255,11 @@ class SimpleSimEnvROSNode:
             rate.sleep()
 
     def _reset_cb(self, msg):
-        objloc_index = self.env.bump_objloc_index()
+        if "[reset index]" in msg.data:
+            rospy.logwarn('Objloc Index Reset!')
+            objloc_index = self.env.reset_objloc_index()
+        else:
+            objloc_index = self.env.bump_objloc_index()
         self.env = SimpleSimEnv(self._init_config, objloc_index=objloc_index)
         self._navigating = False
         # First, clear existing belief messages
