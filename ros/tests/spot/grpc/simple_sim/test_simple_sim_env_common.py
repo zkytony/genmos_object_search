@@ -308,7 +308,7 @@ class TestSimpleEnvCase:
                 if self._num_objloc_configs == -1:
                     self._num_objloc_configs = len(OBJECT_LOCATIONS[objid])
                 else:
-                    assert len(OBJECT_LOCATIONS[objid]) = self._num_objloc_configs,\
+                    assert len(OBJECT_LOCATIONS[objid]) == self._num_objloc_configs,\
                         "there should be an equal number of location configs for every object"
 
         # Initialize grpc client

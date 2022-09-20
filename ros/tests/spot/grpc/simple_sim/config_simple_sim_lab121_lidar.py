@@ -1,8 +1,8 @@
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
 CONFIG_LOCAL = {
     "object_locations": {
-        "book": [[0.0, 2.0, 0.1]],
-        "cup": [[1.35, 0.1, 0.4]]
+        "book": [[0.0, 2.0, 0.1], [1.0, 2.0, 1.1]],
+        "cup": [[1.35, 0.1, 0.4], [1.35, 1.5, 0.1]]
     },
 
     "agent_config": {
