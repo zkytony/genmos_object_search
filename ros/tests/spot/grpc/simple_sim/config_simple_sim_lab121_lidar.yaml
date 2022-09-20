@@ -48,7 +48,7 @@ agent_config:
         debug: false
         num_nodes: 10
         pos_importance_thres: 0.01
-        res_buf: 2
+        res_buf: 4
         resample_thres: 0.4
         sep: 0.75
     detectors:
@@ -56,14 +56,14 @@ agent_config:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 1000000.0
+          - 100000000.0
           - 0.1
           sensor: camera
       cup:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
-          - 1000000.0
+          - 100000000.0
           - 0.1
           sensor: camera
     id: robot0
@@ -72,7 +72,7 @@ agent_config:
     - name: camera
       params:
         far: 1.75
-        fov: 61
+        fov: 60
         near: 0.2
         occlusion_enabled: true
   search_region: {}
@@ -703,4 +703,4 @@ planner_config:
     show_progress: true
 task_config:
   max_steps: 100
-  max_time: 120
+  max_time: 360

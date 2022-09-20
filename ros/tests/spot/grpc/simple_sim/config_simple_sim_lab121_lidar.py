@@ -4,7 +4,7 @@ LOCAL_TOPO = {'num_nodes': 10,
               'resample_thres': 0.4,
               'sep': 0.75,
               'debug': False,
-              'res_buf': 2}
+              'res_buf': 4}
 
 CONFIG_LOCAL = {
     "object_locations": {
@@ -93,17 +93,17 @@ CONFIG_LOCAL = {
             'no_look': True,
             'sensors': [{
                 'name': 'camera',
-                'params': {'fov': 61,
+                'params': {'fov': 60,
                            'far': 1.75,
                            'near': 0.2,
                            'occlusion_enabled': True}
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
-                                              "quality": [1e6, 0.1]}},
+                                              "quality": [1e8, 0.1]}},
                           'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
-                                              "quality": [1e6, 0.1]}}},
+                                              "quality": [1e8, 0.1]}}},
             'action': {'topo': LOCAL_TOPO,
                        # Below is not relevant if you are using Topo3D
                        'func': 'sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d',
@@ -126,7 +126,7 @@ CONFIG_LOCAL = {
 
     "task_config": {
         "max_steps": 100,
-        "max_time": 120
+        "max_time": 360
     },
 
     "planner_config": {
@@ -157,7 +157,7 @@ CONFIG_LOCAL2D = {
             "id": "robot0",
             "no_look": True,
             "sensors": [{"name": 'fan',
-                         'params': {'fov': 61,
+                         'params': {'fov': 60,
                                     'min_range': 0.2,
                                     'max_range': 1.75}}],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FanModelAlphaBeta',
