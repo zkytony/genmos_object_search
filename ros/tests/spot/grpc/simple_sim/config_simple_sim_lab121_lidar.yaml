@@ -45,7 +45,6 @@ agent_config:
         scheme: axis
         step_size: 0.2
       topo:
-        3d_proj_2d: null
         debug: false
         num_nodes: 10
         pos_importance_thres: 0.01

@@ -4,7 +4,6 @@ LOCAL_TOPO = {'num_nodes': 10,
               'resample_thres': 0.4,
               'sep': 0.75,
               'debug': False,
-              '3d_proj_2d': None,
               'res_buf': 2}
 
 CONFIG_LOCAL = {
