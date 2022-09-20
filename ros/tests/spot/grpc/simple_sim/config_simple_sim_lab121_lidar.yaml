@@ -44,6 +44,14 @@ agent_config:
         rotation: 90.0
         scheme: axis
         step_size: 0.2
+      topo:
+        3d_proj_2d: null
+        debug: false
+        num_nodes: 10
+        pos_importance_thres: 0.01
+        res_buf: 2
+        resample_thres: 0.4
+        sep: 0.75
     detectors:
       book:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
