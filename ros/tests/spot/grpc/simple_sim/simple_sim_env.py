@@ -57,7 +57,7 @@ class SimpleSimEnv(pomdp_py.Environment):
     """This is a simple 3D environment. All of its coordinates should
     be in the world frame, as this is meant to support the underlying
     simulation of an object search scenario in ROS."""
-    def __init__(self, env_config):
+    def __init__(self, env_config, objloc_index=None):
         # Get initial robot pose
         self.env_config = env_config
 
@@ -75,8 +75,25 @@ class SimpleSimEnv(pomdp_py.Environment):
         objects = self.agent_config["objects"]
         object_locations = self.env_config["object_locations"]
         object_states = {}
+
+        # object locations should be a list of 3D locations;
+        # there should be an equal number of locations for every object,
+        # indicating different environment configurations.
+        N = -1
+        for objid in object_locations:
+            assert type(object_locations[objid]) == list\
+                and type(object_locations[objid][0]) == list,\
+                "object locations should be a list of 3D locationS"
+            if N == -1:
+                N = len(object_locations[objid])
+            else:
+                assert N == len(object_locations[objid]),\
+                    "there should be an equal number of locations for every object"
+        self._num_objloc_configs = N
+        self._objloc_index = objloc_index if objloc_index is not None else 0
         for objid in objects:
-            sobj = ObjectState(objid, objects[objid]["class"], tuple(object_locations[objid]))
+            objloc = object_locations[objid][self._objloc_index]
+            sobj = ObjectState(objid, objects[objid]["class"], tuple(objloc))
             object_states[objid] = sobj
         init_state = pomdp_py.OOState({self.robot_id: init_robot_state,
                                        **object_states})
@@ -115,6 +132,10 @@ class SimpleSimEnv(pomdp_py.Environment):
         super().__init__(init_state,
                          transition_model,
                          reward_model)
+
+    def bump_objloc_index(self):
+        self._objloc_index = (self._objloc_index + 1) % self._num_objloc_configs
+        return self._objloc_index
 
     def reachable(self, pos):
         return True  # the real world has no bound
@@ -230,7 +251,8 @@ class SimpleSimEnvROSNode:
             rate.sleep()
 
     def _reset_cb(self, msg):
-        self.env = SimpleSimEnv(self._init_config)
+        objloc_index = self.env.bump_objloc_index()
+        self.env = SimpleSimEnv(self._init_config, objloc_index=objloc_index)
         self._navigating = False
         # First, clear existing belief messages
         header = Header(stamp=rospy.Time.now(),
