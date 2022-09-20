@@ -335,5 +335,5 @@ class TestSimpleEnvCase:
             self._reset_pub.publish(std_msgs.String("reset [reset index]"))
         else:
             self._reset_pub.publish(std_msgs.String("reset"))
-        time.sleep(2)
+        time.sleep(5)
         rospy.loginfo("Simple env reset done.")
