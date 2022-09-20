@@ -260,7 +260,7 @@ def main():
 
     name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
     objloc_index = 0
-    for i in range(50):
+    for i in range(30):
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
                                         agent_config=agent_config,
                                         objloc_index=objloc_index)
@@ -271,6 +271,8 @@ def main():
         try:
             test.run()
             save_report(name, test.report, test._objloc_index)
+        except Exception as ex:
+            rospy.logerr(f"Test failed: {str(ex)}")
         finally:
             objloc_index = test.bump_objloc_index()
             test.reset()
