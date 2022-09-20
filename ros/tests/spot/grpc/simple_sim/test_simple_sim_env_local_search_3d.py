@@ -64,10 +64,7 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
-    def __init__(self, o3dviz=False, prior="uniform", agent_config=None, objloc_index=None):
-        super().__init__(o3dviz=o3dviz, prior=prior, agent_config=agent_config,
-                         objloc_index=objloc_index)
-
+    def run(self):
         self.update_search_region_3d()
 
         self.report = {"steps": [], "total_time": 0, "success": False}
@@ -189,7 +186,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 import os
 import pandas as pd
 import datetime
-def save_report(name, report):
+def save_report(name, report, index):
     os.makedirs("./report", exist_ok=True)
 
     report_name = f"report_{name}"
@@ -210,8 +207,8 @@ def save_report(name, report):
 
     ct = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
-    columns = ["name", "timestamp", "length", "planning_time", "total_time", "success"]
-    row = [name, ct, length, planning_time, report["total_time"], report["success"]]
+    columns = ["name", "index", "timestamp", "length", "planning_time", "total_time", "success"]
+    row = [name, index, ct, length, planning_time, report["total_time"], report["success"]]
 
     if df is None:
         df = pd.DataFrame(data=[row],
@@ -266,10 +263,13 @@ def main():
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
                                         agent_config=agent_config,
                                         objloc_index=objloc_index)
-        save_report(name, test.report)
-        objloc_index = test.bump_objloc_index()
-        test.reset()
-        print("--------------------------------------------------------------")
+        try:
+            test.run()
+            save_report(name, test.report, test._objloc_index)
+        finally:
+            objloc_index = test.bump_objloc_index()
+            test.reset()
+        print(f"----------------------{i}------------------------------------")
         print("--------------------------------------------------------------")
         print("--------------------------------------------------------------")
         print("--------------------------------------------------------------")
