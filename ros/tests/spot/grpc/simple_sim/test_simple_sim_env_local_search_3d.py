@@ -251,6 +251,9 @@ def main():
              "occupancy_blow_up_res": 4,
              "occupancy_fill_height": True})
 
+    if args.octree_size < 32:
+        agent_config["belief"]["visible_volume_params"]["voxel_res"] = 1
+
     agent_config["search_region"]["3d"] = {
         "res": args.res,
         "octree_size": args.octree_size,
