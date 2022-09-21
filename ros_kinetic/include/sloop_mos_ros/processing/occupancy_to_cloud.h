@@ -9,7 +9,11 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/OccupancyGrid.h>
 
+using std::string;
+using std::vector;
+
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+
 
 class OccupancyToCloud {
 public:
@@ -23,8 +27,9 @@ private:
   ros::NodeHandle nh_;
   ros::Publisher pcl_pub_;
   ros::Subscriber ocg_sub_;
-  double pcl_rate_;
   PointCloud cloud_;
+  double z_;  // z coordinate of published cloud
+  string pcl_frame_id_;
 };
 
 #endif

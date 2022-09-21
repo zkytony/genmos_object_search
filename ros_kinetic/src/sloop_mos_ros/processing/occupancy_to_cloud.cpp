@@ -17,12 +17,37 @@ OccupancyToCloud::OccupancyToCloud()
 
   ocg_sub_ = nh_.subscribe("grid_input", 10, &OccupancyToCloud::occupancyGridCallback, this);
   pcl_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("cloud_output", 10, true);  // latch
-
-  pcl_rate_ = 4.0;
+  z_ = nh_.param<double>("points_z", 1.0);  // meters
+  pcl_frame_id_ = nh_.param<string>("pcl_frame_id", "map");  // meters
 }
 
-void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &msg) {
-  std::cout << "HELLO" << std::endl;
+void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &ocg_msg) {
+
+  ROS_INFO("received occupancy grid. Origin:");
+  std::cout << ocg_msg.info.origin << std::endl;
+
+  double origin_x = ocg_msg.info.origin.position.x;
+  double origin_y = ocg_msg.info.origin.position.y;
+
+  PointCloud cloud;
+  for (size_t col = 0; col < ocg_msg.info.width; col++) {
+    for (size_t row = 0; row < ocg_msg.info.height; row++) {
+      if(ocg_msg.data[row*ocg_msg.info.width + col] > 0) {
+        // we have an obstacle
+        double x = origin_x + col * ocg_msg.info.resolution + ocg_msg.info.resolution / 2;
+        double y = origin_y + row * ocg_msg.info.resolution + ocg_msg.info.resolution / 2;
+
+        pcl::PointXYZ point(x, y, z_);
+        cloud.push_back(point);
+      }
+    }
+  }
+  this->cloud_ = cloud;
+  sensor_msgs::PointCloud2 pcl_msg;
+  pcl::toROSMsg(this->cloud_, pcl_msg);
+  pcl_msg.header.frame_id = this->pcl_frame_id_;
+  this->pcl_pub_.publish(pcl_msg);
+  ROS_INFO("published point cloud");
 }
 
 void OccupancyToCloud::run() {

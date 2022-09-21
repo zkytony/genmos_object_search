@@ -107,3 +107,12 @@ target_include_directories(point_cloud_merger
 target_link_libraries(point_cloud_merger
   ${catkin_LIBRARIES}
   yaml-cpp)
+
+add_executable(occupancy_to_cloud
+  src/sloop_mos_ros/processing/occupancy_to_cloud.cpp)
+target_include_directories(occupancy_to_cloud
+  PUBLIC
+  include/sloop_mos_ros/processing
+  include/sloop_mos_ros/)
+target_link_libraries(occupancy_to_cloud
+  ${catkin_LIBRARIES})
