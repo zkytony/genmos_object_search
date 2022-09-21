@@ -18,6 +18,7 @@ OccupancyToCloud::OccupancyToCloud()
   ocg_sub_ = nh_.subscribe("grid_input", 10, &OccupancyToCloud::occupancyGridCallback, this);
   pcl_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("cloud_output", 10, true);  // latch
   z_ = nh_.param<double>("points_z", 1.0);  // meters
+  z_density_ = nh_.param<double>("density_z", 0.1);  // fills the z
   pcl_frame_id_ = nh_.param<string>("pcl_frame_id", "map");  // meters
 }
 
@@ -37,8 +38,12 @@ void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &ocg_
         double x = origin_x + col * ocg_msg.info.resolution + ocg_msg.info.resolution / 2;
         double y = origin_y + row * ocg_msg.info.resolution + ocg_msg.info.resolution / 2;
 
-        pcl::PointXYZ point(x, y, z_);
-        cloud.push_back(point);
+        double z = z_;
+        while (z > 0.0) {
+          pcl::PointXYZ point(x, y, z);
+          cloud.push_back(point);
+          z -= z_density_;
+        }
       }
     }
   }

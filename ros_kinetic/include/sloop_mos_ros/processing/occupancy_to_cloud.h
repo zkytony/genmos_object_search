@@ -29,6 +29,7 @@ private:
   ros::Subscriber ocg_sub_;
   PointCloud cloud_;
   double z_;  // z coordinate of published cloud
+  double z_density_;  // z coordinate of published cloud
   string pcl_frame_id_;
 };
 
