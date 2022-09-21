@@ -1,5 +1,7 @@
 # Example ROS package that uses sloop_object_search
 
+ROS VERSION: ROS Noetic
+
 ## Setup
 
 ### Create symbolic link
