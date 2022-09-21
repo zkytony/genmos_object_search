@@ -1,0 +1,8 @@
+<launch>
+  <!-- Prereq: roslaunch movo_demos map_nav.launch map_file:=<map_name>
+       should be running on MOVO2 -->
+  <arg name="map_name"/>
+  <arg name="world_frame" default="map"/>
+  <arg name="local_search" default="false" type="bool"/>
+
+</launch>
