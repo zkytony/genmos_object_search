@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- rviz -->
+  <arg name="rviz"    default="true" />
+  <arg name="rviz_file" default="$(find sloop_object_search_ros)/rviz/movo_object_search.rviz" />
+  <node pkg="rviz" type="rviz" name="rviz"
+        args="-d $(arg rviz_file)" output="screen"
+        if="$(arg rviz)"/>
+
+</launch>
