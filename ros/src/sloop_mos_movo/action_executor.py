@@ -110,7 +110,8 @@ class MovoSloopActionExecutor(ActionExecutor):
                 rospy.loginfo(typ.warning("User terminates action execution"))
                 return False
 
-        # reset head
+        # reset head and torso
+        self.reset_torso()
         self.reset_head()
 
         # Note that the goal pose is the camera pose in the world frame.
@@ -121,9 +122,13 @@ class MovoSloopActionExecutor(ActionExecutor):
         _, _, yaw = math_utils.quat_to_euler(*goal_pose[3:])
         x, y = goal_pose[:2]
         _waypoint_nav = WaypointApply((x, y, 0.0),
-                                      math_utils.euler_to_quat(0, 0, yaw))
-        if _waypoint_nav.status != WaypointApply.Status.SUCCESS:
-            return False
+                                      math_utils.euler_to_quat(0, 0, yaw),
+                                      xy_tolerance=0.15,
+                                      rot_tolerance=math_utils.to_rad(10))
+        # navigation sometimes gets close but not reaching the goal;
+        # but it doesn't hurt moving torso and turning the head
+        # if _waypoint_nav.status != WaypointApply.Status.SUCCESS:
+        #     return False
 
         # We don't have a simple way to control the robot to move back without
         # guaranteeing that it doens't hit something (unlike spot). So we will
@@ -134,17 +139,18 @@ class MovoSloopActionExecutor(ActionExecutor):
         rospy.loginfo("Waiting for torso action to finish")
         self.torso_jtas.client.wait_for_result(timeout=rospy.Duration(20))
 
-        # # We then pan/tilt the camera as needed
-        # robot_pose_msg = ros_utils.WaitForMessages(
-        #     [self._robot_pose_topic], [geometry_msgs.PoseStamped],
-        #     verbose=True).messages[0]
-        # robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        # We then pan/tilt the camera as needed
+        robot_pose_msg = ros_utils.WaitForMessages(
+            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True).messages[0]
+        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
 
-        # goal_pitch, _, goal_yaw = math_utils.quat_to_euler(*goal_pose[3:])
-        # # cur_pitch, _, cur_yaw = math_utils.quat_to_euler(*robot_pose_tuple[3:])
-        # head_goal = self.make_head_goal(pan=goal_yaw, tilt=goal_pitch)
-        # self.head_jtas.client.send_goal(head_goal)
-        # self.head_jtas.client.wait_for_result(timeout=rospy.Duration(20))
+        _, goal_pitch, goal_yaw = math_utils.quat_to_euler(*goal_pose[3:])
+        _, _, cur_yaw = math_utils.quat_to_euler(*robot_pose_tuple[3:])
+        head_goal = self.make_head_goal(pan=goal_yaw - cur_yaw,
+                                        tilt=-goal_pitch)
+        self.head_jtas.client.send_goal(head_goal)
+        self.head_jtas.client.wait_for_result(timeout=rospy.Duration(20))
         return True
 
     def make_torso_goal(self, **kwargs):
@@ -167,3 +173,8 @@ class MovoSloopActionExecutor(ActionExecutor):
         head_goal = self.make_head_goal(pan=0, tilt=-30)
         self.head_jtas.client.send_goal(head_goal)
         self.head_jtas.client.wait_for_result(timeout=rospy.Duration(20))
+
+    def reset_torso(self):
+        torso_goal = self.make_torso_goal(height=0.2)
+        self.torso_jtas.client.send_goal(torso_goal)
+        self.torso_jtas.client.wait_for_result(timeout=rospy.Duration(20))

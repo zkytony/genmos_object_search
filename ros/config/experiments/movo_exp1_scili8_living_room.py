@@ -39,12 +39,12 @@ HAND_FAN = {"name": 'hand_fan',
 LOCAL_TOPO = {'num_nodes': 10,
               'pos_importance_thres': 0.01,
               'sep': 0.75,
-              'debug': True,
+              'debug': False,
               'resample_thres': 0.4,
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
-                             'inflation': 0.15}}
+                             'inflation': 0.4}}
 
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
