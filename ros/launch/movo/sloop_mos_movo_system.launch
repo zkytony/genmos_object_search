@@ -14,9 +14,17 @@
   <arg name="region_size_z" default="2.0"/>
   <arg name="retain_ratio" default="0.2"/>
 
+  <!-- ########################################################################## -->
+  <!-- Localization -->
+  <!-- ########################################################################## -->
+
   <!-- Stream movo camera pose -->
-  <node name="movo_stream_camera_pose" pkg="sloop_object_search_ros" type="stream_camera_pose.py"
+  <node name="movo_stream_camera_pose" pkg="sloop_object_search_ros" type="stream_movo_camera_pose.py"
         output="screen"/>
+
+  <!-- ########################################################################## -->
+  <!-- Building Local Region Point Cloud -->
+  <!-- ########################################################################## -->
 
   <!-- Run the occupancy to cloud converter -->
   <node name="occupancy_to_cloud" pkg="sloop_object_search_ros" type="occupancy_to_cloud"
@@ -70,5 +78,11 @@
       <arg name="retain_ratio" value="$(arg retain_ratio)"/>
     </include>
   </group>
+
+  <!-- ########################################################################## -->
+  <!-- Object detection -->
+  <!-- ########################################################################## -->
+  <node pkg="sloop_object_search_ros" type="stream_yolov5_detections.py"
+        name="stream_detections" args="--pub"></node>
 
 </launch>
