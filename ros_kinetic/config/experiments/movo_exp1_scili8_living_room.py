@@ -259,7 +259,7 @@ CONFIG = CONFIG_LOCAL
 
 import yaml
 def main():
-    with open("movo_exp1_living_room_scili8.yaml", "w") as f:
+    with open("movo_exp1_scili8_living_room.yaml", "w") as f:
         yaml.dump(CONFIG, f, default_flow_style=False)
 
 if __name__ == "__main__":

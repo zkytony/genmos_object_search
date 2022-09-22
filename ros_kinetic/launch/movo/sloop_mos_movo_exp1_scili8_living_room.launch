@@ -1,0 +1,55 @@
+<launch>
+  <arg name="map_name" value="scili8_living_room"/>
+  <arg name="exp_name" value="movo_exp1_$(arg map_name)" />
+  <arg name="local_search" default="false"/>
+
+  <!-- If we are doing local search, then the search region center is published
+       at /local_region_center; Otherwise, it is spot's hand pose -->
+  <group if="$(arg local_search)">
+
+    <!-- publish region center -->
+    <node name="local_search_center_publisher"
+          pkg="sloop_object_search_ros"
+          type="$(arg map_name)_region_center.py" output="screen"></node>
+
+    <!-- Run SLOOP object search decision making interface (POMDP planner) -->
+    <node name="sloop_ros" ns="movo"
+          pkg="sloop_object_search_ros" type="run_search.py" output="screen">
+      <!-- So strange. you can't do ~config -->
+      <rosparam param="config" command="load"
+                file="$(find sloop_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
+      <param name="robot_id" value="movo"/>
+      <param name="world_frame" value="map"/>
+      <remap from="~search_region_center" to="/local_region_center" />
+      <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
+      <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
+      <remap from="~robot_pose" to="/movo_camera_pose"/>
+      <!-- <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/> -->
+      <!-- <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/> -->
+      <!-- <remap from="~action_done" to="/spot_$(arg spot)/action_executor/done"/> -->
+    </node>
+  </group>
+
+
+  <group unless="$(arg local_search)">
+    <!-- Run SLOOP object search decision making interface (POMDP planner) -->
+    <node name="sloop_ros" ns="movo"
+          pkg="sloop_object_search_ros" type="run_search.py" output="screen">
+      <!-- So strange. you can't do ~config -->
+      <rosparam param="config" command="load"
+                file="$(find sloop_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
+      <param name="robot_id" value="movo"/>
+      <param name="world_frame" value="map"/>
+      <remap from="~search_region_center" to="/movo_camera_pose" />
+      <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
+      <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
+      <remap from="~robot_pose" to="/spot_hand_pose"/>
+      <!-- <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/> -->
+      <!-- <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/> -->
+      <!-- <remap from="~action_done" to="/spot_$(arg spot)/action_executor/done"/> -->
+    </node>
+
+  </group>
+
+
+</launch>
