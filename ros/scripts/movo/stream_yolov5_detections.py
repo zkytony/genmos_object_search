@@ -310,6 +310,7 @@ def main():
 
             # run through model
             image = imgarray_from_imgmsg(color_image_msg)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             depth_image = imgarray_from_imgmsg(depth_image_msg)
             yolomodelPrediction = yolomodel(image)
             yoloPandaDataframe = yolomodelPrediction.pandas().xyxy[0]
