@@ -3,7 +3,7 @@
        should be running on MOVO2 -->
   <arg name="map_name"/>
   <arg name="world_frame" default="map"/>
-  <arg name="local_search" default="false" type="bool"/>
+  <arg name="local_search" default="false"/>
   <arg name="map_points" value="/movo/map2d_points"/>
   <arg name="kinect_points" value="/kinect2/sd/filtered_points"/>
   <arg name="kinect_frame" value="kinect2_color_frame"/>  <!-- +x-forward frame -->
@@ -15,7 +15,7 @@
   <arg name="retain_ratio" default="0.2"/>
 
   <!-- Stream movo camera pose -->
-  <node name="movo_stream_camera_pose" pkg="rbd_movo_systems" type="stream_camera_pose.py"
+  <node name="movo_stream_camera_pose" pkg="sloop_object_search_ros" type="stream_camera_pose.py"
         output="screen"/>
 
   <!-- Run the occupancy to cloud converter -->
