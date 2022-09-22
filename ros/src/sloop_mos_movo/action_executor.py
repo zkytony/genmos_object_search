@@ -22,8 +22,9 @@ from .head_jtas import HeadJTAS
 from .torso_jtas import TorsoJTAS
 from .waypoint import WaypointApply
 
-TORSO_HEIGHT_MAX = 0.6
+TORSO_HEIGHT_MAX = 0.5
 TORSO_HEIGHT_MIN = 0.0
+CAMERA_MIN_HEIGHT = 1.04  # when torso is 0.0
 
 
 class MovoSloopActionExecutor(ActionExecutor):
@@ -109,6 +110,9 @@ class MovoSloopActionExecutor(ActionExecutor):
                 rospy.loginfo(typ.warning("User terminates action execution"))
                 return False
 
+        # reset head
+        self.reset_head()
+
         # Note that the goal pose is the camera pose in the world frame.
         # But when we do navigation, we control the robot's body. So, similar
         # to Spot's execution, we first move the body to the goal 2D location
@@ -121,28 +125,26 @@ class MovoSloopActionExecutor(ActionExecutor):
         if _waypoint_nav.status != WaypointApply.Status.SUCCESS:
             return False
 
-        import pdb; pdb.set_trace()
-
         # We don't have a simple way to control the robot to move back without
         # guaranteeing that it doens't hit something (unlike spot). So we will
         # just not do that, and move the torso and tilt the camera
-        z = goal_pose[2]
-        torso_goal = self.make_torso_goal(height=z)
+        height = (goal_pose[2] - CAMERA_MIN_HEIGHT)
+        torso_goal = self.make_torso_goal(height=height)
         self.torso_jtas.client.send_goal(torso_goal)
         rospy.loginfo("Waiting for torso action to finish")
         self.torso_jtas.client.wait_for_result(timeout=rospy.Duration(20))
 
-        # We then pan/tilt the camera as needed
-        robot_pose_msg = ros_utils.WaitForMessages(
-            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
-            verbose=True).messages[0]
-        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        # # We then pan/tilt the camera as needed
+        # robot_pose_msg = ros_utils.WaitForMessages(
+        #     [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+        #     verbose=True).messages[0]
+        # robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
 
-        goal_pitch, _, goal_yaw = math_utils.quat_to_euler(*goal_pose[3:])
-        # cur_pitch, _, cur_yaw = math_utils.quat_to_euler(*robot_pose_tuple[3:])
-        head_goal = self.make_head_goal(pan=goal_yaw, tilt=goal_pitch)
-        self.head_jtas.client.send_goal(head_goal)
-        self.head_jtas.client.wait_for_result(timeout=rospy.Duration(20))
+        # goal_pitch, _, goal_yaw = math_utils.quat_to_euler(*goal_pose[3:])
+        # # cur_pitch, _, cur_yaw = math_utils.quat_to_euler(*robot_pose_tuple[3:])
+        # head_goal = self.make_head_goal(pan=goal_yaw, tilt=goal_pitch)
+        # self.head_jtas.client.send_goal(head_goal)
+        # self.head_jtas.client.wait_for_result(timeout=rospy.Duration(20))
         return True
 
     def make_torso_goal(self, **kwargs):
