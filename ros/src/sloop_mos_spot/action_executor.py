@@ -9,11 +9,6 @@ import diagnostic_msgs
 from pomdp_py.utils import typ
 
 from sloop_object_search_ros.msg import KeyValAction
-from sloop_object_search.oopomdp.domain.action import (MotionActionTopo,
-                                                       StayAction,
-                                                       FindAction,
-                                                       MotionAction2D)
-from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic2D
 from sloop_mos_ros.action_executor import ActionExecutor
 from sloop_mos_ros import ros_utils
 from visualization_msgs.msg import Marker, MarkerArray

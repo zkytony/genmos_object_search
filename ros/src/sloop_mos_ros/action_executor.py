@@ -5,11 +5,7 @@ import pomdp_py
 import std_msgs.msg as std_msgs
 from pomdp_py.utils import typ
 from actionlib_msgs.msg import GoalStatus
-from sloop_object_search_ros.msg import (PlanNextStepAction,
-                                         PlanNextStepResult,
-                                         KeyValAction,
-                                         DefaultBelief,
-                                         DefaultObservation)
+from sloop_object_search_ros.msg import KeyValAction
 from sloop_object_search.utils.misc import import_class
 from . import ros_utils
 
