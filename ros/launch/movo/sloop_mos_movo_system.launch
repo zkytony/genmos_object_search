@@ -84,6 +84,6 @@
   <!-- Object detection -->
   <!-- ########################################################################## -->
   <node pkg="sloop_object_search_ros" type="stream_movo_yolov5_detections.py"
-        name="stream_detections" args="-q hd"></node>
+        name="stream_detections" args="-q hd" output="screen"></node>
 
 </launch>
