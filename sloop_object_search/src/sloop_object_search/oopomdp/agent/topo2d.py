@@ -17,9 +17,9 @@ from .common import (MosAgent, init_object_transition_models,
                      interpret_localization_model, init_visualizer2d)
 from .basic2d import MosAgentBasic2D
 from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils import visual2d
 from sloop_object_search.utils.algo import PriorityQueue
 from sloop_object_search.utils import grid_map_utils
+
 
 class MosAgentTopo2D(MosAgentBasic2D):
     """This agent will have a topological graph-based action space."""
@@ -96,17 +96,22 @@ class MosAgentTopo2D(MosAgentBasic2D):
                                     self.topo_config)
         _debug = self.topo_config.get("debug", False)
         if _debug:
-            viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
-                                    grid_map=self.search_region.grid_map,
-                                    res=self.visual_config.get("res", 10))
-            img = viz.render(topo_map, object_beliefs,
-                             self.robot_id, robot_pose)
-            if inflated_cells is not None:
-                img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
-            # flip horizotnally is necessary so that +x is right, +y is up.
-            viz.show_img(img, flip_horizontally=True)
-            time.sleep(2)
-            viz.on_cleanup()
+            try:
+                from sloop_object_search.utils import visual2d
+                viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
+                                        grid_map=self.search_region.grid_map,
+                                        res=self.visual_config.get("res", 10))
+                img = viz.render(topo_map, object_beliefs,
+                                 self.robot_id, robot_pose)
+                if inflated_cells is not None:
+                    img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
+                # flip horizotnally is necessary so that +x is right, +y is up.
+                viz.show_img(img, flip_horizontally=True)
+                time.sleep(2)
+                viz.on_cleanup()
+            except ImportError as ex:
+                logging.error("Error importing visual2d: {}".format(ex))
+
         return topo_map
 
     def reachable(self, pos):

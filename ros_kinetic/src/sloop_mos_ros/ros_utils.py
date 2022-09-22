@@ -11,12 +11,7 @@ import visualization_msgs
 import message_filters
 import vision_msgs
 
-import tf
 import tf2_ros
-#!!! NEED THIS:
-# https://answers.ros.org/question/95791/tf-transformpoint-equivalent-on-tf2/?answer=394789#post-id-394789
-# STUPID ROS PROBLEM.
-import tf2_geometry_msgs.tf2_geometry_msgs
 
 # we don't want to crash if a ros-related package is not installed.
 import importlib
@@ -231,35 +226,6 @@ def tf2_lookup_transform(tf2buf, target_frame, source_frame, timestamp):
     except tf2_ros.LookupException:
         rospy.logerr("Error looking up transform from {} to {}"\
                      .format(target_frame, source_frame))
-
-def tf2_do_transform(pose_stamped, trans):
-    return tf2_geometry_msgs.do_transform_pose(pose_stamped, trans)
-
-### Mathematics ###
-def quat_diff(q1, q2):
-    """returns the quaternion space difference between two
-    quaternion q1 and q2"""
-    # reference: https://stackoverflow.com/a/22167097/2893053
-    # reference: http://wiki.ros.org/tf2/Tutorials/Quaternions#Relative_rotations
-    x1, y1, z1, w1 = q1
-    q1_inv = (x1, y1, z1, -w1)
-    qd = tf.transformations.quaternion_multiply(q2, q1_inv)
-    return qd
-
-def quat_diff_angle(q1, q2):
-    """returns the angle (radians) between q1 and q2; signed"""
-    # reference: https://stackoverflow.com/a/23263233/2893053
-    qd = quat_diff(q1, q2)
-    return 2*math.atan2(math_utils.vec_norm(qd[:3]), qd[3])
-
-def quat_diff_angle_relative(q1, q2):
-    """returns the angle (radians) between q1 and q2;
-    The angle will be the smallest one between the two
-    vectors. It is the "intuitive" angular difference.
-    Unsigned."""
-    # reference: https://stackoverflow.com/a/23263233/2893053
-    ad = quat_diff_angle(q1, q2)
-    return min(2*math.pi - ad, ad)
 
 
 ### Sensor Messages ###

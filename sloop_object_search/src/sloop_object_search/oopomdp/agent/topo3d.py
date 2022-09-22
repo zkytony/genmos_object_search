@@ -19,6 +19,7 @@ from .common import MosAgent, init_object_transition_models
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue
 from sloop_object_search.utils import grid_map_utils
+
 try:
     from sloop_object_search.utils import open3d_utils
 except OSError as ex:
@@ -91,12 +92,15 @@ class MosAgentTopo3D(MosAgentBasic3D):
 
         _debug = self.topo_config.get("debug", False)
         if _debug:
-            from sloop_object_search.utils.visual2d import GridMap2Visualizer
-            viz = GridMap2Visualizer(grid_map=grid_map, res=15)
-            img = viz.render()
-            img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
-            viz.show_img(img)
-            time.sleep(3)
+            try:
+                from sloop_object_search.utils.visual2d import GridMap2Visualizer
+                viz = GridMap2Visualizer(grid_map=grid_map, res=15)
+                img = viz.render()
+                img = viz.highlight(img, inflated_cells, color=(72, 213, 235))
+                viz.show_img(img)
+                time.sleep(3)
+            except ImportError as ex:
+                logging.error("Error importing visual2d: {}".format(ex))
 
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
