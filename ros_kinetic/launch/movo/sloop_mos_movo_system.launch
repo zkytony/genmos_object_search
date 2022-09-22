@@ -35,17 +35,8 @@
     <param name="filter_limit_max" value="3.0" />
     <param name="filter_limit_negative" value="False" />
     <remap from="~input" to="/kinect2/sd/points"/>
-    <remap from="~output" to="/kinect2/sd/filtered_passthrough_z"/>
-  </node>
-  <node pkg="nodelet" type="nodelet"
-        name="statistical_filter"
-        args="load pcl/StatisticalOutlierRemoval pcl_manager">
-    <param name="mean_k" value="2" />
-    <param name="stddev" value="0.1" />
-    <remap from="~input" to="/kinect2/sd/filtered_passthrough_z"/>
     <remap from="~output" to="/kinect2/sd/filtered_points"/>
   </node>
-
 
   <!-- Merge the map cloud with the kinect cloud -->
   <node name="point_cloud_merger"

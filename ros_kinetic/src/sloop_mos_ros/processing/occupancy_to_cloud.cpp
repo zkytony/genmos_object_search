@@ -20,6 +20,7 @@ OccupancyToCloud::OccupancyToCloud()
   z_ = nh_.param<double>("points_z", 1.0);  // meters
   z_density_ = nh_.param<double>("density_z", 0.1);  // fills the z
   pcl_frame_id_ = nh_.param<string>("pcl_frame_id", "map");  // meters
+  pcl_updated_ = false;
 }
 
 void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &ocg_msg) {
@@ -48,6 +49,7 @@ void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &ocg_
     }
   }
   this->cloud_ = cloud;
+  pcl_updated_ = true;
   sensor_msgs::PointCloud2 pcl_msg;
   pcl::toROSMsg(this->cloud_, pcl_msg);
   pcl_msg.header.frame_id = this->pcl_frame_id_;
@@ -56,7 +58,21 @@ void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &ocg_
 }
 
 void OccupancyToCloud::run() {
-  ros::spin();
+  ros::Rate loop_rate(5.0);
+  sensor_msgs::PointCloud2 pcl_msg;
+  while (this->nh_.ok()) {
+    if (pcl_updated_) {
+        pcl::toROSMsg(this->cloud_, pcl_msg);
+        pcl_updated_ = false;
+    }
+    pcl_msg.header.frame_id = this->pcl_frame_id_;
+    pcl_msg.header.stamp = ros::Time::now();
+    if (this->cloud_.size() > 0) {
+      this->pcl_pub_.publish(pcl_msg);
+    }
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 }
 
 int main(int argc, char *argv[]) {

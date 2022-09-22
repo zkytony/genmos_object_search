@@ -31,6 +31,7 @@ private:
   double z_;  // z coordinate of published cloud
   double z_density_;  // z coordinate of published cloud
   string pcl_frame_id_;
+  bool pcl_updated_;
 };
 
 #endif
