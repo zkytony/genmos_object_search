@@ -30,6 +30,7 @@ private:
   PointCloud cloud_;
   double z_;  // z coordinate of published cloud
   double z_density_;  // z coordinate of published cloud
+  double z_floor_;
   string pcl_frame_id_;
   bool pcl_updated_;
 };
