@@ -1,4 +1,3 @@
-import rospy
 import random
 from collections import deque
 
