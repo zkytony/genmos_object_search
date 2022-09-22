@@ -31,7 +31,7 @@
         output="screen">
     <remap from="~grid_input" to="/map"/>
     <remap from="~cloud_output" to="$(arg map_points)"/>
-    <param name="floor_z" value="-1" />
+    <param name="floor_z" value="0.2" />
   </node>
 
   <!-- filtered noise too close to kinect -->

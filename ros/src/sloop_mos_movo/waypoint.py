@@ -36,7 +36,7 @@ class WaypointApply(object):
         rospy.loginfo("Waiting for movo_move_base AS...")
         if not self.client.wait_for_server(rospy.Duration(20)):
             rospy.logerr("Could not connect to movo_move_base AS")
-            exit()
+            return
         rospy.loginfo("Connected!")
         rospy.sleep(1.0)
 

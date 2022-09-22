@@ -80,19 +80,13 @@ class MovoSloopActionExecutor(ActionExecutor):
                                     action_id, msg.stamp, pub_done=True)
 
         elif msg.type == "find":
-            # Move backwards a little bit
-            vx = 0.4
-            # command_id, _ = rbd_spot.body.velocityCommand(
-            # self.conn, self.command_client, -vx, 0.0, 0.0, duration=0.2/vx)
-            # # signal find action by closing and opening gripper
-            # rbd_spot.arm.close_gripper(self.conn, self.command_client)
-            # rbd_spot.arm.open_gripper(self.conn, self.command_client)
             self.publish_status(GoalStatus.SUCCEEDED,
                                 typ.success("find action succeeded"),
                                 action_id, msg.stamp, pub_done=True)
 
 
     def move_viewpoint(self, action_id, nav_type, goal_pose):
+        return True
         if nav_type not in {"2d", "3d"}:
             raise ValueError("nav_type should be '2d' or '3d'")
 
@@ -132,8 +126,8 @@ class MovoSloopActionExecutor(ActionExecutor):
                                       rot_tolerance=math_utils.to_rad(10))
         # navigation sometimes gets close but not reaching the goal;
         # but it doesn't hurt moving torso and turning the head
-        # if _waypoint_nav.status != WaypointApply.Status.SUCCESS:
-        #     return False
+        if _waypoint_nav.status != WaypointApply.Status.SUCCESS:
+            return False
 
         # We don't have a simple way to control the robot to move back without
         # guaranteeing that it doens't hit something (unlike spot). So we will

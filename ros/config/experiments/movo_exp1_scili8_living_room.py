@@ -12,7 +12,7 @@ GLOBAL_BELIEF = {"init_params": {"prior_from_occupancy": False}}
 
 SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
-                    "region_size_x": 3.0,
+                    "region_size_x": 3.5,
                     "region_size_y": 3.0,
                     "region_size_z": 1.5}
 
@@ -25,10 +25,10 @@ SEARCH_REGION_2D = {"res": 0.3,
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 HAND_CAMERA = {'name': 'hand_camera',
-               'params': {'fov': 53,
-                          'far': 1.5,
-                          'near': 0.2,
-                          'aspect_ratio': 0.7,
+               'params': {'fov': 70,
+                          'far': 3.5,
+                          'near': 0.3,
+                          'aspect_ratio': 0.85,
                           'occlusion_enabled': True}}
 
 HAND_FAN = {"name": 'hand_fan',
@@ -36,21 +36,21 @@ HAND_FAN = {"name": 'hand_fan',
                        'min_range': 0.2,
                        'max_range': 1.5}}
 
-LOCAL_TOPO = {'num_nodes': 10,
+LOCAL_TOPO = {'num_nodes': 6,
               'pos_importance_thres': 0.01,
-              'sep': 0.75,
+              'sep': 0.5,
               'debug': False,
               'resample_thres': 0.4,
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
-                             'inflation': 0.4}}
+                             'inflation': 0.45}}
 
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 1.0,
-                   "max_height": 1.4}
+LOCAL_REACHABLE = {"min_height": 0.8,
+                   "max_height": 2.0}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
@@ -184,7 +184,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Cat"]#, "ToyPlane", "Lyzol", "Pringles"]
+target_objects = ["Pringles"]#, "Columbia Book"]#, "Lyzol", "Pringles"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
