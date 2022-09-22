@@ -6,6 +6,7 @@ import geometry_msgs.msg as geometry_msgs
 import sys
 import diagnostic_msgs
 import std_msgs.msg as std_msgs
+import geometry_msgs.msg as geometry_msgs
 from actionlib_msgs.msg import GoalStatus
 
 from pomdp_py.utils import typ
@@ -14,6 +15,15 @@ from sloop_object_search_ros.msg import KeyValAction
 from sloop_mos_ros.action_executor import ActionExecutor
 from visualization_msgs.msg import Marker, MarkerArray
 from sloop_mos_ros import ros_utils
+from sloop_object_search.utils.misc import confirm_yes
+import sloop_object_search.utils.math as math_utils
+
+from .head_jtas import HeadJTAS
+from .torso_jtas import TorsoJTAS
+from .waypoint import WaypointApply
+
+TORSO_HEIGHT_MAX = 0.6
+TORSO_HEIGHT_MIN = 0.0
 
 
 class MovoSloopActionExecutor(ActionExecutor):
@@ -27,6 +37,8 @@ class MovoSloopActionExecutor(ActionExecutor):
         self.check_before_execute = rospy.get_param("~check_before_execute", True)
         self._goal_viz_pub = rospy.Publisher(
             "~goal_markers", MarkerArray, queue_size=10, latch=True)
+        self.torso_jtas = TorsoJTAS()
+        self.head_jtas = HeadJTAS()
 
     def _execute_action_cb(self, msg):
         if msg.type == "nothing":
@@ -91,4 +103,41 @@ class MovoSloopActionExecutor(ActionExecutor):
             scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
         self._goal_viz_pub.publish(MarkerArray([_goal_marker_msg]))
 
+        # Check if the user wants to execute
+        if self.check_before_execute:
+            if not confirm_yes("Execute change viewpoint action?"):
+                rospy.loginfo(typ.warning("User terminates action execution"))
+                return False
+
+        # Note that the goal pose is the camera pose in the world frame.
+        # But when we do navigation, we control the robot's body. So, similar
+        # to Spot's execution, we first move the body to the goal 2D location
+        # with desired yaw, then adjust torso and head to look in the right
+        # direction.
+        robot_pose_msg = ros_utils.WaitForMessages(
+            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True).messages[0]
+        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+
+        _, _, yaw = math_utils.quat_to_euler(*goal_pose[3:])
+        x, y = goal_pose[:2]
+        _waypoint_nav = WaypointApply((x, y, robot_pose_tuple[2]),
+                                      math_utils.euler_to_quat(0, 0, yaw))
+        if _waypoint_nav.status != WaypointApply.Status.SUCCESS:
+            return False
+
+        # self.torso_jtas.client.send_goal(self.make_torso_goal(height=0.4))
+        # self.status = "Waiting for torso action to finish"
+        # self.torso_jtas.client.wait_for_result(timeout=rospy.Duration(self._timeout))
+
         return False
+
+    def make_torso_goal(self, **kwargs):
+        vel = kwargs.get("vel", 0.05)
+        desired_height = kwargs["height"]
+        if desired_height < TORSO_HEIGHT_MIN or desired_height > TORSO_HEIGHT_MAX:
+            rospy.logwarn("Specified torso goal height {} is out of range ({} ~ {}). Will clamp."\
+                          .format(desired_height, TORSO_HEIGHT_MIN, TORSO_HEIGHT_MAX))
+            desired_height = max(TORSO_HEIGHT_MIN, min(TORSO_HEIGHT_MAX, desired_height))
+        return TorsoJTAS.make_goal(desired_height,
+                                   v=vel)

@@ -1,10 +1,10 @@
 <launch>
   <!-- Action Executor for MOVO -->
-  <node name="action_executor" ns="movo/sloop_ros"
+  <node name="movo_action_executor"
         pkg="sloop_object_search_ros" type="movo_action_executor.py" output="screen">
     <param name="robot_id" value="movo"/>
     <param name="world_frame" value="map"/>
-    <param name="check_before_execute" value="False" type="bool"/>
+    <param name="check_before_execute" value="True" type="bool"/>
     <remap from="~action"  to="/movo/sloop_ros/action"/>
     <remap from="~robot_pose" to="/movo_camera_pose"/>
   </node>

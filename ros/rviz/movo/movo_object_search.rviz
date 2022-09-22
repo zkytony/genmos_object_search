@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /local region points1
+        - /viewpoint goal1
       Splitter Ratio: 0.5
     Tree Height: 359
   - Class: rviz/Selection
@@ -521,7 +521,7 @@ Visualization Manager:
     - Alpha: 0.30000001192092896
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 1.7499876022338867
+        Max Value: 1.749987006187439
         Min Value: -0.20000000298023224
         Value: true
       Axis: Z
@@ -554,6 +554,14 @@ Visualization Manager:
         "": true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /movo_action_executor/goal_markers
+      Name: viewpoint goal
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -582,7 +590,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.084725856781006
+      Distance: 3.6351375579833984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -598,9 +606,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3947974145412445
+      Pitch: 1.2247973680496216
       Target Frame: <Fixed Frame>
-      Yaw: 3.0804269313812256
+      Yaw: 4.540431499481201
     Saved: ~
 Window Geometry:
   Displays:
