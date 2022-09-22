@@ -14,7 +14,10 @@ setup(name='sloop_object_search',
           'pygame',
           'spacy',
           'grpcio',
-          'pyyaml'
+          'pyyaml',
+          'protobuf',
+          'pandas',
+          'open3d'
       ],
       author='Kaiyu Zheng',
       author_email='kzheng10@cs.brown.edu',
