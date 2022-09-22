@@ -26,6 +26,11 @@ TORSO_HEIGHT_MAX = 0.5
 TORSO_HEIGHT_MIN = 0.0
 CAMERA_MIN_HEIGHT = 1.04  # when torso is 0.0
 
+MAX_PAN = 45
+MIN_PAN = -45
+MAX_TILT = 45
+MIN_TILT = -45
+
 
 class MovoSloopActionExecutor(ActionExecutor):
     def __init__(self, **kwargs):
@@ -165,8 +170,11 @@ class MovoSloopActionExecutor(ActionExecutor):
 
     def make_head_goal(self, **kwargs):
         vel = kwargs.get("vel", 0.3)
-        desired_pan = math_utils.to_radians(kwargs["pan"])
-        desired_tilt = math_utils.to_radians(kwargs["tilt"])
+        # limit pan and tilt ranges
+        pan = max(MIN_PAN, min(MAX_PAN, kwargs["pan"]))
+        tilt = max(MIN_TILT, min(MAX_TILT, kwargs["tilt"]))
+        desired_pan = math_utils.to_radians(pan)
+        desired_tilt = math_utils.to_radians(tilt)
         return HeadJTAS.make_goal(desired_pan, desired_tilt, v=vel)
 
     def reset_head(self):
