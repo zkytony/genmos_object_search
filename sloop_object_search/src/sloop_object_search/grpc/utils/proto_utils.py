@@ -21,7 +21,13 @@ from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
 from sloop_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeBelief, plot_octree_belief
 from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils import open3d_utils
+
+# open3d requires Ubuntu 18.04+ with GLIBC 2.27+
+try:
+    from sloop_object_search.utils import open3d_utils
+except OSError as ex:
+    logging.error("Failed to load open3d: {}".format(ex))
+
 
 def v3toa(v3):
     """convert Vec3 proto to numpy array"""

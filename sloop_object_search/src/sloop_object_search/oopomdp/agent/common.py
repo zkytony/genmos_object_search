@@ -1,7 +1,6 @@
 import logging
 import pomdp_py
 import numpy as np
-from sloop.agent import SloopAgent
 from sloop_object_search.utils.misc import import_class, import_func
 from ..domain.observation import RobotLocalization, RobotObservation, JointObservation
 from ..domain.state import RobotState
@@ -303,21 +302,24 @@ class MosAgent(pomdp_py.Agent):
     def visual_config(self):
         return self.agent_config.get("misc", {}).get("visual", {})
 
+try:
+    from sloop.agent import SloopAgent
+    class SloopMosAgent(SloopAgent):
+        def __init__(self, agent_config, search_region, init_robot_pose_dist,
+                     init_object_beliefs=None):
+            if not isinstance(search_region, SearchRegion2D):
+                raise TypeError("SloopMosAgent requires 2D search region"
+                                "because spatial language currently works in 2D.")
+            map_name = search_region.grid_map.name
+            self.search_region = search_region
+            super().__init__(agent_config, map_name,
+                             init_robot_pose_dist=init_robot_pose_dist,
+                             init_object_beliefs=init_object_beliefs)
 
-class SloopMosAgent(SloopAgent):
-    def __init__(self, agent_config, search_region, init_robot_pose_dist,
-                 init_object_beliefs=None):
-        if not isinstance(search_region, SearchRegion2D):
-            raise TypeError("SloopMosAgent requires 2D search region"
-                            "because spatial language currently works in 2D.")
-        map_name = search_region.grid_map.name
-        self.search_region = search_region
-        super().__init__(agent_config, map_name,
-                         init_robot_pose_dist=init_robot_pose_dist,
-                         init_object_beliefs=init_object_beliefs)
+        def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
+            raise NotImplementedError()
 
-    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
-        raise NotImplementedError()
-
-    def update_belief(self, observation, action=None):
-        raise NotImplementedError()
+        def update_belief(self, observation, action=None):
+            raise NotImplementedError()
+except ModuleNotFoundError as ex:
+    logging.error("Failed to load sloop: {}".format(ex))

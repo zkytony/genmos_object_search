@@ -1,6 +1,7 @@
 """This represents a local 3D search agent with a viewpoint
 topo graph-based action space.
 """
+import logging
 import random
 import pomdp_py
 import time
@@ -14,11 +15,15 @@ from ..models.policy_model import PolicyModelTopo
 from ..models.transition_model import RobotTransTopo3D
 from ..models.observation_model import RobotObservationModelTopo
 from ..models import belief
-from .common import MosAgent, SloopMosAgent, init_object_transition_models
+from .common import MosAgent, init_object_transition_models
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.algo import PriorityQueue
-from sloop_object_search.utils import open3d_utils
 from sloop_object_search.utils import grid_map_utils
+try:
+    from sloop_object_search.utils import open3d_utils
+except OSError as ex:
+    logging.error("Failed to load open3d: {}".format(ex))
+
 
 
 class MosAgentTopo3D(MosAgentBasic3D):

@@ -1,6 +1,7 @@
 """This represents a local 3D search agent with a primitive action
 space such as moving / rotating with respect to an axis.
 """
+import logging
 import pomdp_py
 import numpy as np
 from ..domain.observation\
@@ -10,7 +11,7 @@ from ..models.transition_model import RobotTransBasic3D
 from ..models.sensors import FrustumCamera
 from ..models.policy_model import PolicyModelBasic3D
 from ..models.octree_belief import update_octree_belief
-from .common import MosAgent, SloopMosAgent,\
+from .common import MosAgent,\
     init_object_transition_models, init_primitive_movements, init_detection_models
 from sloop_object_search.utils import math as math_utils
 
@@ -165,10 +166,14 @@ def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_
 
 
 #### useful debugging methods
-import open3d as o3d
-from sloop_object_search.utils.colors import cmaps
-from sloop_object_search.utils.open3d_utils\
-    import draw_octree_dist, cube_unfilled, draw_robot_pose, draw_fov
+try:
+    import open3d as o3d
+    from sloop_object_search.utils.open3d_utils\
+        import draw_octree_dist, cube_unfilled, draw_robot_pose, draw_fov
+    from sloop_object_search.utils.colors import cmaps
+except OSError as ex:
+    logging.error("Failed to load open3d: {}".format(ex))
+
 def _visualize_octree_belief(octree_belief, robot_pose, occupancy_octree=None,
                              visible_volume=None, obstacles_hit=None):
     geometries = []

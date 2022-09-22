@@ -1,5 +1,6 @@
 """This represents the global, 2D search agent that plans
 over an action space based on a topological graph."""
+import logging
 import pomdp_py
 import random
 import time
@@ -12,7 +13,7 @@ from ..models.transition_model import RobotTransTopo2D
 from ..models.observation_model import RobotObservationModelTopo
 from ..models.topo_map import TopoNode, TopoMap, TopoEdge
 from ..models import belief
-from .common import (MosAgent, SloopMosAgent, init_object_transition_models,
+from .common import (MosAgent, init_object_transition_models,
                      interpret_localization_model, init_visualizer2d)
 from .basic2d import MosAgentBasic2D
 from sloop_object_search.utils import math as math_utils
@@ -391,17 +392,22 @@ def _shortest_path(reachable_positions, gloc1, gloc2):
 
 
 ### DEPRECATED ###
-class SloopMosAgentTopo2D(SloopMosAgent):
-    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
-        if init_robot_pose_dist is None:
-            raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
+try:
+    from .common import SloopMosAgent
+    class SloopMosAgentTopo2D(SloopMosAgent):
+        def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
+            if init_robot_pose_dist is None:
+                raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
 
-        mos_agent = MosAgentTopo2D(self.agent_config,
-                                    self.search_region,
-                                    init_robot_pose_dist=init_robot_pose_dist,
-                                    init_object_beliefs=init_object_beliefs)
-        return (mos_agent.belief,
-                mos_agent.policy_model,
-                mos_agent.transition_model,
-                mos_agent.observation_model,
-                mos_agent.reward_model)
+            mos_agent = MosAgentTopo2D(self.agent_config,
+                                        self.search_region,
+                                        init_robot_pose_dist=init_robot_pose_dist,
+                                        init_object_beliefs=init_object_beliefs)
+            return (mos_agent.belief,
+                    mos_agent.policy_model,
+                    mos_agent.transition_model,
+                    mos_agent.observation_model,
+                    mos_agent.reward_model)
+
+except ImportError as ex:
+    logging.error("Failed to import SloopMosAgent (basic2d): {}".format(ex))

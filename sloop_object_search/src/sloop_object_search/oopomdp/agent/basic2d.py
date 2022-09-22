@@ -1,4 +1,5 @@
 # basic2d: 2D search agent with primitive action space.
+import logging
 import pomdp_py
 from tqdm import tqdm
 from ..models.search_region import SearchRegion2D
@@ -6,8 +7,13 @@ from ..models.transition_model import RobotTransBasic2D
 from ..models.policy_model import PolicyModelBasic2D
 from ..models import belief
 from ..domain.observation import JointObservation, ObjectDetection, FovVoxels, Voxel
-from .common import MosAgent, SloopMosAgent, init_object_transition_models, init_primitive_movements
-from sloop_object_search.utils import open3d_utils
+from .common import MosAgent, init_object_transition_models, init_primitive_movements
+# open3d requires Ubuntu 18.04+ with GLIBC 2.27+
+try:
+    from sloop_object_search.utils import open3d_utils
+except OSError as ex:
+    logging.error("Failed to load open3d: {}".format(ex))
+
 
 class MosAgentBasic2D(MosAgent):
 
@@ -139,17 +145,21 @@ def project_fov_voxels_to_2d(fov_voxels, search_region3d, search_region2d, objid
 
 
 ### DEPRECATED ###
-class SloopMosAgentBasic2D(SloopMosAgent):
-    def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
-        if init_robot_pose_dist is None:
-            raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
+try:
+    from .common import SloopMosAgent
+    class SloopMosAgentBasic2D(SloopMosAgent):
+        def _init_oopomdp(self, init_robot_pose_dist=None, init_object_beliefs=None):
+            if init_robot_pose_dist is None:
+                raise ValueError("To instantiate MosAgent, initial robot pose distribution is required.")
 
-        mos_agent = MosAgentBasic2D(self.agent_config,
-                                    self.search_region,
-                                    init_robot_pose_dist=init_robot_pose_dist,
-                                    init_object_beliefs=init_object_beliefs)
-        return (mos_agent.belief,
-                mos_agent.policy_model,
-                mos_agent.transition_model,
-                mos_agent.observation_model,
-                mos_agent.reward_model)
+            mos_agent = MosAgentBasic2D(self.agent_config,
+                                        self.search_region,
+                                        init_robot_pose_dist=init_robot_pose_dist,
+                                        init_object_beliefs=init_object_beliefs)
+            return (mos_agent.belief,
+                    mos_agent.policy_model,
+                    mos_agent.transition_model,
+                    mos_agent.observation_model,
+                    mos_agent.reward_model)
+except ImportError as ex:
+    logging.error("Failed to import SloopMosAgent (basic2d): {}".format(ex))
