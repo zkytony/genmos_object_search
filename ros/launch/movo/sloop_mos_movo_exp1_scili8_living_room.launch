@@ -24,9 +24,9 @@
       <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
       <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
       <remap from="~robot_pose" to="/movo_camera_pose"/>
-      <!-- <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/> -->
-      <!-- <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/> -->
-      <!-- <remap from="~action_done" to="/spot_$(arg spot)/action_executor/done"/> -->
+      <remap from="~object_detections" to="/movo/segmentation/kinect2/result_boxes3d"/>
+      <remap from="~vision_info" to="/movo/segmentation/kinect2/vision_info"/>
+      <remap from="~action_done" to="/movo/sloop_ros/action_executor/done"/>
     </node>
   </group>
 

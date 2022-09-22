@@ -6,6 +6,6 @@
     <param name="world_frame" value="map"/>
     <param name="check_before_execute" value="False" type="bool"/>
     <remap from="~action"  to="/movo/sloop_ros/action"/>
-    <remap from="~robot_pose" to="/spot_hand_pose"/>
+    <remap from="~robot_pose" to="/movo_camera_pose"/>
   </node>
 </launch>
