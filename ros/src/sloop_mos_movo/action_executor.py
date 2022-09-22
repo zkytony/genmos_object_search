@@ -86,7 +86,6 @@ class MovoSloopActionExecutor(ActionExecutor):
 
 
     def move_viewpoint(self, action_id, nav_type, goal_pose):
-        return True
         if nav_type not in {"2d", "3d"}:
             raise ValueError("nav_type should be '2d' or '3d'")
 
