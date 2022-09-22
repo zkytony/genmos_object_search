@@ -1,6 +1,7 @@
 # Example ROS package that uses sloop_object_search
 
-ROS VERSION: ROS Noetic
+Note that sloop_object_search is written in Python 3. For ROS, it is
+best integrated with ROS Noetic.
 
 ## Setup
 

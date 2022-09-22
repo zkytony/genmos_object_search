@@ -3,7 +3,7 @@
 
   <!-- rviz -->
   <arg name="rviz"    default="true" />
-  <arg name="rviz_file" default="$(find sloop_object_search_ros)/rviz/movo_object_search.rviz" />
+  <arg name="rviz_file" default="$(find sloop_object_search_ros)/rviz/movo/movo_object_search.rviz" />
   <node pkg="rviz" type="rviz" name="rviz"
         args="-d $(arg rviz_file)" output="screen"
         if="$(arg rviz)"/>

@@ -49,25 +49,26 @@
     <remap from="/points_merged" to="/movo/local_region/input_points"/>
   </node>
 
-  <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
-    <arg name="robot_pose_topic" value="/movo_camera_pose"/>
-    <arg name="global_cloud_topic" value="/movo/local_region/input_points"/>
-    <arg name="region_size_x" value="$(arg region_size_x)"/>
-    <arg name="region_size_y" value="$(arg region_size_y)"/>
-    <arg name="region_size_z" value="$(arg region_size_z)"/>
-    <arg name="retain_ratio" value="$(arg retain_ratio)"/>
-  </include>
+  <group if="$(arg local_search)">
+    <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
+      <arg name="robot_pose_topic" value="/local_region_center"/>
+      <arg name="global_cloud_topic" value="/movo/local_region/input_points"/>
+      <arg name="region_size_x" value="$(arg region_size_x)"/>
+      <arg name="region_size_y" value="$(arg region_size_y)"/>
+      <arg name="region_size_z" value="$(arg region_size_z)"/>
+      <arg name="retain_ratio" value="$(arg retain_ratio)"/>
+    </include>
+  </group>
 
-  <!-- <group unless="$(arg local_search)"> -->
-  <!--   <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch"> -->
-  <!--     <arg name="robot_pose_topic" value="/spot_hand_pose"/> -->
-  <!--     <arg name="global_cloud_topic" value="/spot/local_region/input_points"/> -->
-  <!--     <arg name="region_size_x" value="$(arg region_size_x)"/> -->
-  <!--     <arg name="region_size_y" value="$(arg region_size_y)"/> -->
-  <!--     <arg name="region_size_z" value="$(arg region_size_z)"/> -->
-  <!--     <arg name="retain_ratio" value="$(arg retain_ratio)"/> -->
-  <!--   </include> -->
-  <!-- </group> -->
-
+  <group unless="$(arg local_search)">
+    <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
+      <arg name="robot_pose_topic" value="/movo_camera_pose"/>
+      <arg name="global_cloud_topic" value="/movo/local_region/input_points"/>
+      <arg name="region_size_x" value="$(arg region_size_x)"/>
+      <arg name="region_size_y" value="$(arg region_size_y)"/>
+      <arg name="region_size_z" value="$(arg region_size_z)"/>
+      <arg name="retain_ratio" value="$(arg retain_ratio)"/>
+    </include>
+  </group>
 
 </launch>
