@@ -16,7 +16,7 @@ using std::vector;
 OccupancyToCloud::OccupancyToCloud()
   : nh_(ros::NodeHandle("~")) {
 
-  ocg_sub_ = nh_.saubscribe("grid_input", 10, &OccupancyToCloud::occupancyGridCallback, this);
+  ocg_sub_ = nh_.subscribe("grid_input", 10, &OccupancyToCloud::occupancyGridCallback, this);
   pcl_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("cloud_output", 10, true);  // latch
   z_ = nh_.param<double>("points_z", 1.0);  // meters
   z_density_ = nh_.param<double>("density_z", 0.1);  // fills the z
@@ -43,15 +43,17 @@ void OccupancyToCloud::occupancyGridCallback(const nav_msgs::OccupancyGrid &ocg_
       if (ocg_msg.data[row*ocg_msg.info.width + col] > 0) {
         // we have an obstacle
         double z = z_;
-        while (z > 0.0) {
+        while (z > z_floor_) {
           pcl::PointXYZ point(x, y, z);
           cloud.push_back(point);
           z -= z_density_;
         }
       } else if (ocg_msg.data[row*ocg_msg.info.width + col] == 0) {
         // free space. We will add points for the floor
-        pcl::PointXYZ point(x, y, z_floor_);
-        cloud.push_back(point);
+        if (z_floor_ >= 0.0) {
+          pcl::PointXYZ point(x, y, z_floor_);
+          cloud.push_back(point);
+        }
       }
     }
   }
