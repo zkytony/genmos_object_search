@@ -44,13 +44,13 @@ LOCAL_TOPO = {'num_nodes': 10,
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
-                             'inflation': 0.1}}
+                             'inflation': 0.15}}
 
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 0.5,
-                   "max_height": 1.2}
+LOCAL_REACHABLE = {"min_height": 1.0,
+                   "max_height": 1.4}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
