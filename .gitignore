@@ -107,3 +107,6 @@ ros/models/*foref*
 
 # sim test report
 ros/tests/spot/grpc/simple_sim/report/
+
+# yolov5
+ros/models/yolov5
