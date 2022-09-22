@@ -286,7 +286,7 @@ def main():
     depth_topic = f"/kinect2/{args.quality}/image_depth_rect"
     caminfo_topic = f"/kinect2/{args.quality}/camera_info"
 
-    print("Loading model...")
+    rospy.loginfo("Loading model...")
     yolomodel = torch.hub.load('ultralytics/yolov5', 'custom', path=f"{ABS_FILE_PATH}/../../models/yolov5/{YOLOV5_MODEL_NAME}/best.pt")
 
     rospy.init_node(f"stream_yolov5_kinect2")
@@ -303,10 +303,10 @@ def main():
             _time = time.time()
             color_image_msg, depth_image_msg, caminfo =\
                 ros_utils.WaitForMessages([color_topic, depth_topic, caminfo_topic],
-                                          [Image, Image, CameraInfo], delay=1.0,
+                                          [Image, Image, CameraInfo], delay=5.0,
                                           verbose=True, timeout=args.timeout).messages
             time_taken = time.time() - _time
-            print("GetImage took: {:.3f}".format(time_taken))
+            rospy.loginfo("GetImage took: {:.3f}".format(time_taken))
 
             # run through model
             image = imgarray_from_imgmsg(color_image_msg)
