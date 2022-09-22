@@ -12,7 +12,9 @@ setup(name='sloop_object_search',
           'numpy',
           'matplotlib',
           'pygame',
-          'spacy'
+          'spacy',
+          'grpcio',
+          'pyyaml'
       ],
       author='Kaiyu Zheng',
       author_email='kzheng10@cs.brown.edu',
