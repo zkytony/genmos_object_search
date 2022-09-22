@@ -462,9 +462,9 @@ class SloopMosROS:
         self.dynamic_update = rospy.get_param("~dynamic_update", False)
 
         # Need to wait for vision info
-        vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
-                                              [vision_msgs.VisionInfo], verbose=True).messages[0]
-        self.detection_class_names = rospy.get_param("/" + vinfo_msg.database_location)
+        # vinfo_msg = ros_utils.WaitForMessages([self._detection_vision_info_topic],
+        #                                       [vision_msgs.VisionInfo], verbose=True).messages[0]
+        self.detection_class_names = [] #rospy.get_param("/" + vinfo_msg.database_location)
 
         # Planning-related
         self.last_action = None

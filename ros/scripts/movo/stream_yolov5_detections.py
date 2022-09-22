@@ -33,7 +33,7 @@ from vision_msgs.msg import (Detection2D, Detection2DArray, Detection3D,
                              Detection3DArray, BoundingBox2D, BoundingBox3D,
                              VisionInfo, ObjectHypothesisWithPose)
 from sloop_mos_ros import ros_utils
-
+from sloop_object_search.utils.vision.detector import bbox3d_from_points
 
 ABS_FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 YOLOV5_MODEL_NAME = "yolov5_lab_custom"
@@ -103,16 +103,16 @@ class SegmentationPublisher:
         self._camera = camera
         self._mask_threshold = mask_threshold
         # Publishes the image with segmentation drawn
-        self._segimg_pub = rospy.Publisher(f"/spot/segmentation/{camera}/result", Image, queue_size=10)
+        self._segimg_pub = rospy.Publisher(f"/movo/segmentation/{camera}/result", Image, queue_size=10)
         # Publishes the point cloud of the back-projected segmentations
-        self._segpcl_pub = rospy.Publisher(f"/spot/segmentation/{camera}/result_points", PointCloud2, queue_size=10)
+        self._segpcl_pub = rospy.Publisher(f"/movo/segmentation/{camera}/result_points", PointCloud2, queue_size=10)
         # Publishes bounding boxes of detected objects with reasonable filtering done.
-        self._segdet3d_pub = rospy.Publisher(f"/spot/segmentation/{camera}/result_boxes3d", Detection3DArray,  queue_size=10)
+        self._segdet3d_pub = rospy.Publisher(f"/movo/segmentation/{camera}/result_boxes3d", Detection3DArray,  queue_size=10)
         # Publishes the detected classes, confidence scores, and boudning boxes
-        self._segdet2d_pub = rospy.Publisher(f"/spot/segmentation/{camera}/result_boxes2d", Detection2DArray, queue_size=10)
+        self._segdet2d_pub = rospy.Publisher(f"/movo/segmentation/{camera}/result_boxes2d", Detection2DArray, queue_size=10)
         # Bounding box visualization markers
-        self._segbox_markers_pub = rospy.Publisher(f"/spot/segmentation/{camera}/result_boxes_viz", MarkerArray, queue_size=10)
-        self._vision_info_pub = rospy.Publisher(f"/spot/segmentation/{camera}/vision_info", VisionInfo, queue_size=10, latch=True)
+        self._segbox_markers_pub = rospy.Publisher(f"/movo/segmentation/{camera}/result_boxes_viz", MarkerArray, queue_size=10)
+        self._vision_info_pub = rospy.Publisher(f"/movo/segmentation/{camera}/vision_info", VisionInfo, queue_size=10, latch=True)
 
     def publish_vision_info(self, class_names, header=None):
         """class_names should be a list of strings"""
@@ -144,7 +144,7 @@ class SegmentationPublisher:
             if self._camera == "front":
                 # We need to roate the bounding boxes clockwise by 90 deg if camera is front
                 # because boudning boxes was generated for an image that was rotated 90 degrees clockwise
-                # with respect to the original image from Spot.
+                # with respect to the original image from Movo.
                 bbox2d = rotate_bbox2d_90(bbox2d, visual_img.shape[:2], d="counterclockwise")
             bbox2d = bbox2d.astype(int)
             label = row['class']
@@ -158,12 +158,13 @@ class SegmentationPublisher:
                                 results=[objhyp], bbox=bbox2d_msg)
             det2d_msgs.append(det2d)
 
+
         det2d_array = Detection2DArray(header=caminfo.header, detections=det2d_msgs)
         # # rospy.loginfo("Publishing det2d_array = ", det2d_array)
         self._segdet2d_pub.publish(det2d_array)
 
         # Publishing image with 2d bounding box
-        result_img_msg = rbd_spot.image.imgmsg_from_imgarray(yoloRender[0])
+        result_img_msg = imgmsg_from_imgarray(yoloRender[0])
         result_img_msg.header.stamp = caminfo.header.stamp
         result_img_msg.header.frame_id = caminfo.header.frame_id
         self._segimg_pub.publish(result_img_msg)
@@ -264,6 +265,12 @@ class SegmentationPublisher:
         rospy.loginfo("Published segmentation result (markers)")
 
 
+def imgarray_from_imgmsg(img_msg):
+    return ros_utils.convert(img_msg)
+
+def imgmsg_from_imgarray(img_arr):
+    return ros_utils.convert(img_arr, encoding="rgb8")
+
 
 def main():
     parser = argparse.ArgumentParser(description="stream segmentation with YOLOv5")
@@ -271,56 +278,52 @@ def main():
                         choices=['hd', 'sd', 'qhd'],
                         help="image quality", default='hd')
     parser.add_argument("-t", "--timeout", type=float, help="time to keep streaming")
-    parser.add_argument("-p", "--pub", action="store_true", help="publish as ROS messages")
     parser.add_argument("-r", "--rate", type=float,
                         help="maximum number of detections per second", default=3.0)
 
     args, _ = parser.parse_known_args()
-    rate = rospy.Rate(args.rate)
-    visual_topic = f"/kinect2/{args.quality}/image_visual_rect"
+    color_topic = f"/kinect2/{args.quality}/image_color_rect"
     depth_topic = f"/kinect2/{args.quality}/image_depth_rect"
     caminfo_topic = f"/kinect2/{args.quality}/camera_info"
 
     print("Loading model...")
-    yolomodel = torch.hub.load('ultralytics/yolov5', 'custom', path=f"{ABS_FILE_PATH}/../models/yolov5/{YOLOV5_MODEL_NAME}/best.pt")
+    yolomodel = torch.hub.load('ultralytics/yolov5', 'custom', path=f"{ABS_FILE_PATH}/../../models/yolov5/{YOLOV5_MODEL_NAME}/best.pt")
 
-    if args.pub:
-        seg_publisher = SegmentationPublisher(args.camera)
-        seg_publisher.publish_vision_info([yolomodel.names[i] for i in sorted(yolomodel.names)])
-        rospy.loginfo("Published vision info")
+    rospy.init_node(f"stream_yolov5_kinect2")
+    rate = rospy.Rate(args.rate)
+    seg_publisher = SegmentationPublisher("kinect2")
+    seg_publisher.publish_vision_info([yolomodel.names[i] for i in sorted(yolomodel.names)])
+    rospy.loginfo("Published vision info")
 
     # yolomodel.conf = 0.45
     # Stream the image through specified sources
     _start_time = time.time()
-    while True:
+    while not rospy.is_shutdown():
         try:
             _time = time.time()
-            visual_image_msg, depth_image_msg, caminfo =\
-                ros_utils.WaitForMessages([visual_topic, depth_topic, caminfo_topic],
-                                          [Image, Image, CameraInfo],
+            color_image_msg, depth_image_msg, caminfo =\
+                ros_utils.WaitForMessages([color_topic, depth_topic, caminfo_topic],
+                                          [Image, Image, CameraInfo], delay=1.0,
                                           verbose=True, timeout=args.timeout).messages
             time_taken = time.time() - _time
             print("GetImage took: {:.3f}".format(time_taken))
 
             # run through model
-            image = rbd_spot.image.imgarray_from_imgmsg(visual_msg)
-            depth_image = rbd_spot.image.imgarray_from_imgmsg(depth_msg)
-            image_input = torch.tensor(image)
-
+            image = imgarray_from_imgmsg(color_image_msg)
+            depth_image = imgarray_from_imgmsg(depth_image_msg)
             yolomodelPrediction = yolomodel(image)
             yoloPandaDataframe = yolomodelPrediction.pandas().xyxy[0]
 
-            if args.pub:
-                seg_publisher.publish_result(yolomodelPrediction, yoloPandaDataframe, image, depth_image, caminfo)
-        if args.pub:
+            seg_publisher.publish_result(yolomodelPrediction, yoloPandaDataframe, image, depth_image, caminfo)
             rate.sleep()
-        _used_time = time.time() - _start_time
-        if args.timeout and _used_time > args.timeout:
-            break
 
-    finally:
-        if args.pub and rospy.is_shutdown():
-            sys.exit(1)
+            _used_time = time.time() - _start_time
+            if args.timeout and _used_time > args.timeout:
+                break
+
+        finally:
+            if rospy.is_shutdown():
+                sys.exit(1)
 
 
 
