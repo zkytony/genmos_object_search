@@ -51,7 +51,7 @@ agent_config:
         3d_proj_2d:
           brush_size: 0.2
           floor_cut: 0.15
-          inflation: 0.45
+          inflation: 0.4
           layout_cut: 0.4
         debug: false
         num_nodes: 6

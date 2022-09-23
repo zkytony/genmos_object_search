@@ -119,10 +119,10 @@ class MovoSloopActionExecutor(ActionExecutor):
         # direction.
         _, _, yaw = math_utils.quat_to_euler(*goal_pose[3:])
         x, y = goal_pose[:2]
-        _waypoint_nav = WaypointApply((x, y, 0.0),
+        _waypoint_nav = WaypointApply((x, y, 0.5),
                                       math_utils.euler_to_quat(0, 0, yaw),
-                                      xy_tolerance=0.15,
-                                      rot_tolerance=math_utils.to_rad(10))
+                                      xy_tolerance=0.2,
+                                      rot_tolerance=math_utils.to_rad(30))
         # navigation sometimes gets close but not reaching the goal;
         # but it doesn't hurt moving torso and turning the head
         if _waypoint_nav.status != WaypointApply.Status.SUCCESS:

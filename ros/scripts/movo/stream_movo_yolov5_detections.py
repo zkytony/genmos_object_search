@@ -303,7 +303,7 @@ def main():
             _time = time.time()
             color_image_msg, depth_image_msg, caminfo =\
                 ros_utils.WaitForMessages([color_topic, depth_topic, caminfo_topic],
-                                          [Image, Image, CameraInfo], delay=5.0,
+                                          [Image, Image, CameraInfo], delay=2.0,
                                           verbose=True, timeout=args.timeout).messages
             time_taken = time.time() - _time
             rospy.loginfo("GetImage took: {:.3f}".format(time_taken))

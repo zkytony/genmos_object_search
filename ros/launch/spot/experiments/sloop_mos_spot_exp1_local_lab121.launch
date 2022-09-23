@@ -21,6 +21,7 @@
                 file="$(find sloop_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
       <param name="robot_id" value="spot_$(arg spot)"/>
       <param name="world_frame" value="graphnav_map"/>
+      <param from="dynamic_update" to="False"/>
       <remap from="~search_region_center" to="/local_region_center" />
       <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
       <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
