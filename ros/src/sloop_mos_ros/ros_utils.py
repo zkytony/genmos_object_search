@@ -665,7 +665,7 @@ class WaitForMessages:
     a tuple of messages that were received."""
     def __init__(self, topics, mtypes, queue_size=10, delay=0.2,
                  allow_headerless=False, sleep=0.5, timeout=None,
-                 verbose=False):
+                 verbose=False, exception_on_timeout=False):
         """
         Args:
             topics (list) List of topics
@@ -701,6 +701,8 @@ class WaitForMessages:
             if timeout is not None and _dt.to_sec() > timeout:
                 rospy.logerr("WaitForMessages: timeout waiting for messages")
                 self.messages = [None]*len(topics)
+                if exception_on_timeout:
+                    raise TimeoutError("WaitForMessages: timeout waiting for messages")
                 break
             rate.sleep()
 

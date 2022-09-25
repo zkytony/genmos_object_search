@@ -123,8 +123,9 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 # wait for navigation done
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True,
-                                          timeout=60)
+                                          timeout=60, exception_on_timeout=True)
                 rospy.loginfo("nav action done.")
+
             elif isinstance(action, a_pb2.Find):
                 find_action = KeyValAction(stamp=rospy.Time.now(),
                                            type="find")
@@ -132,7 +133,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 rospy.loginfo("published find action for execution")
                 ros_utils.WaitForMessages([ACTION_DONE_TOPIC], [std_msgs.String],
                                           allow_headerless=True, verbose=True,
-                                          timeout=60)
+                                          timeout=60, exception_on_timeout=True)
                 rospy.loginfo("find action done")
             _action_time = time.time() - _time
 
@@ -246,7 +247,7 @@ def main():
     if args.prior == "occupancy":
         agent_config["belief"]["init_params"].update(
             {"prior_from_occupancy": True,
-             "occupancy_height_thres": 0.2,
+             "occupancy_height_thres": 0.0,
              "occupancy_blow_up_res": 4,
              "occupancy_fill_height": True})
 
@@ -271,6 +272,8 @@ def main():
         try:
             test.run()
             save_report(name, test.report, test._objloc_index)
+        except TimeoutError as ex:
+            rospy.logerr("timed out. Trial not saved")
         except Exception as ex:
             rospy.logerr(f"Test failed: {str(ex)}")
         finally:
