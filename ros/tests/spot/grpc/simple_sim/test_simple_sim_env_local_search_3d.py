@@ -188,7 +188,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 import os
 import pandas as pd
 import datetime
-def save_report(name, report, index):
+def save_report(name, report, index, error=""):
     os.makedirs("./report", exist_ok=True)
 
     report_name = f"report_{name}"
@@ -209,8 +209,8 @@ def save_report(name, report, index):
 
     ct = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
-    columns = ["name", "index", "timestamp", "length", "planning_time", "total_time", "success"]
-    row = [name, index, ct, length, planning_time, report["total_time"], report["success"]]
+    columns = ["name", "index", "timestamp", "length", "planning_time", "total_time", "success", "error"]
+    row = [name, index, ct, length, planning_time, report["total_time"], report["success"], error]
 
     if df is None:
         df = pd.DataFrame(data=[row],
@@ -261,7 +261,7 @@ def main():
 
     name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
     objloc_index = 0
-    for i in range(30):
+    for i in range(50):
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
                                         agent_config=agent_config,
                                         objloc_index=objloc_index)
@@ -273,7 +273,8 @@ def main():
             test.run()
             save_report(name, test.report, test._objloc_index)
         except TimeoutError as ex:
-            rospy.logerr("timed out. Trial not saved")
+            rospy.logerr("timed out when waiting for some messages. Trial not saved")
+            save_report(name, test.report, test._objloc_index, error="timeout")
         except Exception as ex:
             rospy.logerr(f"Test failed: {str(ex)}")
         finally:
