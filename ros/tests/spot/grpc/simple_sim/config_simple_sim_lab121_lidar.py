@@ -96,7 +96,7 @@ CONFIG_LOCAL = {
                 'params': {'fov': 60,
                            'far': 2.50,
                            'near': 0.2,
-                           'occlusion_enabled': True}
+                           'occlusion_enabled': False}
             }],
             'detectors': {'book': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
                                    'params': {"sensor": "camera",
