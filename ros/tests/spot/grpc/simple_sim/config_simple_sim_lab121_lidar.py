@@ -90,7 +90,7 @@ CONFIG_LOCAL = {
             'sensors': [{
                 'name': 'camera',
                 'params': {'fov': 60,
-                           'far': 2.50,
+                           'far': 1.75,
                            'near': 0.2,
                            'occlusion_enabled': True}
             }],
