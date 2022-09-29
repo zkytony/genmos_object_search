@@ -45,12 +45,7 @@ agent_config:
         scheme: axis
         step_size: 0.2
       topo:
-        3d_proj_2d:
-          brush_size: 0.2
-          floor_cut: 0.15
-          inflation: 0.1
-          layout_cut: 0.4
-        debug: false
+        debug: true
         num_nodes: 10
         pos_importance_thres: 0.01
         res_buf: 4
