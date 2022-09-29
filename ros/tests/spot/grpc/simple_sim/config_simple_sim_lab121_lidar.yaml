@@ -79,7 +79,7 @@ agent_config:
         far: 2.5
         fov: 60
         near: 0.2
-        occlusion_enabled: false
+        occlusion_enabled: true
   search_region: {}
   targets:
   - book
