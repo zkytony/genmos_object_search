@@ -67,7 +67,7 @@ LOCAL_TOPO = {'num_nodes': 10,
               'pos_importance_thres': 0.01,
               'resample_thres': 0.4,
               'sep': 0.75,
-              'debug': True,
+              'debug': False,
               'res_buf': 4}
 
 CONFIG_LOCAL = {
