@@ -245,10 +245,17 @@ def main():
         prior = "uniform"   # occupancy is also uniform
 
     if args.prior == "occupancy":
+        if args.octree_size == 16:
+            blow_up_res = 2  # (0.2m*2)^3
+        elif args.octree_size == 32:
+            blow_up_res = 4  # (0.1m*4)^3
+        else:
+            raise ValueError(f"Not considering octree size {args.octree_size}")
+
         agent_config["belief"]["init_params"].update(
             {"prior_from_occupancy": True,
              "occupancy_height_thres": 0.0,
-             "occupancy_blow_up_res": 4,
+             "occupancy_blow_up_res": blow_up_res,
              "occupancy_fill_height": True})
 
     if args.octree_size < 32:
@@ -261,7 +268,7 @@ def main():
 
     name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
     objloc_index = 0
-    for i in range(15):
+    for i in range(20):
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,
                                         agent_config=agent_config,
                                         objloc_index=objloc_index)

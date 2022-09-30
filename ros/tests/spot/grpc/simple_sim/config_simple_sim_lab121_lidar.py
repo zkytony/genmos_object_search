@@ -68,7 +68,11 @@ LOCAL_TOPO = {'num_nodes': 10,
               'resample_thres': 0.4,
               'sep': 0.75,
               'debug': False,
-              'res_buf': 4}
+              'res_buf': 4,
+              '3d_proj_2d': {'layout_cut': 0.4,
+                             'floor_cut': 0.1,
+                             'brush_size': 0.2,
+                             'inflation': 0.05}}
 
 CONFIG_LOCAL = {
     "object_locations": {
@@ -90,7 +94,7 @@ CONFIG_LOCAL = {
             'sensors': [{
                 'name': 'camera',
                 'params': {'fov': 60,
-                           'far': 1.75,
+                           'far': 2.00,
                            'near': 0.2,
                            'occlusion_enabled': True}
             }],
