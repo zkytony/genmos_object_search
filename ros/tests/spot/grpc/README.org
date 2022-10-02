@@ -1,0 +1,100 @@
+* Test Pass Status 10/02/2022 16:10
+  - [X] test_update_search_region_2d_with_point_cloud.py
+  - [X] test_update_search_region_3d_with_point_cloud.py
+  - [X] test_create_agent_3d_with_point_cloud.py
+  - [X] test_create_planner_3d_with_point_cloud.py
+  - [X] test_get_object_beliefs_3d_with_point_cloud.py
+  - [X] test_get_robot_belief_3d_with_point_cloud.py
+  - [-] test_process_detection_observation_3d_with_point_cloud.py
+  - [-] test_process_robot_pose_observation_3d_with_point_cloud.py
+  - [-] test_plan_action_3d_with_point_cloud.py
+
+
+** Failures
+*** test_process_detection_observation_3d_with_point_cloud.py
+    Client traceback:
+    #+begin_src
+Traceback (most recent call last):
+  File "test_process_detection_observation_3d_with_point_cloud.py", line 189, in <module>
+    ProcessDetectionObservationTestCase(
+  File "test_process_detection_observation_3d_with_point_cloud.py", line 173, in run
+    self.test_one_round(None, o3dviz=o3dviz)
+  File "test_process_detection_observation_3d_with_point_cloud.py", line 162, in test_one_round
+    self.visualize_fovs(response)
+  File "test_process_detection_observation_3d_with_point_cloud.py", line 65, in visualize_fovs
+    m = ros_utils.make_viz_marker_for_voxel(
+TypeError: make_viz_marker_for_voxel() missing 1 required positional argument: 'header'
+    #+end_src
+
+    FIXED 10/02/2022 16:28
+
+*** test_process_robot_pose_observation_3d_with_point_cloud.py
+  Issue 1: Client traceback:
+  #+begin_src
+Traceback (most recent call last):
+  File "test_process_robot_pose_observation_3d_with_point_cloud.py", line 102, in <module>
+    ProcessRobotPoseObservationTestCase(
+  File "test_process_robot_pose_observation_3d_with_point_cloud.py", line 83, in run
+    self.test_one_round((0, 0, 0, 0, 0, 0))
+  File "test_process_robot_pose_observation_3d_with_point_cloud.py", line 68, in test_one_round
+    response = self._sloop_client.processObservation(
+TypeError: processObservation() takes 3 positional arguments but 4 were given
+  #+end_src
+
+  Issue 2: Server traceback:
+  #+begin_src
+Traceback (most recent call last):
+  File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_server.py", line 443, in _call_behavior
+    response_or_iterator = behavior(argument, context)
+  File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/server.py", line 411, in ProcessObservation
+    planner = self._planners[request.robot_id]
+KeyError: 'robot0'
+  #+end_src
+
+  FIXED BOTH 10/02/2022 16:36
+
+*** test_plan_action_3d_with_point_cloud.py
+   Server traceback:
+   #+begin_src
+   Traceback (most recent call last):
+     File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_server.py", line 443, in _call_behavior
+       response_or_iterator = behavior(argument, context)
+     File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/server.py", line 427, in ProcessObservation
+       agent_utils.update_planner(planner, agent, observation, action)
+     File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/utils/agent_utils.py", line 451, in update_planner
+       planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
+   AttributeError: 'RobotObservation' object has no attribute 'z'
+   #+end_src
+
+   Client traceback:
+   #+begin_src
+       Traceback (most recent call last):
+      File "test_plan_action_3d_with_point_cloud.py", line 67, in <module>
+        PlanActionTestcase(node_name="test_plan_action_3d_with_point_cloud",
+      File "test_plan_action_3d_with_point_cloud.py", line 47, in run
+        response = self._sloop_client.processObservation(
+      File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/client.py", line 156, in processObservation
+        return self.call(self.stub.ProcessObservation, request, timeout=timeout)
+      File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/client.py", line 44, in call
+        return rpc_method(request, timeout=timeout)
+      File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_channel.py", line 946, in __call__
+        return _end_unary_response_blocking(state, call, False, None)
+      File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_channel.py", line 849, in _end_unary_response_blocking
+        raise _InactiveRpcError(state)
+    grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
+            status = StatusCode.UNKNOWN
+            details = "Exception calling application: 'RobotObservation' object has no attribute 'z'"
+            debug_error_string = "{"created":"@1664741889.904704531","description":"Error received from peer ipv6:[::1]:50051","file":"src/core/lib/surface/call.cc","file_line":966,"grpc_message":"Exception calling application: 'RobotObservation' object has no attribute 'z'","grpc_status":2}"
+    >
+   #+end_src
+
+   This issue happens because in 'update_planner', the 'obseravtion'
+   is assumed to be an GMOSObservation. But in the test script, only
+   the robot pose observation is passed to the server (a RobotObservation
+   object is created, which is not GMOSObservation).
+
+   A better fix is to fix the test - there is nothing wrong about
+   the source code technically. It is good to expect GMOSObservation
+   when 'update_planner' is called. I should enforce that - Done.
+
+   FIXED. 10/02/2022 17:00

@@ -10,6 +10,7 @@
 import numpy as np
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2 import Status
+from sloop_object_search.grpc import observation_pb2 as o_pb2
 from test_create_planner_3d_with_point_cloud import CreatePlannerTestCase
 
 class PlanActionTestcase(CreatePlannerTestCase):
@@ -20,7 +21,7 @@ class PlanActionTestcase(CreatePlannerTestCase):
             header=proto_utils.make_header(frame_id=self.world_frame))
         assert response.status == Status.SUCCESSFUL
         action = proto_utils.interpret_planned_action(response)
-        print("plan action test passed. Action planned:")
+        print("plan action success. Action planned:")
         print(action)
         print("action id:", response.action_id)
         action_id = response.action_id
@@ -34,15 +35,23 @@ class PlanActionTestcase(CreatePlannerTestCase):
         # Now, mark the action to be finished - but with incorrect action id (should fail)
         robot_pose = (5, 1, 2, 0, 0, 0, 1)  # make up a pose
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        detections_pb = o_pb2.ObjectDetectionArray(header=header, robot_id=self.robot_id, detections=[])
         response = self._sloop_client.processObservation(
-            self.robot_id, None, robot_pose_pb, frame_id=self.world_frame,
+            self.robot_id, robot_pose_pb,
+            object_detections=detections_pb,
+            header=header,
             action_id=action_id + "XXX",
             action_finished=True)
         assert response.status == Status.FAILED
 
         # Actual successful request to mark action finished
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        detections_pb = o_pb2.ObjectDetectionArray(header=header, robot_id=self.robot_id, detections=[])
         response = self._sloop_client.processObservation(
-            self.robot_id, None, robot_pose_pb, frame_id=self.world_frame,
+            self.robot_id, robot_pose_pb,
+            object_detections=detections_pb,
+            header=header,
             action_id=action_id,
             action_finished=True)
         assert response.status == Status.SUCCESSFUL,\
@@ -50,8 +59,12 @@ class PlanActionTestcase(CreatePlannerTestCase):
         print("action marked finished.")
 
         # If we do it again, we will fail
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        detections_pb = o_pb2.ObjectDetectionArray(header=header, robot_id=self.robot_id, detections=[])
         response = self._sloop_client.processObservation(
-            self.robot_id, None, robot_pose_pb, frame_id=self.world_frame,
+            self.robot_id, robot_pose_pb,
+            object_detections=detections_pb,
+            header=header,
             action_id=action_id,
             action_finished=True)
         assert response.status == Status.FAILED

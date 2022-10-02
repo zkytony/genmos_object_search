@@ -448,6 +448,8 @@ def update_planner(planner, agent, observation, action):
     # For 3D agents, the planning observation for an object is a Voxel
     # at the ground resolution level. So we need to convert ObjectDetection
     # into a Voxel. For 2D agents, we need to convert it to ObjectLoc.
+    if not isinstance(observation, slpo.GMOSObservation):
+        raise TypeError(f"update_planner expects GMOSObservation, but got {type(observation)}.")
     planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
     objects_found = agent.belief.b(agent.robot_id).mpe().objects_found
     for objid in observation:

@@ -66,7 +66,7 @@ class ProcessRobotPoseObservationTestCase(CreateAgentTestCase):
         print("new pose:", (*new_robot_pose[:3], quat_to_euler(*new_robot_pose[3:])))
 
         response = self._sloop_client.processObservation(
-            self.robot_id, None, new_robot_pose_pb, frame_id=self.world_frame)
+            self.robot_id, new_robot_pose_pb, frame_id=self.world_frame)
         assert response.status == Status.SUCCESSFUL
 
         # Get and visualize robot pose again.

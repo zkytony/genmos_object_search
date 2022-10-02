@@ -408,7 +408,7 @@ class SloopObjectSearchServer(slbp2_grpc.SloopObjectSearchServicer):
                 self._actions_planned.pop(request.robot_id)
                 action_finished = True
 
-        planner = self._planners[request.robot_id]
+        planner = self._planners.get(request.robot_id, None)
         if isinstance(planner, HierPlanner):
             # If the planner is hierarchical, we will let the planner
             # handle the belief update --> because it is more tricky
