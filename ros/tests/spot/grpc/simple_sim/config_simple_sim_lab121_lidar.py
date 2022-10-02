@@ -145,8 +145,8 @@ CONFIG_LOCAL = {
 ######### THE FOLLOWING IS USED FOR 2D LOCAL SEARCH TEST #########
 CONFIG_LOCAL2D = {
     "object_locations": {
-        "book": [0.0, 2.0, 0.1],
-        "cup": [1.2, 0.1, 0.5]
+        "book": [[0.0, 2.0, 0.1]],
+        "cup": [[1.2, 0.1, 0.5]]
     },
 
     "agent_config": {
@@ -200,8 +200,8 @@ CONFIG_LOCAL2D = {
 ######### THE FOLLOWING IS USED FOR TOPO2D SEARCH TEST #########
 CONFIG_TOPO2D = {
     "object_locations": {
-        "book": [0.0, 2.0, 0.1],
-        "cup": [1.2, 0.1, 0.5]
+        "book": [[0.0, 2.0, 0.1]],
+        "cup": [[1.2, 0.1, 0.5]]
     },
 
     "agent_config": {
@@ -251,8 +251,8 @@ CONFIG_TOPO2D = {
 ######### THE FOLLOWING IS USED FOR HIERARCHICAL SEARCH TEST #########
 CONFIG_HIER = {
     "object_locations": {
-        "book": [0.0, 2.0, 0.1],
-        "cup": [1.2, 0.1, 0.5]
+        "book": [[0.0, 2.0, 0.1]],
+        "cup": [[1.2, 0.1, 0.5]]
     },
 
     "agent_config": {
@@ -325,7 +325,7 @@ CONFIG_HIER = {
 }
 
 #### SET WHICH CONFIG TO USE ###
-CONFIG = CONFIG_LOCAL
+CONFIG = CONFIG_HIER
 
 
 

@@ -1,4 +1,33 @@
-* Test Pass Status 10/02/2022 16:10
+* SIMPLE ENV Tests Passing Status 10/02/2022 17:03
+  - [X] test_simple_sim_env_navigation.py
+  - [X] test_simple_sim_env_ros_messages.py
+  - [X] test_simple_sim_env_local_search_3d.py
+    Caveat: set CONFIG = CONFIG_LOCAL in config_simple_sim_lab121_lidar.py and regenerate
+    Caveat: to run this test, you need something like
+    ~python test_simple_sim_env_local_search_3d.py groundtruth 32 config_simple_sim_lab121_lidar.yaml~
+
+  - [-] test_simple_sim_env_local_search_2d.py
+    Caveat: set CONFIG = CONFIG_LOCAL2D in config_simple_sim_lab121_lidar.py and regenerate
+
+  - [-] test_simple_sim_env_topo2d_search.py
+    Caveat: set CONFIG = CONFIG_TOPO2D in config_simple_sim_lab121_lidar.py and regenerate
+
+  - [-] test_simple_sim_env_hier_search.py
+    Caveat: set CONFIG = CONFIG_HIER in config_simple_sim_lab121_lidar.py and regenerate
+
+** Failures
+*** test_simple_sim_env_local_search_2d.py
+    Issue:
+    client stuck at "waiting for sloop agent creation..."
+    server message: "server - Agent robot0 is not recognized."
+    FIXED the test 10/02/2022 17:31
+*** test_simple_sim_env_topo2d_search.py
+    WORKS AFTER minor changes to test setup (to match local3d's) 10/02/2022 17:36
+*** test_simple_sim_env_hier_search.py
+    client gets message: 'removed local agent has an unexpected ID'
+    FIXED minor (check local agent is none) 10/02/2022 17:44
+
+* GRPC Tests Passing Status 10/02/2022 16:10
   - [X] test_update_search_region_2d_with_point_cloud.py
   - [X] test_update_search_region_3d_with_point_cloud.py
   - [X] test_create_agent_3d_with_point_cloud.py
@@ -8,7 +37,6 @@
   - [-] test_process_detection_observation_3d_with_point_cloud.py
   - [-] test_process_robot_pose_observation_3d_with_point_cloud.py
   - [-] test_plan_action_3d_with_point_cloud.py
-
 
 ** Failures
 *** test_process_detection_observation_3d_with_point_cloud.py

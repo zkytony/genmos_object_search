@@ -432,10 +432,11 @@ def plan_action(planner, agent, server):
             else:
                 # The action is a subgoal that is not a Stay. We discard
                 # the local agent, if there is one.
-                local_robot_id = f"{agent.robot_id}_local"
-                server.remove_agent(local_robot_id)
-                server.add_message(agent.robot_id,
-                                   Message.LOCAL_AGENT_REMOVED.format(local_robot_id))
+                if planner.local_agent is not None:
+                    local_robot_id = f"{agent.robot_id}_local"
+                    server.remove_agent(local_robot_id)
+                    server.add_message(agent.robot_id,
+                                       Message.LOCAL_AGENT_REMOVED.format(local_robot_id))
 
     planned_locally = False
     if isinstance(planner, HierPlanner):

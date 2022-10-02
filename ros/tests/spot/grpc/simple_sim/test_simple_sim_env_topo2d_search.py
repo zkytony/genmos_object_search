@@ -47,9 +47,8 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvTopo2DSearch(TestSimpleEnvCase):
 
-    def __init__(self, prior="uniform"):
-        super().__init__(prior=prior)
-
+    def run(self, o3dviz=False):
+        super().run()
         self.update_search_region_2d()
 
         rospy.loginfo("waiting for sloop agent creation...")
@@ -138,7 +137,8 @@ class TestSimpleEnvTopo2DSearch(TestSimpleEnvCase):
             time.sleep(1)
 
 def main():
-    TestSimpleEnvTopo2DSearch(prior="groundtruth")
+    test = TestSimpleEnvTopo2DSearch(prior="uniform")
+    test.run()
 
 if __name__ == "__main__":
     main()

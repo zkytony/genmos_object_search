@@ -45,9 +45,8 @@ from test_simple_sim_env_common import (TestSimpleEnvCase,
 
 class TestSimpleEnvLocalSearch2D(TestSimpleEnvCase):
 
-    def __init__(self, prior="uniform"):
-        super().__init__(prior=prior)
-
+    def run(self, o3dviz=False):
+        super().run()
         self.update_search_region_2d()
 
         # wait for agent creation
@@ -133,7 +132,8 @@ class TestSimpleEnvLocalSearch2D(TestSimpleEnvCase):
         rospy.spin()
 
 def main():
-    TestSimpleEnvLocalSearch2D(prior="uniform")
+    test = TestSimpleEnvLocalSearch2D(prior="uniform")
+    test.run()
 
 if __name__ == "__main__":
     main()

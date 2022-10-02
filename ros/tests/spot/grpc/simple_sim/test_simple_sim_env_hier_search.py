@@ -62,9 +62,8 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
                 rospy.logerr("removed local agent has an unexpected ID")
             self._local_robot_id = None
 
-    def __init__(self, prior="uniform"):
-        super().__init__(prior=prior)
-
+    def run(self, o3dviz=False):
+        super().run()
         # Make the client listen to server
         ls_future = self._sloop_client.listenToServer(
             self.robot_id, self.server_message_callback)
@@ -202,7 +201,8 @@ class TestSimpleEnvHierSearch(TestSimpleEnvCase):
             time.sleep(1)
 
 def main():
-    TestSimpleEnvHierSearch(prior="uniform")
+    test = TestSimpleEnvHierSearch(prior="uniform")
+    test.run()
 
 if __name__ == "__main__":
     main()
