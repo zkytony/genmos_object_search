@@ -93,7 +93,10 @@ spot/ros_ws/src/rbd_spot_perception/maps/*.yaml
 # bag files (too large)
 *.bag
 
-venv/
+*.egg
+*.egg-info
+.*cache*/
+*venv*/
 
 # SL_OSM_Dataset
 *sloop_object_search/data/SL_OSM_Dataset*
@@ -110,3 +113,6 @@ ros/tests/spot/grpc/simple_sim/report/
 
 # yolov5
 ros/models/yolov5
+
+# ignore viam-server
+viam-server

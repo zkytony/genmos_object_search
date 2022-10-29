@@ -1,0 +1,15 @@
+Viam is a middleware solution to building scalable robotics applications.
+Refer to Viam's [[https://docs.viam.com/getting-started/high-level-overview/][documentation for a high-level-overview]].
+
+** _Setup Viam_
+
+   When you have a linux machine, you can turn it into a "Part"
+   by running the viam server on it. To install viam server,
+   follow [[https://docs.viam.com/getting-started/linux-install/][these instructions]]. The viam-server is distributed
+   as an AppImage, i.e. an executable binary.
+
+   To install viam server:
+   #+begin_src
+   curl -o viam-server http://packages.viam.com/apps/viam-server/viam-server-latest-x86_64.AppImage
+   chmod 755 viam-server
+   #+end_src
