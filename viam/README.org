@@ -13,3 +13,73 @@ Refer to Viam's [[https://docs.viam.com/getting-started/high-level-overview/][do
    curl -o viam-server http://packages.viam.com/apps/viam-server/viam-server-latest-x86_64.AppImage
    chmod 755 viam-server
    #+end_src
+
+   Make sure you have installed the [[https://en.wikipedia.org/wiki/Filesystem_in_Userspace][FUSE library]]:
+   #+begin_src
+   sudo apt-get install -y libfuse2
+   sudo apt-get install -y fuse
+   #+end_src
+
+   To install Viam SDK:
+   Make sure your Python version is 3.9+.
+   Then,
+   #+begin_src
+   pip install viam-sdk
+   #+end_src
+
+** Testing Viam with a Mock robot in simulation (UR5 Mujoco)
+
+   Useful documentation:
+   - [[https://docs.viam.com/tutorials/how-to-build-a-mock-robot/][How To Build a Mock Robot]]
+   - [[https://docs.viam.com/getting-started/linux-install/][Installing Viam Server on Linux Systems]]
+
+   Steps I took:
+
+   1. Create a location, called "mujoco"
+   2. Add a robot, called "ur5"
+   3. In the Config tab, create a component with type 'arm'
+   4. Select 'fake' as the model. Then click *create component*
+   5. Install viam-server on your local computer.
+   6. Click the "Copy Viam-Server Config" button on the web interface, and save the config to a json file 'config.json'.
+      dlopen(): error loading libfuse.so.2
+   7. Run server with a command like:
+      #+begin_src
+      ./viam-server -config tests/ur5/mujoco/config.json
+      #+end_src
+
+*** Troubleshooting
+**** dlopen(): error loading libfuse.so.2
+     I get the following error when starting the server:
+     #+begin_quote
+     $ ./viam-server tests/ur5/mujoco/config.json
+     dlopen(): error loading libfuse.so.2
+
+     AppImages require FUSE to run.
+     You might still be able to extract the contents of this AppImage
+     if you run it with the --appimage-extract option.
+     See https://github.com/AppImage/AppImageKit/wiki/FUSE
+     for more information
+     #+end_quote
+
+     *Solution*: Install libfuse2
+     #+begin_src
+     sudo apt-get install -y libfuse2
+     #+end_src
+
+     However, another error occurred:
+     #+begin_quote
+     $ ./viam-server tests/ur5/mujoco/config.json
+     fuse: failed to exec fusermount: No such file or directory
+
+     Cannot mount AppImage, please check your FUSE setup.
+     You might still be able to extract the contents of this AppImage
+     if you run it with the --appimage-extract option.
+     See https://github.com/AppImage/AppImageKit/wiki/FUSE
+     for more information
+     open dir error: No such file or directory
+     #+end_quote
+
+     *Solution*: install fuse
+     #+begin_src
+     sudo apt-get install -y fuse
+     #+end_src
