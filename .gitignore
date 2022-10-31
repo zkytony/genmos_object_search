@@ -116,3 +116,5 @@ ros/models/yolov5
 
 # ignore viam-server
 viam-server
+*.zip
+viam/tests/ur5/sim_mujoco/assets/meshes
