@@ -1,50 +1,47 @@
-# Example ROS package that uses sloop_object_search
+* Example ROS package that uses sloop_object_search
 
 Note that sloop_object_search is written in Python 3. For ROS, it is
 best integrated with ROS Noetic.
 
-## Setup
+** Setup
 
-### Create symbolic link
+*** Create symbolic link
 
 Go to the `src` folder of your ROS workspace. Then run:
-```
+#+begin_src
 ln -s path/to/sloop_object_search/ros sloop_object_search_ros
-```
+#+end_src
 This effectively adds a ROS package called "sloop_object_search_ros" into your workspace
 
-### Install Dependencies
+*** Install Dependencies
 
 This is a ROS package; Therefore, it is expected to operate within a ROS workspace.
 
 Before building this package, make sure you have activated a virtualenv. Then, run
-```
+#+begin_src
 source install_dependencies.bash
-```
+#+end_src
+
 to install python dependencies.
 
-### Build the ROS package
-```
+*** Build the ROS package
+#+begin_src
 catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_object_search_ros"
-```
+#+end_src
 
 
 
-### Download Dataset and Models
-Install gdown, a Python package used to download files from Google Drive:
-```
+*** Download Dataset and Models
+Install [[https://github.com/wkentaro/gdown][gdown]], then run download script:
+#+begin_src
 pip install gdown
-```
-Then, run
-```
 python download.py
-```
-This will download both the SL\_OSM\_Dataset and the frame of reference prediction models.
-The SL\_OSM\_Dataset will be saved under `data`, while the models
-will be saved under `models`.
+#+end_src
+This will download both the ~SL\_OSM\_Dataset~ and the frame of reference
+prediction models.  The ~SL\_OSM\_Dataset~ will be saved under ~data~, while the
+models will be saved under ~models~.
 
-
-Also, you will need to download spacy models. We use `en_core_web_lg` (400MB). To download it:
-```
+Also, you will need to download spacy models. We use ~en_core_web_lg~ (400MB). To download it:
+#+begin_src
 python -m spacy download en_core_web_lg
-```
+#+end_src
