@@ -30,7 +30,6 @@ catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_object_search_ros"
 #+end_src
 
 
-
 *** Download Dataset and Models
 Install [[https://github.com/wkentaro/gdown][gdown]], then run download script:
 #+begin_src
@@ -45,3 +44,57 @@ Also, you will need to download spacy models. We use ~en_core_web_lg~ (400MB). T
 #+begin_src
 python -m spacy download en_core_web_lg
 #+end_src
+
+
+
+** Integrate sloop_object_search to Your ROS Robot
+
+   The main logic of how the sloop_object_search gRPC-based package
+   is in [[src/sloop_mos_ros/sloop_mos.py]]. The entry point (i.e. the
+   executable script to start the search procedure) is in [[scripts/run_search.py]].
+   The content of this executable script is very simple:
+   #+begin_src python
+   from sloop_mos_ros import SloopMosROS
+
+   def main():
+       sr = SloopMosROS()
+       sr.setup()
+       sr.run()
+
+   if __name__ == "__main__":
+       main()
+   #+end_src
+   So, two things happen sequentially. First, ~setup()~ is called. This function:
+   1. initializes a ros node
+   2. initializes the gRPC client
+   3. obtain configurations through ROS parameters
+   4. initialize ROS publishers and subscribers.
+      -- the publishers publish action, and visualization markers
+      -- the subscribers subscriber for TF, 2D search region cloud, 3D search
+      region cloud (~PointCloud2~), robot pose (~PoseStamped~), object detections
+      (~vision_msgs.Detection3DArray~), and action done signal.
+   5. obtain additional ROS parameters (e.g. for observation queue size)
+   6. set 'last_action' to be None, set 'objects_found' to be an empty set.
+
+   Then, ~run()~ is called. This function:
+   1. calls ~CreateAgent~ RPC to tell the server to create a POMDP search agent with given configurations
+      (Note that the agent is not created until an ~UpdateSearchRegion~ is called.)
+   2. calls ~ListenServer~, a bidirectional streaming RPC that allows the client to listen to the server.
+   3. waits for a point cloud message and robot pose. calls ~UpdateSearchRegion~ RPC to update the POMDP agent's model of the search region's occupancy.
+      (Upon receiving the first ~UpdateSearchRegion~ request, the server will /complete/ the agent creation.)
+   4. waits for agent creation to be completed.
+   5. creates a planner with given configuration.
+   6. search procedure begins. For each search step:
+      6.1 calls ~PlanAction~ RPC to let the server plan an action for its POMDP agent.
+      6.2 execute the planned action on the real robot. This is done by publishing the action as a KeyValAction message to the ~~action~ topic.
+          (a robot-specific action executor should subscribe to ~~action~ to execute it, and then send a done signal to ~~action_done~).
+
+   Here is how this works
+   at a high level.
+
+
+
+
+*** Example: Spot (with ROS)
+
+*** Example: MOVO
