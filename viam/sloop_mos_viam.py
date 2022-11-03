@@ -15,9 +15,59 @@ from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
 
+########### data type utilities ###########
+def point_cloud_array_to_pb():
+    raise NotImplementedError
+
+
+########### viam functions ###########
+def viam_get_point_cloud_array():
+    """return current point cloud from camera through Viam.
+    Return type: numpy array of [x,y,z]"""
+    raise NotImplementedError
+
+def viam_get_ee_pose():
+    """return current end-effector pose through Viam.
+    Return type: tuple"""
+
+
+########### procedural methods ###########
 def server_message_callback(message):
     print(message)
 
+
+def update_search_region():
+    if robot_id is None:
+        robot_id = self.robot_id
+    rospy.loginfo("Sending request to update search region (3D)")
+
+    # region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
+    #     [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
+    #     [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
+    #     delay=100, verbose=True).messages
+    cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+    robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+    robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+
+    # parameters
+    search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+    search_region_params_3d = dict(
+        octree_size=search_region_config.get("octree_size", 32),
+        search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
+        region_size_x=search_region_config.get("region_size_x"),
+        region_size_y=search_region_config.get("region_size_y"),
+        region_size_z=search_region_config.get("region_size_z"),
+        debug=search_region_config.get("debug", False)
+    )
+    self._sloop_client.updateSearchRegion(
+        header=cloud_pb.header,
+        robot_id=robot_id,
+        robot_pose=robot_pose_pb,
+        point_cloud=cloud_pb,
+        search_region_params_3d=search_region_params_3d)
+
+
+########### main object search logic ###########
 def run_sloop_search(config):
     """config: configuration dictionary for SLOOP"""
     sloop_client = SloopObjectSearchClient()
