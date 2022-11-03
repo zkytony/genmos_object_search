@@ -37,7 +37,7 @@ async def main():
     print('Resources:')
     print(robot.resource_names)
     while(True):
-        pcs = await vision.get_object_point_clouds("gripper-pi:combined", "find_person_segmenter", "")
+        pcs = await vision.get_object_point_clouds("gripper-pi:combined", "find_thing_segmenter", "")
         print("number of points clouds:", len(pcs))
         if len(pcs) > 0:
             print(pcs[0].geometries)
