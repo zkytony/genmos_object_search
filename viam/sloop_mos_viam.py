@@ -49,7 +49,7 @@ async def viam_connect():
 
 
 
-async def viam_get_point_cloud_array(robot, debug=True):
+async def viam_get_point_cloud_array(robot, debug=False):
     """return current point cloud from camera through Viam.
     Return type: numpy array of [x,y,z]"""
     camera = Camera.from_robot(robot, "gripper:depth-cam")
@@ -67,7 +67,6 @@ async def viam_get_point_cloud_array(robot, debug=True):
         viz.run()
         viz.destroy_window()
     cloud_array = np.asarray(pcd.points)
-    import pdb; pdb.set_trace()
     return cloud_array
 
 async def viam_get_ee_pose(robot):
