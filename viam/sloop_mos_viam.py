@@ -15,11 +15,6 @@ from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
 
-########### data type utilities ###########
-def point_cloud_array_to_pb():
-    raise NotImplementedError
-
-
 ########### viam functions ###########
 def viam_get_point_cloud_array():
     """return current point cloud from camera through Viam.
@@ -28,29 +23,26 @@ def viam_get_point_cloud_array():
 
 def viam_get_ee_pose():
     """return current end-effector pose through Viam.
-    Return type: tuple"""
+    Return type: tuple (x,y,z,qx,qy,qz,qw)"""
+    raise NotImplementedError
 
 
 ########### procedural methods ###########
 def server_message_callback(message):
     print(message)
+    raise NotImplementedError()
 
+def update_search_region(robot_id, agent_config, sloop_client):
+    print("Sending request to update search region (3D)")
 
-def update_search_region():
-    if robot_id is None:
-        robot_id = self.robot_id
-    rospy.loginfo("Sending request to update search region (3D)")
+    cloud_arr = viam_get_point_cloud_array()
+    cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr)
 
-    # region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
-    #     [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
-    #     [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-    #     delay=100, verbose=True).messages
-    cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-    robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+    robot_pose = viam_get_ee_pose()
     robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
     # parameters
-    search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+    search_region_config = agent_config.get("search_region", {}).get("3d", {})
     search_region_params_3d = dict(
         octree_size=search_region_config.get("octree_size", 32),
         search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
@@ -59,7 +51,7 @@ def update_search_region():
         region_size_z=search_region_config.get("region_size_z"),
         debug=search_region_config.get("debug", False)
     )
-    self._sloop_client.updateSearchRegion(
+    sloop_client.updateSearchRegion(
         header=cloud_pb.header,
         robot_id=robot_id,
         robot_pose=robot_pose_pb,
@@ -88,7 +80,9 @@ def run_sloop_search(config):
         robot_id, server_message_callback)
     local_robot_id = None  # needed if the planner is hierarchical
 
-    # # Update search region
+    # Update search region
+    update_search_region(robot_id, agent_config, sloop_client)
+
     # self.update_search_region()
 
     # # wait for agent creation
