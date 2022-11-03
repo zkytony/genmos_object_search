@@ -8,6 +8,7 @@ from viam.robot.client import RobotClient
 from viam.rpc.dial import Credentials, DialOptions
 
 from viam.components.camera import Camera
+from viam.components.arm import Arm
 from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
 
 import yaml
@@ -44,24 +45,11 @@ def viam_get_point_cloud_array():
     Return type: numpy array of [x,y,z]"""
     raise NotImplementedError
 
-def viam_get_ee_pose(robot):
+async def viam_get_ee_pose(robot):
     """return current end-effector pose through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
-    raise NotImplementedError
-
-def viam_move_ee_to(pos, orien, action_id):
-    """
-    Moves the end effector to the given goal position and orientation.
-    If not possible, [???]
-
-    pos (position): (x,y,z)
-    orien (quaternion): (qx, qy, qz, qw)
-    """
-    raise NotImplementedError
-
-def viam_signal_find(action_id):
-    """Do something with the robot to signal the find action"""
-    raise NotImplementedError
+    arm = Arm.from_robot(robot, "arm")
+    print(await arm.get_end_position())
 
 def viam_get_object_detections(world_frame):
     """Return type: a list of (label, box3d) tuples.
@@ -96,6 +84,21 @@ def detections3d_to_proto(robot_id, detections):
     return o_pb2.ObjectDetectionArray(header=header,
                                       robot_id=robot_id,
                                       detections=detections_pb)
+
+
+def viam_move_ee_to(pos, orien, action_id):
+    """
+    Moves the end effector to the given goal position and orientation.
+    If not possible, [???]
+
+    pos (position): (x,y,z)
+    orien (quaternion): (qx, qy, qz, qw)
+    """
+    raise NotImplementedError
+
+def viam_signal_find(action_id):
+    """Do something with the robot to signal the find action"""
+    raise NotImplementedError
 
 
 def detection3d_to_proto(d3d_msg, class_names,
@@ -267,10 +270,10 @@ def wait_observation_and_update_belief(robot_id, world_frame, action_id, sloop_c
 
 
 ########### main object search logic ###########
-def run_sloop_search(viam_robot,
-                     config,
-                     world_frame=None,
-                     dynamic_update=False):
+async def run_sloop_search(viam_robot,
+                           config,
+                           world_frame=None,
+                           dynamic_update=False):
     """config: configuration dictionary for SLOOP"""
     sloop_client = SloopObjectSearchClient()
     agent_config = config["agent_config"]
@@ -281,7 +284,7 @@ def run_sloop_search(viam_robot,
     objects_found = set()
     #-----------------------------------------
 
-    viam_get_ee_pose(viam_robot)
+    await viam_get_ee_pose(viam_robot)
 
 
 
@@ -345,15 +348,16 @@ async def test_ur5e_viamlab():
     with open("./config/ur5_exp1_viamlab.yaml") as f:
         config = yaml.safe_load(f)
 
-    print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
+    print(">>>>>>><<<<<<<<>>>> viam connecting >><<<<<<<<>>>>>>>")
     viam_robot = await viam_connect()
     print('Resources:')
     print(viam_robot.resource_names)
 
-    run_sloop_search(viam_robot,
-                     config,
-                     world_frame="base",
-                     dynamic_update=False)
+    print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
+    await run_sloop_search(viam_robot,
+                           config,
+                           world_frame="base",
+                           dynamic_update=False)
 
 if __name__ == "__main__":
     asyncio.run(test_ur5e_viamlab())
