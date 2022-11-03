@@ -82,6 +82,20 @@ def pointcloudproto_to_array(point_cloud):
                              for p in point_cloud.points])
     return points_array
 
+def pointcloudproto_from_array(pointx_xyz_array):
+    """Given an array-like list of [x,y,z] points,
+    return a PointCloud protobuf."""
+    points_pb = []
+    for p in points_xyz_array:
+        point_pb = o_pb2.PointCloud.Point(pos=c_pb2.Vec3(x=p[0], y=p[1], z=p[2]))
+        points_pb.append(point_pb)
+
+    header = Header(stamp=google.protobuf.timestamp_pb2.Timestamp().GetCurrentTime(),
+                    frame_id=cloud_msg.header.frame_id)
+    cloud_pb = o_pb2.PointCloud(header=header,
+                                points=points_pb)
+    return cloud_pb
+
 def posemsg_to_pose3dproto(pose_msg):
     return Pose3D(position=Vec3(x=pose_msg.position.x,
                                 y=pose_msg.position.y,
