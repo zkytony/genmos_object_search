@@ -4,14 +4,20 @@
 
 import asyncio
 
+import math
+import yaml
+import numpy as np
+from pypcd import pypcd
+
+import open3d as o3d
+import base64
+
 from viam.robot.client import RobotClient
 from viam.rpc.dial import Credentials, DialOptions
 
 from viam.components.camera import Camera
 from viam.components.arm import Arm
 from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
-
-import yaml
 
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
@@ -29,6 +35,7 @@ from sloop_object_search.utils.misc import import_class
 def get_and_visualize_belief():
     raise NotImplementedError
 
+
 ########### viam functions ###########
 async def viam_connect():
     creds = Credentials(
@@ -40,16 +47,46 @@ async def viam_connect():
     )
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
-def viam_get_point_cloud_array():
+
+
+async def viam_get_point_cloud_array(robot, debug=True):
     """return current point cloud from camera through Viam.
     Return type: numpy array of [x,y,z]"""
-    raise NotImplementedError
+    camera = Camera.from_robot(robot, "gripper:depth-cam")
+    data, mimetype = await camera.get_point_cloud()
+    # TODO: a better way?
+    with open("/tmp/pointcloud_data.pcd", "wb") as f:
+        f.write(data)
+    pcd = o3d.io.read_point_cloud("/tmp/pointcloud_data.pcd")
+    if debug:
+        viz = o3d.visualization.Visualizer()
+        viz.create_window()
+        viz.add_geometry(pcd)
+        opt = viz.get_render_option()
+        opt.show_coordinate_frame = True
+        viz.run()
+        viz.destroy_window()
+    cloud_array = np.asarray(pcd.points)
+    import pdb; pdb.set_trace()
+    return cloud_array
 
 async def viam_get_ee_pose(robot):
     """return current end-effector pose through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
     arm = Arm.from_robot(robot, "arm")
-    print(await arm.get_end_position())
+    pose = await arm.get_end_position()
+
+    # viam represents orientation by ox, oy, oz, theta
+    # where (ox, oy, oz) is the axis of rotation, and
+    # theta is the degree of rotation. We convert that
+    # to quaternion by the definition of quaternion.
+
+    # qx = x * math.sin(math_utils.to_rad(pose.theta) / 2)
+    # qy = y * math.sin(math_utils.to_rad(pose.theta) / 2)
+    # qx = math.cos(math_utils.to_rad(pose.theta) / 2)
+    # pass
+
+    import pdb; pdb.set_trace()
 
 def viam_get_object_detections(world_frame):
     """Return type: a list of (label, box3d) tuples.
@@ -284,7 +321,8 @@ async def run_sloop_search(viam_robot,
     objects_found = set()
     #-----------------------------------------
 
-    await viam_get_ee_pose(viam_robot)
+    # await viam_get_ee_pose(viam_robot)
+    await viam_get_point_cloud_array(viam_robot)
 
 
 
