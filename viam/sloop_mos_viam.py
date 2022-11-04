@@ -21,7 +21,7 @@ from viam.components.gripper import Gripper
 from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
 from viam.services.motion import MotionServiceClient
 
-from viam.proto.common import ResourceName
+from viam.proto.common import ResourceName, PoseInFrame
 
 from viam_utils import OrientationVector
 
@@ -76,20 +76,27 @@ async def viam_get_point_cloud_array(robot, debug=True):
 async def viam_get_ee_pose(viam_robot):
     """return current end-effector pose through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
-    # arm = Arm.from_robot(robot, "arm")
-    # pose = await arm.get_end_position()
-
-    # prefers to use services methods and not component methods.
-    motion = MotionServiceClient.from_robot(viam_robot)
-
-    for resname in viam_robot.resource_names:
-        if resname.name == "gripper:vg1":
-            pose = await motion.get_pose(resname, "world")
-                                 #                            type="component",
-                                 #                            subtype="gripper",
-                                 #                            name="gripper:vg1"),
-                                 # destination_frame="world")
+    arm = Arm.from_robot(viam_robot, "arm")
+    pose = await arm.get_end_position()
     print(pose)
+    # # prefers to use services methods and not component methods.
+    motion = MotionServiceClient.from_robot(viam_robot)
+    await motion.move(Gripper.get_resource_name("gripper:vg1"),
+                      PoseInFrame(reference_frame="arm_origin",
+                                  pose=pose))
+
+
+
+
+    # for resname in viam_robot.resource_names:
+    #     if resname.name == "gripper:vg1":
+    #         print(resname.name)
+    #         pose = await motion.get_pose(resname, "world")
+    #                              #                            type="component",
+    #                              #                            subtype="gripper",
+    #                              #                            name="gripper:vg1"),
+    #                              # destination_frame="world")
+    # print(pose)
 
     # from viam_utils import OrientationVector, Quaternion, Vector3
     # ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
