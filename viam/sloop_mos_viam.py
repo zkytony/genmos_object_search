@@ -76,17 +76,28 @@ async def viam_get_point_cloud_array(robot, debug=True):
 async def viam_get_ee_pose(viam_robot):
     """return current end-effector pose through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
+
+
+
+
     arm = Arm.from_robot(viam_robot, "arm")
     pose = await arm.get_end_position()
-    print(pose)
-    # # prefers to use services methods and not component methods.
-    motion = MotionServiceClient.from_robot(viam_robot)
-    await motion.move(Gripper.get_resource_name("gripper:vg1"),
-                      PoseInFrame(reference_frame="arm_origin",
-                                  pose=pose))
+    pose.x += 100
+    motion = MotionServiceClient.from_robot(robot)
+    for resname in robot.resource_names:
+        if resname.name == "arm":
+            print (resname)
+            move = await motion.move(component_name=resname, destination = PoseInFrame(reference_frame="arm_origin", pose=pose))
 
 
-
+    # arm = Arm.from_robot(viam_robot, "arm")
+    # pose = await arm.get_end_position()
+    # print(pose)
+    # # # prefers to use services methods and not component methods.
+    # motion = MotionServiceClient.from_robot(viam_robot)
+    # await motion.move(Gripper.get_resource_name("gripper:vg1"),
+    #                   PoseInFrame(reference_frame="arm_origin",
+    #                               pose=pose))
 
     # for resname in viam_robot.resource_names:
     #     if resname.name == "gripper:vg1":
