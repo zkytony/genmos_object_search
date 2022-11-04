@@ -247,14 +247,14 @@ class Quaternion:
         theta = o_vec.theta
 
         if 1 - abs(unit_ov.z) > cls.ANGLE_ACCEPTANCE:
-            lon = math.atan2(unit_ov.y, unit_ov.z)
+            lon = math.atan2(unit_ov.y, unit_ov.x)
 
         # convert angles to quat using zyz rotational order
-        s_0 = math.sin(lat / 2)
-        c_0 = math.cos(lat / 2)
+        s_0 = math.sin(lon / 2)
+        c_0 = math.cos(lon / 2)
 
-        s_1 = math.sin(lon / 2)
-        c_1 = math.cos(lon / 2)
+        s_1 = math.sin(lat / 2)
+        c_1 = math.cos(lat / 2)
 
         s_2 = math.sin(theta / 2)
         c_2 = math.cos(theta / 2)
@@ -262,7 +262,7 @@ class Quaternion:
         s = [s_0, s_1, s_2]
         c = [c_0, c_1, c_2]
 
-        real = (c[0]*c[1]*c[2] + s[0]*s[1]*s[2])
+        real = (c[0]*c[1]*c[2] - s[0]*c[1]*s[2])
         i = (c[0]*s[1]*s[2] - s[0]*s[1]*c[2])
         j = (c[0]*s[1]*c[2] + s[0]*s[1]*s[2])
         k = (s[0]*c[1]*c[2] + c[0]*c[1]*s[2])
