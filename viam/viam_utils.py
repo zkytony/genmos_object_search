@@ -1,10 +1,6 @@
 import math
 from dataclasses import dataclass
 
-from viam.proto.api.common import Pose
-from .vec3 import Vector3
-
-
 @dataclass
 class Vector3:
     x: float
@@ -120,7 +116,7 @@ class OrientationVector:
 
 
     @classmethod
-    def extract_from_pose(cls, pose: Pose):
+    def extract_from_pose(cls, pose):
         sphere_vec = Vector3(pose.o_x, pose.o_y, pose.o_z)
         return cls(sphere_vec, pose.theta)
 

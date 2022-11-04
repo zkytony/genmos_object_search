@@ -19,6 +19,8 @@ from viam.components.camera import Camera
 from viam.components.arm import Arm
 from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
 
+from viam_utils import OrientationVector
+
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
@@ -47,9 +49,7 @@ async def viam_connect():
     )
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
-
-
-async def viam_get_point_cloud_array(robot, debug=False):
+async def viam_get_point_cloud_array(robot, debug=True):
     """return current point cloud from camera through Viam.
     Return type: numpy array of [x,y,z]"""
     camera = Camera.from_robot(robot, "gripper:depth-cam")
@@ -75,6 +75,17 @@ async def viam_get_ee_pose(robot):
     arm = Arm.from_robot(robot, "arm")
     pose = await arm.get_end_position()
 
+
+    from viam_utils import OrientationVector, Quaternion, Vector3
+    ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
+    qq = Quaternion.from_orientation_vector(ovec)
+    ovec2 = qq.to_orientation_vector()
+    qq2 = Quaternion.from_orientation_vector(ovec2)
+
+
+
+    import pdb; pdb.set_trace()
+
     # viam represents orientation by ox, oy, oz, theta
     # where (ox, oy, oz) is the axis of rotation, and
     # theta is the degree of rotation. We convert that
@@ -85,7 +96,6 @@ async def viam_get_ee_pose(robot):
     # qx = math.cos(math_utils.to_rad(pose.theta) / 2)
     # pass
 
-    import pdb; pdb.set_trace()
 
 def viam_get_object_detections(world_frame):
     """Return type: a list of (label, box3d) tuples.
@@ -320,8 +330,8 @@ async def run_sloop_search(viam_robot,
     objects_found = set()
     #-----------------------------------------
 
-    # await viam_get_ee_pose(viam_robot)
-    await viam_get_point_cloud_array(viam_robot)
+    await viam_get_ee_pose(viam_robot)
+    # await viam_get_point_cloud_array(viam_robot)
 
 
 
