@@ -75,16 +75,16 @@ async def viam_get_ee_pose(robot):
     arm = Arm.from_robot(robot, "arm")
     pose = await arm.get_end_position()
 
-
     from viam_utils import OrientationVector, Quaternion, Vector3
     ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
     qq = Quaternion.from_orientation_vector(ovec)
     ovec2 = qq.to_orientation_vector()
     qq2 = Quaternion.from_orientation_vector(ovec2)
 
+    print(qq)
+    print(qq2)
 
-
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     # viam represents orientation by ox, oy, oz, theta
     # where (ox, oy, oz) is the axis of rotation, and
@@ -97,14 +97,91 @@ async def viam_get_ee_pose(robot):
     # pass
 
 
-def viam_get_object_detections(world_frame):
+def viam_get_object_detections3d(world_frame):
     """Return type: a list of (label, box3d) tuples.
     A label is a string.
     A box3d is a tuple (center, w, l, h)
     Note that we want 'center' in the world frame. In
     the case of a tabletop robot, it should be the frame
     of its base."""
-    raise NotImplementedError
+    raise NotImplementedError()
+
+
+
+
+
+async def viam_get_object_detections2d(
+        viam_robot,
+        camera_name="segmenter-cam",
+        detector_name="find_objects"):
+    """Return type: a list of (label, box2d) tuples.
+    A label is a string.
+    box2d is xyxy
+    """
+    camera = Camera.from_robot(viam_robot, camera_name)
+    vision = VisionServiceClient.from_robot(viam_robot)
+    print(await vision.get_detector_names())
+    detector_name = "find_objects"
+    print(await vision.get_detections_from_camera("segmenter-cam"), detector_name)
+    import pdb; pdb.set_trace()
+
+
+
+
+
+    # camera = Camera.from_robot(robot, "comp-combined")
+
+
+    # camera = Camera.from_robot(robot, "comp-combined")
+
+    # depth_camera = Camera.from_robot(viam_robot, "gripper:depth-cam")  #"comp-combined")
+    # color_camera = Camera.from_robot(viam_robot, "gripper:color-cam")
+
+    # image = await color_camera.get_image()
+    # image.save("foo.png")
+
+    # print("----------------------------------")
+
+    # vision = VisionServiceClient.from_robot(viam_robot)
+    # segmenter_names = await vision.get_segmenter_names()
+    # print(segmenter_names)
+
+    # print("----------------------------------")
+
+    # # grab Viam's vision service to add a TF-lite model for detection
+    # vision = VisionServiceClient.from_robot(viam_robot)
+    # params = {
+    #     "model_path": "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/models/effdet0.tflite",
+    #     "label_path": "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/models/effdet0_labels.txt",
+    #     "num_threads": 1,
+    # }
+    # findThingDetector = VisModelConfig(
+    #     name="find_thing", type=VisModelType("tflite_detector"), parameters=params)
+    # await vision.add_detector(findThingDetector)
+
+    # print(await vision.get_detector_names())
+
+    # params = {
+    #     "detector_name": "find_thing",
+    #     "confidence_threshold_pct": 0.8,
+    # }
+    # findPersonDetector = VisModelConfig(name="find_thing_segmenter", type=VisModelType("detector_segmenter"), parameters=params)
+
+    # # print('Resources:')
+    # # print(viam_robot.resource_names)
+    # while(True):
+    #     pcs = await vision.get_object_point_clouds(
+    #         "depth-cam", "find_thing_segmenter")
+    #     print("number of points clouds:", len(pcs))
+    #     if len(pcs) > 0:
+    #         print(pcs[0].geometries)
+
+    # print("HEEELO")
+
+    # await viam_robot.close()
+    pass
+
+
 
 def detections3d_to_proto(robot_id, detections):
     """Parameters:
@@ -330,9 +407,10 @@ async def run_sloop_search(viam_robot,
     objects_found = set()
     #-----------------------------------------
 
-    await viam_get_ee_pose(viam_robot)
-    # await viam_get_point_cloud_array(viam_robot)
+    await viam_get_object_detections2d(viam_robot)
 
+    # await viam_get_ee_pose(viam_robot)
+    # await viam_get_point_cloud_array(viam_robot)
 
 
     # # First, create an agent
