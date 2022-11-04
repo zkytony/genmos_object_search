@@ -17,7 +17,11 @@ from viam.rpc.dial import Credentials, DialOptions
 
 from viam.components.camera import Camera
 from viam.components.arm import Arm
+from viam.components.gripper import Gripper
 from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
+from viam.services.motion import MotionServiceClient
+
+from viam.proto.common import ResourceName
 
 from viam_utils import OrientationVector
 
@@ -69,20 +73,32 @@ async def viam_get_point_cloud_array(robot, debug=True):
     cloud_array = np.asarray(pcd.points)
     return cloud_array
 
-async def viam_get_ee_pose(robot):
+async def viam_get_ee_pose(viam_robot):
     """return current end-effector pose through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
-    arm = Arm.from_robot(robot, "arm")
-    pose = await arm.get_end_position()
+    # arm = Arm.from_robot(robot, "arm")
+    # pose = await arm.get_end_position()
 
-    from viam_utils import OrientationVector, Quaternion, Vector3
-    ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
-    qq = Quaternion.from_orientation_vector(ovec)
-    ovec2 = qq.to_orientation_vector()
-    qq2 = Quaternion.from_orientation_vector(ovec2)
+    # prefers to use services methods and not component methods.
+    motion = MotionServiceClient.from_robot(viam_robot)
 
-    print(qq)
-    print(qq2)
+    for resname in viam_robot.resource_names:
+        if resname.name == "gripper:vg1":
+            pose = await motion.get_pose(resname, "world")
+                                 #                            type="component",
+                                 #                            subtype="gripper",
+                                 #                            name="gripper:vg1"),
+                                 # destination_frame="world")
+    print(pose)
+
+    # from viam_utils import OrientationVector, Quaternion, Vector3
+    # ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
+    # qq = Quaternion.from_orientation_vector(ovec)
+    # ovec2 = qq.to_orientation_vector()
+    # qq2 = Quaternion.from_orientation_vector(ovec2)
+
+    # print(qq)
+    # print(qq2)
 
     # import pdb; pdb.set_trace()
 
@@ -95,6 +111,7 @@ async def viam_get_ee_pose(robot):
     # qy = y * math.sin(math_utils.to_rad(pose.theta) / 2)
     # qx = math.cos(math_utils.to_rad(pose.theta) / 2)
     # pass
+    return pose
 
 
 def viam_get_object_detections3d(world_frame):
@@ -105,8 +122,6 @@ def viam_get_object_detections3d(world_frame):
     the case of a tabletop robot, it should be the frame
     of its base."""
     raise NotImplementedError()
-
-
 
 
 
@@ -124,10 +139,6 @@ async def viam_get_object_detections2d(
     detector_name = "find_objects"
     print(await vision.get_detections_from_camera("segmenter-cam"), detector_name)
     import pdb; pdb.set_trace()
-
-
-
-
 
     # camera = Camera.from_robot(robot, "comp-combined")
 
@@ -209,7 +220,7 @@ def detections3d_to_proto(robot_id, detections):
                                       detections=detections_pb)
 
 
-def viam_move_ee_to(pos, orien, action_id):
+async def viam_move_ee_to(viam_robot, pos, orien, action_id):
     """
     Moves the end effector to the given goal position and orientation.
     If not possible, [???]
@@ -217,7 +228,10 @@ def viam_move_ee_to(pos, orien, action_id):
     pos (position): (x,y,z)
     orien (quaternion): (qx, qy, qz, qw)
     """
-    raise NotImplementedError
+    pose = await viam_get_ee_pose(viam_robot)
+    motion = MotionServiceClient.from_robot(viam_robot)
+    # motion.move("arm", )
+
 
 def viam_signal_find(action_id):
     """Do something with the robot to signal the find action"""
@@ -407,10 +421,11 @@ async def run_sloop_search(viam_robot,
     objects_found = set()
     #-----------------------------------------
 
-    await viam_get_object_detections2d(viam_robot)
-
+    # await viam_get_object_detections2d(viam_robot)
     # await viam_get_ee_pose(viam_robot)
     # await viam_get_point_cloud_array(viam_robot)
+
+    await viam_move_ee_to(viam_robot, None, None, None)
 
 
     # # First, create an agent
