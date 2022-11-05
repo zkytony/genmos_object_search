@@ -15,6 +15,8 @@ from viam.services.motion import MotionServiceClient
 
 from viam.proto.common import ResourceName, PoseInFrame
 
+import sloop_object_search.utils.math as math_utils
+
 
 
 ########### viam functions ###########
@@ -39,61 +41,25 @@ async def viam_get_point_cloud_array(robot):
     with open("/tmp/pointcloud_data.pcd", "wb") as f:
         f.write(data)
     pcd = o3d.io.read_point_cloud("/tmp/pointcloud_data.pcd")
-    cloud_array = np.asarray(pcd.points)
+    cloud_array_T_camera = np.asarray(pcd.points)
+
+    # transform cloud from camera frame to world frame
+    T_camera =
+
     return cloud_array
 
 async def viam_get_ee_pose(viam_robot):
     """return current end-effector pose through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
+    #NOTE!!! This function is SPECIFIC to the UR5 robot
+    #at Viam office with the in-house gripper. The end
+    #effector named 'arm' is the end of the arm without
+    #the gripper. The camera has an offset in z of ~20cm.
+    #The pose we get is the pose of the camera.
     arm = Arm.from_robot(viam_robot, "arm")
     pose = await arm.get_end_position()
 
 
-    pose.x += 100
-    motion = MotionServiceClient.from_robot(robot)
-    for resname in robot.resource_names:
-        if resname.name == "arm":
-            print (resname)
-            move = await motion.move(component_name=resname, destination = PoseInFrame(reference_frame="arm_origin", pose=pose))
-    # arm = Arm.from_robot(viam_robot, "arm")
-    # pose = await arm.get_end_position()
-    # print(pose)
-    # # # prefers to use services methods and not component methods.
-    # motion = MotionServiceClient.from_robot(viam_robot)
-    # await motion.move(Gripper.get_resource_name("gripper:vg1"),
-    #                   PoseInFrame(reference_frame="arm_origin",
-    #                               pose=pose))
-
-    for resname in viam_robot.resource_names:
-        if resname.name == "gripper:vg1":
-            print(resname.name)
-            pose = await motion.get_pose(resname, "world")
-                                 #                            type="component",
-                                 #                            subtype="gripper",
-                                 #                            name="gripper:vg1"),
-                                 # destination_frame="world")
-    print(pose)
-
-    # from viam_utils import OrientationVector, Quaternion, Vector3
-    # ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
-    # qq = Quaternion.from_orientation_vector(ovec)
-    # ovec2 = qq.to_orientation_vector()
-    # qq2 = Quaternion.from_orientation_vector(ovec2)
-
-    # print(qq)
-    # print(qq2)
-
-    # import pdb; pdb.set_trace()
-
-    # viam represents orientation by ox, oy, oz, theta
-    # where (ox, oy, oz) is the axis of rotation, and
-    # theta is the degree of rotation. We convert that
-    # to quaternion by the definition of quaternion.
-
-    # qx = x * math.sin(math_utils.to_rad(pose.theta) / 2)
-    # qy = y * math.sin(math_utils.to_rad(pose.theta) / 2)
-    # qx = math.cos(math_utils.to_rad(pose.theta) / 2)
-    # pass
     return pose
 
 def viam_get_object_detections3d(world_frame):
@@ -183,6 +149,52 @@ async def viam_move_ee_to(viam_robot, pos, orien, action_id):
     pose = await viam_get_ee_pose(viam_robot)
     motion = MotionServiceClient.from_robot(viam_robot)
     # motion.move("arm", )
+    pose.x += 100
+    motion = MotionServiceClient.from_robot(robot)
+    for resname in robot.resource_names:
+        if resname.name == "arm":
+            print (resname)
+            move = await motion.move(component_name=resname, destination = PoseInFrame(reference_frame="arm_origin", pose=pose))
+    # arm = Arm.from_robot(viam_robot, "arm")
+    # pose = await arm.get_end_position()
+    # print(pose)
+    # # # prefers to use services methods and not component methods.
+    # motion = MotionServiceClient.from_robot(viam_robot)
+    # await motion.move(Gripper.get_resource_name("gripper:vg1"),
+    #                   PoseInFrame(reference_frame="arm_origin",
+    #                               pose=pose))
+
+    for resname in viam_robot.resource_names:
+        if resname.name == "gripper:vg1":
+            print(resname.name)
+            pose = await motion.get_pose(resname, "world")
+                                 #                            type="component",
+                                 #                            subtype="gripper",
+                                 #                            name="gripper:vg1"),
+                                 # destination_frame="world")
+    print(pose)
+
+    # from viam_utils import OrientationVector, Quaternion, Vector3
+    # ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
+    # qq = Quaternion.from_orientation_vector(ovec)
+    # ovec2 = qq.to_orientation_vector()
+    # qq2 = Quaternion.from_orientation_vector(ovec2)
+
+    # print(qq)
+    # print(qq2)
+
+    # import pdb; pdb.set_trace()
+
+    # viam represents orientation by ox, oy, oz, theta
+    # where (ox, oy, oz) is the axis of rotation, and
+    # theta is the degree of rotation. We convert that
+    # to quaternion by the definition of quaternion.
+
+    # qx = x * math.sin(math_utils.to_rad(pose.theta) / 2)
+    # qy = y * math.sin(math_utils.to_rad(pose.theta) / 2)
+    # qx = math.cos(math_utils.to_rad(pose.theta) / 2)
+    # pass
+
 
 def viam_signal_find(action_id):
     """Do something with the robot to signal the find action"""
