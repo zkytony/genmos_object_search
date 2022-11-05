@@ -12,19 +12,6 @@ from pypcd import pypcd
 import open3d as o3d
 import base64
 
-from viam.robot.client import RobotClient
-from viam.rpc.dial import Credentials, DialOptions
-
-from viam.components.camera import Camera
-from viam.components.arm import Arm
-from viam.components.gripper import Gripper
-from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
-from viam.services.motion import MotionServiceClient
-
-from viam.proto.common import ResourceName, PoseInFrame
-
-from viam_utils import OrientationVector
-
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
@@ -36,6 +23,9 @@ from sloop_object_search.grpc.constants import Message
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
+
+from viam_utils import (viam_connect,
+                        viam_get_point_cloud_array)
 
 ########### visualization ###########
 def get_and_visualize_belief():

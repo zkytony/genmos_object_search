@@ -1,5 +1,21 @@
 import math
+import yaml
+import numpy as np
+import open3d as o3d
 from dataclasses import dataclass
+
+from viam.robot.client import RobotClient
+from viam.rpc.dial import Credentials, DialOptions
+
+from viam.components.camera import Camera
+from viam.components.arm import Arm
+from viam.components.gripper import Gripper
+from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
+from viam.services.motion import MotionServiceClient
+
+from viam.proto.common import ResourceName, PoseInFrame
+
+
 
 ########### viam functions ###########
 async def viam_connect():
