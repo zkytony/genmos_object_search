@@ -4,7 +4,7 @@ import sys
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ABS_PATH, '../../../'))
 
-
+import numpy as np
 import open3d as o3d
 from viam_utils import (viam_connect,
                         viam_get_point_cloud_array)
@@ -19,7 +19,8 @@ async def test_viam_get_point_cloud_array(viam_robot):
 async def test_viam_get_point_cloud_array_to_proto(viam_robot):
     viam_cloud_arr = await viam_get_point_cloud_array(viam_robot, debug=False)
 
-    cloud_pb = proto_utils.pointcloudproto_from_array(viam_cloud_arr)
+    # 'camera' is a made-up camera frame.
+    cloud_pb = proto_utils.pointcloudproto_from_array(viam_cloud_arr, "camera")
     cloud_pb_arr = proto_utils.pointcloudproto_to_array(cloud_pb)
 
     viam_pcd = o3d.geometry.PointCloud()
