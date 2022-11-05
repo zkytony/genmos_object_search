@@ -12,12 +12,8 @@ from viam_utils import (viam_connect,
 from sloop_object_search.grpc.utils import proto_utils
 
 
-async def test_viam_get_point_cloud_array(viam_robot):
-    cloud = await viam_get_point_cloud_array(viam_robot, debug=True)
-    print("You should see Open3D window with reasonable point cloud. IF SO, pass.")
-
 async def test_viam_get_point_cloud_array_to_proto(viam_robot):
-    viam_cloud_arr = await viam_get_point_cloud_array(viam_robot, debug=False)
+    viam_cloud_arr = await viam_get_point_cloud_array(viam_robot)
 
     # 'camera' is a made-up camera frame.
     cloud_pb = proto_utils.pointcloudproto_from_array(viam_cloud_arr, "camera")

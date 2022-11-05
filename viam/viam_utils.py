@@ -28,8 +28,10 @@ async def viam_connect():
     )
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
-async def viam_get_point_cloud_array(robot, debug=False):
+async def viam_get_point_cloud_array(robot):
     """return current point cloud from camera through Viam.
+    Note that we want the point cloud in world frame. Viam's
+    camera component gives you points in camera frame.
     Return type: numpy array of [x,y,z]"""
     camera = Camera.from_robot(robot, "gripper:depth-cam")
     data, mimetype = await camera.get_point_cloud()
@@ -37,14 +39,6 @@ async def viam_get_point_cloud_array(robot, debug=False):
     with open("/tmp/pointcloud_data.pcd", "wb") as f:
         f.write(data)
     pcd = o3d.io.read_point_cloud("/tmp/pointcloud_data.pcd")
-    if debug:
-        viz = o3d.visualization.Visualizer()
-        viz.create_window()
-        viz.add_geometry(pcd)
-        opt = viz.get_render_option()
-        opt.show_coordinate_frame = True
-        viz.run()
-        viz.destroy_window()
     cloud_array = np.asarray(pcd.points)
     return cloud_array
 
