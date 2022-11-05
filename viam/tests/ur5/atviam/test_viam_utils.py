@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.join(ABS_PATH, '../../../'))
 import numpy as np
 import open3d as o3d
 from viam_utils import (viam_connect,
+                        viam_get_ee_pose,
                         viam_get_point_cloud_array)
 
 from sloop_object_search.grpc.utils import proto_utils
@@ -36,11 +37,14 @@ async def test_viam_get_point_cloud_array_to_proto(viam_robot):
     viz.destroy_window()
 
 
+async def test_viam_get_ee_pose(viam_robot):
+    pose = await viam_get_ee_pose(viam_robot)
+    print(pose)
 
 async def testall():
     ur5robot = await viam_connect()
-    # await test_viam_get_point_cloud_array(ur5robot)
-    await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    await test_viam_get_ee_pose(ur5robot)
 
 if __name__ == "__main__":
     asyncio.run(testall())

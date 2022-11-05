@@ -14,7 +14,6 @@ from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelTy
 from viam.services.motion import MotionServiceClient
 
 from viam.proto.common import ResourceName, PoseInFrame
-from viam_utils import OrientationVector, Quaternion, Vector3
 
 import sloop_object_search.utils.math as math_utils
 
@@ -31,6 +30,27 @@ async def viam_connect():
     )
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
+async def viam_get_ee_pose(viam_robot):
+    """return current end-effector pose through Viam.
+    Return type: tuple (x,y,z,qx,qy,qz,qw)"""
+    #NOTE!!! BELOW DOES NOT GIVE YOU THE TRUE EE
+    #ON THE GRIPPER OF THE UR5 ROBOT AT VIAM LAB
+    #BUT THE END OF THE ARM WITHOUT GRIPPER. THIS
+    #IS BECAUSE THE GRIPPER IS A SEPARATE COMPUTER
+    #AND CURRENTLY THERE IS A BUG IN VIAM TO GET
+    #THAT FRAME. ALSO, SHOULD USE MOTIONSERVICE
+    #INSTEAD OF ARM.
+    arm = Arm.from_robot(viam_robot, "arm")
+    pose_w_ovec = await arm.get_end_position()
+
+    # convert pose orientation to quaternion! [viam's problem]
+    ovec = OrientationVector(Vector3(
+        pose_w_ovec.o_x, pose_w_ovec.o_y, pose_w_ovec.o_z), math_utils.to_rad(pose_w_ovec.theta))
+    quat = Quaternion.from_orientation_vector(ovec)
+    pose_w_quat = (pose_w_ovec.x, pose_w_ovec.y, pose_w_ovec.z,
+                   quat.i, quat.j, quat.k, quat.real)
+    return pose_w_quat
+
 async def viam_get_point_cloud_array(robot):
     """return current point cloud from camera through Viam.
     Note that we want the point cloud in world frame. Viam's
@@ -45,28 +65,9 @@ async def viam_get_point_cloud_array(robot):
     cloud_array_T_camera = np.asarray(pcd.points)
 
     # transform cloud from camera frame to world frame
-    T_camera =
+    # T_camera =
 
-    return cloud_array
-
-async def viam_get_ee_pose(viam_robot):
-    """return current end-effector pose through Viam.
-    Return type: tuple (x,y,z,qx,qy,qz,qw)"""
-    #NOTE!!! This function is SPECIFIC to the UR5 robot
-    #at Viam office with the in-house gripper. The end
-    #effector named 'arm' is the end of the arm without
-    #the gripper. The camera has an offset in z of ~20cm.
-    #The pose we get is the pose of the camera.
-    arm = Arm.from_robot(viam_robot, "arm")
-    pose_w_ovec = await arm.get_end_position()
-
-    # convert pose orientation to quaternion! [viam's problem]
-    ovec = OrientationVector(Vector3(
-        pose_w_ovec.o_x, pose_w_ovec.o_y, pose_w_ovec.o_z), math_utils.to_rad(pose_w_ovec.theta))
-    quat = Quaternion.from_orientation_vector(ovec)
-    pose_w_quat = (pose_w_ovec.x, pose_w_ovec.y, pose_w_ovec.z,
-                   quat.i, quat.j, quat.k, quat.real)
-    return pose_w_quat
+    return cloud_array_T_camera
 
 def viam_get_object_detections3d(world_frame):
     """Return type: a list of (label, box3d) tuples.
