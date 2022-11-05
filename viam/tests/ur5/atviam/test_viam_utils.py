@@ -35,16 +35,19 @@ async def test_viam_get_point_cloud_array_to_proto(viam_robot):
     opt.show_coordinate_frame = True
     viz.run()
     viz.destroy_window()
+    print("----------------------")
 
 
 async def test_viam_get_ee_pose(viam_robot):
     pose = await viam_get_ee_pose(viam_robot)
     print(pose)
+    print("----------------------")
 
 async def testall():
     ur5robot = await viam_connect()
-    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
     await test_viam_get_ee_pose(ur5robot)
+    await test_viam_get_point_cloud_array_to_proto(ur5robot)
+
 
 if __name__ == "__main__":
     asyncio.run(testall())

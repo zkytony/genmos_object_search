@@ -31,7 +31,8 @@ async def viam_connect():
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
 async def viam_get_ee_pose(viam_robot):
-    """return current end-effector pose through Viam.
+    """return current end-effector pose in world
+    frame through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)"""
     #NOTE!!! BELOW DOES NOT GIVE YOU THE TRUE EE
     #ON THE GRIPPER OF THE UR5 ROBOT AT VIAM LAB
@@ -51,23 +52,30 @@ async def viam_get_ee_pose(viam_robot):
                    quat.i, quat.j, quat.k, quat.real)
     return pose_w_quat
 
-async def viam_get_point_cloud_array(robot):
+async def viam_get_point_cloud_array(viam_robot):
     """return current point cloud from camera through Viam.
     Note that we want the point cloud in world frame. Viam's
     camera component gives you points in camera frame.
     Return type: numpy array of [x,y,z]"""
-    camera = Camera.from_robot(robot, "gripper:depth-cam")
+    camera = Camera.from_robot(viam_robot, "gripper:depth-cam")
     data, mimetype = await camera.get_point_cloud()
     # TODO: a better way?
     with open("/tmp/pointcloud_data.pcd", "wb") as f:
         f.write(data)
     pcd = o3d.io.read_point_cloud("/tmp/pointcloud_data.pcd")
-    cloud_array_T_camera = np.asarray(pcd.points)
+    points_T_camera = np.asarray(pcd.points)
 
-    # transform cloud from camera frame to world frame
-    # T_camera =
-
-    return cloud_array_T_camera
+    # Get transform of camera wrt world
+    pose_w_quat = await viam_get_ee_pose(viam_robot)
+    x,y,z,qx,qy,qz,qw = pose_w_quat
+    ee_trans_matrix = np.matmul(math_utils.T(x,y,z),
+                                math_utils.R_quat(qx, qy, qz, qw, affine=True))
+    # Transform point cloud to world frame
+    points_affine_T_camera = np.append(points_T_camera,
+                                       np.full((len(points_T_camera), 1), 1), axis=1)
+    points_affine_T_world = np.matmul(points_affine_T_camera, ee_trans_matrix)
+    points_T_world = points_affine_T_world[:,:3]
+    return points_T_world
 
 def viam_get_object_detections3d(world_frame):
     """Return type: a list of (label, box3d) tuples.
