@@ -12,7 +12,7 @@ async def viam_connect():
     )
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
-async def viam_get_point_cloud_array(robot, debug=True):
+async def viam_get_point_cloud_array(robot, debug=False):
     """return current point cloud from camera through Viam.
     Return type: numpy array of [x,y,z]"""
     camera = Camera.from_robot(robot, "gripper:depth-cam")
