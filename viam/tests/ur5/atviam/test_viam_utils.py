@@ -25,11 +25,19 @@ async def test_viam_get_point_cloud_array_to_proto(viam_robot):
 
     viam_pcd = o3d.geometry.PointCloud()
     viam_pcd.points = o3d.utility.Vector3dVector(viam_cloud_arr)
-    viam_pcd.points = o3d.utility.Vector3dVector(np.full((len(viam_cloud_arr), 3), (0.2, 0.2, 0.2)))
+    viam_pcd.colors = o3d.utility.Vector3dVector(np.full((len(viam_cloud_arr), 3), (0.2, 0.2, 0.2)))
 
     my_pcd = o3d.geometry.PointCloud()
     my_pcd.points = o3d.utility.Vector3dVector(cloud_pb_arr)
-    o3d.visualization.draw_geometries([viam_pcd, my_pcd])
+
+    viz = o3d.visualization.Visualizer()
+    viz.create_window()
+    viz.add_geometry(viam_pcd)
+    viz.add_geometry(my_pcd)
+    opt = viz.get_render_option()
+    opt.show_coordinate_frame = True
+    viz.run()
+    viz.destroy_window()
 
 
 
