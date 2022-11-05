@@ -14,6 +14,7 @@ from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelTy
 from viam.services.motion import MotionServiceClient
 
 from viam.proto.common import ResourceName, PoseInFrame
+from viam_utils import OrientationVector, Quaternion, Vector3
 
 import sloop_object_search.utils.math as math_utils
 
@@ -57,10 +58,15 @@ async def viam_get_ee_pose(viam_robot):
     #the gripper. The camera has an offset in z of ~20cm.
     #The pose we get is the pose of the camera.
     arm = Arm.from_robot(viam_robot, "arm")
-    pose = await arm.get_end_position()
+    pose_w_ovec = await arm.get_end_position()
 
-
-    return pose
+    # convert pose orientation to quaternion! [viam's problem]
+    ovec = OrientationVector(Vector3(
+        pose_w_ovec.o_x, pose_w_ovec.o_y, pose_w_ovec.o_z), math_utils.to_rad(pose_w_ovec.theta))
+    quat = Quaternion.from_orientation_vector(ovec)
+    pose_w_quat = (pose_w_ovec.x, pose_w_ovec.y, pose_w_ovec.z,
+                   quat.i, quat.j, quat.k, quat.real)
+    return pose_w_quat
 
 def viam_get_object_detections3d(world_frame):
     """Return type: a list of (label, box3d) tuples.
