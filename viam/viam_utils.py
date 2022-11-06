@@ -87,74 +87,33 @@ def viam_get_object_detections3d(world_frame):
     Note that we want 'center' in the world frame. In
     the case of a tabletop robot, it should be the frame
     of its base."""
+    # NOTE: SKIPPING THIS BECAUSE WILL NOT USE POINT CLOUD AS
+    # THE depth-cam is UNRELIABLE FOR THE UR5 GRIPPER AT VIAM LAB.
     raise NotImplementedError()
 
 async def viam_get_object_detections2d(
-        viam_robot,
+        viam_robot_or_vision_client,
         camera_name="segmenter-cam",
         detector_name="find_objects"):
-    """Return type: a list of (label, box2d) tuples.
-    A label is a string.
-    box2d is xyxy
     """
-    camera = Camera.from_robot(viam_robot, camera_name)
-    vision = VisionServiceClient.from_robot(viam_robot)
-    print(await vision.get_detector_names())
-    detector_name = "find_objects"
-    print(await vision.get_detections_from_camera("segmenter-cam"), detector_name)
-    import pdb; pdb.set_trace()
+    Args:
+        viam_robot_or_vision_client: either viam_robot connection, or VisionServiceClient
+        camera_name (str): name of camera with color image
+        detector_name (str): name of RGB object detection
+    Returns:
+        Return type: a list of (label, box2d) tuples.
+        A label is a string.
+        box2d is xyxy tuple
+    """
+    if isinstance(viam_robot_or_vision_client, VisionServiceClient):
+        vision_client = viam_robot_or_vision_client
+    else:
+        viam_robot = viam_robot_or_vision_client
+        vision_client = VisionServiceClient.from_robot(viam_robot)
+    detections = await vision_client.get_detections_from_camera(
+        camera_name, detector_name)
+    return detections
 
-    # camera = Camera.from_robot(robot, "comp-combined")
-
-
-    # camera = Camera.from_robot(robot, "comp-combined")
-
-    # depth_camera = Camera.from_robot(viam_robot, "gripper:depth-cam")  #"comp-combined")
-    # color_camera = Camera.from_robot(viam_robot, "gripper:color-cam")
-
-    # image = await color_camera.get_image()
-    # image.save("foo.png")
-
-    # print("----------------------------------")
-
-    # vision = VisionServiceClient.from_robot(viam_robot)
-    # segmenter_names = await vision.get_segmenter_names()
-    # print(segmenter_names)
-
-    # print("----------------------------------")
-
-    # # grab Viam's vision service to add a TF-lite model for detection
-    # vision = VisionServiceClient.from_robot(viam_robot)
-    # params = {
-    #     "model_path": "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/models/effdet0.tflite",
-    #     "label_path": "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/models/effdet0_labels.txt",
-    #     "num_threads": 1,
-    # }
-    # findThingDetector = VisModelConfig(
-    #     name="find_thing", type=VisModelType("tflite_detector"), parameters=params)
-    # await vision.add_detector(findThingDetector)
-
-    # print(await vision.get_detector_names())
-
-    # params = {
-    #     "detector_name": "find_thing",
-    #     "confidence_threshold_pct": 0.8,
-    # }
-    # findPersonDetector = VisModelConfig(name="find_thing_segmenter", type=VisModelType("detector_segmenter"), parameters=params)
-
-    # # print('Resources:')
-    # # print(viam_robot.resource_names)
-    # while(True):
-    #     pcs = await vision.get_object_point_clouds(
-    #         "depth-cam", "find_thing_segmenter")
-    #     print("number of points clouds:", len(pcs))
-    #     if len(pcs) > 0:
-    #         print(pcs[0].geometries)
-
-    # print("HEEELO")
-
-    # await viam_robot.close()
-    pass
 
 async def viam_move_ee_to(viam_robot, pos, orien, action_id):
     """

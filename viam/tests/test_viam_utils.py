@@ -8,7 +8,8 @@ import numpy as np
 import open3d as o3d
 from viam_utils import (connect_viamlab_ur5,
                         viam_get_ee_pose,
-                        viam_get_point_cloud_array)
+                        viam_get_point_cloud_array,
+                        viam_get_object_detections2d)
 
 from sloop_object_search.grpc.utils import proto_utils
 
@@ -45,13 +46,18 @@ async def test_viam_get_ee_pose(viam_robot):
     print(pose)
     print("----------------------")
 
+async def test_viam_get_object_detections2d(viam_robot):
+    detections = await viam_get_object_detections2d(viam_robot)
+    print(detections)
+    print("----------------------")
+
 async def testall_viamlab_ur5():
     # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
     # their UR5 robot.
     ur5robot = await connect_viamlab_ur5()
     await test_viam_get_ee_pose(ur5robot)
-    await test_viam_get_point_cloud_array_to_proto(ur5robot)
-
+    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    await test_viam_get_object_detections2d(ur5robot)
 
 if __name__ == "__main__":
     asyncio.run(testall_viamlab_ur5())
