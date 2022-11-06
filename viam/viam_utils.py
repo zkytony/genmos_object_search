@@ -91,8 +91,22 @@ def viam_get_object_detections3d(world_frame):
     # THE depth-cam is UNRELIABLE FOR THE UR5 GRIPPER AT VIAM LAB.
     raise NotImplementedError()
 
+async def viam_get_image(viam_robot, camera_name, return_type="PIL"):
+    """Returns image from given camera"""
+    camera = Camera.from_robot(viam_robot, camera_name)
+    # This image should be a PIL image
+    image = await camera.get_image()
+    if return_type == "PIL":
+        return image
+    elif return_type == "array":
+        imgarr = np.array(image)
+        return imgarr
+    else:
+        raise ValueError(f"Unsupported return type {return_type}")
+
+
 async def viam_get_object_detections2d(
-        viam_robot_or_vision_client,
+        viam_robot,
         camera_name="segmenter-cam",
         detector_name="find_objects"):
     """
@@ -105,11 +119,7 @@ async def viam_get_object_detections2d(
         A label is a string.
         box2d is xyxy tuple
     """
-    if isinstance(viam_robot_or_vision_client, VisionServiceClient):
-        vision_client = viam_robot_or_vision_client
-    else:
-        viam_robot = viam_robot_or_vision_client
-        vision_client = VisionServiceClient.from_robot(viam_robot)
+    vision_client = VisionServiceClient.from_robot(viam_robot)
     detections = await vision_client.get_detections_from_camera(
         camera_name, detector_name)
     return detections
