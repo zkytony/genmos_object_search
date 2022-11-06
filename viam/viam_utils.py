@@ -41,7 +41,7 @@ async def viam_get_ee_pose(viam_robot):
     #IS BECAUSE THE GRIPPER IS A SEPARATE COMPUTER
     #AND CURRENTLY THERE IS A BUG IN VIAM TO GET
     #THAT FRAME. ALSO, SHOULD USE MOTIONSERVICE
-    #INSTEAD OF ARM.
+    #INSTEAD OF ARM BUT CANT BECAUSE OF THAT BUG.
     arm = Arm.from_robot(viam_robot, "arm")
     pose_w_ovec = await arm.get_end_position()
 
