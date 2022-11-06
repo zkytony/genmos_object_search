@@ -20,7 +20,7 @@ import sloop_object_search.utils.math as math_utils
 
 
 ########### viam functions ###########
-async def viam_connect():
+async def connect_viamlab_ur5():
     creds = Credentials(
         type='robot-location-secret',
         payload='gm1rjqe84nt8p64ln6r1jyf5hc3tdnc2jywojoykvk56d0qa')
