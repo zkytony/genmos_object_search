@@ -2,7 +2,7 @@ import asyncio
 import os
 import sys
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ABS_PATH, '../../../'))
+sys.path.insert(0, os.path.join(ABS_PATH, '../../'))
 
 import numpy as np
 import open3d as o3d
