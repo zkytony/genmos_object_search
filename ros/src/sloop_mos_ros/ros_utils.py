@@ -306,9 +306,9 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
 ### Vision Messages ###
 def detection3d_to_proto(d3d_msg, class_names,
                          target_frame=None, tf2buf=None):
-    """Given vision_msgs.Detection3D, return a proto Detection3D object. because the
-    label in d3d_msg have integer id, we will need to map them to strings
-    according to indexing in 'class_names'.
+    """Given vision_msgs.Detection3D, return a proto Detection object with a 3D
+    box. because the label in d3d_msg have integer id, we will need to map them
+    to strings according to indexing in 'class_names'.
 
     If the message contains multiple object hypotheses, will only
     consider the one with the highest score
@@ -332,9 +332,9 @@ def detection3d_to_proto(d3d_msg, class_names,
                            sizes=common_pb2.Vec3(x=d3d_msg.bbox.size.x,
                                                  y=d3d_msg.bbox.size.y,
                                                  z=d3d_msg.bbox.size.z))
-    return o_pb2.Detection3D(label=label,
-                             confidence=confidence,
-                             box=box)
+    return o_pb2.Detection(label=label,
+                           confidence=confidence,
+                           box_3d=box)
 
 def detection3darray_to_proto(d3darr_msg, robot_id, class_names,
                               target_frame=None, tf2buf=None):

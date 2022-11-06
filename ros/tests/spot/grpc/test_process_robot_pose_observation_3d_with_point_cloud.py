@@ -24,7 +24,7 @@ from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc.common_pb2\
     import Status, Voxel3D, Box3D, Pose3D, Vec3
 from sloop_object_search.grpc.observation_pb2\
-    import ObjectDetectionArray, Detection3D
+    import ObjectDetectionArray, Detection
 from sloop_object_search.utils.misc import hash16
 from sloop_object_search.utils.math import euler_to_quat, quat_to_euler
 from sloop_object_search.utils.open3d_utils import draw_octree_dist

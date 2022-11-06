@@ -368,17 +368,21 @@ def robot_belief_to_proto(robot_belief, search_region, header=None, **other_fiel
                              pose=robot_pose_pb,
                              **other_fields)
 
-def pomdp_detection_from_proto(detection_pb, agent,
-                               pos_precision='int',
-                               rot_precision=0.001,
-                               size_precision=0.001):
-    """given Detection3D proto, return ObjectDetection object
-    The pose in the detection will be converted to POMDP space.
-    Its position and orientation will be rounded to the specified
-    precision."""
+def pomdp_detection_from_proto_3d(detection_pb, agent,
+                                  pos_precision='int',
+                                  rot_precision=0.001,
+                                  size_precision=0.001):
+    """given Detection proto for 3D object detection, return an ObjectDetection
+    object. The pose in the detection will be converted to POMDP space.  Its
+    position and orientation will be rounded to the specified precision.
+
+    Note that although the detection_pb is expected to be for 3D object
+    detection, it is ok if the POMDP agent is 2D. In that case, the z
+    coordinate of the 3D box will be dropped.
+    """
     objid = detection_pb.label
-    center = detection_pb.box.center
-    sizes = v3toa(detection_pb.box.sizes)
+    center = detection_pb.box_3d.center
+    sizes = v3toa(detection_pb.box_3d.sizes)
 
     # because the POMDP frame and the world frame are axis-aligned,
     # we only need to convert the position, not rotation.
@@ -482,7 +486,7 @@ def pomdp_observation_from_request(request, agent, action=None):
         # First collect what we do detect
         detections = {}
         for detection_pb in request.object_detections.detections:
-            zobj = pomdp_detection_from_proto(detection_pb, agent)
+            zobj = pomdp_detection_from_proto_3d(detection_pb, agent)
             if zobj.id not in detections:
                 detections[zobj.id] = zobj
             else:
