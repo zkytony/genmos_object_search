@@ -166,6 +166,43 @@ async def viam_get_object_detections2d(
                            (det_pb.x_min, det_pb.y_min, det_pb.x_max, det_pb.y_max)))
     return results
 
+
+def viam_detections3d_to_proto(robot_id, detections):
+    """Parameters:
+    detections: a list of (label, box3d) tuples.
+    A label is a string.
+    A box3d is a tuple (center, w, l, h) -- this is interpreted from Viam's proto def.
+    Note that 'center' should already be in world frame.
+    Note: no handling of confidence.
+    Note: this method is NEVER TESTED (11/06/22 12:29).
+    """
+    detections_pb = []
+    for det3d in detections:
+        label, box3d = det3d
+        center, w, l, h = box3d
+        center_pb = proto_utils.posetuple_to_poseproto(center)
+        box_pb = common_pb2.Box3D(center=center_pb,
+                                  sizes=common_pb2.Vec3(x=w, y=l, z=h))
+        # NOTE: setting confidence is not supported right now
+        det3d_pb = o_pb2.Detection3D(label=label,
+                                     box=box_pb)
+        detections_pb.append(det3d_pb)
+    # TODO: properly create header
+    raise NotImplementedError()
+    header = proto_utils.make_header(frame_id=None, stamp=None)
+    return o_pb2.ObjectDetectionArray(header=header,
+                                      robot_id=robot_id,
+                                      detections=detections_pb)
+
+def viam_detections2d_to_proto(robot_id, detections):
+    """
+    Args:
+        detections: list of (label, confidence, xyxy) tuples.
+    Returns:
+        a
+    """
+
+
 async def viam_move_ee_to(viam_robot, pos, orien, action_id):
     """
     Moves the end effector to the given goal position and orientation.
@@ -228,30 +265,6 @@ def viam_signal_find(action_id):
     """Do something with the robot to signal the find action"""
     raise NotImplementedError
 
-def viam_detections3d_to_proto(robot_id, detections):
-    """Parameters:
-    detections: a list of (label, box3d) tuples.
-    A label is a string.
-    A box3d is a tuple (center, w, l, h) -- this is interpreted from Viam's proto def.
-    Note that 'center' should already be in world frame.
-    """
-    detections_pb = []
-    for det3d in detections:
-        label, box3d = det3d
-        center, w, l, h = box3d
-        center_pb = proto_utils.posetuple_to_poseproto(center)
-        box_pb = common_pb2.Box3D(center=center_pb,
-                                  sizes=common_pb2.Vec3(x=w, y=l, z=h))
-        # NOTE: setting confidence is not supported right now
-        det3d_pb = o_pb2.Detection3D(label=label,
-                                     box=box_pb)
-        detections_pb.append(det3d_pb)
-    # TODO: properly create header
-    raise NotImplementedError()
-    header = proto_utils.make_header(frame_id=None, stamp=None)
-    return o_pb2.ObjectDetectionArray(header=header,
-                                      robot_id=robot_id,
-                                      detections=detections_pb)
 
 
 ################## Below are code from Gautham for orientation conversion #############
