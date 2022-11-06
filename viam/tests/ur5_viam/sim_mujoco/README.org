@@ -1,4 +1,0 @@
-To run tests here, you should install the [[https://github.com/deepmind/mujoco][mujoco python package maintained by Deepmind]]:
-#+begin_src
-pip install mujoco
-#+end_src
