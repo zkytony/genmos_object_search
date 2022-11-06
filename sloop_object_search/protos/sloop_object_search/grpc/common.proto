@@ -48,6 +48,14 @@ message Quaternion {
   double w = 4;
 }
 
+// a box in 2D, represented in the xyxy format
+message Box2D {
+  double x_min = 1;
+  double y_min = 2;
+  double x_max = 3;
+  double y_max = 4;
+}
+
 // a box in 3D that may be rotated in space.
 message Box3D {
   Pose3D center = 1;
