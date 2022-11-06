@@ -14,6 +14,8 @@ from sloop_object_search.grpc.utils import proto_utils
 
 
 async def test_viam_get_point_cloud_array_to_proto(viam_robot):
+    # THIS TEST MAY FAIL BECAUSE:
+    #  -- The depth cloud is not accessible (you will get "Unknown desc = image: unknown format")
     viam_cloud_arr = await viam_get_point_cloud_array(viam_robot)
 
     # 'camera' is a made-up camera frame.
@@ -43,11 +45,13 @@ async def test_viam_get_ee_pose(viam_robot):
     print(pose)
     print("----------------------")
 
-async def testall():
+async def testall_viamlab_ur5():
+    # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
+    # their UR5 robot.
     ur5robot = await connect_viamlab_ur5()
     await test_viam_get_ee_pose(ur5robot)
-    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    await test_viam_get_point_cloud_array_to_proto(ur5robot)
 
 
 if __name__ == "__main__":
-    asyncio.run(testall())
+    asyncio.run(testall_viamlab_ur5())

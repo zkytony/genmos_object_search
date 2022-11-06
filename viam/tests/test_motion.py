@@ -32,20 +32,16 @@ async def main():
 
     worldstate = WorldState(obstacles=[tableFrame, xARMFrame])
 
-
     arm = Arm.from_robot(robot, "arm")
     pose = await arm.get_end_position()
-
+    pose.x += 100
     motion = MotionServiceClient.from_robot(robot)
     for resname in robot.resource_names:
         if resname.name == "arm":
             print (resname)
-
-            for i in range(5):
-                pose.z -= 50
-                move = await motion.move(component_name=resname, destination =
-                                         PoseInFrame(reference_frame="arm_origin", pose=pose),
-                                         world_state=worldstate)
+            move = await motion.move(component_name=resname, destination =
+                                     PoseInFrame(reference_frame="arm_origin", pose=pose),
+                                     world_state=worldstate)
 
     await robot.close()
 
