@@ -1,7 +1,9 @@
 import math
 import yaml
+import time
 import numpy as np
 import open3d as o3d
+import asyncio
 from dataclasses import dataclass
 
 from viam.robot.client import RobotClient
@@ -91,11 +93,25 @@ def viam_get_object_detections3d(world_frame):
     # THE depth-cam is UNRELIABLE FOR THE UR5 GRIPPER AT VIAM LAB.
     raise NotImplementedError()
 
-async def viam_get_image(viam_robot, camera_name, return_type="PIL"):
+async def viam_get_image(viam_robot, camera_name,
+                         return_type="PIL", timeout=10):
     """Returns image from given camera"""
     camera = Camera.from_robot(viam_robot, camera_name)
     # This image should be a PIL image
-    image = await camera.get_image()
+    image = None
+    _start = time.time()
+    while image is None:
+        try:
+            _time_left = timeout - (time.time() - _start)
+            image = await asyncio.wait_for(camera.get_image(), timeout=_time_left)
+        except AssertionError:
+            # see comments in viam_get_object_detections2d; likely due to failure to retrieve data from the camera right now.
+            print("failed to get image. Trying again...")
+            time.sleep(0.1)
+            _time_used = time.time() - _start
+            if timeout is not None and _time_used > timeout:
+                raise RuntimeError(f"Unable to get image from '{camera_name}' camera.")
+
     if return_type == "PIL":
         return image
     elif return_type == "array":
@@ -104,26 +120,51 @@ async def viam_get_image(viam_robot, camera_name, return_type="PIL"):
     else:
         raise ValueError(f"Unsupported return type {return_type}")
 
-
 async def viam_get_object_detections2d(
         viam_robot,
         camera_name="segmenter-cam",
-        detector_name="find_objects"):
+        detector_name="find_objects",
+        confidence_thres=None,
+        timeout=10):
     """
     Args:
         viam_robot_or_vision_client: either viam_robot connection, or VisionServiceClient
         camera_name (str): name of camera with color image
         detector_name (str): name of RGB object detection
+        confidence_thres (float): filter out detections with confidence below this threshold
+        timeout: wait time for the vision service to return a message. Must not be None.
     Returns:
-        Return type: a list of (label, box2d) tuples.
-        A label is a string.
-        box2d is xyxy tuple
+        Return type: a list of (label, confidence, box2d) tuples.
+        A label is a string. confidence is score, box2d is xyxy tuple
     """
     vision_client = VisionServiceClient.from_robot(viam_robot)
-    detections = await vision_client.get_detections_from_camera(
-        camera_name, detector_name)
-    return detections
+    detections = None
+    _start = time.time()
+    while detections is None:
+        try:
+            _time_left = timeout - (time.time() - _start)
+            detections = await asyncio.wait_for(
+                vision_client.get_detections_from_camera(
+                    camera_name, detector_name), timeout=_time_left)
 
+        except AssertionError:
+            # File "/home/kaiyu/repo/robotdev/spot/venv/spot39/lib/python3.9/site-packages/grpclib/client.py", line 883, in __call__
+            #     assert reply is not None
+            # AssertionErro
+            # this is likely because the detector is slow and doesn't return anything when you query.
+            # We try again.
+            print("failed to get detections. Trying again...")
+            time.sleep(0.1)
+            _time_used = time.time() - _start
+            if _time_used > timeout:
+                raise TimeoutError(f"Unable to get detections from '{camera_name}' camera using '{detector_name}' detector")
+
+    results = []
+    for det_pb in detections:
+        if confidence_thres is not None and det_pb.confidence < confidence_thres:
+            results.append((det_pb.class_name, det_pb.confidence,
+                           (det_pb.x_min, det_pb.y_min, det_pb.x_max, det_pb.y_max)))
+    return results
 
 async def viam_move_ee_to(viam_robot, pos, orien, action_id):
     """

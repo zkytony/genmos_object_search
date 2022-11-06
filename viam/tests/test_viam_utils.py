@@ -51,10 +51,13 @@ async def test_viam_get_image(viam_robot):
     image = await viam_get_image(viam_robot, "gripper:color-cam")
     image.save("foo.png")
     print("image saved")
+    image = await viam_get_image(viam_robot, "segmenter-cam")
+    image.save("foo-seg.png")
+    print("segmenter image saved")
     print("----------------------")
 
 async def test_viam_get_object_detections2d(viam_robot):
-    detections = await viam_get_object_detections2d(viam_robot)
+    detections = await viam_get_object_detections2d(viam_robot, confidence_thres=0.5)
     print(detections)
     print("----------------------")
 
@@ -67,7 +70,7 @@ async def testall_viamlab_ur5():
     await test_viam_get_ee_pose(ur5robot)
     # await test_viam_get_point_cloud_array_to_proto(ur5robot)
     await test_viam_get_image(ur5robot)
-    # await test_viam_get_object_detections2d(ur5robot)
+    await test_viam_get_object_detections2d(ur5robot)
 
 if __name__ == "__main__":
     asyncio.run(testall_viamlab_ur5())
