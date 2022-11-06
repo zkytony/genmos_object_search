@@ -176,6 +176,7 @@ def viam_detections3d_to_proto(robot_id, detections):
     Note: no handling of confidence.
     Note: this method is NEVER TESTED (11/06/22 12:29).
     """
+    raise NotImplementedError()
     detections_pb = []
     for det3d in detections:
         label, box3d = det3d
@@ -184,11 +185,10 @@ def viam_detections3d_to_proto(robot_id, detections):
         box_pb = common_pb2.Box3D(center=center_pb,
                                   sizes=common_pb2.Vec3(x=w, y=l, z=h))
         # NOTE: setting confidence is not supported right now
-        det3d_pb = o_pb2.Detection3D(label=label,
-                                     box=box_pb)
+        det3d_pb = o_pb2.Detection(label=label,
+                                   box_3d=box_pb)
         detections_pb.append(det3d_pb)
-    # TODO: properly create header
-    raise NotImplementedError()
+    # TODO: properly create header with proper frame!x
     header = proto_utils.make_header(frame_id=None, stamp=None)
     return o_pb2.ObjectDetectionArray(header=header,
                                       robot_id=robot_id,
@@ -199,8 +199,21 @@ def viam_detections2d_to_proto(robot_id, detections):
     Args:
         detections: list of (label, confidence, xyxy) tuples.
     Returns:
-        a
+        a ObjectDetectionArray proto with 2D detections.
     """
+    detections_pb = []
+    for det2d in detections:
+        label, confidence, box2d = det2d
+        x1, y1, x2, y2 = box2d
+        box_pb = common_pb2.Box2D(x_min=x1, y_min=y1,
+                                  x_max=x2, y_max=y2)
+        det2d_pb = o_pb2.Detection(label=label,
+                                   box_2d=box_pb)
+        detections_pb.append(det2d_pb)
+    header = proto_utils.make_header()
+    return o_pb2.ObjectDetectionArray(header=header,
+                                      robot_id=robot_id,
+                                      detections=detections_pb)
 
 
 async def viam_move_ee_to(viam_robot, pos, orien, action_id):
