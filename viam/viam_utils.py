@@ -94,7 +94,7 @@ def viam_get_object_detections3d(world_frame):
     raise NotImplementedError()
 
 async def viam_get_image(viam_robot, camera_name,
-                         return_type="PIL", timeout=10):
+                         return_type="PIL", timeout=3):
     """Returns image from given camera"""
     camera = Camera.from_robot(viam_robot, camera_name)
     # This image should be a PIL image
@@ -125,7 +125,7 @@ async def viam_get_object_detections2d(
         camera_name="segmenter-cam",
         detector_name="find_objects",
         confidence_thres=None,
-        timeout=10):
+        timeout=3):
     """
     Args:
         viam_robot_or_vision_client: either viam_robot connection, or VisionServiceClient
