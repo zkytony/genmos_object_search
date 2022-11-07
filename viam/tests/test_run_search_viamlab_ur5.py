@@ -57,6 +57,7 @@
 #
 # 1. run in one terminal, run 'python -m sloop_object_search.grpc.server'
 # 2. run in one terminal, run 'python test_run_search_viamlab_ur5.py'
+# 3. run in one terminal, run 'roslaunch view_viam_search.launch'
 import asyncio
 import yaml
 import os
