@@ -66,7 +66,7 @@ agent_config:
       center_z: 0.0
       octree_size: 32
       region_size_x: 1.35
-      region_size_y: 2.0
+      region_size_y: 2.4
       region_size_z: 1.5
       res: 0.08
   targets:
