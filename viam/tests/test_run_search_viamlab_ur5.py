@@ -153,10 +153,17 @@ class SloopMosViam:
         """Publishes the TF and visualization markers for the world state
         periodically"""
         ## Hard coded for the Viam Lab scene
-        table_pose = (0, 0, -0.02)  # in world frame
-        table_sizes = (2.0, 2.0, 0.4)
-        xarm_pose = (0.6, 0., 0.5) # in world frame
+        table_pose = (0.43, 0, -0.465)  # center of table in world frame
+        table_sizes = (0.86, 2.2, 0.93)
+
+        xarm_pose = (0.8, 0., 0.5) # in world frame
         xarm_sizes = (0.4, 0.4, 1.0)
+
+        chair_pose = (0.05, -1.37, 0.415) # in world frame
+        chair_sizes = (0.4, 0.4, 0.83)
+
+        robot_base_pose = (0.0, 0.0, 0.125) # in world frame
+        robot_base_sizes = (0.17, 0.17, 0.25)
 
         table = v_pb2.Geometry(center=v_pb2.Pose(x=table_pose[0]*1000,
                                                  y=table_pose[1]*1000,
@@ -200,6 +207,18 @@ class SloopMosViam:
         world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
         self.viam_wold_state = world_state
 
+        # Chair
+        xarm_marker = ros_utils.make_viz_marker_for_object(
+            "xarm", xarm_pose,
+            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
+            viz_type=viz_msgs.Marker.CUBE,
+            color=[0.95, 0.95, 0.88, 0.8],
+            scale=geometry_msgs.Vector3(x=xarm_sizes[0],
+                                        y=xarm_sizes[1],
+                                        z=xarm_sizes[2]),
+            lifetime=0)  # 0 is forever
+
+
         markers = [table_marker, xarm_marker]
         self._world_state_markers_pub.publish(viz_msgs.MarkerArray(markers))
         rospy.loginfo("Published world state markers")
@@ -212,7 +231,7 @@ class SloopMosViam:
 
     def _publish_tf(self):
         for child_frame in self._world_frame_poses:
-            pose = self._world_frame_poses
+            pose = self._world_frame_poses[child_frame]
 
             if len(pose) == 3:
                 tf_msg = ros_utils.tf2msg_from_object_loc(
@@ -220,11 +239,7 @@ class SloopMosViam:
             else:
                 _, tf_msg = ros_utils.viz_msgs_for_robot_pose(
                     pose, self.world_frame, child_frame)
-
             self.tf2br.sendTransform(tf_msg)
-
-        if self._trobot is not None:
-            self.tf2br.sendTransform(self._trobot)
 
     def get_and_visualize_belief_3d(self):
         robot_id = self.robot_id
@@ -289,7 +304,7 @@ class SloopMosViam:
             scale=geometry_msgs.Vector3(x=0.6, y=0.08, z=0.08))
         self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
         self._world_frame_poses[self.robot_id] = robot_pose
-        self.br.sendTransform(trobot)
+        self.tf2br.sendTransform(trobot)
 
     @property
     def search_space_res_3d(self):
