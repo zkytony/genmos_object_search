@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Grid1
         - /MarkerArray1
         - /octree_belief1
       Splitter Ratio: 0.5
@@ -37,7 +38,7 @@ Visualization Manager:
     - Alpha: 0.5
       Cell Size: 1
       Class: rviz/Grid
-      Color: 160; 160; 164
+      Color: 101; 101; 104
       Enabled: true
       Line Style:
         Line Width: 0.029999999329447746
@@ -141,7 +142,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.994416236877441
+      Distance: 4.9954705238342285
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -149,17 +150,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.31161579489707947
+        Y: 0.22446855902671814
+        Z: -0.18294154107570648
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9453979730606079
+      Pitch: 0.13539713621139526
       Target Frame: <Fixed Frame>
-      Yaw: 1.9103939533233643
+      Yaw: 1.2003960609436035
     Saved: ~
 Window Geometry:
   Displays:
