@@ -15,7 +15,7 @@ from viam.components.gripper import Gripper
 from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelType
 from viam.services.motion import MotionServiceClient
 
-from viam.proto.common import ResourceName, PoseInFrame
+import viam.proto.common as v_pb2
 
 import sloop_object_search.utils.math as math_utils
 from sloop_object_search.grpc import observation_pb2 as o_pb2
@@ -223,62 +223,51 @@ def viam_detections2d_to_proto(robot_id, detections):
                                       detections=detections_pb)
 
 
-async def viam_move_ee_to(viam_robot, pos, orien, action_id):
+async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
+                    world_state, timeout=10):
     """
-    Moves the end effector to the given goal position and orientation.
-    If not possible, [???]
+    Moves the component to the given goal position and orientation.
+    If move is successful, return True. Otherwise, return false.
 
-    pos (position): (x,y,z)
-    orien (quaternion): (qx, qy, qz, qw)
+    Args:
+        viam_robot: viam grpc connection channel
+        component_name (str): the name of the component we are moving
+        goal_pose: a tuple (x,y,z,qx,qy,qz,qw) that specifies the
+            position and orientation (quaternion) of the arm ee.
+            Note that we have the position in meters. Will convert to
+            milimeters for viam.
+        goal_frame: name of frame that the goal pose is with respect to.
+        world_state: a viam.proto.common.WorldState
     """
-    pose = await viam_get_ee_pose(viam_robot)
     motion = MotionServiceClient.from_robot(viam_robot)
-    # motion.move("arm", )
-    pose.x += 100
-    motion = MotionServiceClient.from_robot(robot)
-    for resname in robot.resource_names:
-        if resname.name == "arm":
-            print (resname)
-            move = await motion.move(component_name=resname, destination = PoseInFrame(reference_frame="arm_origin", pose=pose))
-    # arm = Arm.from_robot(viam_robot, "arm")
-    # pose = await arm.get_end_position()
-    # print(pose)
-    # # # prefers to use services methods and not component methods.
-    # motion = MotionServiceClient.from_robot(viam_robot)
-    # await motion.move(Gripper.get_resource_name("gripper:vg1"),
-    #                   PoseInFrame(reference_frame="arm_origin",
-    #                               pose=pose))
+    # need to convert goal_pose rotation from quaternion to orientation vector
+    x, y, z= goal_pose
+    qx, qy, qz, qw = goal_pose[3:]
+    ovec = Quaternion(i=qx, j=qy, k=qz, real=qw).to_orientation_vector()
+    goal_pose_w_ovec = v_pb2.Pose(x=x*1000,
+                                  y=y*1000,
+                                  z=z*1000,
+                                  o_x=ovec.x,
+                                  o_y=ovec.y,
+                                  o_z=ovec.z,
+                                  o_theta=math_utils.to_degrees(ovec.theta))
+    goal_pose_in_frame = v_pb2.PoseInFrame(reference_frame=goal_frame,
+                                           pose=goal_pose_w_ovec)
 
+    move_success = False
     for resname in viam_robot.resource_names:
-        if resname.name == "gripper:vg1":
-            print(resname.name)
-            pose = await motion.get_pose(resname, "world")
-                                 #                            type="component",
-                                 #                            subtype="gripper",
-                                 #                            name="gripper:vg1"),
-                                 # destination_frame="world")
-    print(pose)
+        if resname.name == component_name:
+            try:
+                move_success = await asyncio.wait_for(
+                    motion.move(component_name=resname,
+                                destination=goal_pose_in_frame,
+                                world_state=world_state),
+                    timeout=timeout)
+            except AssertionError as ex:
+                print("unable to receive reply for Move request")
+                return False
+    return move_success
 
-    # from viam_utils import OrientationVector, Quaternion, Vector3
-    # ovec = OrientationVector(Vector3(pose.o_x, pose.o_y, pose.o_z), math_utils.to_rad(pose.theta))
-    # qq = Quaternion.from_orientation_vector(ovec)
-    # ovec2 = qq.to_orientation_vector()
-    # qq2 = Quaternion.from_orientation_vector(ovec2)
-
-    # print(qq)
-    # print(qq2)
-
-    # import pdb; pdb.set_trace()
-
-    # viam represents orientation by ox, oy, oz, theta
-    # where (ox, oy, oz) is the axis of rotation, and
-    # theta is the degree of rotation. We convert that
-    # to quaternion by the definition of quaternion.
-
-    # qx = x * math.sin(math_utils.to_rad(pose.theta) / 2)
-    # qy = y * math.sin(math_utils.to_rad(pose.theta) / 2)
-    # qx = math.cos(math_utils.to_rad(pose.theta) / 2)
-    # pass
 
 
 def viam_signal_find(action_id):
