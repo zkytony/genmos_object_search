@@ -153,13 +153,13 @@ class SloopMosViam:
         """Publishes the TF and visualization markers for the world state
         periodically"""
         ## Hard coded for the Viam Lab scene
-        table_pose = (0.43, 0, -0.465)  # center of table in world frame
+        table_pose = (0.43, 0, -0.49)  # center of table in world frame
         table_sizes = (0.86, 1.16, 0.93)
 
-        xarm_pose = (0.8, 0., 0.5) # in world frame
+        xarm_pose = (0.8, 0., 0.475) # in world frame
         xarm_sizes = (0.4, 0.4, 1.0)
 
-        chair_pose = (0.05, 1.37, 0.415) # in world frame
+        chair_pose = (0.05, 1.37, -0.54) # in world frame
         chair_sizes = (0.4, 0.4, 0.83)
 
         arm_origin_pose = (0.0, 0.0, 0.0) # in world frame
@@ -236,6 +236,8 @@ class SloopMosViam:
         # periodically publish tf
         self._world_frame_poses["table"] = table_pose[:3]
         self._world_frame_poses["xarm"] = xarm_pose[:3]
+        self._world_frame_poses["chair"] = xarm_pose[:3]
+        self._world_frame_poses["arm_base"] = xarm_pose[:3]
 
         rospy.Timer(rospy.Duration(1./5),
                     lambda event: self._publish_tf())
