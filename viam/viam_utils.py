@@ -18,6 +18,9 @@ from viam.services.motion import MotionServiceClient
 from viam.proto.common import ResourceName, PoseInFrame
 
 import sloop_object_search.utils.math as math_utils
+from sloop_object_search.grpc import observation_pb2 as o_pb2
+from sloop_object_search.grpc import common_pb2
+from sloop_object_search.grpc.utils import proto_utils
 
 
 
@@ -36,7 +39,9 @@ async def connect_viamlab_ur5():
 async def viam_get_ee_pose(viam_robot):
     """return current end-effector pose in world
     frame through Viam.
-    Return type: tuple (x,y,z,qx,qy,qz,qw)"""
+    Return type: tuple (x,y,z,qx,qy,qz,qw)
+    Note that viam's positions units are in milimeters.
+    We will convert them into meters (more familiar with me)"""
     #NOTE!!! BELOW DOES NOT GIVE YOU THE TRUE EE
     #ON THE GRIPPER OF THE UR5 ROBOT AT VIAM LAB
     #BUT THE END OF THE ARM WITHOUT GRIPPER. THIS
@@ -51,7 +56,9 @@ async def viam_get_ee_pose(viam_robot):
     ovec = OrientationVector(Vector3(
         pose_w_ovec.o_x, pose_w_ovec.o_y, pose_w_ovec.o_z), math_utils.to_rad(pose_w_ovec.theta))
     quat = Quaternion.from_orientation_vector(ovec)
-    pose_w_quat = (pose_w_ovec.x, pose_w_ovec.y, pose_w_ovec.z,
+    pose_w_quat = (pose_w_ovec.x / 1000,
+                   pose_w_ovec.y / 1000,
+                   pose_w_ovec.z / 1000,
                    quat.i, quat.j, quat.k, quat.real)
     return pose_w_quat
 

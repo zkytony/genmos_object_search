@@ -10,6 +10,7 @@ from viam_utils import (connect_viamlab_ur5,
                         viam_get_ee_pose,
                         viam_get_point_cloud_array,
                         viam_get_object_detections2d,
+                        viam_detections2d_to_proto,
                         viam_get_image)
 
 from sloop_object_search.grpc.utils import proto_utils
@@ -45,6 +46,8 @@ async def test_viam_get_point_cloud_array_to_proto(viam_robot):
 async def test_viam_get_ee_pose(viam_robot):
     pose = await viam_get_ee_pose(viam_robot)
     print(pose)
+    pose_pb = proto_utils.posetuple_to_poseproto(pose)
+    print(pose_pb)
     print("----------------------")
 
 async def test_viam_get_image(viam_robot):
@@ -59,6 +62,9 @@ async def test_viam_get_image(viam_robot):
 async def test_viam_get_object_detections2d(viam_robot):
     detections = await viam_get_object_detections2d(viam_robot, confidence_thres=0.5)
     print(detections)
+    print("::: convert to my ObjectDetectionArray proto :::")
+    detections_pb = viam_detections2d_to_proto("robot0", detections)
+    print(detections_pb)
     print("----------------------")
 
 async def testall_viamlab_ur5():
@@ -71,6 +77,7 @@ async def testall_viamlab_ur5():
     # await test_viam_get_point_cloud_array_to_proto(ur5robot)
     await test_viam_get_image(ur5robot)
     await test_viam_get_object_detections2d(ur5robot)
+    await ur5robot.close()
 
 if __name__ == "__main__":
     asyncio.run(testall_viamlab_ur5())
