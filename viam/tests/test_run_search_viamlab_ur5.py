@@ -318,79 +318,66 @@ class SloopMosViam:
         return response_observation, response_robot_belief
 
     def server_message_callback(self, message):
-        print("received messgae:", message)
+        print("received message:", message)
         raise NotImplementedError("Hierarchical planning is not yet integrated"\
                                   "for viam. Not expecting anything from the server.")
 
+    def run(self):
+        # First, create an agent
+        self.sloop_client.createAgent(
+            header=proto_utils.make_header(), config=self.agent_config,
+            robot_id=self.robot_id)
 
-async def run_sloop_search(viam_robot,
-                           config,
-                           world_frame=None):
-    """main object search logic
-    config: configuration dictionary for SLOOP"""
-    sloop_client = SloopObjectSearchClient()
-    agent_config = config["agent_config"]
-    planner_config = config["planner_config"]
-    robot_id = agent_config["robot"]["id"]
+        # Make the client listen to server
+        ls_future = self.sloop_client.listenToServer(
+            self.robot_id, self.server_message_callback)
+        self._local_robot_id = None  # needed if the planner is hierarchical
 
-    last_action = None
-    objects_found = set()
+        # Update search region
+        self.update_search_region_3d()
 
-    # First, create an agent
-    sloop_client.createAgent(
-        header=proto_utils.make_header(), config=agent_config,
-        robot_id=robot_id)
+        # wait for agent creation
+        print("waiting for sloop agent creation...")
+        self.sloop_client.waitForAgentCreation(self.robot_id)
+        print("agent created!")
 
-    # Make the client listen to server
-    ls_future = sloop_client.listenToServer(
-        robot_id, server_message_callback)
-    local_robot_id = None  # needed if the planner is hierarchical
+        # # visualize initial belief
+        # get_and_visualize_belief()
 
-    # Update search region
-    update_search_region(viam_robot, agent_config, world_frame, sloop_client)
+        # # create planner
+        # response = sloop_client.createPlanner(config=planner_config,
+        #                                       header=proto_utils.make_header(),
+        #                                       robot_id=robot_id)
+        # rospy.loginfo("planner created!")
 
-    # wait for agent creation
-    print("waiting for sloop agent creation...")
-    sloop_client.waitForAgentCreation(robot_id)
-    print("agent created!")
+        # # Send planning requests
+        # for step in range(config["task_config"]["max_steps"]):
+        #     action_id, action_pb = plan_action()
+        #     execute_action(action_id, action_pb)
 
-    # # visualize initial belief
-    # get_and_visualize_belief()
+        #     if dynamic_update:
+        #         update_search_region(robot_id, agent_config, sloop_client)
 
-    # # create planner
-    # response = sloop_client.createPlanner(config=planner_config,
-    #                                       header=proto_utils.make_header(),
-    #                                       robot_id=robot_id)
-    # rospy.loginfo("planner created!")
+        #     response_observation, response_robot_belief =\
+        #         self.wait_observation_and_update_belief(action_id)
+        #     print(f"Step {step} robot belief:")
+        #     robot_belief_pb = response_robot_belief.robot_belief
+        #     objects_found = set(robot_belief_pb.objects_found.object_ids)
+        #     objects_found.update(objects_found)
+        #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+        #     print(f"  objects found: {objects_found}")
+        #     print("-----------")
 
-    # # Send planning requests
-    # for step in range(config["task_config"]["max_steps"]):
-    #     action_id, action_pb = plan_action()
-    #     execute_action(action_id, action_pb)
+        #     # visualize FOV and belief
+        #     self.get_and_visualize_belief()
+        #     if response_observation.HasField("fovs"):
+        #         self.visualize_fovs_3d(response_observation)
 
-    #     if dynamic_update:
-    #         update_search_region(robot_id, agent_config, sloop_client)
-
-    #     response_observation, response_robot_belief =\
-    #         self.wait_observation_and_update_belief(action_id)
-    #     print(f"Step {step} robot belief:")
-    #     robot_belief_pb = response_robot_belief.robot_belief
-    #     objects_found = set(robot_belief_pb.objects_found.object_ids)
-    #     objects_found.update(objects_found)
-    #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-    #     print(f"  objects found: {objects_found}")
-    #     print("-----------")
-
-    #     # visualize FOV and belief
-    #     self.get_and_visualize_belief()
-    #     if response_observation.HasField("fovs"):
-    #         self.visualize_fovs_3d(response_observation)
-
-    #     # Check if we are done
-    #     if objects_found == set(self.agent_config["targets"]):
-    #         rospy.loginfo("Done!")
-    #         break
-    #     time.sleep(1)
+        #     # Check if we are done
+        #     if objects_found == set(self.agent_config["targets"]):
+        #         rospy.loginfo("Done!")
+        #         break
+        #     time.sleep(1)
 
 
 
@@ -403,12 +390,17 @@ async def test_ur5e_viamlab(mock=False):
 
     print(">>>>>>><<<<<<<<>>>> viam connecting >><<<<<<<<>>>>>>>")
     ur5robot = await viam_utils.connect_viamlab_ur5()
+    viam_names = {
+        "camera": "segmenter_cam",
+        "detector": "find_objects",
+        "arm": "arm"
+    }
+    world_frame = "arm_origin"
 
     print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
-    await run_sloop_search(ur5robot,
-                           config,
-                           world_frame="arm_origin")
-
+    sloop_viam = SloopMosViam()
+    sloop_viam.setup(ur5robot, viam_names, config, world_frame)
+    sloop_viam.run()
 
 
 if __name__ == "__main__":

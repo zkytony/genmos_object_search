@@ -39,7 +39,7 @@ async def connect_viamlab_ur5():
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
 ########### Robot-generic viam functions ###########
-async def viam_get_ee_pose(viam_robot):
+async def viam_get_ee_pose(viam_robot, arm_name="arm"):
     """return current end-effector pose in world
     frame through Viam.
     Return type: tuple (x,y,z,qx,qy,qz,qw)
@@ -52,7 +52,7 @@ async def viam_get_ee_pose(viam_robot):
     #AND CURRENTLY THERE IS A BUG IN VIAM TO GET
     #THAT FRAME. ALSO, SHOULD USE MOTIONSERVICE
     #INSTEAD OF ARM BUT CANT BECAUSE OF THAT BUG.
-    arm = Arm.from_robot(viam_robot, "arm")
+    arm = Arm.from_robot(viam_robot, arm_name)
     pose_w_ovec = await arm.get_end_position()
 
     # convert pose orientation to quaternion! [viam's problem]
