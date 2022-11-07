@@ -63,14 +63,24 @@ import os
 import sys
 import numpy as np
 
-# Import stuff from parent folder
+# Allow importing stuff from parent folder
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ABS_PATH, '../'))
-import viam_utils
+
 from constants import (SEARCH_SPACE_RESOLUTION_3D,
                        DETECTION2D_CONFIDENCE_THRES)
 
-# Import from other of sloop_object_search packages
+# Viam related
+import viam_utils
+import viam.proto.common as v_pb2
+
+# ROS related
+import rospy
+import std_msgs.msg as std_msgs
+import geometry_msgs.msg as geometry_msgs
+import visualization_msgs.msg as viz_msgs
+from sloop_mos_ros import ros_utils
+
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
 from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
@@ -82,14 +92,6 @@ from sloop_object_search.grpc.constants import Message
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
-
-# ROS related
-import rospy
-import std_msgs.msg as std_msgs
-import geometry_msgs.msg as geometry_msgs
-import visualization_msgs.msg as viz_msgs
-from sloop_mos_ros import ros_utils
-
 
 
 class SloopMosViam:
@@ -186,7 +188,7 @@ class SloopMosViam:
             lifetime=0)  # 0 is forever
 
         world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
-        self.viam_wold_state = world_State
+        self.viam_wold_state = world_state
 
         markers = [table_marker, xarm_marker]
         self._world_state_pub.publish(viz_msgs.MarkerArray(markers))
@@ -399,6 +401,7 @@ class SloopMosViam:
         print("agent created!")
 
         # visualize initial belief
+        self.publish_world_state_in_ros()
         self.get_and_visualize_belief_3d()
         rospy.spin()
 
