@@ -76,7 +76,10 @@ def search_region_3d_from_point_cloud(point_cloud, robot_position, existing_sear
     points_array = pointcloudproto_to_array(point_cloud)
 
     # size of the search region (in meters)
-    default_sizes = np.max(points_array, axis=0) - np.min(points_array, axis=0)  # size of the search region in each axis
+    if len(points_array) == 0:  # there is no obstacle
+        default_sizes = (kwargs.get("default_size", 4.0),) * 3  # default size: 4.0m
+    else:
+        default_sizes = np.max(points_array, axis=0) - np.min(points_array, axis=0)  # size of the search region in each axis
     region_size_x = kwargs.get("region_size_x", default_sizes[0])
     region_size_y = kwargs.get("region_size_y", default_sizes[1])
     region_size_z = kwargs.get("region_size_z", default_sizes[2])
