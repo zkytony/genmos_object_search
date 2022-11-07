@@ -81,6 +81,7 @@ import std_msgs.msg as std_msgs
 import geometry_msgs.msg as geometry_msgs
 import visualization_msgs.msg as viz_msgs
 from sloop_mos_ros import ros_utils
+from tf2_ros import TransformBroadcaster
 
 from sloop_object_search.grpc.client import SloopObjectSearchClient
 from sloop_object_search.grpc.utils import proto_utils
@@ -134,10 +135,16 @@ class SloopMosViam:
             "~fovs", viz_msgs.MarkerArray, queue_size=10, latch=True)
         self._topo_map_3d_markers_pub = rospy.Publisher(
             "~topo_map_3d", viz_msgs.MarkerArray, queue_size=10, latch=True)
+        self._robot_pose_markers_pub = rospy.Publisher(
+            "~robot_pose_marker", viz_msgs.MarkerArray, queue_size=10, latch=True)
 
         # world state
-        self._world_state_pub = rospy.Publisher(
+        self._world_state_markers_pub = rospy.Publisher(
             "~world_state", viz_msgs.MarkerArray, queue_size=10, latch=True)
+
+        # TF broadcaster
+        self.tf2br = TransformBroadcaster()
+        self._trobot = None  # tf message for robot pose
 
 
     def publish_world_state_in_ros(self):
@@ -192,9 +199,20 @@ class SloopMosViam:
         self.viam_wold_state = world_state
 
         markers = [table_marker, xarm_marker]
-        self._world_state_pub.publish(viz_msgs.MarkerArray(markers))
+        self._world_state_markers_pub.publish(viz_msgs.MarkerArray(markers))
         rospy.loginfo("Published world state markers")
 
+        # periodically publish tf
+        tf2msgs = [ros_utils.tf2msg_from_object_loc(table_pose[:3], self.world_frame, "table"),
+                   ros_utils.tf2msg_from_object_loc(xarm_pose[:3], self.world_frame, "xarm")]
+        rospy.Timer(rospy.Duration(1./5),
+                    lambda event: self._publish_tf(tf2msgs))
+
+    def _publish_tf(self, tf_msgs):
+        for t in tf_msgs:
+            self.tf2br.sendTransform(t)
+        if self._trobot is not None:
+            self.tf2br.sendTransform(trobot)
 
     def get_and_visualize_belief_3d(self):
         robot_id = self.robot_id
@@ -205,6 +223,7 @@ class SloopMosViam:
         clear_msg = ros_utils.clear_markers(header, ns="")
         self._octbelief_markers_pub.publish(clear_msg)
         self._topo_map_3d_markers_pub.publish(clear_msg)
+        self._robot_pose_markers_pub.publish(clear_msg)
 
         response = self.sloop_client.getObjectBeliefs(
             robot_id, header=proto_utils.make_header(self.world_frame))
@@ -248,7 +267,16 @@ class SloopMosViam:
                 node_thickness=self.search_space_res_3d)
             markers.extend(msg.markers)
         self._topo_map_3d_markers_pub.publish(viz_msgs.MarkerArray(markers))
-        rospy.loginfo("belief visualized")
+        rospy.loginfo("topo map 3d visualized")
+
+        # visualize robot pose vector
+        robot_pose = proto_utils.robot_pose_from_proto(robot_belief_pb.pose)
+        robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
+            srobot.pose, self.world_frame, self.env.robot_id,
+            color=[0.9, 0.1, 0.1, 0.9], lifetime=0,
+            scale=Vector3(x=0.6, y=0.08, z=0.08))
+        self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
+        self._trobot = trobot
 
     @property
     def search_space_res_3d(self):
