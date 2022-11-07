@@ -128,11 +128,6 @@ class SloopMosViam:
             "~topo_map_3d", viz_msgs.MarkerArray, queue_size=10, latch=True)
 
         # TF broadcaster
-
-        # tf; need to create listener early enough before looking up to let tf propagate into buffer
-        # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
-        self.tfbuffer = tf2_ros.Buffer()
-        self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
         self.tfbr = TransformBroadcaster()
 
 
