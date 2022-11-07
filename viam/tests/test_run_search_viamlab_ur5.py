@@ -143,7 +143,7 @@ class SloopMosViam:
         ## Hard coded for the Viam Lab scene
         table_pose = (0, 0, -20)  # in world frame
         table_sizes = (2.0, 2.0, 0.4)
-        xarm_pose = (0.6, 0., 0.)
+        xarm_pose = (0.6, 0., 0.) # in world frame
         xarm_sizes = (0.2, 0.2, 0.6)
 
         table = v_pb2.Geometry(center=v_pb2.Pose(x=table_pose[0]*1000,
@@ -174,7 +174,7 @@ class SloopMosViam:
                                       x=xarm_sizes[0]*1000,
                                       y=xarm_sizes[1]*1000,
                                       z=xarm_sizes[2]*1000)))
-        xARMFrame = v_pb2.GeometriesInFrame(reference_frame="arm_origin", geometries=[xARM])
+        xARMFrame = v_pb2.GeometriesInFrame(reference_frame=self.world_frame, geometries=[xARM])
         xarm_marker = ros_utils.make_viz_marker_for_object(
             "xarm", xarm_pose,
             std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
