@@ -151,7 +151,7 @@ class SloopMosViam:
         """Publishes the TF and visualization markers for the world state
         periodically"""
         ## Hard coded for the Viam Lab scene
-        table_pose = (0, 0, -20)  # in world frame
+        table_pose = (0, 0, -0.02)  # in world frame
         table_sizes = (2.0, 2.0, 0.4)
         xarm_pose = (0.6, 0., 0.) # in world frame
         xarm_sizes = (0.2, 0.2, 0.6)
@@ -212,7 +212,7 @@ class SloopMosViam:
         for t in tf_msgs:
             self.tf2br.sendTransform(t)
         if self._trobot is not None:
-            self.tf2br.sendTransform(trobot)
+            self.tf2br.sendTransform(self._trobot)
 
     def get_and_visualize_belief_3d(self):
         robot_id = self.robot_id
@@ -272,9 +272,9 @@ class SloopMosViam:
         # visualize robot pose vector
         robot_pose = proto_utils.robot_pose_from_proto(robot_belief_pb.pose)
         robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
-            srobot.pose, self.world_frame, self.env.robot_id,
+            robot_pose, self.world_frame, self.robot_id,
             color=[0.9, 0.1, 0.1, 0.9], lifetime=0,
-            scale=Vector3(x=0.6, y=0.08, z=0.08))
+            scale=geometry_msgs.Vector3(x=0.6, y=0.08, z=0.08))
         self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
         self._trobot = trobot
 
