@@ -55,6 +55,18 @@ import viam_utils
 import asyncio
 import yaml
 
+from sloop_object_search.grpc.client import SloopObjectSearchClient
+from sloop_object_search.grpc.utils import proto_utils
+from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
+from sloop_object_search.grpc import observation_pb2 as o_pb2
+from sloop_object_search.grpc import action_pb2 as a_pb2
+from sloop_object_search.grpc import common_pb2
+from sloop_object_search.grpc.common_pb2 import Status
+from sloop_object_search.grpc.constants import Message
+from sloop_object_search.utils.colors import lighter
+from sloop_object_search.utils import math as math_utils
+from sloop_object_search.utils.misc import import_class
+
 
 ########### main object search logic ###########
 async def run_sloop_search(viam_robot,
