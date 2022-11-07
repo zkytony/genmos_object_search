@@ -229,7 +229,7 @@ class SloopMosViam:
             header=cloud_pb.header,
             robot_id=self.robot_id,
             robot_pose=robot_pose_pb,
-            point_cloud=self.cloud_pb,
+            point_cloud=cloud_pb,
             search_region_params_3d=search_region_params_3d)
 
     def plan_action(self):
@@ -398,11 +398,12 @@ async def test_ur5e_viamlab(mock=False):
     world_frame = "arm_origin"
 
     print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
-    sloop_viam = SloopMosViam()
-    sloop_viam.setup(ur5robot, viam_names, config, world_frame)
-    sloop_viam.run()
-
-    await ur5robot.close()
+    try:
+        sloop_viam = SloopMosViam()
+        sloop_viam.setup(ur5robot, viam_names, config, world_frame)
+        sloop_viam.run()
+    finally:
+        sloop_viam.sloop_client.channel.close()
 
 
 if __name__ == "__main__":
