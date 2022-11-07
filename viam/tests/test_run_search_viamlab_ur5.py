@@ -133,10 +133,65 @@ class SloopMosViam:
         self._topo_map_3d_markers_pub = rospy.Publisher(
             "~topo_map_3d", viz_msgs.MarkerArray, queue_size=10, latch=True)
 
+        # world state
+        self._world_state_pub = rospy.Publisher(
+            "~world_state", viz_msgs.MarkerArray, queue_size=10, latch=True)
+
         # TF broadcaster
         self.tfbr = TransformBroadcaster()
 
-    def get_and_visualize_belief_3d(self, o3dviz=True):
+    def publish_world_state_in_ros(self):
+        """Publishes the TF and visualization markers for the world state
+        periodically"""
+        ## Hard coded for the Viam Lab scene
+        table_pose = (0, 0, -20)  # in world frame
+        table_sizes = (2.0, 2.0, 0.4)
+        xarm_pose = (0.6, 0., 0.)
+        xarm_sizes = (0.2, 0.2, 0.6)
+
+        table = v_pb2.Geometry(center=v_pb2.Pose(x=table_pose[0]*1000,
+                                                 y=table_pose[1]*1000,
+                                                 z=table_pose[2]*1000),
+                               box=v_pb2.RectangularPrism(
+                                   dims_mm=v_pb2.Vector3(
+                                       x=table_sizes[0]*1000,
+                                       y=table_sizes[1]*1000,
+                                       z=table_sizes[2]*1000)))
+        tableFrame = v_pb2.GeometriesInFrame(
+            reference_frame=self.world_frame, geometries=[table])
+        table_marker = ros_utils.make_viz_marker_for_object(
+            "table", table_pose,
+            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
+            viz_type=viz_msgs.Marker.CUBE,
+            scale=geometry_msgs.Vector3(x=table_sizes[0],
+                                        y=table_sizes[1],
+                                        z=table_sizes[2]))
+
+        xARM = v_pb2.Geometry(center=v_pb2.Pose(x=xarm_pose[0]*1000,
+                                                y=xarm_pose[1]*1000,
+                                                z=xarm_pose[2]*1000),
+                              box=v_pb2.RectangularPrism(
+                                  dims_mm=v_pb2.Vector3(
+                                      x=xarm_sizes[0]*1000,
+                                      y=xarm_sizes[1]*1000,
+                                      z=xarm_sizes[2]*1000)))
+        xARMFrame = v_pb2.GeometriesInFrame(reference_frame="arm_origin", geometries=[xARM])
+        xarm_marker = ros_utils.make_viz_marker_for_object(
+            "xarm", xarm_pose,
+            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
+            viz_type=viz_msgs.Marker.CUBE,
+            scale=geometry_msgs.Vector3(x=xarm_sizes[0],
+                                        y=xarm_sizes[1],
+                                        z=xarm_sizes[2]))
+
+        world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
+        self.viam_wold_state = world_State
+
+
+
+
+
+    def get_and_visualize_belief_3d(self):
         robot_id = self.robot_id
 
         # Clear markers
@@ -341,8 +396,9 @@ class SloopMosViam:
         self.sloop_client.waitForAgentCreation(self.robot_id)
         print("agent created!")
 
-        # # visualize initial belief
-        # get_and_visualize_belief()
+        # visualize initial belief
+        self.get_and_visualize_belief_3d()
+        rospy.spin()
 
         # # create planner
         # response = sloop_client.createPlanner(config=planner_config,
