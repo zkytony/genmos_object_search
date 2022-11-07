@@ -7,7 +7,6 @@ import asyncio
 import math
 import yaml
 import numpy as np
-from pypcd import pypcd
 
 import open3d as o3d
 import base64
