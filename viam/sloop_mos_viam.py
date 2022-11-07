@@ -39,13 +39,19 @@ def server_message_callback(message):
     print(message)
     raise NotImplementedError()
 
-def update_search_region(robot_id, agent_config, sloop_client):
+def update_search_region(viam_robot, agent_config, sloop_client):
     print("Sending request to update search region (3D)")
+    robot_id = agent_config["robot"]["id"]
 
-    cloud_arr = viam_get_point_cloud_array()
+    try:
+        cloud_arr = viam_get_point_cloud_array()
+    except AssertionError:
+        print("Failed to obtain point cloud. Will proceed with empty point cloud.")
+        cloud_arr = np.array([])
+
     cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr)
 
-    robot_pose = viam_get_ee_pose()
+    robot_pose = viam_get_ee_pose(viam_robot)
     robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
     # parameters
@@ -149,98 +155,7 @@ def wait_observation_and_update_belief(robot_id, world_frame, action_id, sloop_c
     return response_observation, response_robot_belief
 
 
-########### main object search logic ###########
-async def run_sloop_search(viam_robot,
-                           config,
-                           world_frame=None,
-                           dynamic_update=False):
-    """config: configuration dictionary for SLOOP"""
-    sloop_client = SloopObjectSearchClient()
-    agent_config = config["agent_config"]
-    planner_config = config["planner_config"]
-    robot_id = agent_config["robot"]["id"]
 
-    last_action = None
-    objects_found = set()
-    #-----------------------------------------
-
-    # await viam_get_object_detections2d(viam_robot)
-    # await viam_get_ee_pose(viam_robot)
-    # await viam_get_point_cloud_array(viam_robot)
-
-    await viam_move_ee_to(viam_robot, None, None, None)
-
-
-    # # First, create an agent
-    # sloop_client.createAgent(
-    #     header=proto_utils.make_header(), config=agent_config,
-    #     robot_id=robot_id)
-
-    # # Make the client listen to server
-    # ls_future = sloop_client.listenToServer(
-    #     robot_id, server_message_callback)
-    # local_robot_id = None  # needed if the planner is hierarchical
-
-    # # Update search region
-    # update_search_region(robot_id, agent_config, sloop_client)
-
-    # # wait for agent creation
-    # print("waiting for sloop agent creation...")
-    # sloop_client.waitForAgentCreation(robot_id)
-    # print("agent created!")
-
-    # # visualize initial belief
-    # get_and_visualize_belief()
-
-    # # create planner
-    # response = sloop_client.createPlanner(config=planner_config,
-    #                                       header=proto_utils.make_header(),
-    #                                       robot_id=robot_id)
-    # rospy.loginfo("planner created!")
-
-    # # Send planning requests
-    # for step in range(config["task_config"]["max_steps"]):
-    #     action_id, action_pb = plan_action()
-    #     execute_action(action_id, action_pb)
-
-    #     if dynamic_update:
-    #         update_search_region(robot_id, agent_config, sloop_client)
-
-    #     response_observation, response_robot_belief =\
-    #         self.wait_observation_and_update_belief(action_id)
-    #     print(f"Step {step} robot belief:")
-    #     robot_belief_pb = response_robot_belief.robot_belief
-    #     objects_found = set(robot_belief_pb.objects_found.object_ids)
-    #     objects_found.update(objects_found)
-    #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-    #     print(f"  objects found: {objects_found}")
-    #     print("-----------")
-
-    #     # visualize FOV and belief
-    #     self.get_and_visualize_belief()
-    #     if response_observation.HasField("fovs"):
-    #         self.visualize_fovs_3d(response_observation)
-
-    #     # Check if we are done
-    #     if objects_found == set(self.agent_config["targets"]):
-    #         rospy.loginfo("Done!")
-    #         break
-    #     time.sleep(1)
-
-async def test_ur5e_viamlab():
-    with open("./config/ur5_exp1_viamlab.yaml") as f:
-        config = yaml.safe_load(f)
-
-    print(">>>>>>><<<<<<<<>>>> viam connecting >><<<<<<<<>>>>>>>")
-    viam_robot = await viam_connect()
-    print('Resources:')
-    print(viam_robot.resource_names)
-
-    print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
-    await run_sloop_search(viam_robot,
-                           config,
-                           world_frame="base",
-                           dynamic_update=False)
 
 if __name__ == "__main__":
     asyncio.run(test_ur5e_viamlab())
