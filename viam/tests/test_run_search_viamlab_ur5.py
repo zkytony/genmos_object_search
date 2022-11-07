@@ -153,8 +153,8 @@ class SloopMosViam:
         ## Hard coded for the Viam Lab scene
         table_pose = (0, 0, -0.02)  # in world frame
         table_sizes = (2.0, 2.0, 0.4)
-        xarm_pose = (0.6, 0., 0.) # in world frame
-        xarm_sizes = (0.2, 0.2, 0.6)
+        xarm_pose = (0.6, 0., 0.5) # in world frame
+        xarm_sizes = (0.4, 0.4, 1.0)
 
         table = v_pb2.Geometry(center=v_pb2.Pose(x=table_pose[0]*1000,
                                                  y=table_pose[1]*1000,
@@ -288,9 +288,6 @@ class SloopMosViam:
         print("Sending request to update search region (3D)")
         if viam_utils.MOCK:
             cloud_arr = np.array([])
-            robot_pose = (0.2797589770640316, 0.7128048233719448, 0.5942370817926967,
-                          -0.6500191634979094, 0.4769735333791088,
-                          0.4926158987104014, 0.32756817897816304)
         else:
             try:
                 cloud_arr = viam_utils.viam_get_point_cloud_array(
@@ -298,10 +295,8 @@ class SloopMosViam:
             except Exception:
                 print("Failed to obtain point cloud. Will proceed with empty point cloud.")
                 cloud_arr = np.array([])
-            robot_pose = viam_get_ee_pose(self.viam_robot)
 
         cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr, self.world_frame)
-        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
         # parameters
         search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
@@ -313,10 +308,14 @@ class SloopMosViam:
             region_size_z=search_region_config.get("region_size_z"),
             debug=search_region_config.get("debug", False)
         )
+        search_region_center = (search_region_config.get("center_x"),
+                                search_region_config.get("center_y"),
+                                search_region_config.get("center_z"), 0, 0, 0, 1)
+        pose_pb = proto_utils.robot_pose_proto_from_tuple(search_region_center)
         self.sloop_client.updateSearchRegion(
             header=cloud_pb.header,
             robot_id=self.robot_id,
-            robot_pose=robot_pose_pb,
+            robot_pose=pose_pb,
             point_cloud=cloud_pb,
             search_region_params_3d=search_region_params_3d)
 
