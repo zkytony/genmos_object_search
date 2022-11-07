@@ -23,9 +23,13 @@ from sloop_object_search.grpc import common_pb2
 from sloop_object_search.grpc.utils import proto_utils
 
 
+MOCK = False
+
 
 ########### Robot-Specific viam functions ###########
 async def connect_viamlab_ur5():
+    if MOCK:
+        return None
     creds = Credentials(
         type='robot-location-secret',
         payload='gm1rjqe84nt8p64ln6r1jyf5hc3tdnc2jywojoykvk56d0qa')

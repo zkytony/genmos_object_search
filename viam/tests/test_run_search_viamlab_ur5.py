@@ -46,14 +46,20 @@
 #     y_max: 104
 #   }
 # }
+import os
+import sys
+ABS_PATH = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(ABS_PATH, '../'))
+import viam_utils
 
+import asyncio
+import yaml
 
 
 ########### main object search logic ###########
 async def run_sloop_search(viam_robot,
                            config,
-                           world_frame=None,
-                           dynamic_update=False):
+                           world_frame=None):
     """config: configuration dictionary for SLOOP"""
     sloop_client = SloopObjectSearchClient()
     agent_config = config["agent_config"]
@@ -62,7 +68,6 @@ async def run_sloop_search(viam_robot,
 
     last_action = None
     objects_found = set()
-    #-----------------------------------------
 
     # First, create an agent
     sloop_client.createAgent(
@@ -75,7 +80,7 @@ async def run_sloop_search(viam_robot,
     local_robot_id = None  # needed if the planner is hierarchical
 
     # Update search region
-    update_search_region(robot_id, agent_config, sloop_client)
+    update_search_region(viam_robot, agent_config, sloop_client)
 
     # wait for agent creation
     print("waiting for sloop agent creation...")
@@ -122,22 +127,22 @@ async def run_sloop_search(viam_robot,
 
 
 
-async def test_ur5e_viamlab():
-    with open("./config/ur5_exp1_viamlab.yaml") as f:
+async def test_ur5e_viamlab(mock=False):
+    with open("../config/ur5_exp1_viamlab.yaml") as f:
         config = yaml.safe_load(f)
 
+    # Globally control whether we are using data from viam or mocked data
+    viam_utils.MOCK = mock
+
     print(">>>>>>><<<<<<<<>>>> viam connecting >><<<<<<<<>>>>>>>")
-    ur5robot = await connect_viamlab_ur5()
-    print('Resources:')
-    print(ur5robot.resource_names)
+    ur5robot = await viam_utils.connect_viamlab_ur5()
 
     print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
     await run_sloop_search(ur5robot,
                            config,
-                           world_frame="arm_origin",
-                           dynamic_update=False)
+                           world_frame="arm_origin")
 
 
 
 if __name__ == "__main__":
-    asyncio.run(test_ur5e_viamlab())
+    asyncio.run(test_ur5e_viamlab(mock=True))

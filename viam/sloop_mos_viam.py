@@ -24,8 +24,7 @@ from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
 
-from viam_utils import (viam_connect,
-                        viam_get_point_cloud_array)
+import viam_utils
 
 ########### visualization ###########
 def get_and_visualize_belief():
@@ -43,15 +42,20 @@ def update_search_region(viam_robot, agent_config, sloop_client):
     print("Sending request to update search region (3D)")
     robot_id = agent_config["robot"]["id"]
 
-    try:
-        cloud_arr = viam_get_point_cloud_array()
-    except AssertionError:
-        print("Failed to obtain point cloud. Will proceed with empty point cloud.")
+    if viam_utils.MOCK:
         cloud_arr = np.array([])
+        robot_pose = (0.2797589770640316, 0.7128048233719448, 0.5942370817926967,
+                      -0.6500191634979094, 0.4769735333791088,
+                      0.4926158987104014, 0.32756817897816304)
+    else:
+        try:
+            cloud_arr = viam_get_point_cloud_array()
+        except AssertionError:
+            print("Failed to obtain point cloud. Will proceed with empty point cloud.")
+            cloud_arr = np.array([])
+        robot_pose = viam_get_ee_pose(viam_robot)
 
     cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr)
-
-    robot_pose = viam_get_ee_pose(viam_robot)
     robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
     # parameters
