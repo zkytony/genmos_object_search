@@ -189,7 +189,7 @@ class SloopMosViam:
         self.viam_wold_state = world_State
 
         markers = [table_marker, xarm_marker]
-        self._world_state_pub.publish(MarkerArray(markers))
+        self._world_state_pub.publish(viz_msgs.MarkerArray(markers))
         rospy.loginfo("Published world state markers")
 
 
@@ -203,7 +203,7 @@ class SloopMosViam:
         self._octbelief_markers_pub.publish(clear_msg)
         self._topo_map_3d_markers_pub.publish(clear_msg)
 
-        response = self._sloop_client.getObjectBeliefs(
+        response = self.sloop_client.getObjectBeliefs(
             robot_id, header=proto_utils.make_header(self.world_frame))
         if response.status != Status.SUCCESSFUL:
             print("Failed to get 3D belief")
@@ -227,13 +227,13 @@ class SloopMosViam:
                     bobj_pb, header, alpha_scaling=1.0)
                 markers.extend(msg.markers)
                 break
-        self._octbelief_markers_pub.publish(MarkerArray(markers))
+        self._octbelief_markers_pub.publish(viz_msgs.MarkerArray(markers))
 
         rospy.loginfo("belief visualized")
 
         # visualize topo map in robot belief
         markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
+        response_robot_belief = self.sloop_client.getRobotBelief(
             robot_id, header=proto_utils.make_header(self.world_frame))
         robot_belief_pb = response_robot_belief.robot_belief
         if robot_belief_pb.HasField("topo_map"):
@@ -244,7 +244,7 @@ class SloopMosViam:
                 edge_color=[0.24, 0.82, 0.01, 0.8],
                 node_thickness=self.search_space_res_3d)
             markers.extend(msg.markers)
-        self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
+        self._topo_map_3d_markers_pub.publish(viz_msgs.MarkerArray(markers))
         rospy.loginfo("belief visualized")
 
     @property
