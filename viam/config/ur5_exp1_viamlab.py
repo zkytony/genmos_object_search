@@ -12,7 +12,10 @@ SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
                     "region_size_x": 2.5,
                     "region_size_y": 2.5,
-                    "region_size_z": 1.5}
+                    "region_size_z": 1.5,
+                    "center_x": 0.0,
+                    "center_y": 0.0,
+                    "center_z": 0.0}
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 GRIPPER_CAMERA = {'name': 'gripper_camera',
@@ -22,7 +25,7 @@ GRIPPER_CAMERA = {'name': 'gripper_camera',
                              'aspect_ratio': 0.7,
                              'occlusion_enabled': True}}
 
-LOCAL_TOPO = {'num_nodes': 4,
+LOCAL_TOPO = {'num_nodes': 5,
               'pos_importance_thres': 0.01,
               'sep': 0.25,
               'debug': False,

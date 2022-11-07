@@ -34,7 +34,7 @@ agent_config:
           inflation: 0.5
           layout_cut: 0.4
         debug: false
-        num_nodes: 4
+        num_nodes: 5
         pos_importance_thres: 0.01
         resample_thres: 0.4
         sep: 0.25
@@ -61,6 +61,9 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
+      center_x: 0.0
+      center_y: 0.0
+      center_z: 0.0
       octree_size: 32
       region_size_x: 2.5
       region_size_y: 2.5
