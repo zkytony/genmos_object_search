@@ -22,8 +22,7 @@ from sloop_object_search.grpc import observation_pb2 as o_pb2
 from sloop_object_search.grpc import common_pb2
 from sloop_object_search.grpc.utils import proto_utils
 
-
-MOCK = False
+from constants import MOCK
 
 
 ########### Robot-Specific viam functions ###########
