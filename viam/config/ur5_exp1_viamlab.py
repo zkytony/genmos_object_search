@@ -8,10 +8,10 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                 "occupancy_blow_up_res": 4,
                                 "occupancy_fill_height": True}}
 
-SEARCH_REGION_3D = {"res": 0.05,
+SEARCH_REGION_3D = {"res": 0.08,
                     "octree_size": 32,
-                    "region_size_x": 1.6,
-                    "region_size_y": 1.4,
+                    "region_size_x": 1.35,
+                    "region_size_y": 2.0,
                     "region_size_z": 1.5,
                     "center_x": 0.0,
                     "center_y": 0.0,

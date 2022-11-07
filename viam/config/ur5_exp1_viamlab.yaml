@@ -65,10 +65,10 @@ agent_config:
       center_y: 0.0
       center_z: 0.0
       octree_size: 32
-      region_size_x: 1.6
-      region_size_y: 1.6
+      region_size_x: 1.35
+      region_size_y: 2.0
       region_size_z: 1.5
-      res: 0.05
+      res: 0.08
   targets:
   - Chair
 planner_config:
