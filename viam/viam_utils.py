@@ -241,16 +241,15 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
     """
     motion = MotionServiceClient.from_robot(viam_robot)
     # need to convert goal_pose rotation from quaternion to orientation vector
-    gx, gy, gz= goal_pose
-    gqx, gqy, gqz, gqw = goal_pose[3:]
+    gx, gy, gz, gqx, gqy, gqz, gqw = goal_pose
     govec = Quaternion(i=gqx, j=gqy, k=gqz, real=gqw).to_orientation_vector()
     goal_pose_w_ovec = v_pb2.Pose(x=gx*1000,
                                   y=gy*1000,
                                   z=gz*1000,
-                                  o_x=govec.x,
-                                  o_y=govec.y,
-                                  o_z=govec.z,
-                                  o_theta=math_utils.to_degrees(govec.theta))
+                                  o_x=govec.unit_sphere_vec.x,
+                                  o_y=govec.unit_sphere_vec.y,
+                                  o_z=govec.unit_sphere_vec.z,
+                                  theta=math_utils.to_degrees(govec.theta))
     goal_pose_in_frame = v_pb2.PoseInFrame(reference_frame=goal_frame,
                                            pose=goal_pose_w_ovec)
 

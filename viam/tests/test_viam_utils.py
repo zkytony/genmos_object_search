@@ -11,7 +11,8 @@ from viam_utils import (connect_viamlab_ur5,
                         viam_get_point_cloud_array,
                         viam_get_object_detections2d,
                         viam_detections2d_to_proto,
-                        viam_get_image)
+                        viam_get_image,
+                        viam_move)
 import viam.proto.common as v_pb2
 
 from sloop_object_search.grpc.utils import proto_utils
@@ -72,7 +73,7 @@ async def test_viam_move_viamlab_ur5(viam_robot):
     # Built for the UR5 robot setup at Viam Lab
     table = v_pb2.Geometry(center=v_pb2.Pose(x=0, y=0, z=-20),
                            box=v_pb2.RectangularPrism(dims_mm=v_pb2.Vector3(x=2000, y=2000, z=40)))
-    tableFrame = v_pb2.GeometriesInFrame(reference_frame=arm_name, geometries=[table])
+    tableFrame = v_pb2.GeometriesInFrame(reference_frame="arm", geometries=[table])
     xARM = v_pb2.Geometry(center=v_pb2.Pose(x=600, y=0, z=0),
                           box=v_pb2.RectangularPrism(dims_mm=v_pb2.Vector3(x=200, y=200, z=600)))
     xARMFrame = v_pb2.GeometriesInFrame(reference_frame="arm_origin", geometries=[xARM])
