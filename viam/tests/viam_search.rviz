@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /MarkerArray1
-        - /MarkerArray1/Status1
         - /octree_belief1
-        - /octree_belief1/Status1
       Splitter Ratio: 0.5
     Tree Height: 725
   - Class: rviz/Selection
@@ -59,7 +57,7 @@ Visualization Manager:
       Marker Topic: /sloop_viam/world_state
       Name: MarkerArray
       Namespaces:
-        {}
+        object: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -70,6 +68,51 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sloop_viam/topo_map_3d
+      Name: topo3d
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sloop_viam/robot_pose_marker
+      Name: robot_pose
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        arm_origin:
+          Value: true
+        robot0:
+          Value: true
+        table:
+          Value: true
+        xarm:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        arm_origin:
+          robot0:
+            {}
+          table:
+            {}
+          xarm:
+            {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -98,7 +141,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.46298885345459
+      Distance: 4.994416236877441
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -114,9 +157,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7053980231285095
+      Pitch: 0.9453979730606079
       Target Frame: <Fixed Frame>
-      Yaw: 0.6753979325294495
+      Yaw: 1.9103939533233643
     Saved: ~
 Window Geometry:
   Displays:
