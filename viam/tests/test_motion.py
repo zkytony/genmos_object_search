@@ -34,7 +34,7 @@ async def main():
 
     arm = Arm.from_robot(robot, "arm")
     pose = await arm.get_end_position()
-    pose.x += 100
+    pose.x -= 100
     motion = MotionServiceClient.from_robot(robot)
     for resname in robot.resource_names:
         if resname.name == "arm":
