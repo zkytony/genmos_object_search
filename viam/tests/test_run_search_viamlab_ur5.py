@@ -46,11 +46,17 @@
 #     y_max: 104
 #   }
 # }
+##################################
+#
+# 1. run in one terminal, run 'python -m sloop_object_search.grpc.server'
+# 2. run in one terminal, run 'python test_run_search_viamlab_ur5.py'
 import os
 import sys
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 import viam_utils
+from sloop_mos_viam import (server_message_callback,
+                            update_search_region)
 
 import asyncio
 import yaml
@@ -66,6 +72,8 @@ from sloop_object_search.grpc.constants import Message
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
+
+
 
 
 ########### main object search logic ###########
@@ -92,7 +100,7 @@ async def run_sloop_search(viam_robot,
     local_robot_id = None  # needed if the planner is hierarchical
 
     # Update search region
-    update_search_region(viam_robot, agent_config, sloop_client)
+    update_search_region(viam_robot, agent_config, world_frame, sloop_client)
 
     # wait for agent creation
     print("waiting for sloop agent creation...")
