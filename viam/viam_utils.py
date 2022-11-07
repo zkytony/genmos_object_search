@@ -187,22 +187,22 @@ def viam_detections3d_to_proto(robot_id, detections):
     Note: this method is NEVER TESTED (11/06/22 12:29).
     """
     raise NotImplementedError()
-    detections_pb = []
-    for det3d in detections:
-        label, box3d = det3d
-        center, w, l, h = box3d
-        center_pb = proto_utils.posetuple_to_poseproto(center)
-        box_pb = common_pb2.Box3D(center=center_pb,
-                                  sizes=common_pb2.Vec3(x=w, y=l, z=h))
-        # NOTE: setting confidence is not supported right now
-        det3d_pb = o_pb2.Detection(label=label,
-                                   box_3d=box_pb)
-        detections_pb.append(det3d_pb)
-    # TODO: properly create header with proper frame!x
-    header = proto_utils.make_header(frame_id=None, stamp=None)
-    return o_pb2.ObjectDetectionArray(header=header,
-                                      robot_id=robot_id,
-                                      detections=detections_pb)
+    # detections_pb = []
+    # for det3d in detections:
+    #     label, box3d = det3d
+    #     center, w, l, h = box3d
+    #     center_pb = proto_utils.posetuple_to_poseproto(center)
+    #     box_pb = common_pb2.Box3D(center=center_pb,
+    #                               sizes=common_pb2.Vec3(x=w, y=l, z=h))
+    #     # NOTE: setting confidence is not supported right now
+    #     det3d_pb = o_pb2.Detection(label=label,
+    #                                box_3d=box_pb)
+    #     detections_pb.append(det3d_pb)
+    # # TODO: properly create header with proper frame!x
+    # header = proto_utils.make_header(frame_id=None, stamp=None)
+    # return o_pb2.ObjectDetectionArray(header=header,
+    #                                   robot_id=robot_id,
+    #                                   detections=detections_pb)
 
 def viam_detections2d_to_proto(robot_id, detections):
     """

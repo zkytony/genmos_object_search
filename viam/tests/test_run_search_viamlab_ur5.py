@@ -66,7 +66,8 @@ import sys
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 import viam_utils
-from constants import SEARCH_SPACE_RESOLUTION_3D
+from constants import (SEARCH_SPACE_RESOLUTION_3D,
+                       DETECTION2D_CONFIDENCE_THRES)
 
 # Import from other of sloop_object_search packages
 from sloop_object_search.grpc.client import SloopObjectSearchClient
@@ -96,8 +97,11 @@ class SloopMosViam:
         self.sloop_client = None  # connection to sloop server
         self.viam_robot = None  # connection to the viam robot
 
-    def setup(self, viam_robot, config, world_frame):
+    def setup(self, viam_robot, viam_names, config, world_frame):
         self.setup_for_rviz()
+
+        self.viam_robot = viam_robot
+        self.viam_names = viam_names
 
         # Configuration and parameters
         self.config = config
@@ -130,198 +134,193 @@ class SloopMosViam:
         # TF broadcaster
         self.tfbr = TransformBroadcaster()
 
+    def get_and_visualize_belief_3d(self, o3dviz=True):
+        robot_id = self.robot_id
 
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._octbelief_markers_pub.publish(clear_msg)
+        self._topo_map_3d_markers_pub.publish(clear_msg)
 
+        response = self._sloop_client.getObjectBeliefs(
+            robot_id, header=proto_utils.make_header(self.world_frame))
+        if response.status != Status.SUCCESSFUL:
+            print("Failed to get 3D belief")
+            return
+        rospy.loginfo("got belief")
 
-def get_and_visualize_belief_3d(agent_config, world_frame, marker_pubs,
-                                sloop_client, objects_found):
+        # visualize the belief
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        markers = []
+        # First, visualize the belief of detected objects
+        for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id in self.objects_found:
+                msg = ros_utils.make_octree_belief_proto_markers_msg(
+                    bobj_pb, header, alpha_scaling=2.0, prob_thres=0.5)
+                markers.extend(msg.markers)
+        # For the other objects, just visualize one is enough.
+        for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id not in self.objects_found:
+                msg = ros_utils.make_octree_belief_proto_markers_msg(
+                    bobj_pb, header, alpha_scaling=1.0)
+                markers.extend(msg.markers)
+                break
+        self._octbelief_markers_pub.publish(MarkerArray(markers))
 
-    robot_id = agent_config["robot"]["id"]
-                                # self, robot_id=None, o3dviz=True):
-    # if robot_id is None:
-    #     robot_id = self.robot_id
+        rospy.loginfo("belief visualized")
 
-    # Clear markers
-    header = std_msgs.Header(stamp=rospy.Time.now(),
-                             frame_id=world_frame)
-    clear_msg = ros_utils.clear_markers(header, ns="")
-    marker_pubs["octree_belief"].publish(clear_msg)
-    marker_pubs["topo_map3d"].publish(clear_msg)
-
-    # self._octbelief_markers_pub.publish(clear_msg)
-    # self._topo_map_3d_markers_pub.publish(clear_msg)
-
-    response = sloop_client.getObjectBeliefs(
-        robot_id, header=proto_utils.make_header(world_frame))
-    if response.status != Status.SUCCESSFUL:
-        print("Failed to get 3D belief")
-        return
-    rospy.loginfo("got belief")
-
-    # visualize the belief
-    header = std_msgs.Header(stamp=rospy.Time.now(),
-                             frame_id=world_frame)
-    markers = []
-    # First, visualize the belief of detected objects
-    for bobj_pb in response.object_beliefs:
-        if bobj_pb.object_id in objects_found:
-            msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=2.0, prob_thres=0.5)
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._sloop_client.getRobotBelief(
+            robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, self.search_space_res_3d,
+                node_color=[0.82, 0.01, 0.08, 0.8],
+                edge_color=[0.24, 0.82, 0.01, 0.8],
+                node_thickness=self.search_space_res_3d)
             markers.extend(msg.markers)
-    # For the other objects, just visualize one is enough.
-    for bobj_pb in response.object_beliefs:
-        if bobj_pb.object_id not in objects_found:
-            msg = ros_utils.make_octree_belief_proto_markers_msg(
-                bobj_pb, header, alpha_scaling=1.0)
-            markers.extend(msg.markers)
-            break
-    marker_pubs["octree_belief"].publish(MarkerArray(markers))
-    # self._octbelief_markers_pub.publish(MarkerArray(markers))
+        self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
+        rospy.loginfo("belief visualized")
 
-    rospy.loginfo("belief visualized")
-
-    # visualize topo map in robot belief
-    markers = []
-    response_robot_belief = sloop_client.getRobotBelief(
-        robot_id, header=proto_utils.make_header(world_frame))
-    robot_belief_pb = response_robot_belief.robot_belief
-    search_region_config = agent_config.get("search_region", {}).get("3d", {})
-    search_space_res_3d = search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D)
-    if robot_belief_pb.HasField("topo_map"):
-        msg = ros_utils.make_topo_map_proto_markers_msg(
-            robot_belief_pb.topo_map,
-            header, search_space_res_3d,
-            node_color=[0.82, 0.01, 0.08, 0.8],
-            edge_color=[0.24, 0.82, 0.01, 0.8],
-            node_thickness=search_space_res_3d)
-        markers.extend(msg.markers)
-    self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
-    rospy.loginfo("belief visualized")
+    @property
+    def search_space_res_3d(self):
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        return search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D)
 
 
-def update_search_region(viam_robot, agent_config, frame_id, sloop_client):
-    print("Sending request to update search region (3D)")
-    robot_id = agent_config["robot"]["id"]
+    def update_search_region_3d(self):
+        print("Sending request to update search region (3D)")
+        robot_id = agent_config["robot"]["id"]
 
-    if viam_utils.MOCK:
-        cloud_arr = np.array([])
-        robot_pose = (0.2797589770640316, 0.7128048233719448, 0.5942370817926967,
-                      -0.6500191634979094, 0.4769735333791088,
-                      0.4926158987104014, 0.32756817897816304)
-    else:
-        try:
-            cloud_arr = viam_get_point_cloud_array()
-        except AssertionError:
-            print("Failed to obtain point cloud. Will proceed with empty point cloud.")
+        if viam_utils.MOCK:
             cloud_arr = np.array([])
-        robot_pose = viam_get_ee_pose(viam_robot)
-
-    cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr, frame_id)
-    robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-
-    # parameters
-    search_region_config = agent_config.get("search_region", {}).get("3d", {})
-    search_region_params_3d = dict(
-        octree_size=search_region_config.get("octree_size", 32),
-        search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
-        region_size_x=search_region_config.get("region_size_x"),
-        region_size_y=search_region_config.get("region_size_y"),
-        region_size_z=search_region_config.get("region_size_z"),
-        debug=search_region_config.get("debug", False)
-    )
-    sloop_client.updateSearchRegion(
-        header=cloud_pb.header,
-        robot_id=robot_id,
-        robot_pose=robot_pose_pb,
-        point_cloud=cloud_pb,
-        search_region_params_3d=search_region_params_3d)
-
-def plan_action(robot_id, world_frame, sloop_client):
-    response_plan = sloop_client.planAction(
-        robot_id, header=proto_utils.make_header(world_frame))
-    action_pb = proto_utils.interpret_planned_action(response_plan)
-    action_id = response_plan.action_id
-    rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
-    self.last_action = action_pb
-    return action_id, action_pb
-
-
-def execute_action(action_id, action_pb):
-    """All viewpoint movement actions specify a goal pose
-    the robot should move its end-effector to, and publish
-    that as a KeyValAction."""
-    if isinstance(action_pb, a_pb2.MoveViewpoint):
-        if action_pb.HasField("dest_3d"):
-            dest = proto_utils.poseproto_to_posetuple(action_pb.dest_3d)
-            nav_type = "3d"
-        elif action_pb.HasField("dest_2d"):
-            raise NotImplementedError("Not expecting destination to be 2D")
+            robot_pose = (0.2797589770640316, 0.7128048233719448, 0.5942370817926967,
+                          -0.6500191634979094, 0.4769735333791088,
+                          0.4926158987104014, 0.32756817897816304)
         else:
-            raise NotImplementedError("Not implemented action_pb.")
+            try:
+                cloud_arr = viam_utils.viam_get_point_cloud_array(
+                    self.viam_robot, target_frame=self.world_frame)
+            except Exception:
+                print("Failed to obtain point cloud. Will proceed with empty point cloud.")
+                cloud_arr = np.array([])
+            robot_pose = viam_get_ee_pose(self.viam_robot)
 
-        # TODO: action execution
-        print("Executing nav action (viewpoint movement)")
-        viam_move_ee_to(dest[:3], dest[3:], action_id)
+        cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr, self.world_frame)
+        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
-    elif isinstance(action_pb, a_pb2.Find):
-        print("Signaling find action")
-        viam_signal_find(action_id)
+        # parameters
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        search_region_params_3d = dict(
+            octree_size=search_region_config.get("octree_size", 32),
+            search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
+            region_size_x=search_region_config.get("region_size_x"),
+            region_size_y=search_region_config.get("region_size_y"),
+            region_size_z=search_region_config.get("region_size_z"),
+            debug=search_region_config.get("debug", False)
+        )
+        self.sloop_client.updateSearchRegion(
+            header=cloud_pb.header,
+            robot_id=robot_id,
+            robot_pose=robot_pose_pb,
+            point_cloud=cloud_pb,
+            search_region_params_3d=search_region_params_3d)
 
-    # TODO: wait for action is done (this may be part of viam_xxx functions)
+    def plan_action(self):
+        response_plan = self.sloop_client.planAction(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        action_pb = proto_utils.interpret_planned_action(response_plan)
+        action_id = response_plan.action_id
+        rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
+        self.last_action = action_pb
+        return action_id, action_pb
 
-def wait_for_observation(robot_id, last_action,
-                         agent_config, world_frame, objects_found):
-    """We wait for the robot pose (PoseStamped) and the
-    object detections (vision_msgs.Detection3DArray)
+    def execute_action(self, action_id, action_pb):
+        """All viewpoint movement actions specify a goal pose
+        the robot should move its end-effector to, and publish
+        that as a KeyValAction."""
+        if isinstance(action_pb, a_pb2.MoveViewpoint):
+            if action_pb.HasField("dest_3d"):
+                dest = proto_utils.poseproto_to_posetuple(action_pb.dest_3d)
+                nav_type = "3d"
+            elif action_pb.HasField("dest_2d"):
+                raise NotImplementedError("Not expecting destination to be 2D")
+            else:
+                raise NotImplementedError("Not implemented action_pb.")
 
-    Returns:
-        a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
-    # TODO: future viam: time sync between robot pose and object detection
-    robot_pose = viam_get_ee_pose()
-    robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-    detections = viam_get_object_detections()
+            # TODO: action execution
+            print("Executing nav action (viewpoint movement)")
+            viam_move_ee_to(dest[:3], dest[3:], action_id)
 
-    # Detection proto
-    detections_pb = detections_to_proto(robot_id, detections)
+        elif isinstance(action_pb, a_pb2.Find):
+            print("Signaling find action")
+            # TODO: signal find
+            viam_signal_find(action_id)
 
-    # Objects found proto
-    # If the last action is "find", and we receive object detections
-    # that contain target objects, then these objects will be considered 'found'
-    if isinstance(last_action, a_pb2.Find):
-        for det_pb in detections_pb.detections:
-            if det_pb.label in agent_config["targets"]:
-                objects_found.add(det_pb.label)
-    header = proto_utils.make_header(frame_id=world_frame)
-    objects_found_pb = o_pb2.ObjectsFound(
-        header=header, robot_id=robot_id,
-        object_ids=sorted(list(objects_found)))
+    def wait_for_observation(self):
+        """We wait for the robot pose (PoseStamped) and the
+        object detections (vision_msgs.Detection3DArray)
 
-    # Robot pose proto
-    robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
-    robot_pose_pb = o_pb2.RobotPose(
-        header=header,
-        robot_id=robot_id,
-        pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
-    return detections_pb, robot_pose_pb, objects_found_pb
+        Returns:
+            a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
+        # TODO: future viam: time sync between robot pose and object detection
+        robot_pose = viam_utils.viam_get_ee_pose(self.viam_robot)
+        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+        # Note: right now we only get 2D detection
+        detections = viam_utils.viam_get_object_detections_2d(
+            self.world_frame,
+            camera_name=self.viam_names["camera"],
+            detector_name=self.viam_names["detector"],
+            confidence_thres=DETECTION2D_CONFIDENCE_THRES)
 
-def wait_observation_and_update_belief(robot_id, world_frame, action_id, sloop_client):
-    # Now, wait for observation, and then update belief
-    detections_pb, robot_pose_pb, objects_found_pb = wait_for_observation()
-    # send obseravtions for belief update
-    header = proto_utils.make_header(frame_id=world_frame)
-    response_observation = sloop_client.processObservation(
-        robot_id, robot_pose_pb,
-        object_detections=detections_pb,
-        objects_found=objects_found_pb,
-        header=header, return_fov=True,
-        action_id=action_id, action_finished=True, debug=False)
-    response_robot_belief = sloop_client.getRobotBelief(
-        robot_id, header=proto_utils.make_header(world_frame))
-    return response_observation, response_robot_belief
+        # Detection proto
+        detections_pb = viam_utils.viam_detections3d_to_proto(self.robot_id, detections)
 
-def server_message_callback(message):
-    print(message)
-    raise NotImplementedError()
+        # Objects found proto
+        # If the last action is "find", and we receive object detections
+        # that contain target objects, then these objects will be considered 'found'
+        if isinstance(last_action, a_pb2.Find):
+            for det_pb in detections_pb.detections:
+                if det_pb.label in agent_config["targets"]:
+                    objects_found.add(det_pb.label)
+        header = proto_utils.make_header(frame_id=world_frame)
+        objects_found_pb = o_pb2.ObjectsFound(
+            header=header, robot_id=self.robot_id,
+            object_ids=sorted(list(objects_found)))
+
+        # Robot pose proto
+        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+        robot_pose_pb = o_pb2.RobotPose(
+            header=header,
+            robot_id=self.robot_id,
+            pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
+        return detections_pb, robot_pose_pb, objects_found_pb
+
+    def wait_observation_and_update_belief(self, action_id):
+        # Now, wait for observation, and then update belief
+        detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
+        # send obseravtions for belief update
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        response_observation = self.sloop_client.processObservation(
+            self.robot_id, robot_pose_pb,
+            object_detections=detections_pb,
+            objects_found=objects_found_pb,
+            header=header, return_fov=True,
+            action_id=action_id, action_finished=True, debug=False)
+        response_robot_belief = self.sloop_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        return response_observation, response_robot_belief
+
+    def server_message_callback(self, message):
+        print("received messgae:", message)
+        raise NotImplementedError("Hierarchical planning is not yet integrated"\
+                                  "for viam. Not expecting anything from the server.")
 
 
 async def run_sloop_search(viam_robot,
