@@ -24,6 +24,8 @@ from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
 
 import viam_utils
+from constants import SEARCH_SPACE_RESOLUTION_3D
+
 
 ########### visualization ###########
 def get_and_visualize_belief():
@@ -37,7 +39,7 @@ def server_message_callback(message):
     print(message)
     raise NotImplementedError()
 
-def update_search_region(viam_robot, agent_config, sloop_client):
+def update_search_region(viam_robot, agent_config, frame_id, sloop_client):
     print("Sending request to update search region (3D)")
     robot_id = agent_config["robot"]["id"]
 
@@ -54,7 +56,7 @@ def update_search_region(viam_robot, agent_config, sloop_client):
             cloud_arr = np.array([])
         robot_pose = viam_get_ee_pose(viam_robot)
 
-    cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr)
+    cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr, frame_id)
     robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
     # parameters
