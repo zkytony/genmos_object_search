@@ -85,7 +85,6 @@ from sloop_object_search.utils.misc import import_class
 
 # ROS related
 import rospy
-from tf2_ros import TransformBroadcaster
 import std_msgs.msg as std_msgs
 import geometry_msgs.msg as geometry_msgs
 import visualization_msgs.msg as viz_msgs
@@ -137,8 +136,6 @@ class SloopMosViam:
         self._world_state_pub = rospy.Publisher(
             "~world_state", viz_msgs.MarkerArray, queue_size=10, latch=True)
 
-        # TF broadcaster
-        self.tfbr = TransformBroadcaster()
 
     def publish_world_state_in_ros(self):
         """Publishes the TF and visualization markers for the world state
@@ -186,9 +183,6 @@ class SloopMosViam:
 
         world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
         self.viam_wold_state = world_State
-
-
-
 
 
     def get_and_visualize_belief_3d(self):
