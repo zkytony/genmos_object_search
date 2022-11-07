@@ -10,26 +10,21 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 
 SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
-                    "region_size_x": 3.0,
-                    "region_size_y": 3.0,
+                    "region_size_x": 2.5,
+                    "region_size_y": 2.5,
                     "region_size_z": 1.5}
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
-HAND_CAMERA = {'name': 'hand_camera',
-               'params': {'fov': 53,
-                          'far': 1.5,
-                          'near': 0.2,
-                          'aspect_ratio': 0.7,
-                          'occlusion_enabled': True}}
+GRIPPER_CAMERA = {'name': 'gripper_camera',
+                  'params': {'fov': 53,
+                             'far': 1.5,
+                             'near': 0.2,
+                             'aspect_ratio': 0.7,
+                             'occlusion_enabled': True}}
 
-HAND_FAN = {"name": 'hand_fan',
-            'params': {'fov': 50,
-                       'min_range': 0.2,
-                       'max_range': 1.5}}
-
-LOCAL_TOPO = {'num_nodes': 10,
+LOCAL_TOPO = {'num_nodes': 4,
               'pos_importance_thres': 0.01,
-              'sep': 0.75,
+              'sep': 0.25,
               'debug': False,
               'resample_thres': 0.4,
               '3d_proj_2d': {'layout_cut': 0.4,
@@ -40,8 +35,8 @@ LOCAL_TOPO = {'num_nodes': 10,
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 0.5,
-                   "max_height": 1.2}
+LOCAL_REACHABLE = {"min_height": 1.0,
+                   "max_height": 1.3}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
@@ -52,13 +47,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 
 ######### DETECTORS AND OBJECTS ######
 LOCAL_DETECTORS = {
-    'Cat': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
-            'params': {"sensor": "hand_camera",
+    'Chair': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+            'params': {"sensor": "gripper_camera",
                        "quality": [1e7, 0.2]}},
 }
 
 OBJECTS = {
-    'Cat': {'class': 'Cat',
+    'Chair': {'class': 'Chair',
             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
             'color': [0.67, 0.61, 0.15, 0.8],
             'viz_type': 'cube'}
@@ -82,7 +77,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Cat"]
+target_objects = ["Chair"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
@@ -92,12 +87,12 @@ CONFIG_LOCAL = {
         'robot': {
             'id': 'robot0',
             'no_look': True,
-            'sensors': [HAND_CAMERA],
+            'sensors': [GRIPPER_CAMERA],
             'detectors': make_detectors("local", *target_objects),
             'action': LOCAL_ACTION,
             "reachable": LOCAL_REACHABLE,
         },
-        'objects': make_objects("Cat", *target_objects),
+        'objects': make_objects(*target_objects),
         'targets': target_objects
     },
 
