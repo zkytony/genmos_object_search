@@ -61,6 +61,7 @@ import asyncio
 import yaml
 import os
 import sys
+import numpy as np
 
 # Import stuff from parent folder
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -81,13 +82,14 @@ from sloop_object_search.grpc.constants import Message
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class
-from sloop_mos_ros import ros_utils
 
 # ROS related
+import rospy
 from tf2_ros import TransformBroadcaster
 import std_msgs.msg as std_msgs
 import geometry_msgs.msg as geometry_msgs
 import visualization_msgs.msg as viz_msgs
+from sloop_mos_ros import ros_utils
 
 
 
@@ -107,7 +109,7 @@ class SloopMosViam:
         self.config = config
         self.agent_config = config["agent_config"]
         self.planner_config = config["planner_config"]
-        self.robot_id = agent_config["robot"]["id"]
+        self.robot_id = self.agent_config["robot"]["id"]
         self.world_frame = world_frame  # fixed frame of the world
 
         # Initialize grpc client
@@ -196,8 +198,6 @@ class SloopMosViam:
 
     def update_search_region_3d(self):
         print("Sending request to update search region (3D)")
-        robot_id = agent_config["robot"]["id"]
-
         if viam_utils.MOCK:
             cloud_arr = np.array([])
             robot_pose = (0.2797589770640316, 0.7128048233719448, 0.5942370817926967,
@@ -227,9 +227,9 @@ class SloopMosViam:
         )
         self.sloop_client.updateSearchRegion(
             header=cloud_pb.header,
-            robot_id=robot_id,
+            robot_id=self.robot_id,
             robot_pose=robot_pose_pb,
-            point_cloud=cloud_pb,
+            point_cloud=self.cloud_pb,
             search_region_params_3d=search_region_params_3d)
 
     def plan_action(self):
@@ -401,6 +401,8 @@ async def test_ur5e_viamlab(mock=False):
     sloop_viam = SloopMosViam()
     sloop_viam.setup(ur5robot, viam_names, config, world_frame)
     sloop_viam.run()
+
+    await ur5robot.close()
 
 
 if __name__ == "__main__":

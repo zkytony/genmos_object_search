@@ -13,10 +13,14 @@ import vision_msgs
 
 import tf
 import tf2_ros
-#!!! NEED THIS:
-# https://answers.ros.org/question/95791/tf-transformpoint-equivalent-on-tf2/?answer=394789#post-id-394789
-# STUPID ROS PROBLEM.
-import tf2_geometry_msgs.tf2_geometry_msgs
+try:
+    #!!! NEED THIS:
+    # https://answers.ros.org/question/95791/tf-transformpoint-equivalent-on-tf2/?answer=394789#post-id-394789
+    # STUPID ROS PROBLEM.
+    import tf2_geometry_msgs.tf2_geometry_msgs
+except ModuleNotFoundError as ex:
+    # This happens for Python3.9 because PyKDL only has support 3.8.
+    print("import tf2_geometry_msgs.tf2_geometry_msgs failed due to ModuleNotFoundError:", ex)
 
 # we don't want to crash if a ros-related package is not installed.
 import importlib
