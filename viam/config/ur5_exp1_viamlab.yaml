@@ -33,11 +33,11 @@ agent_config:
           floor_cut: 0.15
           inflation: 0.5
           layout_cut: 0.4
-        debug: true
-        num_nodes: 5
+        debug: false
+        num_nodes: 10
         pos_importance_thres: 0.01
         resample_thres: 0.4
-        sep: 0.25
+        sep: 0.75
     detectors:
       Chair:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
@@ -65,10 +65,10 @@ agent_config:
       center_y: 0.0
       center_z: 0.0
       octree_size: 32
-      region_size_x: 2.5
-      region_size_y: 2.5
+      region_size_x: 1.6
+      region_size_y: 1.6
       region_size_z: 1.5
-      res: 0.1
+      res: 0.05
   targets:
   - Chair
 planner_config:
