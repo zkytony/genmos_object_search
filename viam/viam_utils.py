@@ -270,8 +270,6 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
                 return False
     return move_success
 
-
-
 def viam_signal_find(action_id):
     """Do something with the robot to signal the find action"""
     raise NotImplementedError

@@ -144,7 +144,9 @@ class SloopMosViam:
 
         # TF broadcaster
         self.tf2br = TransformBroadcaster()
-        self._trobot = None  # tf message for robot pose
+        self._world_frame_poses = {}  # maps from frame name to the pose
+                                      # (position or pose) w.r.t. world frame
+                                      # that should be published as tf transforms
 
 
     def publish_world_state_in_ros(self):
@@ -203,14 +205,24 @@ class SloopMosViam:
         rospy.loginfo("Published world state markers")
 
         # periodically publish tf
-        tf2msgs = [ros_utils.tf2msg_from_object_loc(table_pose[:3], self.world_frame, "table"),
-                   ros_utils.tf2msg_from_object_loc(xarm_pose[:3], self.world_frame, "xarm")]
+        self._world_frame_poses["table"] = table_pose[:3]
+        self._world_frame_poses["xarm"] = xarm_pose[:3]
         rospy.Timer(rospy.Duration(1./5),
-                    lambda event: self._publish_tf(tf2msgs))
+                    lambda event: self._publish_tf())
 
-    def _publish_tf(self, tf_msgs):
-        for t in tf_msgs:
-            self.tf2br.sendTransform(t)
+    def _publish_tf(self):
+        for child_frame in self._world_frame_poses:
+            pose = self._world_frame_poses
+
+            if len(pose) == 3:
+                tf_msg = ros_utils.tf2msg_from_object_loc(
+                    pose[:3], self.world_frame, child_frame)
+            else:
+                _, tf_msg = ros_utils.viz_msgs_for_robot_pose(
+                    pose, self.world_frame, child_frame)
+
+            self.tf2br.sendTransform(tf_msg)
+
         if self._trobot is not None:
             self.tf2br.sendTransform(self._trobot)
 
@@ -276,7 +288,8 @@ class SloopMosViam:
             color=[0.9, 0.1, 0.1, 0.9], lifetime=0,
             scale=geometry_msgs.Vector3(x=0.6, y=0.08, z=0.08))
         self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
-        self._trobot = trobot
+        self._world_frame_poses[self.robot_id] = robot_pose
+        self.br.sendTransform(trobot)
 
     @property
     def search_space_res_3d(self):
