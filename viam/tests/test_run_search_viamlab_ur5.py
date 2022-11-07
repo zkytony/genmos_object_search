@@ -160,9 +160,11 @@ class SloopMosViam:
             "table", table_pose,
             std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
             viz_type=viz_msgs.Marker.CUBE,
+            color=[0.05, 0.45, 0.72, 0.8],
             scale=geometry_msgs.Vector3(x=table_sizes[0],
                                         y=table_sizes[1],
-                                        z=table_sizes[2]))
+                                        z=table_sizes[2]),
+            lifetime=0)  # 0 is forever
 
         xARM = v_pb2.Geometry(center=v_pb2.Pose(x=xarm_pose[0]*1000,
                                                 y=xarm_pose[1]*1000,
@@ -177,12 +179,18 @@ class SloopMosViam:
             "xarm", xarm_pose,
             std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
             viz_type=viz_msgs.Marker.CUBE,
+            color=[0.95, 0.95, 0.88, 0.8],
             scale=geometry_msgs.Vector3(x=xarm_sizes[0],
                                         y=xarm_sizes[1],
-                                        z=xarm_sizes[2]))
+                                        z=xarm_sizes[2]),
+            lifetime=0)  # 0 is forever
 
         world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
         self.viam_wold_state = world_State
+
+        markers = [table_marker, xarm_marker]
+        self._world_state_pub.publish(MarkerArray(markers))
+        rospy.loginfo("Published world state markers")
 
 
     def get_and_visualize_belief_3d(self):
