@@ -70,8 +70,7 @@ from pomdp_py.utils import typ
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 
-from constants import (SEARCH_SPACE_RESOLUTION_3D,
-                       DETECTION2D_CONFIDENCE_THRES)
+import constants
 
 # Viam related
 import viam_utils
@@ -324,7 +323,7 @@ class SloopMosViam:
     @property
     def search_space_res_3d(self):
         search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
-        return search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D)
+        return search_region_config.get("res", constants.SEARCH_SPACE_RESOLUTION_3D)
 
 
     def update_search_region_3d(self):
@@ -345,7 +344,7 @@ class SloopMosViam:
         search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
         search_region_params_3d = dict(
             octree_size=search_region_config.get("octree_size", 32),
-            search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
+            search_space_resolution=search_region_config.get("res", constants.SEARCH_SPACE_RESOLUTION_3D),
             region_size_x=search_region_config.get("region_size_x"),
             region_size_y=search_region_config.get("region_size_y"),
             region_size_z=search_region_config.get("region_size_z"),
@@ -371,7 +370,7 @@ class SloopMosViam:
         self.last_action = action_pb
         return action_id, action_pb
 
-    def execute_action(self, action_id, action_pb):
+    async def execute_action(self, action_id, action_pb):
         """All viewpoint movement actions specify a goal pose
         the robot should move its end-effector to, and publish
         that as a KeyValAction."""
@@ -386,10 +385,10 @@ class SloopMosViam:
 
             # TODO: action execution
             print("Executing nav action (viewpoint movement)")
-            success = viam_utils.viam_move(self.viam_robot,
-                                           self.viam_names["arm"],
-                                           dest, self.world_frame,
-                                           self.viam_world_state)
+            success = await viam_utils.viam_move(self.viam_robot,
+                                                 self.viam_names["arm"],
+                                                 dest, self.world_frame,
+                                                 self.viam_world_state)
             if not success:
                 print("viewpoint movement failed.")
             else:
@@ -402,21 +401,21 @@ class SloopMosViam:
             if success:
                 print("Find action taken.")
 
-    def wait_for_observation(self):
+    async def wait_for_observation(self):
         """We wait for the robot pose (PoseStamped) and the
         object detections (vision_msgs.Detection3DArray)
 
         Returns:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         # TODO: future viam: time sync between robot pose and object detection
-        robot_pose = viam_utils.viam_get_ee_pose(self.viam_robot)
+        robot_pose = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         # Note: right now we only get 2D detection
         detections = viam_utils.viam_get_object_detections_2d(
             self.world_frame,
             camera_name=self.viam_names["camera"],
             detector_name=self.viam_names["detector"],
-            confidence_thres=DETECTION2D_CONFIDENCE_THRES)
+            confidence_thres=constants.DETECTION2D_CONFIDENCE_THRES)
 
         # Detection proto
         detections_pb = viam_utils.viam_detections3d_to_proto(self.robot_id, detections)
@@ -441,9 +440,9 @@ class SloopMosViam:
             pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
         return detections_pb, robot_pose_pb, objects_found_pb
 
-    def wait_observation_and_update_belief(self, action_id):
+    async def wait_observation_and_update_belief(self, action_id):
         # Now, wait for observation, and then update belief
-        detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
+        detections_pb, robot_pose_pb, objects_found_pb = await self.wait_for_observation()
         # send obseravtions for belief update
         header = proto_utils.make_header(frame_id=self.world_frame)
         response_observation = self.sloop_client.processObservation(
@@ -461,7 +460,7 @@ class SloopMosViam:
         raise NotImplementedError("Hierarchical planning is not yet integrated"\
                                   "for viam. Not expecting anything from the server.")
 
-    def run(self):
+    async def run(self):
         # First, create an agent
         self.sloop_client.createAgent(
             header=proto_utils.make_header(), config=self.agent_config,
@@ -493,11 +492,10 @@ class SloopMosViam:
         # Send planning requests
         for step in range(self.config["task_config"]["max_steps"]):
             action_id, action_pb = self.plan_action()
-            import pdb; pdb.set_trace()
-            self.execute_action(action_id, action_pb)
+            await self.execute_action(action_id, action_pb)
 
             response_observation, response_robot_belief =\
-                self.wait_observation_and_update_belief(action_id)
+                await self.wait_observation_and_update_belief(action_id)
             print(f"Step {step} robot belief:")
             robot_belief_pb = response_robot_belief.robot_belief
             objects_found = set(robot_belief_pb.objects_found.object_ids)
@@ -539,7 +537,7 @@ async def test_ur5e_viamlab(mock=False):
     try:
         sloop_viam = SloopMosViam()
         sloop_viam.setup(ur5robot, viam_names, config, world_frame)
-        sloop_viam.run()
+        await sloop_viam.run()
     finally:
         sloop_viam.sloop_client.channel.close()
 
