@@ -242,6 +242,9 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
         goal_frame (str): name of frame that the goal pose is with respect to.
         world_state: a viam.proto.common.WorldState
     """
+    if MOCK:
+        return True
+
     motion = MotionServiceClient.from_robot(viam_robot)
     # need to convert goal_pose rotation from quaternion to orientation vector
     gx, gy, gz, gqx, gqy, gqz, gqw = goal_pose
@@ -270,8 +273,10 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
                 return False
     return move_success
 
-def viam_signal_find(action_id):
+def viam_signal_find(viam_robot):
     """Do something with the robot to signal the find action"""
+    if MOCK:
+        return True
     raise NotImplementedError
 
 

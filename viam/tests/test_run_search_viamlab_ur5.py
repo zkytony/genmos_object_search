@@ -62,7 +62,9 @@ import asyncio
 import yaml
 import os
 import sys
+import time
 import numpy as np
+from pomdp_py.utils import typ
 
 # Allow importing stuff from parent folder
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -205,7 +207,7 @@ class SloopMosViam:
             lifetime=0)  # 0 is forever
 
         world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
-        self.viam_wold_state = world_state
+        self.viam_world_state = world_state
 
         # Chair
         chair_marker = ros_utils.make_viz_marker_for_object(
@@ -384,12 +386,21 @@ class SloopMosViam:
 
             # TODO: action execution
             print("Executing nav action (viewpoint movement)")
-            viam_move_ee_to(dest[:3], dest[3:], action_id)
+            success = viam_utils.viam_move(self.viam_robot,
+                                           self.viam_names["arm"],
+                                           dest, self.world_frame,
+                                           self.viam_world_state)
+            if not success:
+                print("viewpoint movement failed.")
+            else:
+                print("viewpoint movement succeeded.")
 
         elif isinstance(action_pb, a_pb2.Find):
             print("Signaling find action")
             # TODO: signal find
-            viam_signal_find(action_id)
+            success = viam_utils.viam_signal_find(self.viam_robot)
+            if success:
+                print("Find action taken.")
 
     def wait_for_observation(self):
         """We wait for the robot pose (PoseStamped) and the
@@ -479,34 +490,32 @@ class SloopMosViam:
                                               robot_id=self.robot_id)
         rospy.loginfo("planner created!")
 
-        # # Send planning requests
-        # for step in range(config["task_config"]["max_steps"]):
-        #     action_id, action_pb = plan_action()
-        #     execute_action(action_id, action_pb)
+        # Send planning requests
+        for step in range(self.config["task_config"]["max_steps"]):
+            action_id, action_pb = self.plan_action()
+            import pdb; pdb.set_trace()
+            self.execute_action(action_id, action_pb)
 
-        #     if dynamic_update:
-        #         update_search_region(robot_id, agent_config, sloop_client)
+            response_observation, response_robot_belief =\
+                self.wait_observation_and_update_belief(action_id)
+            print(f"Step {step} robot belief:")
+            robot_belief_pb = response_robot_belief.robot_belief
+            objects_found = set(robot_belief_pb.objects_found.object_ids)
+            objects_found.update(objects_found)
+            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+            print(f"  objects found: {objects_found}")
+            print("-----------")
 
-        #     response_observation, response_robot_belief =\
-        #         self.wait_observation_and_update_belief(action_id)
-        #     print(f"Step {step} robot belief:")
-        #     robot_belief_pb = response_robot_belief.robot_belief
-        #     objects_found = set(robot_belief_pb.objects_found.object_ids)
-        #     objects_found.update(objects_found)
-        #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-        #     print(f"  objects found: {objects_found}")
-        #     print("-----------")
+            # visualize FOV and belief
+            self.get_and_visualize_belief()
+            if response_observation.HasField("fovs"):
+                self.visualize_fovs_3d(response_observation)
 
-        #     # visualize FOV and belief
-        #     self.get_and_visualize_belief()
-        #     if response_observation.HasField("fovs"):
-        #         self.visualize_fovs_3d(response_observation)
-
-        #     # Check if we are done
-        #     if objects_found == set(self.agent_config["targets"]):
-        #         rospy.loginfo("Done!")
-        #         break
-        #     time.sleep(1)
+            # Check if we are done
+            if objects_found == set(self.agent_config["targets"]):
+                rospy.loginfo("Done!")
+                break
+            time.sleep(1)
 
 
 
