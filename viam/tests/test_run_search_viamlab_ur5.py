@@ -472,13 +472,12 @@ class SloopMosViam:
         # visualize initial belief
         self.publish_world_state_in_ros()
         self.get_and_visualize_belief_3d()
-        rospy.spin()
 
-        # # create planner
-        # response = sloop_client.createPlanner(config=planner_config,
-        #                                       header=proto_utils.make_header(),
-        #                                       robot_id=robot_id)
-        # rospy.loginfo("planner created!")
+        # create planner
+        response = self.sloop_client.createPlanner(config=self.planner_config,
+                                              header=proto_utils.make_header(),
+                                              robot_id=self.robot_id)
+        rospy.loginfo("planner created!")
 
         # # Send planning requests
         # for step in range(config["task_config"]["max_steps"]):
