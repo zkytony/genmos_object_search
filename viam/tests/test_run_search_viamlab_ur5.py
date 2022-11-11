@@ -63,6 +63,7 @@ import yaml
 import os
 import sys
 import time
+import json
 import numpy as np
 from pomdp_py.utils import typ
 
@@ -254,6 +255,42 @@ class SloopMosViam:
                 _, tf_msg = ros_utils.viz_msgs_for_robot_pose(
                     pose, self.world_frame, child_frame)
             self.tf2br.sendTransform(tf_msg)
+
+    def visualize_fovs_3d(self, response):
+        # Clear markers
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros_utils.clear_markers(header, ns="")
+        self._fovs_markers_pub.publish(clear_msg)
+
+        header = std_msgs.Header(stamp=rospy.Time.now(),
+                                 frame_id=self.world_frame)
+        fovs = json.loads(response.fovs.decode('utf-8'))
+        markers = []
+        for objid in fovs:
+            if objid in self.objects_found:
+                continue
+            free_color = np.array(self.agent_config["objects"][objid].get(
+                "color", [0.8, 0.4, 0.8]))[:3]
+            hit_color = lighter(free_color*255, -0.25)/255
+
+            obstacles_hit = set(map(tuple, fovs[objid]['obstacles_hit']))
+            for voxel in fovs[objid]['visible_volume']:
+                voxel = tuple(voxel)
+                if voxel in obstacles_hit:
+                    continue
+                m = ros_utils.make_viz_marker_for_voxel(
+                    objid, voxel, header, color=free_color, ns="fov",
+                    lifetime=0, alpha=0.7)
+                markers.append(m)
+            for voxel in obstacles_hit:
+                m = ros_utils.make_viz_marker_for_voxel(
+                    objid, voxel, header, color=hit_color, ns="fov",
+                    lifetime=0, alpha=0.7)
+                markers.append(m)
+            break  # just visualize one
+        self._fovs_markers_pub.publish(viz_msgs.MarkerArray(markers))
+
 
     def get_and_visualize_belief_3d(self):
         robot_id = self.robot_id
@@ -504,7 +541,7 @@ class SloopMosViam:
             print("-----------")
 
             # visualize FOV and belief
-            self.get_and_visualize_belief()
+            self.get_and_visualize_belief_3d()
             if response_observation.HasField("fovs"):
                 self.visualize_fovs_3d(response_observation)
 
