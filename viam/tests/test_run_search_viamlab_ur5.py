@@ -411,33 +411,32 @@ class SloopMosViam:
         robot_pose = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         # Note: right now we only get 2D detection
-        detections = viam_utils.viam_get_object_detections_2d(
+        detections = await viam_utils.viam_get_object_detections2d(
             self.world_frame,
             camera_name=self.viam_names["camera"],
             detector_name=self.viam_names["detector"],
             confidence_thres=constants.DETECTION2D_CONFIDENCE_THRES)
 
         # Detection proto
-        detections_pb = viam_utils.viam_detections3d_to_proto(self.robot_id, detections)
+        detections_pb = viam_utils.viam_detections2d_to_proto(self.robot_id, detections)
 
         # Objects found proto
         # If the last action is "find", and we receive object detections
         # that contain target objects, then these objects will be considered 'found'
-        if isinstance(last_action, a_pb2.Find):
+        if isinstance(self.last_action, a_pb2.Find):
             for det_pb in detections_pb.detections:
-                if det_pb.label in agent_config["targets"]:
-                    objects_found.add(det_pb.label)
-        header = proto_utils.make_header(frame_id=world_frame)
+                if det_pb.label in self.agent_config["targets"]:
+                    self.objects_found.add(det_pb.label)
+        header = proto_utils.make_header(frame_id=self.world_frame)
         objects_found_pb = o_pb2.ObjectsFound(
             header=header, robot_id=self.robot_id,
-            object_ids=sorted(list(objects_found)))
+            object_ids=sorted(list(self.objects_found)))
 
         # Robot pose proto
-        robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
         robot_pose_pb = o_pb2.RobotPose(
             header=header,
             robot_id=self.robot_id,
-            pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
+            pose_3d=proto_utils.posetuple_to_poseproto(robot_pose))
         return detections_pb, robot_pose_pb, objects_found_pb
 
     async def wait_observation_and_update_belief(self, action_id):

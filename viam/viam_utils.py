@@ -154,6 +154,9 @@ async def viam_get_object_detections2d(
         Return type: a list of (label, confidence, box2d) tuples.
         A label is a string. confidence is score, box2d is xyxy tuple
     """
+    if MOCK:
+        return []
+
     vision_client = VisionServiceClient.from_robot(viam_robot)
     detections = None
     _start = time.time()
