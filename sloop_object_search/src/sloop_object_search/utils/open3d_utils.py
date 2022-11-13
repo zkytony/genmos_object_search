@@ -269,8 +269,8 @@ def draw_robot_pose(robot_pose):
         cylinder_radius=0.5, cone_radius=0.75, cylinder_height=3.0,
         cone_height=1.8)
 
-    _o3d_rotation = np.array(default_o3d_rotation) + np.array(rotation)
-    arrow.rotate(math_utils.R_euler(*_o3d_rotation).as_matrix())
+    arrow.rotate(math_utils.R_euler(*default_o3d_rotation).as_matrix())
+    arrow.rotate(math_utils.R_euler(*math_utils.quat_to_euler(*sensor_pose[3:])).as_matrix())
     arrow.translate(np.asarray(sensor_pose[:3]))
     arrow.paint_uniform_color([0.4, 0.4, 0.4])
     return arrow
