@@ -372,12 +372,12 @@ def update_octree_belief(octree_belief, real_observation,
         if not node.leaf:
             node.remove_children()  # we are overwriting this node
         if voxel.label == Voxel.UNKNOWN:
-            node.set_val(None, (val_t * gamma)*(res**3))
+            node.set_val(None, (val_t * gamma))
         elif voxel.label == octree_belief.objid:
             # override potential previous belief of free space due to beta=0
-            node.set_val(None, (val_t * alpha)*(res**3))
+            node.set_val(None, (val_t * alpha))
         else:
-            node.set_val(None, (val_t * beta)*(res**3))
+            node.set_val(None, (val_t * beta))
         val_tp1 = node.value()
         octree_belief.octree_dist.backtrack(node)
     verify_octree_dist_integrity(octree_belief.octree_dist)
