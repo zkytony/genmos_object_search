@@ -633,7 +633,6 @@ def get_camera_direction3d(current_pose,
     """
     Given a current 3D camera pose, return a
     vector that indicates its look direction.
-    The default look direction is -z, or (0, 0, -1)
 
     Tip: default_camera_direction refers to the normal
     vector of the 0th plane in the frustum modeled by
