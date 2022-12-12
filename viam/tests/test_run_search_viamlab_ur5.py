@@ -8,51 +8,6 @@
 # class that can be the basis of that more general program.
 #
 # Viam Robot Pose
-# Connected!
-# (0.2797589770640316, 0.7128048233719448, 0.5942370817926967, -0.6500191634979094, 0.4769735333791088, 0.4926158987104014, 0.32756817897816304)
-# position {
-#   x: 0.27975897706403158
-#   y: 0.71280482337194484
-#   z: 0.59423708179269674
-# }
-# rotation {
-#   x: -0.65001916349790945
-#   y: 0.4769735333791088
-#   z: 0.4926158987104014
-#   w: 0.32756817897816304
-# }
-#
-# Example output of object detection
-# header {
-# }
-# robot_id: "robot0"
-# detections {
-#   label: "Chair"
-#   box_2d {
-#     x_min: 69
-#     y_min: 146
-#     x_max: 161
-#     y_max: 237
-#   }
-# }
-# detections {
-#   label: "Person"
-#   box_2d {
-#     x_min: 14
-#     y_min: 87
-#     x_max: 38
-#     y_max: 127
-#   }
-# }
-# detections {
-#   label: "Person"
-#   box_2d {
-#     x_min: 195
-#     y_min: 31
-#     x_max: 226
-#     y_max: 104
-#   }
-# }
 ##################################
 #
 # 1. run in one terminal, run 'python -m sloop_object_search.grpc.server'
