@@ -309,6 +309,17 @@ def ovec_to_quat(ox, oy, oz, theta):
     quat = Quaternion.from_orientation_vector(ovec)
     return (quat.i, quat.j, quat.k, quat.real)
 
+def pose_ovec_to_quat(pose_ovec):
+    """given a pose with ovec orientation (x,y,z,ox,oy,oz,theta),
+    return a pose with quaternion orientation
+    (x,y,z,qx,qy,qz,qw).  Handles it if the pose_ovec is a
+    protobuf object (viam.proto.common.Pose)."""
+    if isinstance(pose_ovec, viam.proto.common.Pose):
+        pose_ovec = (pose_ovec.x, pose_ovec.y, pose_ovec.z,
+                     pose_ovec.ox, pose_ovec.oy, pose_ovec.oz, pose_ovec.theta)
+    return (*pose_ovec[:3],
+            *ovec_to_quat(*pose_ovec[3:]))
+
 
 
 ################## Below are code from Gautham for orientation conversion #############
