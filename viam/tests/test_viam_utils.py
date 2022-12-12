@@ -11,6 +11,7 @@ from utils.viam_utils import (connect_viamlab_ur5,
                               viam_get_ee_pose,
                               viam_get_point_cloud_array,
                               viam_get_object_detections2d,
+                              viam_get_joint_positions,
                               viam_detections2d_to_proto,
                               viam_get_image,
                               viam_move,
@@ -78,6 +79,12 @@ async def test_viam_get_ee_pose(viam_robot):
     pose_pb = proto_utils.posetuple_to_poseproto(pose)
     print(pose_pb)
     print("----------------------")
+
+async def test_viam_get_joint_positions(viam_robot):
+    joints = await viam_get_joint_positions(viam_robot)
+    print(joints)
+    print("----------------------")
+
 
 async def test_viam_get_image(viam_robot):
     image = await viam_get_image(viam_robot, "gripper:color-cam")
@@ -154,7 +161,10 @@ async def testall_viamlab_ur5():
     print("Connecting to robot...")
     ur5robot = await connect_viamlab_ur5()
     print("Connected!")
-    await test_viam_move_viamlab_ur5(ur5robot)
+
+    await test_viam_get_joint_positions(ur5robot)
+
+    # await test_viam_move_viamlab_ur5(ur5robot)
 
     # # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
     # # their UR5 robot.

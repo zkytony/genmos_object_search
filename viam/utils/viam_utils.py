@@ -62,6 +62,16 @@ async def viam_get_ee_pose(viam_robot, arm_name="arm"):
                    quat.i, quat.j, quat.k, quat.real)
     return pose_w_quat
 
+async def viam_get_joint_positions(viam_robot, arm_name="arm"):
+    """Returns a tuple of joint positions, each a float,
+    representing an angle in degrees."""
+    arm = Arm.from_robot(viam_robot, arm_name)
+    joints_proto = await arm.get_joint_positions()
+    joints = []
+    for val in joints_proto.values:
+        joints.append(val)
+    return tuple(joints)
+
 async def viam_get_point_cloud_array(viam_robot, target_frame="camera"):
     """return current point cloud from camera through Viam.
     If 'target_frame' == 'camera', then the returned points will be in camera frame. If
