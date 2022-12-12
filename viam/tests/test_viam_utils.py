@@ -12,12 +12,14 @@ from utils.viam_utils import (connect_viamlab_ur5,
                               viam_get_point_cloud_array,
                               viam_get_object_detections2d,
                               viam_get_joint_positions,
+                              viam_move_to_joint_positions,
                               viam_detections2d_to_proto,
                               viam_get_image,
                               viam_move,
                               ovec_to_quat,
                               quat_to_ovec)
 from utils import viam_utils
+from constants import UR5_HOME_CONFIG
 
 from viam.components.arm import Arm
 
@@ -38,7 +40,6 @@ def test_quat_ovec_conversion():
         "o_z": -0.322136174798259,
         "theta": 71.308462217232076
     }
-
     ovec = (pose['o_x'], pose['o_y'], pose['o_z'], pose['theta'])
     quat = ovec_to_quat(*ovec)
     ovec2 = quat_to_ovec(*quat)
@@ -103,6 +104,11 @@ async def test_viam_get_object_detections2d(viam_robot):
     print(detections_pb)
     print("----------------------")
 
+async def test_viam_move_to_joint_pos_viamlab_ur5(viam_robot, arm_name="arm"):
+    await viam_move_to_joint_positions(viam_robot, UR5_HOME_CONFIG, arm_name)
+    print("----------------------")
+
+
 async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm", world_frame="world"):
     """testing motion planning service (end-effector) at Viam lab with the UR5 robot.
     Also tests move to joint positions through returning to home."""
@@ -163,8 +169,10 @@ async def testall_viamlab_ur5():
     print("Connected!")
 
     await test_viam_get_joint_positions(ur5robot)
+    await test_viam_move_viamlab_ur5(ur5robot)
+    await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
 
-    # await test_viam_move_viamlab_ur5(ur5robot)
+
 
     # # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
     # # their UR5 robot.

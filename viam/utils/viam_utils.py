@@ -16,7 +16,7 @@ from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelTy
 from viam.services.motion import MotionServiceClient
 
 import viam.proto.common as v_pb2
-from viam.proto.common import Pose, PoseInFrame, Geometry, GeometriesInFrame, RectangularPrism, WorldState
+import viam.proto.component.arm as varm_pb2
 
 import sloop_object_search.utils.math as math_utils
 from sloop_object_search.grpc import observation_pb2 as o_pb2
@@ -63,14 +63,14 @@ async def viam_get_ee_pose(viam_robot, arm_name="arm"):
     return pose_w_quat
 
 async def viam_get_joint_positions(viam_robot, arm_name="arm"):
-    """Returns a tuple of joint positions, each a float,
+    """Returns a list of joint positions, each a float,
     representing an angle in degrees."""
     arm = Arm.from_robot(viam_robot, arm_name)
     joints_proto = await arm.get_joint_positions()
     joints = []
     for val in joints_proto.values:
         joints.append(val)
-    return tuple(joints)
+    return joints
 
 async def viam_get_point_cloud_array(viam_robot, target_frame="camera"):
     """return current point cloud from camera through Viam.
@@ -233,10 +233,17 @@ def viam_detections2d_to_proto(robot_id, detections):
                                       detections=detections_pb)
 
 
-async def viam_move_joints(viam_robot, ):
+async def viam_move_to_joint_positions(viam_robot, goal_positions, arm_name="arm"):
     """
     Moves to the specified joint configuration.
+
+    Args:
+        goal_positions (list): list of joint positions (angles in degrees)
+            that is the goal configuration.
     """
+    arm = Arm.from_robot(viam_robot, arm_name)
+    goal_positions_proto = varm_pb2.JointPositions(values=goal_positions)
+    await arm.move_to_joint_positions(goal_positions_proto)
 
 
 async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
