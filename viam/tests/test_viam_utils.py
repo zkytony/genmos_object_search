@@ -17,6 +17,9 @@ from utils.viam_utils import (connect_viamlab_ur5,
                               ovec_to_quat,
                               quat_to_ovec)
 from utils import viam_utils
+
+from viam.components.arm import Arm
+
 import viam.proto.common as v_pb2
 from viam.proto.common import (Pose, PoseInFrame, Geometry, RectangularPrism,
                                GeometriesInFrame, Vector3, WorldState)
@@ -93,7 +96,7 @@ async def test_viam_get_object_detections2d(viam_robot):
     print(detections_pb)
     print("----------------------")
 
-async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm" world_frame="world"):
+async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm", world_frame="world"):
     """testing motion planning service (end-effector) at Viam lab with the UR5 robot.
     Also tests move to joint positions through returning to home."""
     def build_world_state_viamlab_ur5():
@@ -116,22 +119,26 @@ async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm" world_frame="wor
     # Adapting the examples from Nick in test_motion_nick_viam.py
     world_state = build_world_state_viamlab_ur5()
 
-    test_goals = {
+    test_goals = [
         (-0.6, -0.4, 0.06, *ovec_to_quat(0, -1, 0, 0)),
         (-0.6, -0.4, 1.60, *ovec_to_quat(0, -1, 0, 0)),
         (-0.6, -0.4, 0.60, *ovec_to_quat(0, -1, 0, 0)),
         (-0.7, -0.4, 0.60, *ovec_to_quat(0, -1, 0, 0)),
-        (-0.5, -1.3, 0.53, *ovec_to_quat(0.05, -0.02,  -1.00,  70.20))
+        (-0.5, -1.3, 0.53, *ovec_to_quat(0.05, -0.02,  -1.00,  70.20)),
         (-0.42, -1.3, 0.53, *ovec_to_quat(0.05, -0.02,  -1.00,  70.20))
-    }
+    ]
 
-    arm = Arm.from_robot(robot, "arm")
+    arm = Arm.from_robot(viam_robot, arm_name)
     for i, goal_pose in enumerate(test_goals):
         print(f"---------test {i}---------")
         pose = await arm.get_end_position()
         # note all rotations are printed in quaternion
         print("Start EE pose:", viam_utils.pose_ovec_to_quat(pose))
-        success = viam_move(viam_robot, arm_name, goal_pose, world_frame, world_state)
+        success = await viam_move(viam_robot,
+                                  arm_name,
+                                  goal_pose,
+                                  world_frame,
+                                  world_state)
         print("Goal EE pose:", goal_pose)
         if not success:
             print('motion planning failed.')
@@ -143,6 +150,11 @@ async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm" world_frame="wor
 
 async def testall_viamlab_ur5():
     test_quat_ovec_conversion()
+
+    print("Connecting to robot...")
+    ur5robot = await connect_viamlab_ur5()
+    print("Connected!")
+    await test_viam_move_viamlab_ur5(ur5robot)
 
     # # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
     # # their UR5 robot.

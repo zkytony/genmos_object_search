@@ -16,6 +16,7 @@ from viam.services.vision import VisionServiceClient, VisModelConfig, VisModelTy
 from viam.services.motion import MotionServiceClient
 
 import viam.proto.common as v_pb2
+from viam.proto.common import Pose, PoseInFrame, Geometry, GeometriesInFrame, RectangularPrism, WorldState
 
 import sloop_object_search.utils.math as math_utils
 from sloop_object_search.grpc import observation_pb2 as o_pb2
@@ -230,7 +231,6 @@ async def viam_move_joints(viam_robot, ):
 
 async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
                     world_state, timeout=10, extra=None):
-# extra = {"motion_profile": "linear", "line_tolerance": 0.2}
     """
     Moves the component to the given goal position and orientation.
     If move is successful, return True. Otherwise, return false.
@@ -250,8 +250,10 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
     if extra is None:
         extra = {"motion_profile": "pseudolinear",
                  "tolerance": 0.7}
+    extra["timeout"] = timeout
 
     motion = MotionServiceClient.from_robot(viam_robot)
+
     # need to convert goal_pose rotation from quaternion to orientation vector
     gx, gy, gz, gqx, gqy, gqz, gqw = goal_pose
     govec = Quaternion(i=gqx, j=gqy, k=gqz, real=gqw).to_orientation_vector()
@@ -264,26 +266,22 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
                                   theta=math_utils.to_degrees(govec.theta))
     goal_pose_in_frame = v_pb2.PoseInFrame(reference_frame=goal_frame,
                                            pose=goal_pose_w_ovec)
-
     comp_resname = None
     for resname in viam_robot.resource_names:
         if resname.name == component_name:
-            comp_resname = resname.name
+            comp_resname = resname
     if comp_resname is None:
         raise RuntimeError(f"Could not find resource name: {comp_resname}")
 
-    move_success = False
     try:
-        move_success = await asyncio.wait_for(
-            motion.move(component_name=resname,
-                        destination=goal_pose_in_frame,
-                        world_state=world_state,
-                        extra=extra),
-            timeout=timeout)
-    except AssertionError as ex:
-        print("unable to receive reply for Move request")
+        move_success = await motion.move(component_name=comp_resname,
+                                         destination=goal_pose_in_frame,
+                                         world_state=world_state,
+                                         extra=extra)
+        return move_success
+    except AssertionError:
+        print("Motion planning failed. Unable to receive reply from motion service.")
         return False
-    return move_success
 
 def viam_signal_find(viam_robot):
     """Do something with the robot to signal the find action"""
