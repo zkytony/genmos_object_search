@@ -22,7 +22,6 @@ from sloop_object_search.grpc import observation_pb2 as o_pb2
 from sloop_object_search.grpc import common_pb2
 from sloop_object_search.grpc.utils import proto_utils
 
-import constants
 
 ########### Robot-Specific viam functions ###########
 async def connect_viamlab_ur5():
@@ -291,6 +290,24 @@ def viam_signal_find(viam_robot):
     raise NotImplementedError()
 
 
+def quat_to_ovec(qx, qy, qz, qw):
+    """given a quaternion, returns a tuple (ox,oy,oz,theta)
+    that is the orientation vector."""
+    ovec = Quaternion(real=qw, i=qx, j=qy, k=qz).to_orientation_vector()
+    unit_ov = ovec.unit_sphere_vec
+    return (unit_ov.x, unit_ov.y, unit_ov.z, ovec.theta)
+
+
+def ovec_to_quat(ox, oy, oz, theta):
+    """given an orientation vector (ox, oy, oz, theta)
+    return a quaternion (qx, qy, qz, qw)"""
+    ovec = OrientationVector(Vector3(x=ox,
+                                     y=oy,
+                                     z=oz), theta=theta)
+    quat = Quaternion.from_orientation_vector(ovec)
+    return (quat.i, quat.j, quat.k, quat.real)
+
+
 
 ################## Below are code from Gautham for orientation conversion #############
 @dataclass
@@ -404,8 +421,6 @@ class OrientationVector:
 
     def __str__(self) -> str:
         return f"OV: ({self.unit_sphere_vec}, Theta: {self.theta})"
-
-
 
     @classmethod
     def extract_from_pose(cls, pose):
