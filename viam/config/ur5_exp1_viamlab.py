@@ -1,3 +1,30 @@
+######### WORLD STATE ################################
+# All positions and sizes are in metric unit (meters)
+# All world state objects are boxes (rectangular prism)
+# All poses should be in world frame.
+WORLD_STATE = [
+    {"name": "table",
+     "pose": [0.43, 0, -0.49],
+     "sizes": [0.86, 1.16, 0.93],
+     "color": [0.05, 0.45, 0.72, 0.8]},  # rgba
+
+    {"name": "xarm",
+     "pose": [0.8, 0., 0.475],
+     "sizes": [0.4, 0.4, 1.0],
+     "color": [0.95, 0.95, 0.88, 0.8]},
+
+    {"name": "chair",
+     "pose": [0.05, 1.37, -0.54],
+     "sizes": [0.4, 0.4, 0.83],
+     "color": [0.18, 0.18, 0.18, 0.8]},
+
+    {"name": "arm_origin",
+     "pose": [0.0, 0.0, 0.0],
+     "sizes": [0.17, 0.17, 0.25],
+     "color": [0.5, 0.8, 0.9, 0.8]}
+]
+
+
 ######### COMMON CONFIGURATIONS ######
 LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
                                           "step_size": 0.2,
@@ -103,7 +130,11 @@ CONFIG_LOCAL = {
         "max_steps": 200
     },
 
-    "planner_config": LOCAL_PLANNER_CONFIG
+    "planner_config": LOCAL_PLANNER_CONFIG,
+
+    # used for collision avoidance geometry configuration
+    # and rviz visualization.
+    "world_state_config": WORLD_STATE
 }
 
 

@@ -70,6 +70,7 @@ class SloopMosViam:
         self.agent_config = config["agent_config"]
         self.planner_config = config["planner_config"]
         self.robot_id = self.agent_config["robot"]["id"]
+        self.world_state_config = config["world_state_config"]
         self.world_frame = world_frame  # fixed frame of the world
 
         # Initialize grpc client
@@ -109,93 +110,46 @@ class SloopMosViam:
     def publish_world_state_in_ros(self):
         """Publishes the TF and visualization markers for the world state
         periodically"""
-        ## Hard coded for the Viam Lab scene
-        table_pose = (0.43, 0, -0.49)  # center of table in world frame
-        table_sizes = (0.86, 1.16, 0.93)
+        geoms_F_world = []  # geometry with pose in specified reference frame.
+        viz_markers = []
+        for obj_spec in self.world_state_config:
+            pose = obj_spec["pose"]  # in meters
+            sizes = obj_spec["sizes"]  # in meters
+            geom = v_pb2.Geometry(center=v_pb2.Pose(x=pose[0]*1000,
+                                                    y=pose[1]*1000,
+                                                    z=pose[2]*1000),
+                                  box=v_pb2.RectangularPrism(
+                                      dims_mm=v_pb2.Vector3(
+                                          x=sizes[0]*1000,
+                                          y=sizes[1]*1000,
+                                          z=sizes[2]*1000)))
 
-        xarm_pose = (0.8, 0., 0.475) # in world frame
-        xarm_sizes = (0.4, 0.4, 1.0)
+            # think of this as ROS's PoseStamped (pose with frame)
+            geom_F_world = v_pb2.GeometriesInFrame(
+                reference_frame=self.world_frame, geometries=[geom])
+            geoms_F_world.append(geom_F_world)
 
-        chair_pose = (0.05, 1.37, -0.54) # in world frame
-        chair_sizes = (0.4, 0.4, 0.83)
+            viz_marker = ros_utils.make_viz_marker_for_object(
+                obj_spec["name"], pose,
+                std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
+                viz_type=viz_msgs.Marker.CUBE,
+                color=obj_spec["color"],
+                scale=geometry_msgs.Vector3(x=sizes[0],
+                                            y=sizes[1],
+                                            z=sizes[2]),
+                lifetime=0)
+            viz_markers.append(viz_marker)
 
-        arm_origin_pose = (0.0, 0.0, 0.0) # in world frame
-        arm_origin_sizes = (0.17, 0.17, 0.25)
+            # record pose for periodic tf publication
+            self._world_frame_poses[obj_spec["name"]] = pose[:3]
 
-        table = v_pb2.Geometry(center=v_pb2.Pose(x=table_pose[0]*1000,
-                                                 y=table_pose[1]*1000,
-                                                 z=table_pose[2]*1000),
-                               box=v_pb2.RectangularPrism(
-                                   dims_mm=v_pb2.Vector3(
-                                       x=table_sizes[0]*1000,
-                                       y=table_sizes[1]*1000,
-                                       z=table_sizes[2]*1000)))
-        tableFrame = v_pb2.GeometriesInFrame(
-            reference_frame=self.world_frame, geometries=[table])
-        table_marker = ros_utils.make_viz_marker_for_object(
-            "table", table_pose,
-            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
-            viz_type=viz_msgs.Marker.CUBE,
-            color=[0.05, 0.45, 0.72, 0.8],
-            scale=geometry_msgs.Vector3(x=table_sizes[0],
-                                        y=table_sizes[1],
-                                        z=table_sizes[2]),
-            lifetime=0)  # 0 is forever
-
-        xARM = v_pb2.Geometry(center=v_pb2.Pose(x=xarm_pose[0]*1000,
-                                                y=xarm_pose[1]*1000,
-                                                z=xarm_pose[2]*1000),
-                              box=v_pb2.RectangularPrism(
-                                  dims_mm=v_pb2.Vector3(
-                                      x=xarm_sizes[0]*1000,
-                                      y=xarm_sizes[1]*1000,
-                                      z=xarm_sizes[2]*1000)))
-        xARMFrame = v_pb2.GeometriesInFrame(reference_frame=self.world_frame, geometries=[xARM])
-        xarm_marker = ros_utils.make_viz_marker_for_object(
-            "xarm", xarm_pose,
-            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
-            viz_type=viz_msgs.Marker.CUBE,
-            color=[0.95, 0.95, 0.88, 0.8],
-            scale=geometry_msgs.Vector3(x=xarm_sizes[0],
-                                        y=xarm_sizes[1],
-                                        z=xarm_sizes[2]),
-            lifetime=0)  # 0 is forever
-
-        world_state = v_pb2.WorldState(obstacles=[tableFrame, xARMFrame])
+        world_state = v_pb2.WorldState(obstacles=geoms_F_world)
         self.viam_world_state = world_state
 
-        # Chair
-        chair_marker = ros_utils.make_viz_marker_for_object(
-            "chair", chair_pose,
-            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
-            viz_type=viz_msgs.Marker.CUBE,
-            color=[0.18, 0.18, 0.18, 0.8],
-            scale=geometry_msgs.Vector3(x=chair_sizes[0],
-                                        y=chair_sizes[1],
-                                        z=chair_sizes[2]),
-            lifetime=0)  # 0 is forever
-
-        # Robot arm base
-        arm_origin_marker = ros_utils.make_viz_marker_for_object(
-            "arm_origin", arm_origin_pose,
-            std_msgs.Header(stamp=rospy.Time.now(), frame_id=self.world_frame),
-            viz_type=viz_msgs.Marker.CUBE,
-            color=[0.5, 0.8, 0.9, 0.8],
-            scale=geometry_msgs.Vector3(x=arm_origin_sizes[0],
-                                        y=arm_origin_sizes[1],
-                                        z=arm_origin_sizes[2]),
-            lifetime=0)  # 0 is forever
-
-        markers = [table_marker, xarm_marker, chair_marker, arm_origin_marker]
-        self._world_state_markers_pub.publish(viz_msgs.MarkerArray(markers))
+        self._world_state_markers_pub.publish(viz_msgs.MarkerArray(viz_markers))
         rospy.loginfo("Published world state markers")
 
-        # periodically publish tf
-        self._world_frame_poses["table"] = table_pose[:3]
-        self._world_frame_poses["xarm"] = xarm_pose[:3]
-        self._world_frame_poses["chair"] = xarm_pose[:3]
-        self._world_frame_poses["arm_base"] = xarm_pose[:3]
-
+        rospy.loginfo("Publishing world state TF")
         rospy.Timer(rospy.Duration(1./5),
                     lambda event: self._publish_tf())
 
