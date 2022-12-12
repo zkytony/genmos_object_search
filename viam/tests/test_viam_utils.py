@@ -19,7 +19,7 @@ from utils.viam_utils import (connect_viamlab_ur5,
                               ovec_to_quat,
                               quat_to_ovec)
 from utils import viam_utils
-from constants import UR5_HOME_CONFIG
+import constants
 
 from viam.components.arm import Arm
 
@@ -50,7 +50,7 @@ def test_quat_ovec_conversion():
 async def test_viam_get_point_cloud_array_to_proto(viam_robot):
     # THIS TEST MAY FAIL BECAUSE:
     #  -- The depth cloud is not accessible (you will get "Unknown desc = image: unknown format")
-    viam_cloud_arr = await viam_get_point_cloud_array(viam_robot)
+    viam_cloud_arr = await viam_get_point_cloud_array(viam_robot, constants.DEPTH_CAM)
 
     # 'camera' is a made-up camera frame.
     cloud_pb = proto_utils.pointcloudproto_from_array(viam_cloud_arr, "camera")
@@ -88,10 +88,10 @@ async def test_viam_get_joint_positions(viam_robot):
 
 
 async def test_viam_get_image(viam_robot):
-    image = await viam_get_image(viam_robot, "gripper:color-cam")
+    image = await viam_get_image(viam_robot, constants.COLOR_CAM)
     image.save("foo.png")
-    print("image saved")
-    image = await viam_get_image(viam_robot, "segmenter-cam")
+    print("color image saved")
+    image = await viam_get_image(viam_robot, constants.SEGM_CAM)
     image.save("foo-seg.png")
     print("segmenter image saved")
     print("----------------------")
@@ -105,7 +105,7 @@ async def test_viam_get_object_detections2d(viam_robot):
     print("----------------------")
 
 async def test_viam_move_to_joint_pos_viamlab_ur5(viam_robot, arm_name="arm"):
-    await viam_move_to_joint_positions(viam_robot, UR5_HOME_CONFIG, arm_name)
+    await viam_move_to_joint_positions(viam_robot, constants.UR5_HOME_CONFIG, arm_name)
     print("----------------------")
 
 
@@ -164,28 +164,23 @@ async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm", world_frame="wo
 async def testall_viamlab_ur5():
     test_quat_ovec_conversion()
 
+    # Note on 12/12/2022 15:42: These tests are conducted at Viam Inc. using
     print("Connecting to robot...")
     ur5robot = await connect_viamlab_ur5()
     print("Connected!")
 
+    # Testing perception
+    await test_viam_get_ee_pose(ur5robot)
     await test_viam_get_joint_positions(ur5robot)
+    await test_viam_get_image(ur5robot)
+    await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    await test_viam_get_object_detections2d(ur5robot)
+
+    # Testing the arm motion
     await test_viam_move_viamlab_ur5(ur5robot)
     await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
 
-
-
-    # # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
-    # # their UR5 robot.
-    # print("Connecting to robot...")
-    # ur5robot = await connect_viamlab_ur5()
-    # print("Connected!")
-    # await test_viam_get_ee_pose(ur5robot)
-    # # await test_viam_get_point_cloud_array_to_proto(ur5robot)
-    # # await test_viam_get_image(ur5robot)
-    # # await test_viam_get_object_detections2d(ur5robot)
-    # await test_viam_move_viamlab_ur5(ur5robot)
-
-    # await ur5robot.close()
+    await ur5robot.close()
 
 if __name__ == "__main__":
     asyncio.run(testall_viamlab_ur5())

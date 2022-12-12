@@ -72,14 +72,14 @@ async def viam_get_joint_positions(viam_robot, arm_name="arm"):
         joints.append(val)
     return joints
 
-async def viam_get_point_cloud_array(viam_robot, target_frame="camera"):
+async def viam_get_point_cloud_array(viam_robot, camera_name, target_frame="camera"):
     """return current point cloud from camera through Viam.
     If 'target_frame' == 'camera', then the returned points will be in camera frame. If
     'target_frame' == 'world', then the returned points will be in the world frame.
 
     Return type: numpy array of [x,y,z]
     """
-    camera = Camera.from_robot(viam_robot, "gripper:depth-cam")
+    camera = Camera.from_robot(viam_robot, camera_name)
     data, mimetype = await camera.get_point_cloud()
     # TODO: a better way?
     with open("/tmp/pointcloud_data.pcd", "wb") as f:
