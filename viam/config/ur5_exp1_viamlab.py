@@ -82,13 +82,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 
 ######### DETECTORS AND OBJECTS ######
 LOCAL_DETECTORS = {
-    'Chair': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+    'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "gripper_camera",
                        "quality": [1e7, 0.2]}},
 }
 
 OBJECTS = {
-    'Chair': {'class': 'Chair',
+    'cup': {'class': 'cup',
             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
             'color': [0.67, 0.61, 0.15, 0.8],
             'viz_type': 'cube'}
@@ -107,12 +107,12 @@ def make_detectors(local_or_global, *objects):
         if local_or_global == "local":
             result[obj] = LOCAL_DETECTORS[obj]
         else:
-            result[obj] = GLOBAL_DETECTORS[obj]
+            raise NotImplementedError()
     return result
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["Chair"]
+target_objects = ["cup"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",

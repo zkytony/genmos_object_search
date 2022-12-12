@@ -149,14 +149,20 @@ def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_
             voxels[voxel] = Voxel(voxel, Voxel.FREE)
         else:
             detected = True
-            x,y,z,r = voxel
-            bbox = detection.bbox_axis_aligned()
-            voxel_box = ((x*r, y*r, z*r), r, r, r)
-            if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
+            if detection.pose == ObjectDetection.NO_POSE:
+                # this is a label-only detection. All voxels within FOV will be marked.
                 voxels[voxel] = Voxel(voxel, detection.id)
                 overlapped = True
             else:
-                voxels[voxel] = Voxel(voxel, Voxel.FREE)
+                # this is a 3d bbox detection. Check if the detection bbox overlaps with voxel
+                x,y,z,r = voxel
+                voxel_box = ((x*r, y*r, z*r), r, r, r)
+                bbox = detection.bbox_axis_aligned()
+                if math_utils.boxes_overlap3d_origin(bbox, voxel_box):
+                    voxels[voxel] = Voxel(voxel, detection.id)
+                    overlapped = True
+                else:
+                    voxels[voxel] = Voxel(voxel, Voxel.FREE)
 
     if detected and not overlapped:
         print(f"Warning: detected object {detection.id} at {detection.loc} "\

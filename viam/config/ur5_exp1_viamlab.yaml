@@ -13,8 +13,8 @@ agent_config:
       step_size: 0.2
       voxel_res: 2
   objects:
-    Chair:
-      class: Chair
+    cup:
+      class: cup
       color:
       - 0.67
       - 0.61
@@ -39,7 +39,7 @@ agent_config:
         resample_thres: 0.4
         sep: 0.75
     detectors:
-      Chair:
+      cup:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
@@ -70,7 +70,7 @@ agent_config:
       region_size_z: 1.5
       res: 0.08
   targets:
-  - Chair
+  - cup
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
@@ -137,3 +137,17 @@ world_state_config:
   - 0.17
   - 0.17
   - 0.25
+- color:
+  - 0.8
+  - 0.2
+  - 0.2
+  - 0.8
+  name: cup
+  pose:
+  - 0.05
+  - 1.37
+  - 0.5
+  sizes:
+  - 0.1
+  - 0.1
+  - 0.15

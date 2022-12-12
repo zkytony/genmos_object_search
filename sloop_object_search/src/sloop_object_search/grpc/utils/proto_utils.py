@@ -405,6 +405,10 @@ def pomdp_detection_from_proto_3d(detection_pb, agent,
     pomdp_pose = (pomdp_center_pos, center_rot)
     return slpo.ObjectDetection(objid, pomdp_pose, sizes=pomdp_sizes)
 
+def pomdp_detection_from_proto_labelonly(detection_pb):
+    objid = detection_pb.label
+    return slpo.ObjectDetection(objid, slpo.ObjectDetection.NO_POSE)
+
 def pomdp_robot_observation_from_request(request, agent, action=None,
                                          pos_precision='int',
                                          rot_precision=0.001):
@@ -486,7 +490,12 @@ def pomdp_observation_from_request(request, agent, action=None):
         # First collect what we do detect
         detections = {}
         for detection_pb in request.object_detections.detections:
-            zobj = pomdp_detection_from_proto_3d(detection_pb, agent)
+            if detection_pb.HasField("box_3d"):
+                zobj = pomdp_detection_from_proto_3d(detection_pb, agent)
+            else:
+                # label-only detection (no 3d box information)
+                zobj = pomdp_detection_from_proto_labelonly(detection_pb)
+
             if zobj.id not in detections:
                 detections[zobj.id] = zobj
             else:
