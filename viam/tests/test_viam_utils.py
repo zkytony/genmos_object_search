@@ -1,4 +1,5 @@
 import asyncio
+import pytest
 import os
 import sys
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -6,17 +7,37 @@ sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 
 import numpy as np
 import open3d as o3d
-from viam_utils import (connect_viamlab_ur5,
-                        viam_get_ee_pose,
-                        viam_get_point_cloud_array,
-                        viam_get_object_detections2d,
-                        viam_detections2d_to_proto,
-                        viam_get_image,
-                        viam_move)
+from utils.viam_utils import (connect_viamlab_ur5,
+                              viam_get_ee_pose,
+                              viam_get_point_cloud_array,
+                              viam_get_object_detections2d,
+                              viam_detections2d_to_proto,
+                              viam_get_image,
+                              viam_move,
+                              ovec_to_quat,
+                              quat_to_ovec)
 import viam.proto.common as v_pb2
 
 from sloop_object_search.grpc.utils import proto_utils
 
+
+def test_quat_ovec_conversion():
+    pose = {
+        "x": 462.41402300101993,
+        "y": 340.22520636265983,
+        "z": 625.99252608964252,
+        "o_x": -0.16668243758578755,
+        "o_y": 0.93190409908252192,
+        "o_z": -0.322136174798259,
+        "theta": 71.308462217232076
+    }
+
+    ovec = (pose['o_x'], pose['o_y'], pose['o_z'], pose['theta'])
+    quat = ovec_to_quat(*ovec)
+    ovec2 = quat_to_ovec(*quat)
+    quat2 = ovec_to_quat(*ovec2)
+    assert ovec2 == pytest.approx(ovec)
+    assert quat2 == pytest.approx(quat)
 
 async def test_viam_get_point_cloud_array_to_proto(viam_robot):
     # THIS TEST MAY FAIL BECAUSE:
@@ -89,18 +110,20 @@ async def test_viam_move_viamlab_ur5(viam_robot):
 
 
 async def testall_viamlab_ur5():
-    # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
-    # their UR5 robot.
-    print("Connecting to robot...")
-    ur5robot = await connect_viamlab_ur5()
-    print("Connected!")
-    await test_viam_get_ee_pose(ur5robot)
-    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
-    # await test_viam_get_image(ur5robot)
-    # await test_viam_get_object_detections2d(ur5robot)
-    await test_viam_move_viamlab_ur5(ur5robot)
+    test_quat_ovec_conversion()
 
-    await ur5robot.close()
+    # # Note on 11/06/2022 09:31AM: These tests are conducted at Viam Inc. using
+    # # their UR5 robot.
+    # print("Connecting to robot...")
+    # ur5robot = await connect_viamlab_ur5()
+    # print("Connected!")
+    # await test_viam_get_ee_pose(ur5robot)
+    # # await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    # # await test_viam_get_image(ur5robot)
+    # # await test_viam_get_object_detections2d(ur5robot)
+    # await test_viam_move_viamlab_ur5(ur5robot)
+
+    # await ur5robot.close()
 
 if __name__ == "__main__":
     asyncio.run(testall_viamlab_ur5())

@@ -292,18 +292,20 @@ def viam_signal_find(viam_robot):
 
 def quat_to_ovec(qx, qy, qz, qw):
     """given a quaternion, returns a tuple (ox,oy,oz,theta)
-    that is the orientation vector."""
+    that is the orientation vector.
+    Note that the resulting ovec's theta is in degrees"""
     ovec = Quaternion(real=qw, i=qx, j=qy, k=qz).to_orientation_vector()
     unit_ov = ovec.unit_sphere_vec
-    return (unit_ov.x, unit_ov.y, unit_ov.z, ovec.theta)
+    return (unit_ov.x, unit_ov.y, unit_ov.z, math_utils.to_deg(ovec.theta))
 
 
 def ovec_to_quat(ox, oy, oz, theta):
     """given an orientation vector (ox, oy, oz, theta)
-    return a quaternion (qx, qy, qz, qw)"""
+    return a quaternion (qx, qy, qz, qw).
+    Note that the theta of the given ovec should be in degrees"""
     ovec = OrientationVector(Vector3(x=ox,
                                      y=oy,
-                                     z=oz), theta=theta)
+                                     z=oz), theta=math_utils.to_rad(theta))
     quat = Quaternion.from_orientation_vector(ovec)
     return (quat.i, quat.j, quat.k, quat.real)
 
