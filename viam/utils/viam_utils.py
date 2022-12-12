@@ -313,10 +313,15 @@ def pose_ovec_to_quat(pose_ovec):
     """given a pose with ovec orientation (x,y,z,ox,oy,oz,theta),
     return a pose with quaternion orientation
     (x,y,z,qx,qy,qz,qw).  Handles it if the pose_ovec is a
-    protobuf object (viam.proto.common.Pose)."""
-    if isinstance(pose_ovec, viam.proto.common.Pose):
-        pose_ovec = (pose_ovec.x, pose_ovec.y, pose_ovec.z,
-                     pose_ovec.ox, pose_ovec.oy, pose_ovec.oz, pose_ovec.theta)
+    protobuf object (viam.proto.common.Pose).
+    By default: the x, y, z of pose_ovec are assumed to be in meters.
+    Unless when pose_ovec is a v_pb2.Pose, we will convert milimeters
+    to meters."""
+    if isinstance(pose_ovec, v_pb2.Pose):
+        pose_ovec = (pose_ovec.x / 1000.,
+                     pose_ovec.y / 1000.,
+                     pose_ovec.z / 1000.,
+                     pose_ovec.o_x, pose_ovec.o_y, pose_ovec.o_z, pose_ovec.theta)
     return (*pose_ovec[:3],
             *ovec_to_quat(*pose_ovec[3:]))
 
