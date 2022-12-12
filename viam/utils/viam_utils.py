@@ -24,15 +24,8 @@ from sloop_object_search.grpc.utils import proto_utils
 
 import constants
 
-# Variables used when mocking viam data or API calls
-MOCK = False
-MOCK_ROBOT_POSE = None
-
-
 ########### Robot-Specific viam functions ###########
 async def connect_viamlab_ur5():
-    if MOCK:
-        return None
     creds = Credentials(
         type='robot-location-secret',
         payload='gm1rjqe84nt8p64ln6r1jyf5hc3tdnc2jywojoykvk56d0qa')
@@ -49,9 +42,6 @@ async def viam_get_ee_pose(viam_robot, arm_name="arm"):
     Return type: tuple (x,y,z,qx,qy,qz,qw)
     Note that viam's positions units are in milimeters.
     We will convert them into meters (more familiar with me)"""
-    if MOCK:
-        return MOCK_ROBOT_POSE
-
     #NOTE!!! BELOW DOES NOT GIVE YOU THE TRUE EE
     #ON THE GRIPPER OF THE UR5 ROBOT AT VIAM LAB
     #BUT THE END OF THE ARM WITHOUT GRIPPER. THIS
@@ -154,9 +144,6 @@ async def viam_get_object_detections2d(
         Return type: a list of (label, confidence, box2d) tuples.
         A label is a string. confidence is score, box2d is xyxy tuple
     """
-    if MOCK:
-        return []
-
     vision_client = VisionServiceClient.from_robot(viam_robot)
     detections = None
     _start = time.time()
@@ -252,11 +239,6 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
         goal_frame (str): name of frame that the goal pose is with respect to.
         world_state: a viam.proto.common.WorldState
     """
-    if MOCK:
-        global MOCK_ROBOT_POSE
-        MOCK_ROBOT_POSE = goal_pose  # mock -- as if the move succeeded
-        return True
-
     motion = MotionServiceClient.from_robot(viam_robot)
     # need to convert goal_pose rotation from quaternion to orientation vector
     gx, gy, gz, gqx, gqy, gqz, gqw = goal_pose
@@ -287,9 +269,7 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
 
 def viam_signal_find(viam_robot):
     """Do something with the robot to signal the find action"""
-    if constants.MOCK:
-        return True
-    raise NotImplementedError
+    raise NotImplementedError()
 
 
 

@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 import constants
 
 # Viam related
-import viam_utils
+from utils.mock import viam_utils
 import viam.proto.common as v_pb2
 
 # ROS related
