@@ -145,6 +145,10 @@ for Multi-Object Search.
     ObjectVoxel is specific to an object $i$, used to refer to a voxel
     in $V_i$, the field of view of object i. This is used during planning
     and updating the planner.
+*** Object detection types
+    We can handle:
+    - 3D object detection bounding boxes. If not available:
+    - label-only object detection.
 
 *** Server and Client: A Concrete Use Case
     The server runs planner, holds agent's beliefs, etc.
