@@ -139,14 +139,14 @@ async def viam_get_image(viam_robot, camera_name,
 
 async def viam_get_object_detections2d(
         viam_robot,
-        camera_name="segmenter-cam",
+        camera_name="gripper-main:color-cam",
         detector_name="find_objects",
         confidence_thres=None,
         timeout=3):
     """
     Args:
         viam_robot_or_vision_client: either viam_robot connection, or VisionServiceClient
-        camera_name (str): name of camera with color image
+        camera_name (str): name of camera with color image. NOT the virtual camera with detection output!
         detector_name (str): name of RGB object detection
         confidence_thres (float): filter out detections with confidence below this threshold
         timeout: wait time for the vision service to return a message. Must not be None.

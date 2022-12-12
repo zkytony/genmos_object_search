@@ -97,7 +97,9 @@ async def test_viam_get_image(viam_robot):
     print("----------------------")
 
 async def test_viam_get_object_detections2d(viam_robot):
-    detections = await viam_get_object_detections2d(viam_robot, confidence_thres=0.5)
+    detections = await viam_get_object_detections2d(
+        viam_robot, camera_name=constants.COLOR_CAM,
+        detector_name=constants.DETECTOR, confidence_thres=0.5)
     print(detections)
     print("::: convert to my ObjectDetectionArray proto :::")
     detections_pb = viam_detections2d_to_proto("robot0", detections)
@@ -170,15 +172,15 @@ async def testall_viamlab_ur5():
     print("Connected!")
 
     # Testing perception
-    await test_viam_get_ee_pose(ur5robot)
-    await test_viam_get_joint_positions(ur5robot)
-    await test_viam_get_image(ur5robot)
-    await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    # await test_viam_get_ee_pose(ur5robot)
+    # await test_viam_get_joint_positions(ur5robot)
+    # await test_viam_get_image(ur5robot)
+    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
     await test_viam_get_object_detections2d(ur5robot)
 
-    # Testing the arm motion
-    await test_viam_move_viamlab_ur5(ur5robot)
-    await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
+    # # Testing the arm motion
+    # await test_viam_move_viamlab_ur5(ur5robot)
+    # await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
 
     await ur5robot.close()
 

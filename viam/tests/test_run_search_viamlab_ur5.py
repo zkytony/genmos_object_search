@@ -359,7 +359,7 @@ class SloopMosViam:
         # Note: right now we only get 2D detection
         detections = await viam_utils.viam_get_object_detections2d(
             self.world_frame,
-            camera_name=self.viam_names["camera"],
+            camera_name=self.viam_names["color_camera"],
             detector_name=self.viam_names["detector"],
             confidence_thres=constants.DETECTION2D_CONFIDENCE_THRES)
 
@@ -472,9 +472,9 @@ async def test_ur5e_viamlab(mock=False):
     print(">>>>>>><<<<<<<<>>>> viam connecting >><<<<<<<<>>>>>>>")
     ur5robot = await viam_utils.connect_viamlab_ur5()
     viam_names = {
-        "camera": "segmenter_cam",
-        "detector": "find_objects",
-        "arm": "arm"
+        "color_camera": constants.COLOR_CAM,
+        "detector": constants.DETECTOR,
+        "arm": constants.ARM
     }
     world_frame = "arm_origin"
 
