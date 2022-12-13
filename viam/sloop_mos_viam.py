@@ -280,12 +280,12 @@ class SloopMosViam:
         self._world_frame_poses[self.robot_id] = robot_pose
         self.tf2br.sendTransform(trobot)
 
-    def _simulate_point_cloud_from_world_state(self, density=2, viz=False):
+    def _simulate_point_cloud_from_world_state(self, density=0.01, viz=False):
         """
         Returns a numpy array (Nx3) of point cloud generated
         based on geometrical information in 'self.world_state_config'.
 
-        density (int): the number of points per cubic centi-meter (1cm^3).
+        density (int): the number of points per cubic meter (1m^3).
         viz (bool): True if publishes the world state point cloud for RVIZ.
         """
         # currently, all world state objects are boxes.

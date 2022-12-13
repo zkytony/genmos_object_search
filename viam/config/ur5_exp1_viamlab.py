@@ -1,32 +1,33 @@
 ######### WORLD STATE ################################
+# Configured on 12/12/2022 18:03
 # All positions and sizes are in metric unit (meters)
 # All world state objects are boxes (rectangular prism)
 # All poses should be in world frame.
 WORLD_STATE = [
-    {"name": "table",
-     "pose": [0.43, 0, -0.49],
-     "sizes": [0.86, 1.16, 0.93],
-     "color": [0.05, 0.45, 0.72, 0.8]},  # rgba
-
-    {"name": "xarm",
-     "pose": [0.8, 0., 0.475],
-     "sizes": [0.4, 0.4, 1.0],
-     "color": [0.95, 0.95, 0.88, 0.8]},
-
-    {"name": "chair",
-     "pose": [0.05, 1.37, -0.54],
-     "sizes": [0.4, 0.4, 0.83],
-     "color": [0.18, 0.18, 0.18, 0.8]},
-
     {"name": "arm_origin",
      "pose": [0.0, 0.0, 0.0],
      "sizes": [0.17, 0.17, 0.25],
      "color": [0.5, 0.8, 0.9, 0.8]},
 
-    {"name": "cup",
-     "pose": [0.05, 1.37, 0.5],
-     "sizes": [0.1, 0.1, 0.15],
-     "color": [0.8, 0.2, 0.2, 0.8]}
+    {"name": "wall_behind",
+     "pose": [0.2, 0, 0.5],
+     "sizes": [0.08, 2.0, 2.0],
+     "color": [0.2, 0.2, 0.2, 0.8]},  # rgba
+
+    {"name": "mount",  # the table where the robot is mounted on
+     "pose": [0.3, 0.0, -0.5],
+     "sizes": [0.7, 1.0, 1.0],
+     "color": [0.05, 0.45, 0.72, 0.8]},  # rgba
+
+    {"name": "table_below",  # table right below the robot
+     "pose": [-0.45, 0.0, -0.27],
+     "sizes": [0.9, 1.9, 0.1],
+     "color": [0.9, 0.9, 0.9, 0.8]},  # rgba
+
+    {"name": "table_far",  # table right below the robot
+     "pose": [0.05, -1.70, -0.27],
+     "sizes": [1.9, 0.8, 0.1],
+     "color": [0.9, 0.9, 0.9, 0.8]},  # rgba
 ]
 
 
@@ -47,7 +48,8 @@ SEARCH_REGION_3D = {"res": 0.08,
                     "region_size_z": 1.5,
                     "center_x": 0.0,
                     "center_y": 0.0,
-                    "center_z": 0.0}
+                    "center_z": 0.0,
+                    "point_cloud_from_world_state": True}
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 GRIPPER_CAMERA = {'name': 'gripper_camera',
@@ -82,13 +84,13 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 
 ######### DETECTORS AND OBJECTS ######
 LOCAL_DETECTORS = {
-    'cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+    'Cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "gripper_camera",
                        "quality": [1e7, 0.2]}},
 }
 
 OBJECTS = {
-    'cup': {'class': 'cup',
+    'Cup': {'class': 'cup',
             'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
             'color': [0.67, 0.61, 0.15, 0.8],
             'viz_type': 'cube'}
@@ -112,7 +114,7 @@ def make_detectors(local_or_global, *objects):
 
 
 ######### THE FOLLOWING IS USED FOR LOCAL SEARCH TEST #########
-target_objects = ["cup"]
+target_objects = ["Cup"]
 CONFIG_LOCAL = {
     "agent_config": {
         "agent_class": "MosAgentTopo3D",
