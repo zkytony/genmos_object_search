@@ -161,7 +161,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 res = self.topo_config.get("res_buf", 4)
                 pos_res = Octree.increase_res(pos, 1, res)
                 valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
-                if not valid_voxel:
+                if valid_voxel:
                     not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
                         and pos2d not in self.obstacles2d
                     return not_occupied
@@ -300,11 +300,13 @@ def _sample_topo_graph3d(init_object_beliefs,
     # estimated at that position lies within 30% from the the maximum
     # probability (obtained over all sampled positions).
     pos_importance_thres = topo_config.get("pos_importance_thres", 0.3)
+    # debug
+    debug = topo_config.get("debug", False)
 
     if sample_space is None:
         # If this is not specified, then the robot positions will be sampled
         # to be within the search region.
-        region = self.search_region.octree_dist.region
+        region = search_region.octree_dist.region
         origin, w, l, h = region
     else:
         origin, w, l, h = sample_space
@@ -346,6 +348,8 @@ def _sample_topo_graph3d(init_object_beliefs,
                 if math_utils.euclidean_dist(closest, pos) >= sep:
                     candidate_positions.add(pos)
                     added = True
+            if debug:
+                print(f"{pos} is reachable!")
 
         if added:
             prob_pos =\
@@ -353,6 +357,10 @@ def _sample_topo_graph3d(init_object_beliefs,
             candidate_scores.append((pos, prob_pos))
             min_prob = min(min_prob, prob_pos)
             max_prob = max(max_prob, prob_pos)
+
+    if debug:
+        if len(candidate_scores) == 0:
+            print("NO REACHABLE CANDIDATE FOR TOPO MAP NODE.")
 
     pq = PriorityQueue()
     positions = []
@@ -365,6 +373,8 @@ def _sample_topo_graph3d(init_object_beliefs,
             norm_score = prob_pos
         if norm_score > pos_importance_thres:
             pq.push(pos, -norm_score)
+            if debug:
+                print(f"{pos} will be considered!")
 
     while not pq.isEmpty() and len(positions) < num_nodes:
         positions.append(pq.pop())
