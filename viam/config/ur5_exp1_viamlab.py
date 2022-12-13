@@ -60,29 +60,31 @@ GRIPPER_CAMERA = {'name': 'gripper_camera',
                              'occlusion_enabled': True}}
 
 LOCAL_TOPO = {'num_nodes': 10,
-              'pos_importance_thres': 0.01,
-              'sep': 0.75,
+              'sep': 0.3,
               'debug': False,
               'resample_thres': 0.4,
               # the 3D box within which samples of viewpoint positions will be drawn.
               'sample_space': {
-                  "center_x": 0.0,
-                  "center_y": 2.0,
-                  "center_z": 0.0,
+                  "center_x": -1.0,
+                  "center_y": -0.5,
+                  "center_z": 1.0,
                   "size_x": 2.0,
-                  "size_y": 4.0,
-                  "size_z": 1.5
+                  "size_y": 2.0,
+                  "size_z": 2.0
               },
-              '3d_proj_2d': {'layout_cut': 0.4,
-                             'floor_cut': 0.15,
-                             'brush_size': 0.2,
-                             'inflation': 0.5}}
+              # because the sample space may be off the search region,
+              # it is not so important to filter by importance.
+              'pos_importance_thres': -1}
+              # '3d_proj_2d': {'layout_cut': 0.4,
+              #                'floor_cut': 0.15,
+              #                'brush_size': 0.2,
+              #                'inflation': 0.5}}
 
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 1.0,
-                   "max_height": 1.3}
+LOCAL_REACHABLE = {}#{"min_height": 1.0,
+                   # "max_height": 1.3}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {

@@ -102,11 +102,22 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 except ImportError as ex:
                     logging.error("Error importing visual2d: {}".format(ex))
 
+        # sample space (optional) is a box used for sampling topo nodes and also for
+        # checking reachability (the bound).
+        sample_space = self.topo_config.get("sample_space", None)
+        self.sample_space = None  # this would be an origin box
+        if sample_space is not None:
+            # the 3D box within which samples of viewpoint positions will be drawn.
+            center = (sample_space["center_x"], sample_space["center_y"], sample_space["center_z"])
+            w, l, h = sample_space["size_x"], sample_space["size_y"], sample_space["size_z"]
+            origin, _, _, _ = math_utils.centerbox_to_originbox((center, w, l, h))
+            self.sample_space = (origin, w, l, h)
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
                                         self.search_region,
                                         self.reachable,
-                                        self.topo_config)
+                                        self.topo_config,
+                                        sample_space=self.sample_space)
         if _debug:
             open3d_utils.draw_topo_graph3d(topo_map, self.search_region,
                                            object_beliefs=object_beliefs)
@@ -120,20 +131,40 @@ class MosAgentTopo3D(MosAgentBasic3D):
         """Returns True if a position is reachable. Assume 'pos' is a position at the
         ground resolution level
         """
-        above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
-        not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
-        if above_ground and not_too_high:
-            pos2d = (int(round(pos[0])), int(round(pos[1])))
-            # res_buf: blows up the voxel at pos to keep some distance to obstacles
-            # It will affect where the topological graph nodes are placed with respect
-            # to obstacles.
+        # if 'sample_space' is set, then check bounds by checking if pos is in that box
+        if self.sample_space is not None:
+            in_bound = math_utils.in_box3d_origin(pos, self.sample_space)
+            if not in_bound:
+                return False
+            # check if collision happens. Note this is checkable only if 'pos' is
+            # a valid voxel in the occupancy octree.  Also, blows up the voxel by res_buf
             res = self.topo_config.get("res_buf", 4)
             pos_res = Octree.increase_res(pos, 1, res)
             valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
             if valid_voxel:
-                not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
-                    and pos2d not in self.obstacles2d
-                return not_occupied
+                not_occupied = not self.search_region.occupied_at(pos_res, res=res)
+                if not_occupied:
+                    return True
+            else:
+                # voxel is not valid. Cannot check collision. For now, just pass (TODO: optionally deny).
+                return True
+
+        else:
+            # sample box is not specified. Do it the original way.
+            above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
+            not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
+            if above_ground and not_too_high:
+                pos2d = (int(round(pos[0])), int(round(pos[1])))
+                # res_buf: blows up the voxel at pos to keep some distance to obstacles
+                # It will affect where the topological graph nodes are placed with respect
+                # to obstacles.
+                res = self.topo_config.get("res_buf", 4)
+                pos_res = Octree.increase_res(pos, 1, res)
+                valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
+                if not valid_voxel:
+                    not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
+                        and pos2d not in self.obstacles2d
+                    return not_occupied
         return False
 
     def _update_robot_belief(self, observation, action=None, **kwargs):
@@ -232,7 +263,8 @@ def _sample_topo_graph3d(init_object_beliefs,
                          init_robot_pose,
                          search_region,
                          reachable_func,
-                         topo_config={}):
+                         topo_config={},
+                         sample_space=None):
     """
     The algorithm: sample uniformly from search region
     candidate robot positions. Obtain cumulative object
@@ -246,6 +278,10 @@ def _sample_topo_graph3d(init_object_beliefs,
 
     score_thres: nodes kept must have normalized score
     in the top X% where X is score_thres.
+
+    sample_space: a origin box (origin, w, l, h) that
+    specifies the sample space, i.e. where samples of
+    topo graph node can be drawn.
     """
     # parameters
     num_nodes = topo_config.get("num_nodes", 10)
@@ -264,17 +300,14 @@ def _sample_topo_graph3d(init_object_beliefs,
     # estimated at that position lies within 30% from the the maximum
     # probability (obtained over all sampled positions).
     pos_importance_thres = topo_config.get("pos_importance_thres", 0.3)
-    # the 3D box within which samples of viewpoint positions will be drawn.
-    # If this is not specified, then the robot positions will be sampled
-    # to be within the search region.
-    sample_space = topo_config.get("sample_space", None)
-    if sample_space is not None:
-        center = (sample_space["center_x"], sample_space["center_y"], sample_space["center_z"])
-        w, l, h = sample_space["size_x"], sample_space["size_y"], sample_space["size_z"]
-        origin, _, _, _ = math_utils.centerbox_to_originbox((center, w, l, h))
-    else:
-        region = search_region.octree_dist.region
+
+    if sample_space is None:
+        # If this is not specified, then the robot positions will be sampled
+        # to be within the search region.
+        region = self.search_region.octree_dist.region
         origin, w, l, h = region
+    else:
+        origin, w, l, h = sample_space
 
     if type(degree) == int:
         degree_range = (degree, degree)

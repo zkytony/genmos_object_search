@@ -49,7 +49,7 @@ from sloop_object_search.grpc.common_pb2 import Status
 from sloop_object_search.grpc.constants import Message
 from sloop_object_search.utils.colors import lighter
 from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils.misc import import_class
+from sloop_object_search.utils.misc import import_class, hash16
 
 
 class SloopMosViam:
@@ -275,9 +275,9 @@ class SloopMosViam:
             center = sample_space["center_x"], sample_space["center_y"], sample_space["center_z"]
             sizes = sample_space["size_x"], sample_space["size_y"], sample_space["size_z"]
             msg = ros_utils.make_viz_marker_cube(
-                self.robot_id + "_topo_map_sample_space",
+                hash16(self.robot_id + "_topo_map_sample_space"),
                 (*center, 0., 0., 0., 1.),
-                header, color=[0.2, 0.2, 0.2, 0.2],
+                header, color=[0.05, 0.4, 0.48, 0.2],
                 scale=geometry_msgs.Vector3(x=sizes[0],
                                             y=sizes[1],
                                             z=sizes[2]),
@@ -520,8 +520,6 @@ class SloopMosViam:
         self.publish_world_state_in_ros()
         self.get_and_visualize_belief_3d()
 
-        import pdb; pdb.set_trace()
-
         # create planner
         response = self.sloop_client.createPlanner(config=self.planner_config,
                                               header=proto_utils.make_header(),
@@ -531,7 +529,7 @@ class SloopMosViam:
         # Send planning requests
         for step in range(self.config["task_config"]["max_steps"]):
             action_id, action_pb = self.plan_action()
-            # await self.execute_action(action_id, action_pb)
+            await self.execute_action(action_id, action_pb)
 
             response_observation, response_robot_belief =\
                 await self.wait_observation_and_update_belief(action_id)
