@@ -111,6 +111,8 @@ class SloopMosViam:
             "~robot_pose_marker", viz_msgs.MarkerArray, queue_size=10, latch=True)
         self._world_state_cloud_pub = rospy.Publisher(
             "~world_state_cloud", sensor_msgs.PointCloud2, queue_size=10, latch=True)
+        self._goal_viz_pub = rospy.Publisher(
+            "~goal_markers", viz_msgs.MarkerArray, queue_size=10, latch=True)
 
         # world state
         self._world_state_markers_pub = rospy.Publisher(
@@ -273,13 +275,15 @@ class SloopMosViam:
             center = sample_space["center_x"], sample_space["center_y"], sample_space["center_z"]
             sizes = sample_space["size_x"], sample_space["size_y"], sample_space["size_z"]
             msg = ros_utils.make_viz_marker_cube(
-                "topo_map_sample_space", (*center, 0., 0., 0., 1.),
+                self.robot_id + "_topo_map_sample_space",
+                (*center, 0., 0., 0., 1.),
                 header, color=[0.2, 0.2, 0.2, 0.2],
                 scale=geometry_msgs.Vector3(x=sizes[0],
                                             y=sizes[1],
                                             z=sizes[2]),
                 lifetime=0)
             markers.append(msg)
+            rospy.loginfo("adding marker for topo map sample space")
         self._topo_map_3d_markers_pub.publish(viz_msgs.MarkerArray(markers))
         rospy.loginfo("topo map 3d visualized")
 
@@ -328,11 +332,6 @@ class SloopMosViam:
                 sim_cloud_arr = np.append(sim_cloud_arr, obj_points, axis=0)
 
         if viz:
-            # Clear markers
-            header = std_msgs.Header(stamp=rospy.Time.now(),
-                                     frame_id=self.world_frame)
-            clear_msg = ros_utils.clear_markers(header, ns="")
-            self._world_state_cloud_pub.publish(clear_msg)
             # publish and latch the point cloud
             point_cloud_msg = ros_utils.xyz_array_to_pointcloud2(
                 sim_cloud_arr, frame_id=self.world_frame)
@@ -414,7 +413,14 @@ class SloopMosViam:
             else:
                 raise NotImplementedError("Not implemented action_pb.")
 
-            # TODO: action execution
+            # visualize the goal
+            _marker_scale = geometry_msgs.Vector3(x=0.4, y=0.05, z=0.05)
+            _goal_marker_msg = ros_utils.make_viz_marker_from_robot_pose_3d(
+                self.robot_id + "_goal", dest, std_msgs.Header(frame_id=self.world_frame, stamp=rospy.Time.now()),
+                scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
+            self._goal_viz_pub.publish(viz_msgs.MarkerArray([_goal_marker_msg]))
+
+            # execute the goal
             print("Executing nav action (viewpoint movement)")
             success = await viam_utils.viam_move(self.viam_robot,
                                                  self.viam_names["arm"],
@@ -513,6 +519,8 @@ class SloopMosViam:
         # visualize initial belief
         self.publish_world_state_in_ros()
         self.get_and_visualize_belief_3d()
+
+        import pdb; pdb.set_trace()
 
         # create planner
         response = self.sloop_client.createPlanner(config=self.planner_config,
