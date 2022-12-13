@@ -264,6 +264,17 @@ def _sample_topo_graph3d(init_object_beliefs,
     # estimated at that position lies within 30% from the the maximum
     # probability (obtained over all sampled positions).
     pos_importance_thres = topo_config.get("pos_importance_thres", 0.3)
+    # the 3D box within which samples of viewpoint positions will be drawn.
+    # If this is not specified, then the robot positions will be sampled
+    # to be within the search region.
+    sample_space = topo_config.get("sample_space", None)
+    if sample_space is not None:
+        center = (sample_space["center_x"], sample_space["center_y"], sample_space["center_z"])
+        w, l, h = sample_space["size_x"], sample_space["size_y"], sample_space["size_z"]
+        origin, _, _, _ = math_utils.centerbox_to_originbox((center, w, l, h))
+    else:
+        region = search_region.octree_dist.region
+        origin, w, l, h = region
 
     if type(degree) == int:
         degree_range = (degree, degree)
@@ -276,11 +287,9 @@ def _sample_topo_graph3d(init_object_beliefs,
     if isinstance(init_object_beliefs, pomdp_py.OOBelief):
         init_object_beliefs = init_object_beliefs.object_beliefs
 
-    # The overall idea: sample robot positions from within the search region,
+    # The overall idea: sample robot positions from within the sample space,
     # and rank them based on object beliefs, and only keep <= X number of nodes
     # that have normalized scores above some threshold
-    region = search_region.octree_dist.region
-    origin, w, l, h = region
     candidate_positions = set()
     if reachable_func(init_robot_pose[:3]):
         candidate_positions.add(init_robot_pose[:3])
