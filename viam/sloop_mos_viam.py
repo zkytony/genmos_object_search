@@ -31,9 +31,11 @@ import viam.proto.common as v_pb2
 
 # ROS related
 import rospy
+import ros_numpy
 import std_msgs.msg as std_msgs
 import geometry_msgs.msg as geometry_msgs
 import visualization_msgs.msg as viz_msgs
+import sensor_msgs.msg as sensor_msgs
 from sloop_mos_ros import ros_utils
 from tf2_ros import TransformBroadcaster
 
@@ -107,6 +109,8 @@ class SloopMosViam:
             "~topo_map_3d", viz_msgs.MarkerArray, queue_size=10, latch=True)
         self._robot_pose_markers_pub = rospy.Publisher(
             "~robot_pose_marker", viz_msgs.MarkerArray, queue_size=10, latch=True)
+        self._world_state_cloud_pub = rospy.Publisher(
+            "~world_state_cloud", sensor_msgs.PointCloud2, queue_size=10, latch=True)
 
         # world state
         self._world_state_markers_pub = rospy.Publisher(
@@ -118,14 +122,13 @@ class SloopMosViam:
                                       # (position or pose) w.r.t. world frame
                                       # that should be published as tf transforms
 
-
     def publish_world_state_in_ros(self):
         """Publishes the TF and visualization markers for the world state
         periodically"""
         geoms_F_world = []  # geometry with pose in specified reference frame.
         viz_markers = []
         for obj_spec in self.world_state_config:
-            pose = obj_spec["pose"]  # in meters
+            pose = obj_spec["pose"]  # in meters; center of the box
             sizes = obj_spec["sizes"]  # in meters
             geom = v_pb2.Geometry(center=v_pb2.Pose(x=pose[0]*1000,
                                                     y=pose[1]*1000,
@@ -212,7 +215,6 @@ class SloopMosViam:
             break  # just visualize one
         self._fovs_markers_pub.publish(viz_msgs.MarkerArray(markers))
 
-
     def get_and_visualize_belief_3d(self):
         robot_id = self.robot_id
 
@@ -278,11 +280,49 @@ class SloopMosViam:
         self._world_frame_poses[self.robot_id] = robot_pose
         self.tf2br.sendTransform(trobot)
 
+    def _simulate_point_cloud_from_world_state(self, density=100, viz=False):
+        """
+        Returns a numpy array (Nx3) of point cloud generated
+        based on geometrical information in 'self.world_state_config'.
+
+        density (int): the number of points within a cubic meter.
+        viz (bool): True if publishes the world state point cloud for RVIZ.
+        """
+        # currently, all world state objects are boxes.
+        sim_cloud_arr = None
+        for obj_spec in self.world_state_config:
+            volume = obj_spec["sizes"][0] * obj_spec["sizes"][1] * obj_spec["sizes"][2]
+            num_points = volume * density
+            x_range = (obj_spec["pose"][0] - obj_spec["sizes"][0] / 2.,
+                       obj_spec["pose"][0] + obj_spec["sizes"][0] / 2.)
+            y_range = (obj_spec["pose"][1] - obj_spec["sizes"][1] / 2.,
+                       obj_spec["pose"][1] + obj_spec["sizes"][1] / 2.)
+            z_range = (obj_spec["pose"][2] - obj_spec["sizes"][2] / 2.,
+                       obj_spec["pose"][2] + obj_spec["sizes"][2] / 2.)
+            obj_points = np.random.uniform(low=[x_range[0], y_range[0], z_range[0]],
+                                           high=[x_range[1], y_range[1], z_range[1]],
+                                           sizes=[num_points, 3])
+            if sim_cloud_arr is None:
+                sim_cloud_arr = obj_points
+            else:
+                sim_cloud_arr = np.append(sim_cloud_arr, obj_points)
+
+        if viz:
+            # publish and latch the point cloud
+            stamp = rospy.Time.now()
+            point_cloud_msg = ros_numpy.array_to_pointcloud2(
+                sim_cloud_arr, stamp=stamp, frame_id=self.world_frame)
+            self._world_state_cloud_pub.publish(point_cloud_msg)
+            print("Published point cloud!")
+            import pdb; pdb.set_trace()
+
+        return sim_cloud_arr
+
+
     @property
     def search_space_res_3d(self):
         search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
         return search_region_config.get("res", constants.SEARCH_SPACE_RESOLUTION_3D)
-
 
     def update_search_region_3d(self, init=False):
         """
@@ -298,7 +338,7 @@ class SloopMosViam:
         if point_cloud_from_world_state:
             # will create a synthetic point cloud based on the world state
             # specified in the config
-            raise NotImplementedError()
+            cloud_arr = self._simulate_point_cloud_from_world_state(viz=True)
         else:
             # will try to obtain point cloud from camera
             try:
