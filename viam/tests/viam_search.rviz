@@ -6,9 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Grid1
+        - /worldstate_cloud1
         - /worldstate1
         - /octree_belief1
-        - /worldstate_cloud1
       Splitter Ratio: 0.5
     Tree Height: 725
   - Class: rviz/Selection
@@ -28,7 +28,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -54,66 +54,11 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /sloop_viam/world_state
-      Name: worldstate
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /sloop_viam/octree_belief
-      Name: octree_belief
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /sloop_viam/topo_map_3d
-      Name: topo3d
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /sloop_viam/robot_pose_marker
-      Name: robot_pose
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/TF
-      Enabled: true
-      Frame Timeout: 15
-      Frames:
-        All Enabled: true
-      Marker Alpha: 1
-      Marker Scale: 1
-      Name: TF
-      Show Arrows: true
-      Show Axes: true
-      Show Names: true
-      Tree:
-        {}
-      Update Interval: 0
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /sloop_viam/fovs
-      Name: fov
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 1.4961856603622437
-        Min Value: -0.9987196922302246
+        Max Value: 1.4988189935684204
+        Min Value: -0.999740481376648
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -130,13 +75,90 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.019999999552965164
       Style: Flat Squares
       Topic: /sloop_viam/world_state_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sloop_viam/world_state
+      Name: worldstate
+      Namespaces:
+        object: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sloop_viam/octree_belief
+      Name: octree_belief
+      Namespaces:
+        octnode: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sloop_viam/topo_map_3d
+      Name: topo3d
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sloop_viam/robot_pose_marker
+      Name: robot_pose
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        arm_origin:
+          Value: true
+        mount:
+          Value: true
+        robot0:
+          Value: true
+        table_below:
+          Value: true
+        table_far:
+          Value: true
+        wall_behind:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        arm_origin:
+          mount:
+            {}
+          robot0:
+            {}
+          table_below:
+            {}
+          table_far:
+            {}
+          wall_behind:
+            {}
+      Update Interval: 0
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /sloop_viam/fovs
+      Name: fov
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -165,7 +187,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.186894416809082
+      Distance: 3.9078938961029053
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -181,9 +203,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5697965025901794
+      Pitch: 0.6147966384887695
       Target Frame: <Fixed Frame>
-      Yaw: 2.2253904342651367
+      Yaw: 2.5203983783721924
     Saved: ~
 Window Geometry:
   Displays:
