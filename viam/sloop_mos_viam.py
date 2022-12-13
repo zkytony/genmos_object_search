@@ -280,19 +280,26 @@ class SloopMosViam:
         self._world_frame_poses[self.robot_id] = robot_pose
         self.tf2br.sendTransform(trobot)
 
-    def _simulate_point_cloud_from_world_state(self, density=100, viz=False):
+    def _simulate_point_cloud_from_world_state(self, density=2, viz=False):
         """
         Returns a numpy array (Nx3) of point cloud generated
         based on geometrical information in 'self.world_state_config'.
 
-        density (int): the number of points within a cubic meter.
+        density (int): the number of points per cubic centi-meter (1cm^3).
         viz (bool): True if publishes the world state point cloud for RVIZ.
         """
         # currently, all world state objects are boxes.
         sim_cloud_arr = None
         for obj_spec in self.world_state_config:
-            volume = obj_spec["sizes"][0] * obj_spec["sizes"][1] * obj_spec["sizes"][2]
-            num_points = volume * density
+            if obj_spec.get("exclude_from_cloud", False):
+                # do not include this object when building the point cloud
+                continue
+
+            # note that density is cm^3 while sizes are in meters
+            # need to convert the volume to cm^3 as well
+            volume = (obj_spec["sizes"][0] * obj_spec["sizes"][1] * obj_spec["sizes"][2]) * 100**3
+            num_points = int(volume * density)
+
             x_range = (obj_spec["pose"][0] - obj_spec["sizes"][0] / 2.,
                        obj_spec["pose"][0] + obj_spec["sizes"][0] / 2.)
             y_range = (obj_spec["pose"][1] - obj_spec["sizes"][1] / 2.,
@@ -301,23 +308,21 @@ class SloopMosViam:
                        obj_spec["pose"][2] + obj_spec["sizes"][2] / 2.)
             obj_points = np.random.uniform(low=[x_range[0], y_range[0], z_range[0]],
                                            high=[x_range[1], y_range[1], z_range[1]],
-                                           sizes=[num_points, 3])
+                                           size=[num_points, 3])
             if sim_cloud_arr is None:
                 sim_cloud_arr = obj_points
             else:
-                sim_cloud_arr = np.append(sim_cloud_arr, obj_points)
+                sim_cloud_arr = np.append(sim_cloud_arr, obj_points, axis=0)
 
         if viz:
             # publish and latch the point cloud
-            stamp = rospy.Time.now()
-            point_cloud_msg = ros_numpy.array_to_pointcloud2(
-                sim_cloud_arr, stamp=stamp, frame_id=self.world_frame)
+            point_cloud_msg = ros_utils.xyz_array_to_pointcloud2(
+                sim_cloud_arr, frame_id=self.world_frame)
             self._world_state_cloud_pub.publish(point_cloud_msg)
             print("Published point cloud!")
             import pdb; pdb.set_trace()
 
         return sim_cloud_arr
-
 
     @property
     def search_space_res_3d(self):

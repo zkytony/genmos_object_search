@@ -26,12 +26,9 @@ import viam.proto.common as v_pb2
 from sloop_mos_viam import SloopMosViam
 
 
-async def test_ur5e_viamlab(mock=False):
+async def test_ur5e_viamlab():
     with open("../config/ur5_exp1_viamlab.yaml") as f:
         config = yaml.safe_load(f)
-
-    # Globally control whether we are using data from viam or mocked data
-    viam_utils.MOCK = mock
 
     print(">>>>>>><<<<<<<<>>>> viam connecting >><<<<<<<<>>>>>>>")
     ur5robot = await viam_utils.connect_viamlab_ur5()
@@ -52,4 +49,4 @@ async def test_ur5e_viamlab(mock=False):
 
 
 if __name__ == "__main__":
-    asyncio.run(test_ur5e_viamlab(mock=True))
+    asyncio.run(test_ur5e_viamlab())

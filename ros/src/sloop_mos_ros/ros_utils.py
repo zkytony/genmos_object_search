@@ -10,6 +10,7 @@ import std_msgs
 import visualization_msgs
 import message_filters
 import vision_msgs
+import ros_numpy
 
 import tf
 import tf2_ros
@@ -306,6 +307,30 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
     cloud_pb = o_pb2.PointCloud(header=header,
                                 points=points_pb)
     return cloud_pb
+
+def xyz_array_to_pointcloud2(xyz, stamp=None, frame_id=None):
+    """Given a numpy array of shape (N,3) output a PointCloud2
+    message. Makes use of ros_numpy's array_to_pointcloud2 method.
+
+    reference: https://github.com/Nenetti/rviz_gaussian_distribution/blob/
+    75f0ebb1035a489db376d5b0fd38dedfde548fdc/rviz_gaussian_distribution/
+    scripts/modules/pointcloud2/pointcloud2_encoder.py#L19
+
+    Args:
+       xyz (np.ndarray): (N,3)"""
+    if xyz.ndim != 3:
+        xyz = xyz.reshape((1, -1, 3))
+    height, width = xyz.shape[:2]
+    cloud_dtype = [("x", np.float32), ("y", np.float32), ("z", np.float32)]
+    cloud = np.empty((height, width), cloud_dtype)
+    cloud["x"] = xyz[:, :, 0]
+    cloud["y"] = xyz[:, :, 1]
+    cloud["z"] = xyz[:, :, 2]
+    if stamp is None:
+        stamp = rospy.Time.now()
+    return ros_numpy.point_cloud2.array_to_pointcloud2(
+        cloud, stamp=stamp, frame_id=frame_id)
+
 
 ### Vision Messages ###
 def detection3d_to_proto(d3d_msg, class_names,
