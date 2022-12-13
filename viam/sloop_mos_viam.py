@@ -57,6 +57,21 @@ class SloopMosViam:
         self.viam_robot = None  # connection to the viam robot
 
     def setup(self, viam_robot, viam_names, config, world_frame):
+        """
+        Args:
+            viam_robot: the grpc connection to viam
+            viam_names (dict): maps from a string (e.g. 'color_camera')
+                to another string (e.g. 'gripper-main:color-cam').
+            config (dict): misc configurations
+            world_frame (str): name of the world frame.
+
+        Note:
+           required entries in viam_names:
+           - color_camera
+           - depth_camera
+           - detector
+           - arm TODO: right now the code here is specific to robot arm. Make it general.
+        """
         self.setup_for_rviz()
 
         self.viam_robot = viam_robot
@@ -269,11 +284,23 @@ class SloopMosViam:
         return search_region_config.get("res", constants.SEARCH_SPACE_RESOLUTION_3D)
 
 
-    def update_search_region_3d(self):
+    def update_search_region_3d(self, init=False):
+        """
+        Sends gRPC request to update search region based on point cloud
+        observation. If 'init' is True, then this function is called
+        to initialize the search agent in the server. Otherwise, this
+        function is called during search.
+        """
         print("Sending request to update search region (3D)")
-        if viam_utils.MOCK:
-            cloud_arr = np.array([])
+
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        point_cloud_from_world_state = search_region_config.get("point_cloud_from_world_state", False)
+        if point_cloud_from_world_state:
+            # will create a synthetic point cloud based on the world state
+            # specified in the config
+            raise NotImplementedError()
         else:
+            # will try to obtain point cloud from camera
             try:
                 cloud_arr = viam_utils.viam_get_point_cloud_array(
                     self.viam_robot, target_frame=self.world_frame)
@@ -284,7 +311,6 @@ class SloopMosViam:
         cloud_pb = proto_utils.pointcloudproto_from_array(cloud_arr, self.world_frame)
 
         # parameters
-        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
         search_region_params_3d = dict(
             octree_size=search_region_config.get("octree_size", 32),
             search_space_resolution=search_region_config.get("res", constants.SEARCH_SPACE_RESOLUTION_3D),
@@ -415,7 +441,7 @@ class SloopMosViam:
         self._local_robot_id = None  # needed if the planner is hierarchical
 
         # Update search region
-        self.update_search_region_3d()
+        self.update_search_region_3d(init=True)
 
         # wait for agent creation
         print("waiting for sloop agent creation...")
