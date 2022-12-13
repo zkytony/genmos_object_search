@@ -166,6 +166,14 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             sep_pomdp = sep_world / search_region.search_space_resolution
             agent_config_pomdp["robot"]["action"]["topo"]["sep"] = sep_pomdp
 
+        if "sample_space" in topo_config_world:
+            for field_name in {"center_x", "center_y", "center_z",
+                               "size_x", "size_y", "size_z"}:
+                if field_name in topo_config_world["sample_space"]:
+                    field_world = topo_config_world["sample_space"][field_name]
+                    field_pomdp = field_world / search_region.search_space_resolution
+                    topo_config_pomdp["sample_space"][field_name] = field_pomdp
+
         if "3d_proj_2d" in topo_config_world:
             if "layout_cut" in topo_config_world["3d_proj_2d"]:
                 layout_cut_world = topo_config_world["3d_proj_2d"]["layout_cut"]

@@ -64,6 +64,15 @@ LOCAL_TOPO = {'num_nodes': 10,
               'sep': 0.75,
               'debug': False,
               'resample_thres': 0.4,
+              # the 3D box within which samples of viewpoint positions will be drawn.
+              'sample_space': {
+                  "center_x": 0.0,
+                  "center_y": 2.0,
+                  "center_z": 0.0,
+                  "size_x": 2.0,
+                  "size_y": 4.0,
+                  "size_z": 1.5
+              },
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
