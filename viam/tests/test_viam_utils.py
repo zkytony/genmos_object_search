@@ -76,8 +76,8 @@ async def test_viam_get_point_cloud_array_to_proto(viam_robot):
 
 
 async def test_viam_get_ee_pose(viam_robot):
-    arm_pose = await viam_get_pose(viam_robot, "arm", "world")
-    print("arm pose (service):", arm_pose)
+    # arm_pose = await viam_get_pose(viam_robot, "arm", "world")
+    # print("arm pose (service):", arm_pose)
     arm_pose = await viam_get_ee_pose(viam_robot)
     print("arm pose (component):", arm_pose)
     arm_pose_pb = proto_utils.posetuple_to_poseproto(arm_pose)
