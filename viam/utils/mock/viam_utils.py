@@ -76,7 +76,7 @@ async def viam_get_object_detections2d(
 
         # angle_diff = math_utils.angle_between(vec_look, vec_robot_target)
         # if angle_diff < 30:
-        return [("cup", 0.9, (-1,-1,-1,-1))]  # successful, label-only detection
+        return [("Cup", 0.9, (-1,-1,-1,-1))]  # successful, label-only detection
         # else:
         #     return []  # no detection
 
@@ -136,6 +136,6 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
     return True
 
 
-def viam_signal_find(viam_robot):
+async def viam_signal_find(viam_robot):
     """Do something with the robot to signal the find action"""
     return True

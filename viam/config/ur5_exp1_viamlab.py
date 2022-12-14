@@ -28,6 +28,12 @@ WORLD_STATE = [
      "pose": [0.05, -1.70, -0.27],
      "sizes": [1.9, 0.8, 0.2],
      "color": [0.9, 0.9, 0.9, 0.8]},  # rgba
+
+    {"name": "cup",  # table right below the robot
+     "pose": [-0.4, -1.70, -0.5],
+     "sizes": [0.2, 0.2, 0.3],
+     "color": [0.9, 0.1, 0.1, 0.8],
+     "skip_cloud": True},
 ]
 
 

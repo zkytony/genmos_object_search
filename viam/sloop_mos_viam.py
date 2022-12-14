@@ -308,7 +308,7 @@ class SloopMosViam:
         # currently, all world state objects are boxes.
         sim_cloud_arr = None
         for obj_spec in self.world_state_config:
-            if obj_spec.get("exclude_from_cloud", False):
+            if obj_spec.get("skip_cloud", False):
                 # do not include this object when building the point cloud
                 continue
 
@@ -434,7 +434,7 @@ class SloopMosViam:
         elif isinstance(action_pb, a_pb2.Find):
             print("Signaling find action")
             # TODO: signal find
-            success = viam_utils.viam_signal_find(self.viam_robot)
+            success = await viam_utils.viam_signal_find(self.viam_robot)
             if success:
                 print("Find action taken.")
 
@@ -456,7 +456,6 @@ class SloopMosViam:
 
         # Detection proto
         detections_pb = viam_utils.viam_detections2d_to_proto(self.robot_id, detections)
-        print(detections_pb)
 
         # Objects found proto
         # If the last action is "find", and we receive object detections

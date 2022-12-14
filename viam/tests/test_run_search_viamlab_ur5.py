@@ -45,7 +45,7 @@ async def test_ur5e_viamlab():
         sloop_viam.setup(ur5robot, viam_names, config, world_frame)
         await sloop_viam.run()
     finally:
-        sloop_viam.sloop_client.channel.close()
+        await sloop_viam.sloop_client.channel.close()
 
 
 if __name__ == "__main__":
