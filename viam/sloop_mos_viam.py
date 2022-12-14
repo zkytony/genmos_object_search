@@ -303,7 +303,6 @@ class SloopMosViam:
             color=[0.9, 0.1, 0.1, 0.9], lifetime=0,
             scale=geometry_msgs.Vector3(x=0.6, y=0.08, z=0.08))
         self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
-        self._world_frame_poses[self.robot_id + "_viam"] = robot_pose
         self._world_frame_poses[self.robot_id] = robot_pose
         self.tf2br.sendTransform(trobot)
 
@@ -542,6 +541,38 @@ class SloopMosViam:
         print("received message:", message)
         raise NotImplementedError("Hierarchical planning is not yet integrated"\
                                   "for viam. Not expecting anything from the server.")
+
+    async def stream_state(self):
+        search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
+        point_cloud_from_world_state = search_region_config.get("point_cloud_from_world_state", False)
+        if point_cloud_from_world_state:
+            # will create a synthetic point cloud based on the world state
+            # specified in the config
+            cloud_arr = self._simulate_point_cloud_from_world_state(viz=True)
+
+        self.publish_world_state_in_ros()
+
+        # TODO: future viam: time sync between robot pose and object detection
+        rate = rospy.Rate(5)
+        while not rospy.is_shutdown():
+            # visualize the robot state
+            header = std_msgs.Header(stamp=rospy.Time.now(),
+                                     frame_id=self.world_frame)
+            clear_msg = ros_utils.clear_markers(header, ns="")
+            self._robot_pose_markers_pub.publish(clear_msg)
+
+            robot_pose_viam = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
+            print("got robot pose from viam", robot_pose_viam)
+            robot_pose = self._process_viam_pose(robot_pose_viam)
+            robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
+                robot_pose, self.world_frame, self.robot_id,
+                color=[0.9, 0.1, 0.1, 0.9], lifetime=0,
+                scale=geometry_msgs.Vector3(x=0.6, y=0.08, z=0.08))
+            self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
+            self._world_frame_poses[self.robot_id] = robot_pose
+            self.tf2br.sendTransform(trobot)
+            rate.sleep()
+
 
     async def run(self):
         # First, create an agent

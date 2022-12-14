@@ -42,7 +42,8 @@ async def test_ur5e_viamlab():
     print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
     sloop_viam = SloopMosViam()
     sloop_viam.setup(ur5robot, viam_names, config, world_frame)
-    await sloop_viam.run()
+    # await sloop_viam.run()
+    await sloop_viam.stream_state()
 
 if __name__ == "__main__":
     asyncio.run(test_ur5e_viamlab())
