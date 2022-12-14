@@ -386,7 +386,8 @@ def _sample_topo_graph3d(init_object_beliefs,
         topo_node = TopoNode(i, pos)
         nodes[i] = topo_node
         pos_to_nid[pos] = i
-        print(search_region.to_world_pos(pos))
+        if debug:
+            print("topo node pos in world:", search_region.to_world_pos(pos))
 
     # Now, we need to connect the places to form a graph.
     _conns = {}

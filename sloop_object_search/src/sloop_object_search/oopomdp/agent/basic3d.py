@@ -100,7 +100,7 @@ class MosAgentBasic3D(MosAgent):
             if objid in self.target_objects:
                 b_obj = self.belief.b(objid)
                 if debug:
-                    _visualize_octree_belief(b_obj, robot_pose,
+                    _visualize_octree_belief(b_obj, robot_pose, occupancy_octree=self.search_region.octree_dist,
                                              visible_volume=visible_volume, obstacles_hit=obstacles_hit)
                 alpha = detection_model.alpha
                 beta = detection_model.beta
