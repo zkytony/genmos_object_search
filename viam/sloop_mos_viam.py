@@ -429,11 +429,7 @@ class SloopMosViam:
             # execute the goal
             print("Executing nav action (viewpoint movement)")
             move_viewpoint_func = self.viam_info["move_viewpoint_func"]
-            success = await move_viewpoint_func(self.viam_robot,
-                                                self.viam_names,
-                                                dest_viam,
-                                                self.world_frame,
-                                                self.viam_world_state)
+            success = await move_viewpoint_func(dest_viam, self)
             if not success:
                 print("viewpoint CHANGED.")
             else:

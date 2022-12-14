@@ -11,6 +11,7 @@ import asyncio
 import yaml
 import os
 import sys
+import time
 
 # Allow importing stuff from parent folder
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -34,8 +35,7 @@ async def signal_find_func(viam_robot):
     success = await viam_utils.viam_signal_find(self.viam_robot)
     return success
 
-async def move_viewpoint_ur5(dest,
-                             sloop_mos_viam):
+async def move_viewpoint_ur5(dest, sloop_mos_viam):
     """moves the arm to goal pose.
 
     dest is the goal pose in my frame (not viam's).
@@ -86,6 +86,8 @@ async def move_viewpoint_ur5(dest,
     # for the last joint.
     viam_utils.viam_level_ur5gripper(viam_robot,
                                      sloop_mos_viam.viam_names["arm"])
+    # sleep for 0.5 seconds for the detection result to come through
+    time.sleep(0.5)
     return success
 
 
