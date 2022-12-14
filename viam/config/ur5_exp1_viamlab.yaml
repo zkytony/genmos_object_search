@@ -55,7 +55,7 @@ agent_config:
     sensors:
     - name: gripper_camera
       params:
-        aspect_ratio: 0.7
+        aspect_ratio: 1.25
         far: 1.5
         fov: 53
         near: 0.2
@@ -63,13 +63,13 @@ agent_config:
   search_region:
     3d:
       center_x: -0.5
-      center_y: -1.5
-      center_z: -0.2
+      center_y: -1.65
+      center_z: -0.25
       debug: false
       octree_size: 32
       point_cloud_from_world_state: true
-      region_size_x: 1.35
-      region_size_y: 2.4
+      region_size_x: 1.8
+      region_size_y: 2.5
       region_size_z: 1.5
       res: 0.08
   targets:

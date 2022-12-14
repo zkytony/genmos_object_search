@@ -49,12 +49,12 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 
 SEARCH_REGION_3D = {"res": 0.08,
                     "octree_size": 32,
-                    "region_size_x": 1.35,
-                    "region_size_y": 2.4,
+                    "region_size_x": 1.8,
+                    "region_size_y": 2.5,
                     "region_size_z": 1.5,
                     "center_x": -0.5,
-                    "center_y": -1.5,
-                    "center_z": -0.2,
+                    "center_y": -1.65,
+                    "center_z": -0.25,
                     "point_cloud_from_world_state": True,
                     "debug": False}
 
@@ -63,7 +63,7 @@ GRIPPER_CAMERA = {'name': 'gripper_camera',
                   'params': {'fov': 53,
                              'far': 1.5,
                              'near': 0.2,
-                             'aspect_ratio': 0.7,
+                             'aspect_ratio': 1.25,
                              'occlusion_enabled': True}}
 
 LOCAL_TOPO = {'num_nodes': 10,
