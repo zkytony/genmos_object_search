@@ -447,15 +447,14 @@ class SloopMosViam:
         """
         # get the transform of the viam pose to the world frame
         import pdb; pdb.set_trace()
+        # get transform to correct -y forward to +x forward
+        fixed_transform = math_utils.R_euler(0, 0, -90, affine=True)
         vx, vy, vz, vqx, vqy, vqz, vqw = viam_pose
-        viam_pose_transform = np.matmul(math_utils.T(vx, vy, vz),
-                                        math_utils.R_quat(vqx, vqy, vqz, vqw, affine=True))
-        # get transform to correct y forward to x forward
-        fixed_transform = np.matmul(math_utils.R_euler(0, 0, 90, affine=True),
-                                    math_utils.R_euler(-180, 0, 0, affine=True))
+        pose_transform = np.matmul(math_utils.T(vx, vy, vz),
+                                   np.matmul(fixed_transform,
+                                             math_utils.R_quat(vqx, vqy, vqz, vqw, affine=True)))
         # apply fixed transform, then extract the pose
-        pose_transform = np.matmul(fixed_transform, viam_pose_transform)
-        pose_quat = math_utils.R_to_quat(pose_transform[:3, :3])
+        pose_quat = math_utils.R_to_quat(math_utils.R_matrix(pose_transform[:3, :3]))
         pose_xyz = pose_transform[:3, 3]
         return (*pose_xyz, *pose_quat)
 
@@ -463,13 +462,11 @@ class SloopMosViam:
         """given a pose in my frame system (x forward), output a pose in Viam's
         frame system (y forward). """
         x, y, z, qx, qy, qz, vqw = pose
-        pose_transform = np.matmul(math_utils.T(x, y, z),
-                                   math_utils.R_quat(qx, qy, qz, qw, affine=True))
-        # get transform to correct y forward to x forward
-        fixed_transform = np.matmul(math_utils.R_euler(180, 0, 0, affine=True),
-                                    math_utils.R_euler(0, 0, -90, affine=True))
+        fixed_transform = math_utils.R_euler(0, 0, 90, affine=True)
+        viam_pose_transform = np.matmul(math_utils.T(x, y, z),
+                                        np.matmul(fixed_transform,
+                                                  math_utils.R_quat(qx, qy, qz, qw, affine=True)))
         # apply fixed transform, then extract the pose
-        viam_pose_transform = np.matmul(fixed_transform, pose_transform)
         viam_pose_quat = math_utils.R_to_quat(viam_pose_transform[:3, :3])
         viam_pose_xyz = viam_pose_transform[:3, 3]
         return (*viam_pose_xyz, *viam_pose_quat)
@@ -482,9 +479,9 @@ class SloopMosViam:
         Returns:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         # TODO: future viam: time sync between robot pose and object detection
-        robot_pose = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
-        # robot_pose = self._process_viam_pose(robot_pose_viam)
-        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+        robot_pose_viam = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
+        robot_pose = self._process_viam_pose(robot_pose_viam)
+        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose_viam)
         # Note: right now we only get 2D detection
         detections = await viam_utils.viam_get_object_detections2d(
             self.viam_robot,
@@ -553,38 +550,49 @@ class SloopMosViam:
         self.sloop_client.waitForAgentCreation(self.robot_id)
         print("agent created!")
 
-        # visualize initial belief
-        self.publish_world_state_in_ros()
-        self.get_and_visualize_belief_3d()
-
-        # create planner
+        # DUMMY WAIT FOR OBSERVATION DEBUG
         response = self.sloop_client.createPlanner(config=self.planner_config,
                                               header=proto_utils.make_header(),
                                               robot_id=self.robot_id)
-        rospy.loginfo("planner created!")
+        action_id, action_pb = self.plan_action()
+        response_observation, response_robot_belief =\
+            await self.wait_observation_and_update_belief(action_id)
 
-        # Send planning requests
-        for step in range(self.config["task_config"]["max_steps"]):
-            action_id, action_pb = self.plan_action()
-            await self.execute_action(action_id, action_pb)
+        # visualize initial belief
+        self.publish_world_state_in_ros()
+        self.get_and_visualize_belief_3d()
+        import pdb; pdb.set_trace()
 
-            response_observation, response_robot_belief =\
-                await self.wait_observation_and_update_belief(action_id)
-            print(f"Step {step} robot belief:")
-            robot_belief_pb = response_robot_belief.robot_belief
-            objects_found = set(robot_belief_pb.objects_found.object_ids)
-            objects_found.update(objects_found)
-            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-            print(f"  objects found: {objects_found}")
-            print("-----------")
+        # # create planner
+        # response = self.sloop_client.createPlanner(config=self.planner_config,
+        #                                       header=proto_utils.make_header(),
+        #                                       robot_id=self.robot_id)
+        # rospy.loginfo("planner created!")
 
-            # visualize FOV and belief
-            self.get_and_visualize_belief_3d()
-            if response_observation.HasField("fovs"):
-                self.visualize_fovs_3d(response_observation)
+        # # Send planning requests
+        # for step in range(self.config["task_config"]["max_steps"]):
+        #     action_id, action_pb = self.plan_action()
+        #     await self.execute_action(action_id, action_pb)
 
-            # Check if we are done
-            if objects_found == set(self.agent_config["targets"]):
-                rospy.loginfo("Done!")
-                break
-            time.sleep(1)
+        #     response_observation, response_robot_belief =\
+        #         await self.wait_observation_and_update_belief(action_id)
+        #     print(f"Step {step} robot belief:")
+        #     robot_belief_pb = response_robot_belief.robot_belief
+        #     objects_found = set(robot_belief_pb.objects_found.object_ids)
+        #     objects_found.update(objects_found)
+        #     print(f"  pose: {robot_belief_pb.pose.pose_3d}")
+        #     print(f"  objects found: {objects_found}")
+        #     print("-----------")
+
+        #     # visualize FOV and belief
+        #     self.get_and_visualize_belief_3d()
+        #     if response_observation.HasField("fovs"):
+        #         self.visualize_fovs_3d(response_observation)
+
+        #     import pdb; pdb.set_trace()
+
+        #     # Check if we are done
+        #     if objects_found == set(self.agent_config["targets"]):
+        #         rospy.loginfo("Done!")
+        #         break
+        #     time.sleep(1)
