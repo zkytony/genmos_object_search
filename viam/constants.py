@@ -15,3 +15,4 @@ COLOR_CAM = "gripper-main:color-cam"
 DEPTH_CAM = "gripper-main:depth-corrected"
 COMB_CAM = "gripper-main:comb-cam"
 DETECTOR = "find_objects"
+DETECTOR_CAM = "segmenter-cam"  # rgb output of object detector

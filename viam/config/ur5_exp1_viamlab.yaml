@@ -36,10 +36,10 @@ agent_config:
           center_x: -0.5
           center_y: 0.0
           center_z: 0.0
-          size_x: 2.0
+          size_x: 1.25
           size_y: 1.25
           size_z: 2.0
-        sep: 0.3
+        sep: 0.4
     detectors:
       Cup:
         class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
@@ -50,7 +50,8 @@ agent_config:
           sensor: gripper_camera
     id: robot0
     no_look: true
-    reachable: {}
+    reachable:
+      min_height: 1.2
     sensors:
     - name: gripper_camera
       params:
