@@ -52,14 +52,14 @@ from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class, hash16
 
 
-WORKING_MOTION_POSES = {
-    (-0.6, -0.4, 0.06, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-    (-0.6, -0.4, 1.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-    (-0.6, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-    (-0.7, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-    (-0.5, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-    (-0.42, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90))
-}
+# WORKING_MOTION_POSES = {
+#     (-0.6, -0.4, 0.06, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+#     (-0.6, -0.4, 1.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+#     (-0.6, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+#     (-0.7, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+#     (-0.5, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+#     (-0.42, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90))
+# }
 
 
 class SloopMosViam:
@@ -434,10 +434,12 @@ class SloopMosViam:
             dest_viam = self._output_viam_pose(dest)
             # WARN: instead of doing going to the destination, go to
             # a closest pose known to work.
-            approx_dest_viam = min(WORKING_MOTION_POSES, key=lambda p: math_utils.euclidean_dist(p[:3], dest_viam[:3]))
+            # approx_dest_viam = min(WORKING_MOTION_POSES, key=lambda p: math_utils.euclidean_dist(p[:3], dest_viam[:3]))
             success = await viam_utils.viam_move(self.viam_robot,
                                                  self.viam_names["arm"],
-                                                 approx_dest_viam, self.world_frame,
+                                                 # approx_dest_viam,
+                                                 dest_viam,
+                                                 self.world_frame,
                                                  self.viam_world_state)
             if not success:
                 print("viewpoint movement failed.")
