@@ -287,13 +287,13 @@ class SloopMosViam:
         self._topo_map_3d_markers_pub.publish(viz_msgs.MarkerArray(markers))
         rospy.loginfo("topo map 3d visualized")
 
-        # visualize robot pose vector
         robot_pose = proto_utils.robot_pose_from_proto(robot_belief_pb.pose)
         robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
             robot_pose, self.world_frame, self.robot_id,
             color=[0.9, 0.1, 0.1, 0.9], lifetime=0,
             scale=geometry_msgs.Vector3(x=0.6, y=0.08, z=0.08))
         self._robot_pose_markers_pub.publish(viz_msgs.MarkerArray([robot_marker]))
+        self._world_frame_poses[self.robot_id + "_viam"] = robot_pose
         self._world_frame_poses[self.robot_id] = robot_pose
         self.tf2br.sendTransform(trobot)
 
@@ -438,6 +438,43 @@ class SloopMosViam:
             if success:
                 print("Find action taken.")
 
+    def _process_viam_pose(self, viam_pose):
+        """
+        Args:
+            viam_pose (x,y,z,qx,qy,qz,qw): pose returned wrt Viam's frame system (y forward)
+        Returns:
+            pose: pose wrt conventional frame system (x forward)
+        """
+        # get the transform of the viam pose to the world frame
+        import pdb; pdb.set_trace()
+        vx, vy, vz, vqx, vqy, vqz, vqw = viam_pose
+        viam_pose_transform = np.matmul(math_utils.T(vx, vy, vz),
+                                        math_utils.R_quat(vqx, vqy, vqz, vqw, affine=True))
+        # get transform to correct y forward to x forward
+        fixed_transform = np.matmul(math_utils.R_euler(0, 0, 90, affine=True),
+                                    math_utils.R_euler(-180, 0, 0, affine=True))
+        # apply fixed transform, then extract the pose
+        pose_transform = np.matmul(fixed_transform, viam_pose_transform)
+        pose_quat = math_utils.R_to_quat(pose_transform[:3, :3])
+        pose_xyz = pose_transform[:3, 3]
+        return (*pose_xyz, *pose_quat)
+
+    def _output_viam_pose(self, pose):
+        """given a pose in my frame system (x forward), output a pose in Viam's
+        frame system (y forward). """
+        x, y, z, qx, qy, qz, vqw = pose
+        pose_transform = np.matmul(math_utils.T(x, y, z),
+                                   math_utils.R_quat(qx, qy, qz, qw, affine=True))
+        # get transform to correct y forward to x forward
+        fixed_transform = np.matmul(math_utils.R_euler(180, 0, 0, affine=True),
+                                    math_utils.R_euler(0, 0, -90, affine=True))
+        # apply fixed transform, then extract the pose
+        viam_pose_transform = np.matmul(fixed_transform, pose_transform)
+        viam_pose_quat = math_utils.R_to_quat(viam_pose_transform[:3, :3])
+        viam_pose_xyz = viam_pose_transform[:3, 3]
+        return (*viam_pose_xyz, *viam_pose_quat)
+
+
     async def wait_for_observation(self):
         """We wait for the robot pose (PoseStamped) and the
         object detections (vision_msgs.Detection3DArray)
@@ -445,7 +482,8 @@ class SloopMosViam:
         Returns:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         # TODO: future viam: time sync between robot pose and object detection
-        robot_pose = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
+        robot_pose_viam = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
+        robot_pose = self._process_viam_pose(robot_pose_viam)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         # Note: right now we only get 2D detection
         detections = await viam_utils.viam_get_object_detections2d(
