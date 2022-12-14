@@ -35,7 +35,34 @@ async def connect_viamlab_ur5():
     )
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
+
 ########### Robot-generic viam functions ###########
+async def viam_get_pose(viam_robot, component_name, frame):
+    """
+    Returns the pose of the component in the given frame.
+    Args:
+        component_name (str): name of the component
+        frame (str): name of the frame to express the component's pose
+    Returns:
+        tuple (x,y,z,qx,qy,qz,qw)
+    Note that viam's positions units are in milimeters.
+    We will convert them into meters (more familiar with me)
+    """
+    motion = MotionServiceClient.from_robot(viam_robot)
+    comp_resname = viam_get_resname(viam_robot, component_name)
+    pose_w_ovec = (await motion.get_pose(comp_resname, frame)).pose
+
+    # convert pose orientation to quaternion! [viam's problem]
+    ovec = OrientationVector(Vector3(
+        pose_w_ovec.o_x, pose_w_ovec.o_y, pose_w_ovec.o_z), math_utils.to_rad(pose_w_ovec.theta))
+    quat = Quaternion.from_orientation_vector(ovec)
+    pose_w_quat = (pose_w_ovec.x / 1000,
+                   pose_w_ovec.y / 1000,
+                   pose_w_ovec.z / 1000,
+                   quat.i, quat.j, quat.k, quat.real)
+    return pose_w_quat
+
+
 async def viam_get_ee_pose(viam_robot, arm_name="arm"):
     """return current end-effector pose in world
     frame through Viam.
@@ -61,6 +88,7 @@ async def viam_get_ee_pose(viam_robot, arm_name="arm"):
                    pose_w_ovec.z / 1000,
                    quat.i, quat.j, quat.k, quat.real)
     return pose_w_quat
+
 
 async def viam_get_joint_positions(viam_robot, arm_name="arm"):
     """Returns a list of joint positions, each a float,
@@ -283,10 +311,7 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
                                   theta=math_utils.to_degrees(govec.theta))
     goal_pose_in_frame = v_pb2.PoseInFrame(reference_frame=goal_frame,
                                            pose=goal_pose_w_ovec)
-    comp_resname = None
-    for resname in viam_robot.resource_names:
-        if resname.name == component_name:
-            comp_resname = resname
+    comp_resname = viam_get_resname(viam_robot, component_name)
     if comp_resname is None:
         raise RuntimeError(f"Could not find resource name: {comp_resname}")
 
@@ -340,6 +365,15 @@ def pose_ovec_to_quat(pose_ovec):
     return (*pose_ovec[:3],
             *ovec_to_quat(*pose_ovec[3:]))
 
+
+############# Viam Framework Functions ##########
+def viam_get_resname(viam_robot, component_name):
+    """returns the ResourceName corresponding to component name"""
+    comp_resname = None
+    for resname in viam_robot.resource_names:
+        if resname.name == component_name:
+            comp_resname = resname
+    return comp_resname
 
 
 ################## Below are code from Gautham for orientation conversion #############
