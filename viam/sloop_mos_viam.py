@@ -458,7 +458,7 @@ class SloopMosViam:
         Returns:
             pose: pose wrt conventional frame system (x forward)
         """
-        # get transform to align 0 quat direction from viam's system (+z) to my system (+x)
+        # get transform to align 0 quat direction from my system (+x) to viam system (+z)
         fixed_transform = math_utils.R_euler(0, -90, 0, affine=True)
         vx, vy, vz, vqx, vqy, vqz, vqw = viam_pose
         pose_transform = np.matmul(math_utils.T(vx, vy, vz),
@@ -472,7 +472,7 @@ class SloopMosViam:
     def _output_viam_pose(self, pose):
         """given a pose in my frame system (+x), output a pose in Viam's
         frame system (+z). """
-        # get transform to align 0 quat direction from my system (+x) to viam's system (+z)
+        # get transform to align 0 quat direction from viam system (+z) to my system (+x)
         fixed_transform = math_utils.R_euler(0, 90, 0, affine=True)
         x, y, z, qx, qy, qz, qw = pose
         viam_pose_transform = np.matmul(math_utils.T(x, y, z),
