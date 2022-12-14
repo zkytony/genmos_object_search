@@ -172,8 +172,27 @@ async def test_viam_move_viamlab_ur5_level_gripper(viam_robot, arm_name="arm"):
     # Adapting the examples from Nick in test_motion_nick_viam.py
     joint_positions1 = [10.0, 0.0, -25.8, 0.0, 0.0, 0.0]
     await viam_move_to_joint_positions(viam_robot, joint_positions1, arm_name)
-    print("leveling the gripper!")
+    print("[1] leveling the gripper!")
     await viam_utils.viam_level_ur5gripper(viam_robot, arm_name)
+    await viam_move_to_joint_positions(viam_robot, constants.UR5_HOME_CONFIG, arm_name)
+
+    joint_positions2 = [0, -32, 0, -10, 10, -10]
+    await viam_move_to_joint_positions(viam_robot, joint_positions2, arm_name)
+    print("[2] leveling the gripper!")
+    await viam_utils.viam_level_ur5gripper(viam_robot, arm_name)
+    await viam_move_to_joint_positions(viam_robot, constants.UR5_HOME_CONFIG, arm_name)
+
+    joint_positions3 = [0, -32, 0, -10, 10, 85]
+    await viam_move_to_joint_positions(viam_robot, joint_positions3, arm_name)
+    print("[3] leveling the gripper!")
+    await viam_utils.viam_level_ur5gripper(viam_robot, arm_name)
+    await viam_move_to_joint_positions(viam_robot, constants.UR5_HOME_CONFIG, arm_name)
+
+    joint_positions4 = [0, 0, 0, -19.01, 119.8, 19.1]
+    await viam_move_to_joint_positions(viam_robot, joint_positions4, arm_name)
+    print("[4] leveling the gripper!")
+    await viam_utils.viam_level_ur5gripper(viam_robot, arm_name)
+    await viam_move_to_joint_positions(viam_robot, constants.UR5_HOME_CONFIG, arm_name)
     print("-------------------------------------")
 
 async def testall_viamlab_ur5():
