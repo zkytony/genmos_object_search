@@ -53,12 +53,12 @@ from sloop_object_search.utils.misc import import_class, hash16
 
 
 WORKING_MOTION_POSES = {
-    (-0.6, -0.4, 0.06, *viam_utils.ovec_to_quat(0, -1, 0, 0)),
-    (-0.6, -0.4, 1.60, *viam_utils.ovec_to_quat(0, -1, 0, 0)),
-    (-0.6, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 0)),
-    (-0.7, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 0)),
-    (-0.5, -1.3, 0.53, *viam_utils.ovec_to_quat(0.05, -0.02,  -1.00,  70.20)),
-    (-0.42, -1.3, 0.53, *viam_utils.ovec_to_quat(0.05, -0.02,  -1.00,  70.20))
+    (-0.6, -0.4, 0.06, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+    (-0.6, -0.4, 1.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+    (-0.6, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+    (-0.7, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+    (-0.5, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
+    (-0.42, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90))
 }
 
 
@@ -459,11 +459,11 @@ class SloopMosViam:
             pose: pose wrt conventional frame system (x forward)
         """
         # get transform to correct -y forward to +x forward
-        fixed_transform = math_utils.R_euler(0, 0, -90, affine=True)
+        fixed_transform = math_utils.R_euler(0, -90, 0, affine=True)
         vx, vy, vz, vqx, vqy, vqz, vqw = viam_pose
         pose_transform = np.matmul(math_utils.T(vx, vy, vz),
-                                   np.matmul(fixed_transform,
-                                             math_utils.R_quat(vqx, vqy, vqz, vqw, affine=True)))
+                                   np.matmul(math_utils.R_quat(vqx, vqy, vqz, vqw, affine=True),
+                                             fixed_transform))
         # apply fixed transform, then extract the pose
         pose_quat = math_utils.R_to_quat(math_utils.R_matrix(pose_transform[:3, :3]))
         pose_xyz = pose_transform[:3, 3]
@@ -622,8 +622,6 @@ class SloopMosViam:
             self.get_and_visualize_belief_3d()
             if response_observation.HasField("fovs"):
                 self.visualize_fovs_3d(response_observation)
-
-            import pdb; pdb.set_trace()
 
             # Check if we are done
             if objects_found == set(self.agent_config["targets"]):
