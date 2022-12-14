@@ -21,12 +21,12 @@ WORLD_STATE = [
 
     {"name": "table_below",  # table right below the robot
      "pose": [-0.45, 0.0, -0.27],
-     "sizes": [0.9, 1.9, 0.1],
+     "sizes": [0.9, 1.9, 0.2],
      "color": [0.9, 0.9, 0.9, 0.8]},  # rgba
 
     {"name": "table_far",  # table right below the robot
      "pose": [0.05, -1.70, -0.27],
-     "sizes": [1.9, 0.8, 0.1],
+     "sizes": [1.9, 0.8, 0.2],
      "color": [0.9, 0.9, 0.9, 0.8]},  # rgba
 ]
 
@@ -46,10 +46,11 @@ SEARCH_REGION_3D = {"res": 0.08,
                     "region_size_x": 1.35,
                     "region_size_y": 2.4,
                     "region_size_z": 1.5,
-                    "center_x": 0.0,
-                    "center_y": 0.0,
-                    "center_z": 0.0,
-                    "point_cloud_from_world_state": True}
+                    "center_x": -0.5,
+                    "center_y": -1.5,
+                    "center_z": -0.2,
+                    "point_cloud_from_world_state": True,
+                    "debug": False}
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 GRIPPER_CAMERA = {'name': 'gripper_camera',
@@ -65,11 +66,11 @@ LOCAL_TOPO = {'num_nodes': 10,
               'resample_thres': 0.4,
               # the 3D box within which samples of viewpoint positions will be drawn.
               'sample_space': {
-                  "center_x": -1.0,
-                  "center_y": -0.5,
-                  "center_z": 1.0,
+                  "center_x": -0.5,
+                  "center_y": 0.0,
+                  "center_z": 0.0,
                   "size_x": 2.0,
-                  "size_y": 2.0,
+                  "size_y": 1.25,
                   "size_z": 2.0
               },
               # because the sample space may be off the search region,

@@ -487,7 +487,7 @@ class SloopMosViam:
             object_detections=detections_pb,
             objects_found=objects_found_pb,
             header=header, return_fov=True,
-            action_id=action_id, action_finished=True, debug=False)
+            action_id=action_id, action_finished=True, debug=True)
         response_robot_belief = self.sloop_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         return response_observation, response_robot_belief
