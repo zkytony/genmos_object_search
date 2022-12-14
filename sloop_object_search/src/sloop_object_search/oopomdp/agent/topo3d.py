@@ -130,6 +130,12 @@ class MosAgentTopo3D(MosAgentBasic3D):
         """Returns True if a position is reachable. Assume 'pos' is a position at the
         ground resolution level
         """
+        # sample box is not specified. Do it the original way.
+        above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
+        not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
+        if not (above_ground and not_too_high):
+            return False
+
         # if 'sample_space' is set, then check bounds by checking if pos is in that box
         if self.sample_space is not None:
             in_bound = math_utils.in_box3d_origin(pos, self.sample_space)
@@ -149,21 +155,17 @@ class MosAgentTopo3D(MosAgentBasic3D):
                 return True
 
         else:
-            # sample box is not specified. Do it the original way.
-            above_ground = pos[2] >= self.reachable_config.get("min_height", 0)
-            not_too_high = pos[2] <= self.reachable_config.get("max_height", float('inf'))
-            if above_ground and not_too_high:
-                pos2d = (int(round(pos[0])), int(round(pos[1])))
-                # res_buf: blows up the voxel at pos to keep some distance to obstacles
-                # It will affect where the topological graph nodes are placed with respect
-                # to obstacles.
-                res = self.topo_config.get("res_buf", 4)
-                pos_res = Octree.increase_res(pos, 1, res)
-                valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
-                if valid_voxel:
-                    not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
-                        and pos2d not in self.obstacles2d
-                    return not_occupied
+            pos2d = (int(round(pos[0])), int(round(pos[1])))
+            # res_buf: blows up the voxel at pos to keep some distance to obstacles
+            # It will affect where the topological graph nodes are placed with respect
+            # to obstacles.
+            res = self.topo_config.get("res_buf", 4)
+            pos_res = Octree.increase_res(pos, 1, res)
+            valid_voxel = self.search_region.octree_dist.octree.valid_voxel(*pos_res, res)
+            if valid_voxel:
+                not_occupied = not self.search_region.occupied_at(pos_res, res=res)\
+                    and pos2d not in self.obstacles2d
+                return not_occupied
         return False
 
     def _update_robot_belief(self, observation, action=None, **kwargs):
