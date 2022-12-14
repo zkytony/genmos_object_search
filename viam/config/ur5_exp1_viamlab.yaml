@@ -33,8 +33,8 @@ agent_config:
         pos_importance_thres: -1
         resample_thres: 0.4
         sample_space:
-          center_x: -0.5
-          center_y: -0.5
+          center_x: -0.05
+          center_y: -0.4
           center_z: 0.25
           size_x: 2.0
           size_y: 1.5
