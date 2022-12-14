@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 import constants
 
 # Viam related
-from utils.mock import viam_utils
+from utils import viam_utils
 import viam.proto.common as v_pb2
 
 # ROS related
@@ -482,8 +482,8 @@ class SloopMosViam:
         Returns:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         # TODO: future viam: time sync between robot pose and object detection
-        robot_pose_viam = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
-        robot_pose = self._process_viam_pose(robot_pose_viam)
+        robot_pose = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
+        # robot_pose = self._process_viam_pose(robot_pose_viam)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         # Note: right now we only get 2D detection
         detections = await viam_utils.viam_get_object_detections2d(
