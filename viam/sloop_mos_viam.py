@@ -211,12 +211,12 @@ class SloopMosViam:
                     continue
                 m = ros_utils.make_viz_marker_for_voxel(
                     objid, voxel, header, color=free_color, ns="fov",
-                    lifetime=0, alpha=0.7)
+                    lifetime=0, alpha=0.4)
                 markers.append(m)
             for voxel in obstacles_hit:
                 m = ros_utils.make_viz_marker_for_voxel(
                     objid, voxel, header, color=hit_color, ns="fov",
-                    lifetime=0, alpha=0.7)
+                    lifetime=0, alpha=0.4)
                 markers.append(m)
             break  # just visualize one
         self._fovs_markers_pub.publish(viz_msgs.MarkerArray(markers))
