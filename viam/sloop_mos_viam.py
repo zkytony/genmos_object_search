@@ -52,15 +52,6 @@ from sloop_object_search.utils import math as math_utils
 from sloop_object_search.utils.misc import import_class, hash16
 
 
-# WORKING_MOTION_POSES = {
-#     (-0.6, -0.4, 0.06, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-#     (-0.6, -0.4, 1.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-#     (-0.6, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-#     (-0.7, -0.4, 0.60, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-#     (-0.5, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90)),
-#     (-0.42, -1.3, 0.53, *viam_utils.ovec_to_quat(0, -1, 0, 90))
-# }
-
 
 class SloopMosViam:
     def __init__(self, name="sloop_viam"):
@@ -433,7 +424,7 @@ class SloopMosViam:
             self._goal_viz_pub.publish(viz_msgs.MarkerArray([_goal_marker_msg]))
 
             # account for frame difference (viam vs me)
-            dest_viam = self._output_viam_pose(dest)
+            dest_viam = self.output_viam_pose(dest)
 
             # execute the goal
             print("Executing nav action (viewpoint movement)")
@@ -455,7 +446,7 @@ class SloopMosViam:
             if success:
                 print("Find action taken.")
 
-    def _process_viam_pose(self, viam_pose):
+    def process_viam_pose(self, viam_pose):
         """
         Args:
             viam_pose (x,y,z,qx,qy,qz,qw): pose returned wrt Viam's frame system (y forward)
@@ -473,7 +464,7 @@ class SloopMosViam:
         pose_xyz = pose_transform[:3, 3]
         return (*pose_xyz, *pose_quat)
 
-    def _output_viam_pose(self, pose):
+    def output_viam_pose(self, pose):
         """given a pose in my frame system (+x), output a pose in Viam's
         frame system (+z). """
         # get transform to align 0 quat direction from viam system (+z) to my system (+x)
@@ -496,7 +487,7 @@ class SloopMosViam:
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         # TODO: future viam: time sync between robot pose and object detection
         robot_pose_viam = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
-        robot_pose = self._process_viam_pose(robot_pose_viam)
+        robot_pose = self.process_viam_pose(robot_pose_viam)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose_viam)
         # Note: right now we only get 2D detection
         detections = await viam_utils.viam_get_object_detections2d(
@@ -568,7 +559,7 @@ class SloopMosViam:
 
             robot_pose_viam = await viam_utils.viam_get_ee_pose(self.viam_robot, arm_name=self.viam_names["arm"])
             print("got robot pose from viam", robot_pose_viam)
-            robot_pose = self._process_viam_pose(robot_pose_viam)
+            robot_pose = self.process_viam_pose(robot_pose_viam)
             robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
                 robot_pose, self.world_frame, self.robot_id,
                 color=[0.9, 0.1, 0.1, 0.9], lifetime=0,

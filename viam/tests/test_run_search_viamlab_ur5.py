@@ -24,6 +24,8 @@ import viam.proto.common as v_pb2
 
 # the core functionality
 from sloop_mos_viam import SloopMosViam
+import sloop_object_search.utils.math as math_utils
+
 
 LAST_MOVE_IS_HOME = False
 
@@ -32,46 +34,66 @@ async def signal_find_func(viam_robot):
     success = await viam_utils.viam_signal_find(self.viam_robot)
     return success
 
-async def move_viewpoint_ur5(viam_robot,
-                             viam_names,
-                             viam_goal_pose,
-                             world_frame,
-                             viam_world_state):
+async def move_viewpoint_ur5(dest,
+                             sloop_mos_viam):
     """moves the arm to goal pose.
 
-    'viam_goal_pose' should be a pose friendly to viam's frame system
-    (i.e. +z forward)
+    dest is the goal pose in my frame (not viam's).
     """
     global LAST_MOVE_IS_HOME
+
+    viam_robot = sloop_mos_viam.viam_robot
+
+    # account for frame difference (viam vs me)
+    dest_viam = sloop_mos_viam.output_viam_pose(dest)
 
     # WARN: instead of doing going to the destination, go to
     # a closest pose known to work.
     # approx_dest_viam = min(WORKING_MOTION_POSES, key=lambda p: math_utils.euclidean_dist(p[:3], dest_viam[:3]))
     success = await viam_utils.viam_move(viam_robot,
-                                         viam_names["arm"],
-                                         # approx_dest_viam,
-                                         viam_goal_pose,
-                                         world_frame,
-                                         viam_world_state)
+                                         sloop_mos_viam.viam_names["arm"],
+                                         dest_viam,
+                                         sloop_mos_viam.world_frame,
+                                         sloop_mos_viam.viam_world_state)
     if not success:
         print("viewpoint movement failed.")
 
         if not LAST_MOVE_IS_HOME:
             print(":::Move back to home configuration.")
             await viam_utils.viam_move_to_joint_positions(
-                viam_robot, constants.UR5_HOME_CONFIG, viam_names["arm"])
+                viam_robot,
+                constants.UR5_HOME_CONFIG,
+                sloop_mos_viam.viam_names["arm"])
             LAST_MOVE_IS_HOME = True
 
         else:
             # go to another filler pose just to not stay in place
             print(":::Move to alternative configuration.")
             await viam_utils.viam_move_to_joint_positions(
-                viam_robot, constants.UR5_ALT_CONFIG, viam_names["arm"])
+                viam_robot,
+                constants.UR5_ALT_CONFIG,
+                sloop_mos_viam.viam_names["arm"])
             LAST_MOVE_IS_HOME = False
         return success
+
     else:
         print("viewpoint movement succeeded.")
         LAST_MOVE_IS_HOME = False
+
+    # Whatever the movement is, we will try to rotate the last joint
+    # to level it. Basically, get the rotation around the z axis (cuz
+    # we are getting viam pose), and undo it by setting a joint angle
+    # for the last joint.
+    robot_pose_viam = viam_utils.viam_get_ee_pose(viam_robot,
+                                                  arm_name=sloop_mos_viam.viam_names["arm"])
+    _, _, thz = math_utils.quat_to_euler(*robot_pose_viam[3:])
+    joint_positions = viam_utils.viam_get_joint_positions(viam_robot)
+    goal_joint_positions = [*joint_positions[:-1], joint_positions[-1] - thz]
+    await viam_utils.viam_move_to_joint_positions(
+        viam_robot,
+        goal_joint_positions,
+        sloop_mos_viam.viam_names["arm"])
+
     return success
 
 
