@@ -325,9 +325,10 @@ async def viam_move(viam_robot, component_name, goal_pose, goal_frame,
         print("Motion planning failed. Unable to receive reply from motion service.")
         return False
 
-def viam_signal_find(viam_robot):
+async def viam_signal_find(viam_robot):
     """Do something with the robot to signal the find action"""
-    raise NotImplementedError()
+    print("WARNING: ROBOT HAS DECLARED FIND.")
+    return True
 
 
 def quat_to_ovec(qx, qy, qz, qw):
