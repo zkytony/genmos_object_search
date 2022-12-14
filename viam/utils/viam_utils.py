@@ -271,6 +271,7 @@ async def viam_move_to_joint_positions(viam_robot, goal_positions, arm_name="arm
     """
     arm = Arm.from_robot(viam_robot, arm_name)
     goal_positions_proto = varm_pb2.JointPositions(values=goal_positions)
+    # TODO: handle failure
     await arm.move_to_joint_positions(goal_positions_proto)
 
 

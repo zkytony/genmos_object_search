@@ -68,13 +68,15 @@ class SloopMosViam:
         self.sloop_client = None  # connection to sloop server
         self.viam_robot = None  # connection to the viam robot
 
-    def setup(self, viam_robot, viam_names, config, world_frame):
+    def setup(self, viam_robot, viam_info, config, world_frame):
         """
         Args:
             viam_robot: the grpc connection to viam
-            viam_names (dict): maps from a string (e.g. 'color_camera')
+            viam_info (dict): a dictionary containing necessary info
+                related to dealing with viam. For example, names,
+                a subdict, maps from a string (e.g. 'color_camera')
                 to another string (e.g. 'gripper-main:color-cam').
-            config (dict): misc configurations
+            config (dict): misc configurations for object search
             world_frame (str): name of the world frame.
 
         Note:
@@ -87,7 +89,8 @@ class SloopMosViam:
         self.setup_for_rviz()
 
         self.viam_robot = viam_robot
-        self.viam_names = viam_names
+        self.viam_info = viam_info
+        self.viam_names = self.viam_info["names"]
 
         # Configuration and parameters
         self.config = config
@@ -429,27 +432,26 @@ class SloopMosViam:
                 scale=_marker_scale, color=[0.53, 0.95, 0.99, 0.9], lifetime=0)
             self._goal_viz_pub.publish(viz_msgs.MarkerArray([_goal_marker_msg]))
 
+            # account for frame difference (viam vs me)
+            dest_viam = self._output_viam_pose(dest)
+
             # execute the goal
             print("Executing nav action (viewpoint movement)")
-            dest_viam = self._output_viam_pose(dest)
-            # WARN: instead of doing going to the destination, go to
-            # a closest pose known to work.
-            # approx_dest_viam = min(WORKING_MOTION_POSES, key=lambda p: math_utils.euclidean_dist(p[:3], dest_viam[:3]))
-            success = await viam_utils.viam_move(self.viam_robot,
-                                                 self.viam_names["arm"],
-                                                 # approx_dest_viam,
-                                                 dest_viam,
-                                                 self.world_frame,
-                                                 self.viam_world_state)
+            move_viewpoint_func = self.viam_info["move_viewpoint_func"]
+            success = await move_viewpoint_func(self.viam_robot,
+                                                self.viam_names,
+                                                dest_viam,
+                                                self.world_frame,
+                                                self.viam_world_state)
             if not success:
-                print("viewpoint movement failed.")
+                print("viewpoint CHANGED.")
             else:
-                print("viewpoint movement succeeded.")
+                print("viewpoint change FAILED.")
 
         elif isinstance(action_pb, a_pb2.Find):
             print("Signaling find action")
-            # TODO: signal find
-            success = await viam_utils.viam_signal_find(self.viam_robot)
+            signal_find_func = self.viam_info["signal_find_func"]
+            success = signal_find_func(self.viam_robot)
             if success:
                 print("Find action taken.")
 
