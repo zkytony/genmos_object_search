@@ -40,13 +40,9 @@ async def test_ur5e_viamlab():
     world_frame = "arm_origin"
 
     print(">>>>>>><<<<<<<<>>>> begin >><<<<<<<<>>>>>>>")
-    try:
-        sloop_viam = SloopMosViam()
-        sloop_viam.setup(ur5robot, viam_names, config, world_frame)
-        await sloop_viam.run()
-    finally:
-        await sloop_viam.sloop_client.channel.close()
-
+    sloop_viam = SloopMosViam()
+    sloop_viam.setup(ur5robot, viam_names, config, world_frame)
+    await sloop_viam.run()
 
 if __name__ == "__main__":
     asyncio.run(test_ur5e_viamlab())
