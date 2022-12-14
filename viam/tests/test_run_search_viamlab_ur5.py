@@ -47,7 +47,11 @@ CANDIDATE_VIEWPOINTS = [
 
     {"name": "p5",
      "ee_pose": [-0.190, -0.415, -0.149, *viam_utils.ovec_to_quat(-0.05, -0.93, -0.37, 100.00)],
-     "joint_positions": [39.22, -71.06, 119.32, -17.72, 46.65, -11.61]}
+     "joint_positions": [39.22, -71.06, 119.32, -17.72, 46.65, -11.61]},
+
+    {"name": "p6",
+     "ee_pose": [-0.340, -0.417, -0.20, *viam_utils.ovec_to_quat(-0.13, -0.99, -0.03, 90.00)],
+     "joint_positions": [25.76, -41.64, 109.46, -62.94, 18.15, -4.65]}
 ]
 
 
@@ -65,12 +69,6 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
 
     # account for frame difference (viam vs me)
     dest_viam = sloop_mos_viam.output_viam_pose(dest)
-
-    # pick the viewpoint from candidates that is closest to the
-    # planned viewpoint.
-    for v in CANDIDATE_VIEWPOINTS:
-        print(v)
-        print(math_utils.euclidean_dist(v["ee_pose"][:3], dest_viam[:3]))
 
     approx_dest = min(CANDIDATE_VIEWPOINTS,
                       key=lambda v: math_utils.euclidean_dist(
