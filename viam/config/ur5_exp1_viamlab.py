@@ -60,14 +60,14 @@ SEARCH_REGION_3D = {"res": 0.08,
 
 # Official spot spec: RGB: 60.2deg x 46.4deg; Depth: 55.9deg x 44deg
 GRIPPER_CAMERA = {'name': 'gripper_camera',
-                  'params': {'fov': 53,
-                             'far': 1.5,
+                  'params': {'fov': 45,
+                             'far': 1.3,
                              'near': 0.2,
-                             'aspect_ratio': 1.25,
+                             'aspect_ratio': 1.3,
                              'occlusion_enabled': True}}
 
 LOCAL_TOPO = {'num_nodes': 10,
-              'sep': 0.4,
+              'sep': 0.3,
               'debug': False,
               'resample_thres': 0.4,
               # the 3D box within which samples of viewpoint positions will be drawn.

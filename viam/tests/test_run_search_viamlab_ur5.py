@@ -28,6 +28,8 @@ from sloop_mos_viam import SloopMosViam
 import sloop_object_search.utils.math as math_utils
 
 
+LAST_CANDIDATE = None
+
 CANDIDATE_VIEWPOINTS = [
     {"name": "p1",
      "ee_pose": [-0.425, -0.417, 0.109, *viam_utils.ovec_to_quat(-0.04, -1.00, -0.02, 92.87)],
@@ -69,12 +71,18 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
 
     dest is the goal pose in my frame (not viam's).
     """
+    global LAST_CANDIDATE
     viam_robot = sloop_mos_viam.viam_robot
 
     # account for frame difference (viam vs me)
     dest_viam = sloop_mos_viam.output_viam_pose(dest)
 
-    approx_dest = min(CANDIDATE_VIEWPOINTS,
+    candidates = CANDIDATE_VIEWPOINTS
+    if LAST_CANDIDATE is not None:
+        candidates = [v for v in CANDIDATE_VIEWPOINTS
+                      if v["name"] != LAST_CANDIDATE]
+
+    approx_dest = min(candidates,
                       key=lambda v: math_utils.euclidean_dist(
                           v["ee_pose"][:3], dest_viam[:3]))
     print(f"moving to joint positions in {approx_dest['name']}")
@@ -82,6 +90,7 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
         viam_robot,
         approx_dest["joint_positions"],
         sloop_mos_viam.viam_names["arm"])
+    LAST_CANDIDATE = approx_dest['name']
     # Whatever the movement is, we will try to rotate the last joint
     # to level it. Basically, get the rotation around the z axis (cuz
     # we are getting viam pose), and undo it by setting a joint angle
