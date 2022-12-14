@@ -49,8 +49,8 @@ LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
 
 SEARCH_REGION_3D = {"res": 0.08,
                     "octree_size": 32,
-                    "region_size_x": 1.8,
-                    "region_size_y": 2.5,
+                    "region_size_x": 2.5,
+                    "region_size_y": 2.0,
                     "region_size_z": 1.5,
                     "center_x": -0.5,
                     "center_y": -1.65,
@@ -73,11 +73,11 @@ LOCAL_TOPO = {'num_nodes': 10,
               # the 3D box within which samples of viewpoint positions will be drawn.
               'sample_space': {
                   "center_x": -0.5,
-                  "center_y": 0.0,
-                  "center_z": 0.0,
-                  "size_x": 1.25,
-                  "size_y": 1.25,
-                  "size_z": 2.0
+                  "center_y": -0.5,
+                  "center_z": 0.25,
+                  "size_x": 2.00,
+                  "size_y": 1.50,
+                  "size_z": 2.00
               },
               # because the sample space may be off the search region,
               # it is not so important to filter by importance.

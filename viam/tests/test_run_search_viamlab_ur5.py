@@ -28,22 +28,25 @@ from sloop_mos_viam import SloopMosViam
 import sloop_object_search.utils.math as math_utils
 
 
-LAST_MOVE_IS_HOME = False
-
 CANDIDATE_VIEWPOINTS = [
-    {"ee_pose": [-0.425, -0.417, 0.109, *viam_utils.ovec_to_quat(-0.04, -1.00, -0.02, 92.87)],
+    {"name": "p1",
+     "ee_pose": [-0.425, -0.417, 0.109, *viam_utils.ovec_to_quat(-0.04, -1.00, -0.02, 92.87)],
      "joint_positions": [22.38, -53.26, 101.41, -44.99, 24.63, 0.00]},
 
-    {"ee_pose": [-0.817, -0.232, 0.062, *viam_utils.ovec_to_quat(0.0, -1.00, -0.02, 90.00)],
+    {"name": "p2",
+     "ee_pose": [-0.817, -0.232, 0.062, *viam_utils.ovec_to_quat(0.0, -1.00, -0.02, 90.00)],
      "joint_positions": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
 
-    {"ee_pose": [-0.838, -0.066, -0.09, *viam_utils.ovec_to_quat(-0.72, -0.66, -0.21, 105.37)],
+    {"name": "p3",
+     "ee_pose": [-0.838, -0.066, -0.09, *viam_utils.ovec_to_quat(-0.72, -0.66, -0.21, 105.37)],
      "joint_positions": [-9.99, -10.01, 29.53, 0.00, 39.23, 0.01]},
 
-    {"ee_pose": [-0.242, -0.459, -0.203, *viam_utils.ovec_to_quat(-0.08, -0.96, -0.25, 93.00)],
+    {"name": "p4",
+     "ee_pose": [-0.242, -0.459, -0.203, *viam_utils.ovec_to_quat(-0.08, -0.96, -0.25, 93.00)],
      "joint_positions": [39.22, -71.06, 109.33, -17.72, 45.95, -11.60]},
 
-    {"ee_pose": [-0.190, -0.415, -0.149, *viam_utils.ovec_to_quat(-0.05, -0.93, -0.37, 100.00)],
+    {"name": "p5",
+     "ee_pose": [-0.190, -0.415, -0.149, *viam_utils.ovec_to_quat(-0.05, -0.93, -0.37, 100.00)],
      "joint_positions": [39.22, -71.06, 119.32, -17.72, 46.65, -11.61]}
 ]
 
@@ -58,8 +61,6 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
 
     dest is the goal pose in my frame (not viam's).
     """
-    global LAST_MOVE_IS_HOME
-
     viam_robot = sloop_mos_viam.viam_robot
 
     # account for frame difference (viam vs me)
@@ -67,9 +68,14 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
 
     # pick the viewpoint from candidates that is closest to the
     # planned viewpoint.
+    for v in CANDIDATE_VIEWPOINTS:
+        print(v)
+        print(math_utils.euclidean_dist(v["ee_pose"][:3], dest_viam[:3]))
+
     approx_dest = min(CANDIDATE_VIEWPOINTS,
                       key=lambda v: math_utils.euclidean_dist(
                           v["ee_pose"][:3], dest_viam[:3]))
+    print(f"moving to joint positions in {approx_dest['name']}")
     await viam_utils.viam_move_to_joint_positions(
         viam_robot,
         approx_dest["joint_positions"],
@@ -78,54 +84,11 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
     # to level it. Basically, get the rotation around the z axis (cuz
     # we are getting viam pose), and undo it by setting a joint angle
     # for the last joint.
-    viam_utils.viam_level_ur5gripper(viam_robot,
-                                     sloop_mos_viam.viam_names["arm"])
-    # sleep for 0.5 seconds for the detection result to come through
-    time.sleep(0.5)
+    await viam_utils.viam_level_ur5gripper(viam_robot,
+                                           sloop_mos_viam.viam_names["arm"])
+    # sleep for 0.25 seconds for the detection result to come through
+    time.sleep(0.25)
     return True
-
-    # # WARN: instead of doing going to the destination, go to
-    # # a closest pose known to work.
-    # # approx_dest_viam = min(WORKING_MOTION_POSES, key=lambda p: math_utils.euclidean_dist(p[:3], dest_viam[:3]))
-    # success = await viam_utils.viam_move(viam_robot,
-    #                                      sloop_mos_viam.viam_names["arm"],
-    #                                      dest_viam,
-    #                                      sloop_mos_viam.world_frame,
-    #                                      sloop_mos_viam.viam_world_state)
-    # if not success:
-    #     print("viewpoint movement failed.")
-
-    #     if not LAST_MOVE_IS_HOME:
-    #         print(":::Move back to home configuration.")
-    #         await viam_utils.viam_move_to_joint_positions(
-    #             viam_robot,
-    #             constants.UR5_HOME_CONFIG,
-    #             sloop_mos_viam.viam_names["arm"])
-    #         LAST_MOVE_IS_HOME = True
-
-    #     else:
-    #         # go to another filler pose just to not stay in place
-    #         print(":::Move to alternative configuration.")
-    #         await viam_utils.viam_move_to_joint_positions(
-    #             viam_robot,
-    #             constants.UR5_ALT_CONFIG,
-    #             sloop_mos_viam.viam_names["arm"])
-    #         LAST_MOVE_IS_HOME = False
-    #     return success
-
-    # else:
-    #     print("viewpoint movement succeeded.")
-    #     LAST_MOVE_IS_HOME = False
-
-    # # Whatever the movement is, we will try to rotate the last joint
-    # # to level it. Basically, get the rotation around the z axis (cuz
-    # # we are getting viam pose), and undo it by setting a joint angle
-    # # for the last joint.
-    # viam_utils.viam_level_ur5gripper(viam_robot,
-    #                                  sloop_mos_viam.viam_names["arm"])
-    # # sleep for 0.5 seconds for the detection result to come through
-    # time.sleep(0.5)
-    # return success
 
 
 async def test_ur5e_viamlab():

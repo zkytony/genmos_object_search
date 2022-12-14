@@ -211,12 +211,12 @@ class SloopMosViam:
                     continue
                 m = ros_utils.make_viz_marker_for_voxel(
                     objid, voxel, header, color=free_color, ns="fov",
-                    lifetime=0, alpha=0.4)
+                    lifetime=0, alpha=0.2)
                 markers.append(m)
             for voxel in obstacles_hit:
                 m = ros_utils.make_viz_marker_for_voxel(
                     objid, voxel, header, color=hit_color, ns="fov",
-                    lifetime=0, alpha=0.4)
+                    lifetime=0, alpha=0.2)
                 markers.append(m)
             break  # just visualize one
         self._fovs_markers_pub.publish(viz_msgs.MarkerArray(markers))
@@ -430,10 +430,7 @@ class SloopMosViam:
             print("Executing nav action (viewpoint movement)")
             move_viewpoint_func = self.viam_info["move_viewpoint_func"]
             success = await move_viewpoint_func(dest_viam, self)
-            if not success:
-                print("viewpoint CHANGED.")
-            else:
-                print("viewpoint change FAILED.")
+            print("viewpoint change success?", success)
 
         elif isinstance(action_pb, a_pb2.Find):
             print("Signaling find action")

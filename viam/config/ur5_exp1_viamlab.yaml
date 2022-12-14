@@ -34,10 +34,10 @@ agent_config:
         resample_thres: 0.4
         sample_space:
           center_x: -0.5
-          center_y: 0.0
-          center_z: 0.0
-          size_x: 1.25
-          size_y: 1.25
+          center_y: -0.5
+          center_z: 0.25
+          size_x: 2.0
+          size_y: 1.5
           size_z: 2.0
         sep: 0.4
     detectors:
@@ -68,8 +68,8 @@ agent_config:
       debug: false
       octree_size: 32
       point_cloud_from_world_state: true
-      region_size_x: 1.8
-      region_size_y: 2.5
+      region_size_x: 2.5
+      region_size_y: 2.0
       region_size_z: 1.5
       res: 0.08
   targets:
