@@ -178,6 +178,16 @@ def R_quat(x, y, z, w, affine=False):
         R = aR
     return R
 
+def R_matrix(m, affine=False):
+    """m: a numpy array of shape (3,3)"""
+    R = scipyR.from_matrix(m)
+    if affine:
+        aR = np.zeros((4,4), dtype=float)
+        aR[:3,:3] = R.as_matrix()
+        aR[3,3] = 1
+        R = aR
+    return R
+
 def R_to_euler(R, order='xyz'):
     """
     Obtain the thx,thy,thz angles that result in the rotation matrix Rz(thx) * Ry(thy) * Rx(thz)

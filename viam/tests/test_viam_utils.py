@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 import numpy as np
 import open3d as o3d
 from utils.viam_utils import (connect_viamlab_ur5,
+                              viam_get_pose,
                               viam_get_ee_pose,
                               viam_get_point_cloud_array,
                               viam_get_object_detections2d,
@@ -75,10 +76,12 @@ async def test_viam_get_point_cloud_array_to_proto(viam_robot):
 
 
 async def test_viam_get_ee_pose(viam_robot):
-    pose = await viam_get_ee_pose(viam_robot)
-    print(pose)
-    pose_pb = proto_utils.posetuple_to_poseproto(pose)
-    print(pose_pb)
+    arm_pose = await viam_get_pose(viam_robot, "arm", "world")
+    print("arm pose (service):", arm_pose)
+    arm_pose = await viam_get_ee_pose(viam_robot)
+    print("arm pose (component):", arm_pose)
+    arm_pose_pb = proto_utils.posetuple_to_poseproto(arm_pose)
+    print("  in my pb:", arm_pose_pb)
     print("----------------------")
 
 async def test_viam_get_joint_positions(viam_robot):
@@ -91,7 +94,7 @@ async def test_viam_get_image(viam_robot):
     image = await viam_get_image(viam_robot, constants.COLOR_CAM)
     image.save("foo.png")
     print("color image saved")
-    image = await viam_get_image(viam_robot, constants.SEGM_CAM)
+    image = await viam_get_image(viam_robot, constants.DETECTOR_CAM)
     image.save("foo-seg.png")
     print("segmenter image saved")
     print("----------------------")
@@ -172,15 +175,15 @@ async def testall_viamlab_ur5():
     print("Connected!")
 
     # Testing perception
-    # await test_viam_get_ee_pose(ur5robot)
-    # await test_viam_get_joint_positions(ur5robot)
-    # await test_viam_get_image(ur5robot)
-    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    await test_viam_get_ee_pose(ur5robot)
+    await test_viam_get_joint_positions(ur5robot)
+    await test_viam_get_image(ur5robot)
+    await test_viam_get_point_cloud_array_to_proto(ur5robot)
     await test_viam_get_object_detections2d(ur5robot)
 
-    # # Testing the arm motion
-    # await test_viam_move_viamlab_ur5(ur5robot)
-    # await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
+    # Testing the arm motion
+    await test_viam_move_viamlab_ur5(ur5robot)
+    await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
 
     await ur5robot.close()
 
