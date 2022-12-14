@@ -162,7 +162,7 @@ world_state_config:
   pose:
   - -0.4
   - -1.7
-  - -0.5
+  - -0.8
   sizes:
   - 0.2
   - 0.2

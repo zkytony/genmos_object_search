@@ -13,7 +13,7 @@ import numpy as np
 
 
 MOCK_ROBOT_POSE = None
-MOCK_TARGET_LOC = [0.05, 1.37, 0.5]
+MOCK_TARGET_LOC = [-0.4, -1.70, -0.8]
 
 async def connect_viamlab_ur5():
     return None
@@ -63,22 +63,22 @@ async def viam_get_object_detections2d(
         A label is a string. confidence is score, box2d is xyxy tuple
     """
     if MOCK_ROBOT_POSE is not None:
-        # robot_pos3d = MOCK_ROBOT_POSE[:3]
-        # # vector from robot to target
-        # vec_robot_target = math_utils.vec(robot_pos3d, MOCK_TARGET_LOC)
+        robot_pos3d = MOCK_ROBOT_POSE[:3]
+        # vector from robot to target
+        vec_robot_target = math_utils.vec(robot_pos3d, MOCK_TARGET_LOC)
 
-        # # angle between robot's look vector and vec_robot_target
-        # # the robot camera by default should look at +x. See sensors.py
-        # default_camera_direction = np.array([1, 0, 0, 1])
-        # R = math_utils.R_quat(*MOCK_ROBOT_POSE[3:], affine=True)
-        # d_transformed = np.transpose(np.matmul(R, np.transpose(default_camera_direction)))
-        # vec_look = d_transformed[:3]
+        # angle between robot's look vector and vec_robot_target
+        # the robot camera by default should look at +x. See sensors.py
+        default_camera_direction = np.array([1, 0, 0, 1])
+        R = math_utils.R_quat(*MOCK_ROBOT_POSE[3:], affine=True)
+        d_transformed = np.transpose(np.matmul(R, np.transpose(default_camera_direction)))
+        vec_look = d_transformed[:3]
 
-        # angle_diff = math_utils.angle_between(vec_look, vec_robot_target)
-        # if angle_diff < 30:
-        return [("Cup", 0.9, (-1,-1,-1,-1))]  # successful, label-only detection
-        # else:
-        #     return []  # no detection
+        angle_diff = math_utils.angle_between(vec_look, vec_robot_target)
+        if angle_diff < 30:
+            return [("Cup", 0.9, (-1,-1,-1,-1))]  # successful, label-only detection
+        else:
+            return []  # no detection
 
     return []  # no detection
 
