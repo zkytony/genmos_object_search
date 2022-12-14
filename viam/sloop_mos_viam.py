@@ -247,7 +247,7 @@ class SloopMosViam:
         for bobj_pb in response.object_beliefs:
             if bobj_pb.object_id in self.objects_found:
                 msg = ros_utils.make_octree_belief_proto_markers_msg(
-                    bobj_pb, header, alpha_scaling=2.0, prob_thres=0.5)
+                    bobj_pb, header, alpha_scaling=2.0, prob_thres=0.35)
                 markers.extend(msg.markers)
         # For the other objects, just visualize one is enough.
         for bobj_pb in response.object_beliefs:
@@ -491,6 +491,7 @@ class SloopMosViam:
 
         # Detection proto
         detections_pb = viam_utils.viam_detections2d_to_proto(self.robot_id, detections)
+        print(detections_pb)
 
         # Objects found proto
         # If the last action is "find", and we receive object detections
