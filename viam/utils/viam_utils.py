@@ -36,6 +36,22 @@ async def connect_viamlab_ur5():
     return await RobotClient.at_address('viam-test-bot-main.tcyat99x8y.viam.cloud', opts)
 
 
+async def viam_level_ur5gripper(viam_robot, arm_name="arm"):
+    # Whatever the movement is, we will try to rotate the last joint
+    # to level it. Basically, get the rotation around the z axis (cuz
+    # we are getting viam pose), and undo it by setting a joint angle
+    # for the last joint.
+    robot_pose_viam = viam_get_ee_pose(viam_robot, arm_name=arm_name)
+    _, _, thz = math_utils.quat_to_euler(*robot_pose_viam[3:])
+    joint_positions = viam_get_joint_positions(viam_robot)
+    goal_joint_positions = [*joint_positions[:-1], joint_positions[-1] - thz]
+    await viam_move_to_joint_positions(
+        viam_robot,
+        goal_joint_positions,
+        arm_name)
+    return True
+
+
 ########### Robot-generic viam functions ###########
 async def viam_get_pose(viam_robot, component_name, frame):
     """

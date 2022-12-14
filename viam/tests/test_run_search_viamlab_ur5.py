@@ -84,16 +84,8 @@ async def move_viewpoint_ur5(dest,
     # to level it. Basically, get the rotation around the z axis (cuz
     # we are getting viam pose), and undo it by setting a joint angle
     # for the last joint.
-    robot_pose_viam = viam_utils.viam_get_ee_pose(viam_robot,
-                                                  arm_name=sloop_mos_viam.viam_names["arm"])
-    _, _, thz = math_utils.quat_to_euler(*robot_pose_viam[3:])
-    joint_positions = viam_utils.viam_get_joint_positions(viam_robot)
-    goal_joint_positions = [*joint_positions[:-1], joint_positions[-1] - thz]
-    await viam_utils.viam_move_to_joint_positions(
-        viam_robot,
-        goal_joint_positions,
-        sloop_mos_viam.viam_names["arm"])
-
+    viam_utils.viam_level_ur5gripper(viam_robot,
+                                     sloop_mos_viam.viam_names["arm"])
     return success
 
 

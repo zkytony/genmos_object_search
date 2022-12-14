@@ -30,7 +30,7 @@ from viam.proto.common import (Pose, PoseInFrame, Geometry, RectangularPrism,
 
 from sloop_object_search.grpc.utils import proto_utils
 
-
+###################### test functions #######################
 def test_quat_ovec_conversion():
     pose = {
         "x": 462.41402300101993,
@@ -117,6 +117,7 @@ async def test_viam_move_to_joint_pos_viamlab_ur5(viam_robot, arm_name="arm"):
 async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm", world_frame="world"):
     """testing motion planning service (end-effector) at Viam lab with the UR5 robot.
     Also tests move to joint positions through returning to home."""
+    # Adapting the examples from Nick in test_motion_nick_viam.py
     def build_world_state_viamlab_ur5():
         # World State... defined in test_motion_nick_viam.py
         # create a geometry 200mm behind the arm to block it from hitting the xarm
@@ -134,7 +135,6 @@ async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm", world_frame="wo
         worldstate = WorldState(obstacles=[tableFrame, wallBehindFrame, mountFrame] )
         return worldstate
 
-    # Adapting the examples from Nick in test_motion_nick_viam.py
     world_state = build_world_state_viamlab_ur5()
 
     test_goals = [
@@ -166,6 +166,16 @@ async def test_viam_move_viamlab_ur5(viam_robot, arm_name="arm", world_frame="wo
     print("-------------------------------------")
 
 
+async def test_viam_move_viamlab_ur5_level_gripper(viam_robot, arm_name="arm"):
+    """testing motion planning service (end-effector) at Viam lab with the UR5 robot.
+    Also tests move to joint positions through returning to home."""
+    # Adapting the examples from Nick in test_motion_nick_viam.py
+    joint_positions1 = [10.0, 0.0, -25.8, 0.0, 0.0, 0.0]
+    await viam_move_to_joint_positions(viam_robot, joint_positions1, arm_name)
+    print("leveling the gripper!")
+    await viam_utils.viam_level_ur5gripper(viam_robot, arm_name)
+    print("-------------------------------------")
+
 async def testall_viamlab_ur5():
     test_quat_ovec_conversion()
 
@@ -174,16 +184,17 @@ async def testall_viamlab_ur5():
     ur5robot = await connect_viamlab_ur5()
     print("Connected!")
 
-    # Testing perception
-    await test_viam_get_ee_pose(ur5robot)
-    await test_viam_get_joint_positions(ur5robot)
-    await test_viam_get_image(ur5robot)
-    await test_viam_get_point_cloud_array_to_proto(ur5robot)
-    await test_viam_get_object_detections2d(ur5robot)
+    # # Testing perception
+    # await test_viam_get_ee_pose(ur5robot)
+    # await test_viam_get_joint_positions(ur5robot)
+    # await test_viam_get_image(ur5robot)
+    # await test_viam_get_point_cloud_array_to_proto(ur5robot)
+    # await test_viam_get_object_detections2d(ur5robot)
 
     # Testing the arm motion
-    await test_viam_move_viamlab_ur5(ur5robot)
-    await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
+    # await test_viam_move_viamlab_ur5(ur5robot)
+    # await test_viam_move_to_joint_pos_viamlab_ur5(ur5robot)
+    await test_viam_move_viamlab_ur5_level_gripper(ur5robot)
 
     await ur5robot.close()
 
