@@ -110,8 +110,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
             # the 3D box within which samples of viewpoint positions will be drawn.
             center = (sample_space["center_x"], sample_space["center_y"], sample_space["center_z"])
             w, l, h = sample_space["size_x"], sample_space["size_y"], sample_space["size_z"]
-            origin, _, _, _ = math_utils.centerbox_to_originbox((center, w, l, h))
-            self.sample_space = (origin, w, l, h)
+            self.sample_space = math_utils.centerbox_to_originbox((center, w, l, h))
         topo_map = _sample_topo_graph3d(object_beliefs,
                                         robot_pose,
                                         self.search_region,
@@ -387,6 +386,7 @@ def _sample_topo_graph3d(init_object_beliefs,
         topo_node = TopoNode(i, pos)
         nodes[i] = topo_node
         pos_to_nid[pos] = i
+        print(search_region.to_world_pos(pos))
 
     # Now, we need to connect the places to form a graph.
     _conns = {}

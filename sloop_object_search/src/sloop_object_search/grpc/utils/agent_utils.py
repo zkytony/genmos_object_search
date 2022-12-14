@@ -167,8 +167,15 @@ def _convert_metric_fields_to_pomdp_fields(agent_config_world, search_region):
             agent_config_pomdp["robot"]["action"]["topo"]["sep"] = sep_pomdp
 
         if "sample_space" in topo_config_world:
-            for field_name in {"center_x", "center_y", "center_z",
-                               "size_x", "size_y", "size_z"}:
+            sample_space_world = topo_config_world["sample_space"]
+            center_world = (sample_space_world["center_x"],
+                            sample_space_world["center_y"],
+                            sample_space_world["center_z"])
+            center_pomdp = search_region.to_pomdp_pos(center_world)
+            topo_config_pomdp["sample_space"]["center_x"] = center_pomdp[0]
+            topo_config_pomdp["sample_space"]["center_y"] = center_pomdp[1]
+            topo_config_pomdp["sample_space"]["center_z"] = center_pomdp[2]
+            for field_name in {"size_x", "size_y", "size_z"}:
                 if field_name in topo_config_world["sample_space"]:
                     field_world = topo_config_world["sample_space"][field_name]
                     field_pomdp = field_world / search_region.search_space_resolution
