@@ -46,7 +46,7 @@ agent_config:
         params:
           quality:
           - 10000000.0
-          - 0.2
+          - 0.3
           sensor: gripper_camera
     id: robot0
     no_look: true

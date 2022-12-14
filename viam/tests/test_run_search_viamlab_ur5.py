@@ -114,7 +114,8 @@ async def test_ur5e_viamlab():
             "detector": constants.DETECTOR,
             "arm": constants.ARM,
         },
-        "move_viewpoint_func": move_viewpoint_ur5
+        "move_viewpoint_func": move_viewpoint_ur5,
+        "signal_find_func": signal_find_func
     }
     world_frame = "arm_origin"
 

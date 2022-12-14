@@ -104,7 +104,7 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 LOCAL_DETECTORS = {
     'Cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "gripper_camera",
-                       "quality": [1e7, 0.2]}},
+                       "quality": [1e7, 0.3]}},
 }
 
 OBJECTS = {
