@@ -1,6 +1,6 @@
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 
-DETECTION2D_CONFIDENCE_THRES = 0.5
+DETECTION2D_CONFIDENCE_THRES = 0.35
 
 #################################################
 # The following configurations are specific to
