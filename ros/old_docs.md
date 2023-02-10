@@ -34,7 +34,7 @@ python -m spacy download en_core_web_lg
 
 ## Build the ROS package
 
-Normally, you just need to run `catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_object_search"`.
+Normally, you just need to run `catkin_make -DCATKIN_WHITELIST_PACKAGES="genmos_object_search"`.
 
 ### As part of robotdev/spot
 (Optional) To enable rtags indexing in emacs (for C++):
@@ -43,12 +43,12 @@ export SPOT_ADDITIONAL_BUILD_OPTIONS=-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 ```
 Then, to build just sloop\_ros,
 ```
-build_spot -DCATKIN_WHITELIST_PACKAGES="sloop_object_search"
+build_spot -DCATKIN_WHITELIST_PACKAGES="genmos_object_search"
 ```
 
 
 ## Test it out
-Go to `sloop_object_search/tests/sloop_object_search`, run any one (or all) of the following three tests:
+Go to `genmos_object_search/tests/genmos_object_search`, run any one (or all) of the following three tests:
 ```
 python test_sloop_system.py config_test_basic2d.py
 python test_sloop_system.py config_test_topo2d.py
@@ -58,7 +58,7 @@ python test_sloop_system.py config_test_hier2d.py
 
 # Documentation OUTDATED
 
-The sloop_object_search package can be thought of as wrapping a ROS interface around
+The genmos_object_search package can be thought of as wrapping a ROS interface around
 a SLOOP agent, which allows the SLOOP agent to interact with real robot sensor
 inputs and execute actions in the real world.
 
@@ -69,21 +69,21 @@ that factors state and observation spaces by objects.
 ## SLOOP Agent OUTDATED DOCS
 
 There are currently two specific implementations of the SLOOP agent:
-- **SloopMosBasic2DAgent** (at [basic2d.py](./src/sloop_object_search/oopomdp/agent/basic2d.py))
+- **SloopMosBasic2DAgent** (at [basic2d.py](./src/genmos_object_search/oopomdp/agent/basic2d.py))
 
   Here, "Basic2D" means the action space of the agent is "basic": it consists
   of primitive motions such as moving forward, turning left and turning right
-  (see [PolicyModelBasic2D](./src/sloop_object_search/oopomdp/models/policy_model.py)).
+  (see [PolicyModelBasic2D](./src/genmos_object_search/oopomdp/models/policy_model.py)).
 
-- **SloopMosTopo2DAgent** (at [topo2d.py](./src/sloop_object_search/oopomdp/agent/topo2d.py))
+- **SloopMosTopo2DAgent** (at [topo2d.py](./src/genmos_object_search/oopomdp/agent/topo2d.py))
 
   Here, "Topo2D" means the action space of the agent is "topological": it
   consists of navigations between topological graph nodes.
-  (see [PolicyModelTopo](./src/sloop_object_search/oopomdp/models/policy_model.py)).
+  (see [PolicyModelTopo](./src/genmos_object_search/oopomdp/models/policy_model.py)).
 
 A SLOOP agent can be most conveniently created based on a configuration dictionary.
-See [tests/sloop_object_search/config_test_topo2d.py](./tests/sloop_object_search/config_test_topo2d.py)
-as an example configuration dictionary. See [tests/sloop_object_search/test_sloop_system.py](./tests/sloop_object_search/test_sloop_system.py)
+See [tests/genmos_object_search/config_test_topo2d.py](./tests/genmos_object_search/config_test_topo2d.py)
+as an example configuration dictionary. See [tests/genmos_object_search/test_sloop_system.py](./tests/genmos_object_search/test_sloop_system.py)
 for how to actually create the agent. It boils down to:
 ```python
 map_name = _config['task_config']["map_name"]
@@ -119,7 +119,7 @@ space of a SloopMosTopo2DAgent. To use this planner:
 ```python
 config = {
     "planner_config": {
-        "planner": "sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner",
+        "planner": "genmos_object_search.oopomdp.planner.hier2d.HierarchicalPlanner",
         "subgoal_level": {
             "max_depth": 20,
             "exploration_const": 1000,

@@ -1,12 +1,11 @@
-* sloop_object_search
+* genmos_object_search
 
-SLOOP (Spatial Language Understanding Object-Oriented POMDP)
-for Multi-Object Search.
+GenMOS (Generalized Multi-Object Search)
 
-** sloop object search package design decisions
+** GenMOS object search package design decisions
    <<design_decisions>>
 *** Objective (last updated 08/15/2022)
-    sloop object search package is an object search package that:
+    GenMOS object search package is an object search package that:
 
      - [ ] Performs hierarchical object search with 3D local search and 2D global search
      - [ ] Allows specification of correlation between objects
@@ -17,11 +16,11 @@ for Multi-Object Search.
              (A demo/experiment of this is more impressive)
 
 *** gRPC calls as the core interface (last updated 08/15/2022)
-    - sloop object search is a middleware-independent package who
+    - GenMOS is a middleware-independent package who
       is intended to be run as a gRPC server, and offers its functionality
       through handling gRPC calls.
 
-      As such, code in ~sloop_object_search~ is of course ROS-independent.
+      As such, code in ~genmos_object_search~ is of course ROS-independent.
 
     - messages in gRPC should by default contain world-frame coordinates,
       while utility functions in grpc/utils perform conversion of those
@@ -69,9 +68,10 @@ for Multi-Object Search.
     - ~MosAgent~ is the high-level class for a multi-object search agent.
       It does not assume if the world is 2D or 3D. The code is general.
 
-      ~SloopMosAgent~ is a sloop agent whose underlying OOPOMDP is
-      a MosAgent. Because MosAgent is not grounded to any world
-      representation, I have left ~_init_oopomdp~ unimplemented.
+      ~SloopMosAgent~ is an agent that applies SLOOP to MOS (the parent class is
+      ~SloopAgent~, which has a spatial language observation space & model).
+      Because MosAgent is not grounded to any world representation, I have left
+      ~_init_oopomdp~ unimplemented.
 
     - We will implement: ~MosAgentBasic2D~, which is just a 2D local
       search agent (with primitive actions); There should be not
@@ -106,7 +106,7 @@ for Multi-Object Search.
     Visualization functions that do not begin with ~make_*~ do not follow the
     above convention. Example ~viz_msgs_for_robot_pose_proto~ will return RVIZ
     marker and tf2 message that account for the default rotation differences
-    between the camera in ROS and the camera in SLOOP.
+    between the camera in ROS and the camera in GenMOS.
 *** Belief over robot pose
     The POMDP agent allows the robot to have uncertainty over its pose.
     It expects a localization module on the system will output estimates
@@ -122,9 +122,9 @@ for Multi-Object Search.
     This frame is translated and scaled with respect to the world
     frame. There is no rotation difference between them.
 
-    Code inside sloop_object_search/oopomdp are by default working with
+    Code inside genmos_object_search/oopomdp are by default working with
     POMDP frame (except for, e.g. SearchRegion which connects the two).
-    Code inside sloop_object_search/grpc assume client and server communicate
+    Code inside genmos_object_search/grpc assume client and server communicate
     with messages that by default contain coordinates in the world frame.
 *** Object detection precision in POMDP frame
     Although ~pomdp_detection_from_proto~ allows specifying position
@@ -159,7 +159,7 @@ for Multi-Object Search.
     with the robot - the server doesn't do that - the
     server just cares about POMDP stuff.
 
-    So, you can imagine, setting up the sloop_object_search
+    So, you can imagine, setting up the genmos_object_search
     server on your static desktop machine with good hardware,
     and running the client on a laptop that you carry when
     you have a mission with the robot.
@@ -172,7 +172,7 @@ for Multi-Object Search.
     The client wants to know what's going on. The client may
     not use RViZ.
 
-    Visualization involved in sloop_object_search is in
+    Visualization involved in genmos_object_search is in
     the following aspects:
     - visualize the search region (both local and global)
     - visualize the belief state (local and global)
@@ -183,22 +183,22 @@ for Multi-Object Search.
 
 ** Usage
 
-*** Launch the sloop_object_search gRPC server
+*** Launch the genmos_object_search gRPC server
 #+begin_src
-python -m sloop_object_search.grpc.server
+python -m genmos_object_search.grpc.server
 #+end_src
 
 
-** Set up sloop_object_search for ROS
+** Set up genmos_object_search for ROS
 
 1. Go to the 'src' folder of your ROS workspace.
-2. Create a symbolic link to the `sloop_object_search/ros` folder, and name that
-   symbolic link "sloop_object_search." That is,
+2. Create a symbolic link to the `genmos_object_search/ros` folder, and name that
+   symbolic link "genmos_object_search." That is,
    #+begin_src
-   ln -s /path/to/sloop_object_search/ros sloop_object_search_ros
+   ln -s /path/to/genmos_object_search/ros genmos_object_search_ros
    #+end_src
 
 3. Compile the package
    #+begin_src
-   catkin_make -DCATKLIN_WHITELIST_PACKAGES="sloop_object_search_ros"
+   catkin_make -DCATKLIN_WHITELIST_PACKAGES="genmos_object_search_ros"
    #+end_src

@@ -1,4 +1,4 @@
-Since the pursuit of sloop_object_search as a gRPC server,
+Since the pursuit of genmos_object_search as a gRPC server,
 the way an agent should be constructed is refactored.
 
 However, I don't want to mess up previously working code.

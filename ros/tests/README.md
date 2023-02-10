@@ -1,4 +1,4 @@
-# tests for sloop_object_search
+# tests for genmos_object_search
 
 ## How to Run Python Tests
 
@@ -43,7 +43,7 @@ ignores testmon stuff.
 Look at [documentations here](http://wiki.ros.org/actionlib_tutorials/Tutorials/Calling%20Action%20Server%20without%20Action%20Client).
 Basically, do something like
 ```
-rostopic pub /run_pomdp_agent_fake/plan/goal sloop_object_search/PlanNextStepActionGoal "header:
+rostopic pub /run_pomdp_agent_fake/plan/goal genmos_object_search/PlanNextStepActionGoal "header:
   seq: 0
   stamp:
     secs: 0
@@ -66,7 +66,7 @@ TAB completion is your friend.
 ### Publish Observation (Test Belief Update)
 Similar to above, you can publish an observation as follows
 ```
-$ rostopic pub /run_pomdp_agentobservation sloop_object_search/DefaultObservation "stamp:eader:
+$ rostopic pub /run_pomdp_agentobservation genmos_object_search/DefaultObservation "stamp:eader:
   secs: 0
   nsecs: 0
 data: 'HELLO!'"
