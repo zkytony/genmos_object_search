@@ -25,7 +25,18 @@ To compile protos:
 1. Go to `src`, and run
    ```
    python -m grpc_tools.protoc -I ../protos/ --python_out=. --grpc_python_out=. ../protos/genmos_object_search/grpc/genmos_object_search.proto
+   python -m grpc_tools.protoc -I ../protos/ --python_out=. --grpc_python_out=. ../protos/genmos_object_search/grpc/common.proto
+   python -m grpc_tools.protoc -I ../protos/ --python_out=. --grpc_python_out=. ../protos/genmos_object_search/grpc/action.proto
+   python -m grpc_tools.protoc -I ../protos/ --python_out=. --grpc_python_out=. ../protos/genmos_object_search/grpc/observation.proto
    ```
+
+   Alternatively, you could just run
+   ```
+   source build_proto.sh
+   ```
+   which does the same thing.
+
+
 
 (Optional) Download SL_OSM dataset and FoR inference models:
 ```
