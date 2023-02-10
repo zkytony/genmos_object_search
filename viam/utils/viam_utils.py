@@ -222,7 +222,7 @@ async def viam_get_object_detections2d(
 
     results = []
     for det_pb in detections:
-        if confidence_thres is not None and det_pb.confidence > confidence_thres:
+        if confidence_thres is not None and det_pb.confidence >= confidence_thres:
             results.append((det_pb.class_name, det_pb.confidence,
                            (det_pb.x_min, det_pb.y_min, det_pb.x_max, det_pb.y_max)))
     return results
