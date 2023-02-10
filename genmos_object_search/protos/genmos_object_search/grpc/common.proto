@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sloop_object_search.grpc;
+package genmos_object_search.grpc;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";

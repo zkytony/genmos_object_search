@@ -1,4 +1,4 @@
-// Observations that sloop_object_search can consider.
+// Observations that genmos_object_search can consider.
 // Note that all of the observations are assumed to be with respect to a fixed
 // world frame.
 //
@@ -8,9 +8,9 @@
 
 syntax = "proto3";
 
-package sloop_object_search.grpc;
+package genmos_object_search.grpc;
 
-import "sloop_object_search/grpc/common.proto";
+import "genmos_object_search/grpc/common.proto";
 
 // Occupancy grid: a 2D representation of the whole or a region of the search
 // environment as a set of grid locations, each could be either free, occupied

@@ -1,12 +1,12 @@
-// Actions that an agent in sloop_object_search may perform.
+// Actions that an agent in genmos_object_search may perform.
 // Note that all poses that parameterize an action are assumed to be
 // with respect to a fixed world frame.
 
 syntax = "proto3";
 
-package sloop_object_search.grpc;
+package genmos_object_search.grpc;
 
-import "sloop_object_search/grpc/common.proto";
+import "genmos_object_search/grpc/common.proto";
 
 message Motion3D {
   Vec3 dpos = 1;
