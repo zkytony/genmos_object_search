@@ -13,8 +13,8 @@
           pkg="genmos_object_search_ros"
           type="lab115_kitchen_$(arg map_type)_search_region_center.py" output="screen"></node>
 
-    <!-- Run SLOOP object search decision making interface (POMDP planner) -->
-    <node name="sloop_ros" ns="spot_$(arg spot)"
+    <!-- Run GENMOS object search decision making interface (POMDP planner) -->
+    <node name="genmos_ros" ns="spot_$(arg spot)"
           pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"
@@ -33,8 +33,8 @@
 
   <group unless="$(arg local_search)">
 
-    <!-- Run SLOOP object search decision making interface (POMDP planner) -->
-    <node name="sloop_ros" ns="spot_$(arg spot)"
+    <!-- Run GENMOS object search decision making interface (POMDP planner) -->
+    <node name="genmos_ros" ns="spot_$(arg spot)"
           pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"

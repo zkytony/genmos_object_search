@@ -14,7 +14,7 @@ import vision_msgs.msg as vision_msgs
 from visualization_msgs.msg import Marker, MarkerArray
 
 from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenmosObjectSearchClient
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_ros import ros_utils
 from genmos_object_search.utils.open3d_utils import draw_octree_dist
@@ -45,10 +45,10 @@ def make_nav_action(pos, orien, action_id, nav_type):
     return nav_action
 
 
-class SloopMosROS:
-    def __init__(self, name="sloop_ros"):
+class GenMOSROS:
+    def __init__(self, name="genmos_ros"):
         self.name = name
-        self._sloop_client = None
+        self._genmos_client = None
 
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
@@ -89,7 +89,7 @@ class SloopMosROS:
             expansion_width=search_region_config.get("expansion_width", 0.5),
             debug=search_region_config.get("debug", False)
         )
-        self._sloop_client.updateSearchRegion(
+        self._genmos_client.updateSearchRegion(
             header=cloud_pb.header,
             robot_id=robot_id,
             robot_pose=robot_pose_pb,
@@ -128,7 +128,7 @@ class SloopMosROS:
             region_size_z=search_region_config.get("region_size_z"),
             debug=search_region_config.get("debug", False)
         )
-        self._sloop_client.updateSearchRegion(
+        self._genmos_client.updateSearchRegion(
             header=cloud_pb.header,
             robot_id=robot_id,
             robot_pose=robot_pose_pb,
@@ -210,7 +210,7 @@ class SloopMosROS:
         self._octbelief_markers_pub.publish(clear_msg)
         self._topo_map_3d_markers_pub.publish(clear_msg)
 
-        response = self._sloop_client.getObjectBeliefs(
+        response = self._genmos_client.getObjectBeliefs(
             robot_id, header=proto_utils.make_header(self.world_frame))
         if response.status != Status.SUCCESSFUL:
             print("Failed to get 3D belief")
@@ -240,7 +240,7 @@ class SloopMosROS:
 
         # visualize topo map in robot belief
         markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
+        response_robot_belief = self._genmos_client.getRobotBelief(
             robot_id, header=proto_utils.make_header(self.world_frame))
         robot_belief_pb = response_robot_belief.robot_belief
         if robot_belief_pb.HasField("topo_map"):
@@ -262,7 +262,7 @@ class SloopMosROS:
         self._belief_2d_markers_pub.publish(clear_msg)
         self._topo_map_2d_markers_pub.publish(clear_msg)
 
-        response = self._sloop_client.getObjectBeliefs(
+        response = self._genmos_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got belief")
@@ -287,7 +287,7 @@ class SloopMosROS:
 
         # visualize topo map in robot belief
         markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
+        response_robot_belief = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         robot_belief_pb = response_robot_belief.robot_belief
         if robot_belief_pb.HasField("topo_map"):
@@ -415,7 +415,7 @@ class SloopMosROS:
         rospy.init_node(self.name)
 
         # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
+        self._genmos_client = GenmosObjectSearchClient()
         config = rospy.get_param("~config")  # access parameters together as a dictionary
         self.config = config
         self.agent_config = config["agent_config"]
@@ -472,7 +472,7 @@ class SloopMosROS:
 
 
     def plan_action(self):
-        response_plan = self._sloop_client.planAction(
+        response_plan = self._genmos_client.planAction(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         action_pb = proto_utils.interpret_planned_action(response_plan)
         action_id = response_plan.action_id
@@ -485,24 +485,24 @@ class SloopMosROS:
         detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
         # send obseravtions for belief update
         header = proto_utils.make_header(frame_id=self.world_frame)
-        response_observation = self._sloop_client.processObservation(
+        response_observation = self._genmos_client.processObservation(
             self.robot_id, robot_pose_pb,
             object_detections=detections_pb,
             objects_found=objects_found_pb,
             header=header, return_fov=True,
             action_id=action_id, action_finished=True, debug=False)
-        response_robot_belief = self._sloop_client.getRobotBelief(
+        response_robot_belief = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         return response_observation, response_robot_belief
 
     def run(self):
         # First, create an agent
-        self._sloop_client.createAgent(
+        self._genmos_client.createAgent(
             header=proto_utils.make_header(), config=self.agent_config,
             robot_id=self.robot_id)
 
         # Make the client listen to server
-        ls_future = self._sloop_client.listenToServer(
+        ls_future = self._genmos_client.listenToServer(
             self.robot_id, self.server_message_callback)
         self._local_robot_id = None  # needed if the planner is hierarchical
 
@@ -510,15 +510,15 @@ class SloopMosROS:
         self.update_search_region()
 
         # wait for agent creation
-        rospy.loginfo("waiting for sloop agent creation...")
-        self._sloop_client.waitForAgentCreation(self.robot_id)
+        rospy.loginfo("waiting for genmos agent creation...")
+        self._genmos_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
         # visualize initial belief
         self.get_and_visualize_belief()
 
         # create planner
-        response = self._sloop_client.createPlanner(config=self.planner_config,
+        response = self._genmos_client.createPlanner(config=self.planner_config,
                                                     header=proto_utils.make_header(),
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")

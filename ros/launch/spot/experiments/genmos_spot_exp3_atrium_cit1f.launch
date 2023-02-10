@@ -1,7 +1,7 @@
 <launch>
   <arg name="spot" value="002"/>
   <arg name="map_type" default="lidar"/>
-  <arg name="exp_name" value="spot_exp1_local_lab121"/>
+  <arg name="exp_name" value="spot_exp3_atrium_cit1f"/>
   <arg name="local_search" default="false"/>
 
   <!-- If we are doing local search, then the search region center is published
@@ -11,17 +11,16 @@
     <!-- publish region center -->
     <node name="local_search_center_publisher"
           pkg="genmos_object_search_ros"
-          type="lab121_local_$(arg map_type)_search_region_center.py" output="screen"></node>
+          type="cit1f_atrium_$(arg map_type)_search_region_center.py" output="screen"></node>
 
-    <!-- Run SLOOP object search decision making interface (POMDP planner) -->
-    <node name="sloop_ros" ns="spot_$(arg spot)"
+    <!-- Run GENMOS object search decision making interface (POMDP planner) -->
+    <node name="genmos_ros" ns="spot_$(arg spot)"
           pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"
                 file="$(find genmos_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
       <param name="robot_id" value="spot_$(arg spot)"/>
       <param name="world_frame" value="graphnav_map"/>
-      <param from="dynamic_update" to="False"/>
       <remap from="~search_region_center" to="/local_region_center" />
       <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
       <remap from="~search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
@@ -34,8 +33,8 @@
 
   <group unless="$(arg local_search)">
 
-    <!-- Run SLOOP object search decision making interface (POMDP planner) -->
-    <node name="sloop_ros" ns="spot_$(arg spot)"
+    <!-- Run GENMOS object search decision making interface (POMDP planner) -->
+    <node name="genmos_ros" ns="spot_$(arg spot)"
           pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"

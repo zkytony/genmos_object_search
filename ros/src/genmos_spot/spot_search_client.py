@@ -8,7 +8,7 @@
 # import std_msgs.msg as std_msgs
 # from visualization_msgs.msg import Marker, MarkerArray
 # from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
-# from genmos_object_search.grpc.client import SloopObjectSearchClient
+# from genmos_object_search.grpc.client import GenMOSClient
 # from genmos_object_search.grpc.utils import proto_utils
 # from genmos_ros import ros_utils
 # from genmos_object_search.utils.open3d_utils import draw_octree_dist

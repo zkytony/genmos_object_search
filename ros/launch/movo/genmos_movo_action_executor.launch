@@ -5,7 +5,7 @@
     <param name="robot_id" value="movo"/>
     <param name="world_frame" value="map"/>
     <param name="check_before_execute" value="False" type="bool"/>
-    <remap from="~action"  to="/movo/sloop_ros/action"/>
+    <remap from="~action"  to="/movo/genmos_ros/action"/>
     <remap from="~robot_pose" to="/movo_camera_pose"/>
   </node>
 </launch>

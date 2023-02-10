@@ -81,35 +81,35 @@ include_directories(${sensor_msgs_INCLUDE_DIRS})
 
 ################ Building our libraries and executables ###################
 add_library(math_utils
-  include/sloop_mos_ros/utils/math_utils.cpp)
+  include/genmos_ros/utils/math_utils.cpp)
 target_include_directories(math_utils
   PUBLIC
-  include/sloop_mos_ros/)
+  include/genmos_ros/)
 
 add_executable(local_cloud_publisher
-  src/sloop_mos_ros/processing/local_cloud_publisher.cpp)
+  src/genmos_ros/processing/local_cloud_publisher.cpp)
 target_include_directories(local_cloud_publisher
   PUBLIC
-  include/sloop_mos_ros/processing
-  include/sloop_mos_ros/)
+  include/genmos_ros/processing
+  include/genmos_ros/)
 target_link_libraries(local_cloud_publisher
   ${catkin_LIBRARIES})
 
 add_executable(point_cloud_merger
-  src/sloop_mos_ros/processing/point_cloud_merger.cpp)
+  src/genmos_ros/processing/point_cloud_merger.cpp)
 target_include_directories(point_cloud_merger
   PUBLIC
-  include/sloop_mos_ros/processing
-  include/sloop_mos_ros/)
+  include/genmos_ros/processing
+  include/genmos_ros/)
 target_link_libraries(point_cloud_merger
   ${catkin_LIBRARIES}
   yaml-cpp)
 
 add_executable(occupancy_to_cloud
-  src/sloop_mos_ros/processing/occupancy_to_cloud.cpp)
+  src/genmos_ros/processing/occupancy_to_cloud.cpp)
 target_include_directories(occupancy_to_cloud
   PUBLIC
-  include/sloop_mos_ros/processing
-  include/sloop_mos_ros/)
+  include/genmos_ros/processing
+  include/genmos_ros/)
 target_link_libraries(occupancy_to_cloud
   ${catkin_LIBRARIES})
