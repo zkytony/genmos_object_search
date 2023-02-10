@@ -5,15 +5,15 @@ import pomdp_py
 import time
 import copy
 
-from sloop_object_search.oopomdp.agent import\
+from genmos_object_search.oopomdp.agent import\
     (MosAgentBasic2D, MosAgentTopo2D, MosAgentBasic3D, MosAgentTopo3D)
 
-import sloop_object_search.oopomdp.domain.observation as slpo
-import sloop_object_search.oopomdp.domain.action as slpa
-from sloop_object_search.oopomdp.models import belief
-from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
-from sloop_object_search.oopomdp.planner.hier import HierPlanner
-from sloop_object_search.utils.misc import import_class
+import genmos_object_search.oopomdp.domain.observation as slpo
+import genmos_object_search.oopomdp.domain.action as slpa
+from genmos_object_search.oopomdp.models import belief
+from genmos_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
+from genmos_object_search.oopomdp.planner.hier import HierPlanner
+from genmos_object_search.utils.misc import import_class
 
 from . import proto_utils
 from .search_region_processing import (search_region_2d_from_point_cloud,

@@ -20,15 +20,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import open3d as o3d
-from sloop_object_search.oopomdp.models.sensors import (FanSensor,
+from genmos_object_search.oopomdp.models.sensors import (FanSensor,
                                                         FrustumCamera,
                                                         FanSensor3D,
                                                         pitch_facing)
-from sloop_object_search.utils.math import to_rad, euler_to_quat, quat_to_euler, R_euler
-from sloop_object_search.utils.plotting import plot_pose
-from sloop_object_search.utils.colors import lighter, rgb_to_hex
-from sloop_object_search.utils import open3d_utils
-from sloop_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
+from genmos_object_search.utils.math import to_rad, euler_to_quat, quat_to_euler, R_euler
+from genmos_object_search.utils.plotting import plot_pose
+from genmos_object_search.utils.colors import lighter, rgb_to_hex
+from genmos_object_search.utils import open3d_utils
+from genmos_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
 
 @pytest.fixture
 def fansensor():

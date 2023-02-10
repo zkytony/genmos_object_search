@@ -7,24 +7,24 @@ import pickle
 
 import pomdp_py
 
-import sloop_object_search.grpc.observation_pb2 as o_pb2
-from sloop_object_search.grpc.common_pb2\
+import genmos_object_search.grpc.observation_pb2 as o_pb2
+from genmos_object_search.grpc.common_pb2\
     import Vec2, Vec3, Header, Pose2D, Pose3D, Quaternion, Histogram, Voxel3D
-from sloop_object_search.grpc.action_pb2\
+from genmos_object_search.grpc.action_pb2\
     import MoveViewpoint, Find, KeyValueAction, Motion2D, Motion3D
-from .. import sloop_object_search_pb2 as slpb2
+from .. import genmos_object_search_pb2 as slpb2
 
-from sloop_object_search.oopomdp.domain import action as slpa
-from sloop_object_search.oopomdp.domain import observation as slpo
-from sloop_object_search.oopomdp.models.belief import RobotStateBelief
-from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
-from sloop_object_search.oopomdp.models.octree_belief\
+from genmos_object_search.oopomdp.domain import action as slpa
+from genmos_object_search.oopomdp.domain import observation as slpo
+from genmos_object_search.oopomdp.models.belief import RobotStateBelief
+from genmos_object_search.oopomdp.models.search_region import SearchRegion3D
+from genmos_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeBelief, plot_octree_belief
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils import math as math_utils
 
 # open3d requires Ubuntu 18.04+ with GLIBC 2.27+
 try:
-    from sloop_object_search.utils import open3d_utils
+    from genmos_object_search.utils import open3d_utils
 except OSError as ex:
     logging.error("Failed to load open3d: {}".format(ex))
 

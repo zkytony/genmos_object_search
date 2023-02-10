@@ -1,4 +1,4 @@
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
+from genmos_object_search.oopomdp.domain.state import RobotState, ObjectState
 
 def test_state_creation():
     # robot pose is represented as x, y, z, qx, qy, qz, qw

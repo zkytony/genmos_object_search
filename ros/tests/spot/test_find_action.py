@@ -1,11 +1,11 @@
 import rospy
 import time
 import rbd_spot
-from sloop_object_search.oopomdp.models.policy_model import PolicyModelBasic2D
-from sloop_object_search_ros.msg import GridMap2d, KeyValAction
-from sloop_object_search_ros.grid_map_utils import ros_msg_to_grid_map
-from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic2D
-from sloop_object_search.utils.math import to_rad
+from genmos_object_search.oopomdp.models.policy_model import PolicyModelBasic2D
+from genmos_object_search_ros.msg import GridMap2d, KeyValAction
+from genmos_object_search_ros.grid_map_utils import ros_msg_to_grid_map
+from genmos_object_search.oopomdp.models.transition_model import RobotTransBasic2D
+from genmos_object_search.utils.math import to_rad
 
 
 def test_find_action(pub, wait=5):

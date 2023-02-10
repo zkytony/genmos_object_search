@@ -18,15 +18,15 @@ import numpy as np
 from tqdm import tqdm
 from scipy.spatial.transform import Rotation as R
 
-from sloop_object_search.utils.math import (to_rad, to_deg, R2d,
+from genmos_object_search.utils.math import (to_rad, to_deg, R2d,
                                             euclidean_dist, pol2cart,
                                             vec, R_quat, R_euler, T, R_y,
                                             in_range_inclusive, closest,
                                             law_of_cos, inverse_law_of_cos,
                                             angle_between, in_box3d_origin,
                                             quat_between)
-from sloop_object_search.utils.algo import PriorityQueue
-from sloop_object_search.oopomdp.models.octree_belief import OctNode, Octree
+from genmos_object_search.utils.algo import PriorityQueue
+from genmos_object_search.oopomdp.models.octree_belief import OctNode, Octree
 
 class SensorModel:
     IS_3D = False

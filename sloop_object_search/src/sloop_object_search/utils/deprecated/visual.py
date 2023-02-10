@@ -8,7 +8,7 @@ from tqdm import tqdm
 from .images import overlay, cv2shape
 from .colors import lighter, lighter_with_alpha, inverse_color_rgb, random_unique_color
 from .math import to_rad
-from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
+from genmos_object_search.oopomdp.models.grid_map2 import GridMap2
 
 __all__ = ['Visualizer2D']
 

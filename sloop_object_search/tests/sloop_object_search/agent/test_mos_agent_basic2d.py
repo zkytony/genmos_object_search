@@ -2,10 +2,10 @@ import os
 import pomdp_py
 import pytest
 from sloop.osm.datasets.map_info_utils import register_map, load_filepaths
-from sloop_object_search.oopomdp.domain.state import RobotState
-from sloop_object_search.oopomdp.agent.basic2d import MosAgentBasic2D, SloopMosAgentBasic2D
-from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
-from sloop_object_search.oopomdp.models.search_region import SearchRegion2D
+from genmos_object_search.oopomdp.domain.state import RobotState
+from genmos_object_search.oopomdp.agent.basic2d import MosAgentBasic2D, SloopMosAgentBasic2D
+from genmos_object_search.oopomdp.models.grid_map2 import GridMap2
+from genmos_object_search.oopomdp.models.search_region import SearchRegion2D
 
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,7 +20,7 @@ def config():
                 "G": {
                     "class": "car",
                     "transition": {
-                        "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
+                        "class": "genmos_object_search.oopomdp.StaticObjectTransitionModel"
                     },
                     "color": [100, 200, 80]
                 },
@@ -29,12 +29,12 @@ def config():
                 "id": "robot0",
                 "detectors": {
                     "G": {
-                        "class": "sloop_object_search.oopomdp.FanModelSimpleFP",
+                        "class": "genmos_object_search.oopomdp.FanModelSimpleFP",
                         "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1, 0.25))
                     },
                 },
                 "action": {
-                    "func": "sloop_object_search.oopomdp.domain.action.basic_discrete_moves2d",
+                    "func": "genmos_object_search.oopomdp.domain.action.basic_discrete_moves2d",
                     "params": {
                         "step_size": 3,
                         "h_rotation": 45.0

@@ -1,5 +1,5 @@
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
-from sloop_object_search.oopomdp.domain.observation import RobotObservation, ObjectDetection
+from genmos_object_search.oopomdp.domain.state import RobotState, ObjectState
+from genmos_object_search.oopomdp.domain.observation import RobotObservation, ObjectDetection
 
 def test_observation_creation():
     # robot pose is represented as x, y, z, qx, qy, qz, qw

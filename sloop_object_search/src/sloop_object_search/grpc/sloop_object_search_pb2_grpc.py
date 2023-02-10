@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from sloop_object_search.grpc import sloop_object_search_pb2 as sloop__object__search_dot_grpc_dot_sloop__object__search__pb2
+from genmos_object_search.grpc import genmos_object_search_pb2 as sloop__object__search_dot_grpc_dot_sloop__object__search__pb2
 
 
 class SloopObjectSearchStub(object):
@@ -15,52 +15,52 @@ class SloopObjectSearchStub(object):
             channel: A grpc.Channel.
         """
         self.CreateAgent = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
+                '/genmos_object_search.grpc.SloopObjectSearch/CreateAgent',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
                 )
         self.GetAgentCreationStatus = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/GetAgentCreationStatus',
+                '/genmos_object_search.grpc.SloopObjectSearch/GetAgentCreationStatus',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusReply.FromString,
                 )
         self.UpdateSearchRegion = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
+                '/genmos_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.FromString,
                 )
         self.ProcessObservation = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/ProcessObservation',
+                '/genmos_object_search.grpc.SloopObjectSearch/ProcessObservation',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationReply.FromString,
                 )
         self.GetObjectBeliefs = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/GetObjectBeliefs',
+                '/genmos_object_search.grpc.SloopObjectSearch/GetObjectBeliefs',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsReply.FromString,
                 )
         self.GetRobotBelief = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/GetRobotBelief',
+                '/genmos_object_search.grpc.SloopObjectSearch/GetRobotBelief',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.FromString,
                 )
         self.CreatePlanner = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/CreatePlanner',
+                '/genmos_object_search.grpc.SloopObjectSearch/CreatePlanner',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerReply.FromString,
                 )
         self.PlanAction = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
+                '/genmos_object_search.grpc.SloopObjectSearch/PlanAction',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
                 )
         self.ListenServer = channel.unary_stream(
-                '/sloop_object_search.grpc.SloopObjectSearch/ListenServer',
+                '/genmos_object_search.grpc.SloopObjectSearch/ListenServer',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerReply.FromString,
                 )
         self.Reset = channel.unary_unary(
-                '/sloop_object_search.grpc.SloopObjectSearch/Reset',
+                '/genmos_object_search.grpc.SloopObjectSearch/Reset',
                 request_serializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetRequest.SerializeToString,
                 response_deserializer=sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetReply.FromString,
                 )
@@ -194,7 +194,7 @@ def add_SloopObjectSearchServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'sloop_object_search.grpc.SloopObjectSearch', rpc_method_handlers)
+            'genmos_object_search.grpc.SloopObjectSearch', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -213,7 +213,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/CreateAgent',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/CreateAgent',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreateAgentReply.FromString,
             options, channel_credentials,
@@ -230,7 +230,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/GetAgentCreationStatus',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/GetAgentCreationStatus',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetAgentCreationStatusReply.FromString,
             options, channel_credentials,
@@ -247,7 +247,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/UpdateSearchRegion',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.UpdateSearchRegionReply.FromString,
             options, channel_credentials,
@@ -264,7 +264,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/ProcessObservation',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/ProcessObservation',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ProcessObservationReply.FromString,
             options, channel_credentials,
@@ -281,7 +281,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/GetObjectBeliefs',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/GetObjectBeliefs',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetObjectBeliefsReply.FromString,
             options, channel_credentials,
@@ -298,7 +298,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/GetRobotBelief',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/GetRobotBelief',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.GetRobotBeliefReply.FromString,
             options, channel_credentials,
@@ -315,7 +315,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/CreatePlanner',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/CreatePlanner',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.CreatePlannerReply.FromString,
             options, channel_credentials,
@@ -332,7 +332,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/PlanAction',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/PlanAction',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.PlanActionReply.FromString,
             options, channel_credentials,
@@ -349,7 +349,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/sloop_object_search.grpc.SloopObjectSearch/ListenServer',
+        return grpc.experimental.unary_stream(request, target, '/genmos_object_search.grpc.SloopObjectSearch/ListenServer',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ListenServerReply.FromString,
             options, channel_credentials,
@@ -366,7 +366,7 @@ class SloopObjectSearch(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/sloop_object_search.grpc.SloopObjectSearch/Reset',
+        return grpc.experimental.unary_unary(request, target, '/genmos_object_search.grpc.SloopObjectSearch/Reset',
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetRequest.SerializeToString,
             sloop__object__search_dot_grpc_dot_sloop__object__search__pb2.ResetReply.FromString,
             options, channel_credentials,

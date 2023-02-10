@@ -30,13 +30,13 @@ if importlib.util.find_spec("ros_numpy") is not None:
 
 import google.protobuf.timestamp_pb2
 import google.protobuf.any_pb2
-import sloop_object_search.grpc.common_pb2 as common_pb2
-import sloop_object_search.grpc.observation_pb2 as o_pb2
-import sloop_object_search.grpc.common_pb2 as c_pb2
-from sloop_object_search.grpc.utils import proto_utils
-from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils.misc import hash16
-from sloop_object_search.utils.colors import color_map, cmaps, lighter_with_alpha
+import genmos_object_search.grpc.common_pb2 as common_pb2
+import genmos_object_search.grpc.observation_pb2 as o_pb2
+import genmos_object_search.grpc.common_pb2 as c_pb2
+from genmos_object_search.grpc.utils import proto_utils
+from genmos_object_search.utils import math as math_utils
+from genmos_object_search.utils.misc import hash16
+from genmos_object_search.utils.colors import color_map, cmaps, lighter_with_alpha
 
 
 def IS_TAG(t):

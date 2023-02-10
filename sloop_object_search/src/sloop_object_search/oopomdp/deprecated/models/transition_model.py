@@ -1,11 +1,11 @@
 import math
 
 from ...models.sensors import yaw_facing, get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
-from sloop_object_search.oopomdp.domain.action import MotionAction, LookAction, FindAction, MotionActionTopo
-from sloop_object_search.oopomdp.models.transition_model import RobotTransitionModel
-from sloop_object_search.oopomdp.models.sensors import get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
-from sloop_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
-from sloop_object_search.utils.math import (fround,
+from genmos_object_search.oopomdp.domain.action import MotionAction, LookAction, FindAction, MotionActionTopo
+from genmos_object_search.oopomdp.models.transition_model import RobotTransitionModel
+from genmos_object_search.oopomdp.models.sensors import get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
+from genmos_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
+from genmos_object_search.utils.math import (fround,
                                             to_rad,
                                             R_quat,
                                             euler_to_quat,

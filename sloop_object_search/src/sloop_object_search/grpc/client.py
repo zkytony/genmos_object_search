@@ -12,8 +12,8 @@ import yaml
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from . import sloop_object_search_pb2 as slpb2
-from . import sloop_object_search_pb2_grpc as slpb2_grpc
+from . import genmos_object_search_pb2 as slpb2
+from . import genmos_object_search_pb2_grpc as slpb2_grpc
 from . import observation_pb2 as o_pb2
 from .common_pb2 import Pose2D, Status
 from .server import MAX_MESSAGE_LENGTH

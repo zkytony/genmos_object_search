@@ -3,7 +3,7 @@ import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 from visualization_msgs.msg import Marker, MarkerArray
-from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
+from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
 from sloop_mos_ros import ros_utils
 from rbd_spot_perception.msg import GraphNavWaypointArray
 

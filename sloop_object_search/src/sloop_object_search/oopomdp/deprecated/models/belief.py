@@ -4,13 +4,13 @@ import pomdp_py
 from deprecated import deprecated
 from tqdm import tqdm
 
-from sloop_object_search.utils.math import normalize
-from sloop_object_search.oopomdp.domain.observation import GMOSObservation
-from sloop_object_search.oopomdp.models.transition_model import StaticObjectTransitionModel
-from sloop_object_search.oopomdp.domain.state import (ObjectState,
+from genmos_object_search.utils.math import normalize
+from genmos_object_search.oopomdp.domain.observation import GMOSObservation
+from genmos_object_search.oopomdp.models.transition_model import StaticObjectTransitionModel
+from genmos_object_search.oopomdp.domain.state import (ObjectState,
                                                       RobotState)
-from sloop_object_search.oopomdp.models.octree_belief import OctreeBelief, Octree
-from sloop_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
+from genmos_object_search.oopomdp.models.octree_belief import OctreeBelief, Octree
+from genmos_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
 from sloop.observation import SpatialLanguageObservation
 
 ##################### Belief 2D ##########################

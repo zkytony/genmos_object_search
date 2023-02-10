@@ -16,12 +16,12 @@ from ..models.transition_model import RobotTransTopo3D
 from ..models.observation_model import RobotObservationModelTopo
 from ..models import belief
 from .common import MosAgent, init_object_transition_models
-from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils.algo import PriorityQueue
-from sloop_object_search.utils import grid_map_utils
+from genmos_object_search.utils import math as math_utils
+from genmos_object_search.utils.algo import PriorityQueue
+from genmos_object_search.utils import grid_map_utils
 
 try:
-    from sloop_object_search.utils import open3d_utils
+    from genmos_object_search.utils import open3d_utils
 except OSError as ex:
     logging.error("Failed to load open3d: {}".format(ex))
 
@@ -93,7 +93,7 @@ class MosAgentTopo3D(MosAgentBasic3D):
 
             if _debug:
                 try:
-                    from sloop_object_search.utils.visual2d import GridMap2Visualizer
+                    from genmos_object_search.utils.visual2d import GridMap2Visualizer
                     viz = GridMap2Visualizer(grid_map=grid_map, res=15)
                     img = viz.render()
                     img = viz.highlight(img, inflated_cells, color=(72, 213, 235))

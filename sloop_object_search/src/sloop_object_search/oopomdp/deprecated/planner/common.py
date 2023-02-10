@@ -1,4 +1,4 @@
-from sloop_object_search.utils.misc import import_class
+from genmos_object_search.utils.misc import import_class
 
 def make_planner(planner_config, agent):
     planner_class = planner_config['planner']

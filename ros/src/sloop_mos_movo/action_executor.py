@@ -11,12 +11,12 @@ from actionlib_msgs.msg import GoalStatus
 
 from pomdp_py.utils import typ
 
-from sloop_object_search_ros.msg import KeyValAction
+from genmos_object_search_ros.msg import KeyValAction
 from sloop_mos_ros.action_executor import ActionExecutor
 from visualization_msgs.msg import Marker, MarkerArray
 from sloop_mos_ros import ros_utils
-from sloop_object_search.utils.misc import confirm_yes
-import sloop_object_search.utils.math as math_utils
+from genmos_object_search.utils.misc import confirm_yes
+import genmos_object_search.utils.math as math_utils
 
 from .head_jtas import HeadJTAS
 from .torso_jtas import TorsoJTAS

@@ -6,18 +6,18 @@ from collections import deque
 from tqdm import tqdm
 
 from .proto_utils import pointcloudproto_to_array
-from sloop_object_search.utils.math import (remap, euclidean_dist,
+from genmos_object_search.utils.math import (remap, euclidean_dist,
                                             eucdist_multi, in_square, in_square_multi)
-from sloop_object_search.utils.conversion import Frame, convert
-from sloop_object_search.utils.algo import flood_fill_2d
-from sloop_object_search.oopomdp.models.grid_map import GridMap
-from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
-from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
-from sloop_object_search.oopomdp.models.octree_belief\
+from genmos_object_search.utils.conversion import Frame, convert
+from genmos_object_search.utils.algo import flood_fill_2d
+from genmos_object_search.oopomdp.models.grid_map import GridMap
+from genmos_object_search.oopomdp.models.grid_map2 import GridMap2
+from genmos_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
+from genmos_object_search.oopomdp.models.octree_belief\
     import Octree, OctreeDistribution, OccupancyOctreeDistribution
 try:
     import open3d as o3d
-    from sloop_object_search.utils import open3d_utils
+    from genmos_object_search.utils import open3d_utils
 except OSError as ex:
     logging.error("Failed to load open3d: {}".format(ex))
 

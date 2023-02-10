@@ -1,6 +1,6 @@
 import pytest
 import open3d as o3d
-from sloop_object_search.utils import open3d_utils
+from genmos_object_search.utils import open3d_utils
 
 
 def test_draw_transparent_cube():

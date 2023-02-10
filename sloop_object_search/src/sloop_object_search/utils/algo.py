@@ -5,7 +5,7 @@
 import heapq
 import numpy as np
 from collections import deque
-from sloop_object_search.utils.math import in_square
+from genmos_object_search.utils.math import in_square
 
 class PriorityQueue:
     """

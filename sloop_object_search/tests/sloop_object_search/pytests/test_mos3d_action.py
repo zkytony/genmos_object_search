@@ -1,4 +1,4 @@
-from sloop_object_search.oopomdp.domain import action
+from genmos_object_search.oopomdp.domain import action
 
 def test_making_actions():
     actions_axis = action.basic_discrete_moves3d(step_size=2, scheme="axis")

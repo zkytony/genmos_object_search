@@ -1,7 +1,7 @@
 import time
-from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
-from sloop_object_search.utils.visual2d import GridMap2Visualizer
-from sloop_object_search.utils import grid_map_utils
+from genmos_object_search.oopomdp.models.grid_map2 import GridMap2
+from genmos_object_search.utils.visual2d import GridMap2Visualizer
+from genmos_object_search.utils import grid_map_utils
 
 def test_grid_map2():
     free_locations = {(x,y)

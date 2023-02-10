@@ -4,11 +4,11 @@ import pytest
 import numpy as np
 import random
 from sloop.osm.datasets.map_info_utils import register_map, load_filepaths
-from sloop_object_search.oopomdp.domain.state import RobotState
-from sloop_object_search.oopomdp.agent.basic3d import MosAgentBasic3D
-from sloop_object_search.oopomdp.agent.belief import RobotPoseDist
-from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief, OccupancyOctreeDistribution
-from sloop_object_search.oopomdp.models.search_region import SearchRegion3D
+from genmos_object_search.oopomdp.domain.state import RobotState
+from genmos_object_search.oopomdp.agent.basic3d import MosAgentBasic3D
+from genmos_object_search.oopomdp.agent.belief import RobotPoseDist
+from genmos_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief, OccupancyOctreeDistribution
+from genmos_object_search.oopomdp.models.search_region import SearchRegion3D
 
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,7 +23,7 @@ def config():
                 "G": {
                     "class": "car",
                     "transition": {
-                        "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
+                        "class": "genmos_object_search.oopomdp.StaticObjectTransitionModel"
                     },
                     "color": [100, 200, 80]
                 },
@@ -32,12 +32,12 @@ def config():
                 "id": "robot0",
                 "detectors": {
                     "G": {
-                        "class": "sloop_object_search.oopomdp.FrustumVoxelAlphaBeta",
+                        "class": "genmos_object_search.oopomdp.FrustumVoxelAlphaBeta",
                         "params": (dict(fov=60, near=0.1, far=5), (1e5, 0.1)),
                     },
                 },
                 "action": {
-                    "func": "sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d",
+                    "func": "genmos_object_search.oopomdp.domain.action.basic_discrete_moves3d",
                     "params": {
                         "step_size": 1,
                         "rotation": 90.0,

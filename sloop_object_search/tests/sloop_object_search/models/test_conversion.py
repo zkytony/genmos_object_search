@@ -3,7 +3,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
-from sloop_object_search.utils.conversion import Frame, convert, convert_cov
+from genmos_object_search.utils.conversion import Frame, convert, convert_cov
 
 
 def plot_gaussian(mean, cov, title):

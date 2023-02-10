@@ -4,13 +4,13 @@ import sloop.observation
 from pomdp_py.utils import typ
 from geometry_msgs.msg import PoseStamped
 from actionlib_msgs.msg import GoalStatus
-from sloop_object_search_ros.msg import GridMap2d
+from genmos_object_search_ros.msg import GridMap2d
 
-from sloop_object_search.utils.colors import lighter, inverse_color_rgb
-from sloop_object_search.oopomdp.domain.observation import (
+from genmos_object_search.utils.colors import lighter, inverse_color_rgb
+from genmos_object_search.oopomdp.domain.observation import (
     ObjectDetection, GMOSObservation, RobotObservationTopo)
-from sloop_object_search.oopomdp.domain.action import FindAction
-from sloop_object_search.oopomdp.models.detection_models import FanModelSimpleFPLabelOnly
+from genmos_object_search.oopomdp.domain.action import FindAction
+from genmos_object_search.oopomdp.models.detection_models import FanModelSimpleFPLabelOnly
 from sloop_mos_ros.framework import ObservationInterpreter
 from sloop_mos_ros.grid_map_utils import ros_msg_to_grid_map
 from sloop_mos_ros.mapinfo_utils import FILEPATHS, register_map

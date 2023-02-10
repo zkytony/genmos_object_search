@@ -14,7 +14,7 @@ class SloopAgent(pomdp_py.Agent):
                  **pomdp_kwargs):
         """
         agent_config (dict): specifies various configurations.
-            See example in tests/src/sloop_object_search/test_sloop_system.py
+            See example in tests/src/genmos_object_search/test_sloop_system.py
         """
         self.agent_config = agent_config
         self.robot_id = agent_config["robot"]["id"]

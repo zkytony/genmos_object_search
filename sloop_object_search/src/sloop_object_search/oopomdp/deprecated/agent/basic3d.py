@@ -1,12 +1,12 @@
 
 import pomdp_py
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
-from sloop_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
+from genmos_object_search.oopomdp.domain.state import RobotState, ObjectState
+from genmos_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
                                                                   RobotObservationModel)
-from sloop_object_search.oopomdp.models.policy_model import PolicyModelBasic3D
-from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
-from sloop_object_search.oopomdp.deprecated.models.belief import BeliefBasic3D
-from sloop_object_search.oopomdp.deprecated.models.transition_model import RobotTransBasic3D
+from genmos_object_search.oopomdp.models.policy_model import PolicyModelBasic3D
+from genmos_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from genmos_object_search.oopomdp.deprecated.models.belief import BeliefBasic3D
+from genmos_object_search.oopomdp.deprecated.models.transition_model import RobotTransBasic3D
 
 from .basic2d import (init_detection_models,
                       init_object_transition_models,

@@ -1,8 +1,8 @@
 import time
 import random
-from sloop_object_search.oopomdp import ObjectState
-from sloop_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
-from sloop_object_search.utils.misc import timeout
+from genmos_object_search.oopomdp import ObjectState
+from genmos_object_search.oopomdp.models.octree_belief import Octree, OctreeBelief
+from genmos_object_search.utils.misc import timeout
 
 
 def test_octree_belief_performance_small():

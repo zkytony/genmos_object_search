@@ -102,14 +102,14 @@ LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
 
 ######### DETECTORS AND OBJECTS ######
 LOCAL_DETECTORS = {
-    'Cup': {'class': 'sloop_object_search.oopomdp.FrustumVoxelAlphaBeta',
+    'Cup': {'class': 'genmos_object_search.oopomdp.FrustumVoxelAlphaBeta',
             'params': {"sensor": "gripper_camera",
                        "quality": [1e7, 0.3]}},
 }
 
 OBJECTS = {
     'Cup': {'class': 'cup',
-            'transition': {'class': 'sloop_object_search.oopomdp.StaticObjectTransitionModel'},
+            'transition': {'class': 'genmos_object_search.oopomdp.StaticObjectTransitionModel'},
             'color': [0.67, 0.61, 0.15, 0.8],
             'viz_type': 'cube'}
 }

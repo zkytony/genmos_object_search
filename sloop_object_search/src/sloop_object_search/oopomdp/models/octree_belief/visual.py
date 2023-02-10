@@ -21,7 +21,7 @@ import matplotlib.colors as mcl
 import numpy as np
 from .octree import Octree
 from .util_viz import plot_voxels, CMAPS
-from sloop_object_search.utils.math import remap
+from genmos_object_search.utils.math import remap
 from pylab import rcParams
 rcParams['figure.figsize'] = 4,4
 

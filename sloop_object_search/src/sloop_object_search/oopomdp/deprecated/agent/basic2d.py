@@ -1,17 +1,17 @@
 import pomdp_py
 from sloop.agent import SloopAgent
 from sloop.observation import SpatialLanguageObservation
-from sloop_object_search.utils.osm import osm_map_to_grid_map
-from sloop_object_search.utils.misc import import_class, import_func
-from sloop_object_search.oopomdp.domain.state import RobotState
-from sloop_object_search.oopomdp.domain import action
-from sloop_object_search.oopomdp.models.transition_model import StaticObjectTransitionModel
-from sloop_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
+from genmos_object_search.utils.osm import osm_map_to_grid_map
+from genmos_object_search.utils.misc import import_class, import_func
+from genmos_object_search.oopomdp.domain.state import RobotState
+from genmos_object_search.oopomdp.domain import action
+from genmos_object_search.oopomdp.models.transition_model import StaticObjectTransitionModel
+from genmos_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
                                                                   RobotObservationModel)
-from sloop_object_search.oopomdp.models.policy_model import PolicyModelBasic2D
-from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
-from sloop_object_search.oopomdp.deprecated.models.belief import BeliefBasic2D
-from sloop_object_search.oopomdp.deprecated.models.transition_model import RobotTransBasic2D
+from genmos_object_search.oopomdp.models.policy_model import PolicyModelBasic2D
+from genmos_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from genmos_object_search.oopomdp.deprecated.models.belief import BeliefBasic2D
+from genmos_object_search.oopomdp.deprecated.models.transition_model import RobotTransBasic2D
 
 
 def init_detection_models(agent_config):

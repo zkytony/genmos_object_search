@@ -7,11 +7,11 @@
 # To run the test, do the following IN ORDER:
 # 0. run config_simple_sim_lab121_lidar.py to generate the .yaml configuration file
 # 1. run in a terminal 'roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=lab121_lidar'
-# 2. run in a terminal 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/robot_pose'
-# 3. run in a terminal 'roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
-# 4. run in a terminal 'python -m sloop_object_search.grpc.server'
+# 2. run in a terminal 'roslaunch genmos_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/robot_pose'
+# 3. run in a terminal 'roslaunch genmos_object_search_ros simple_sim_env.launch map_name:=lab121_lidar'
+# 4. run in a terminal 'python -m genmos_object_search.grpc.server'
 # 5. run in a terminal 'python test_simple_sim_env_hier_search.py'
-# 6. run in a terminal 'roslaunch sloop_object_search_ros view_simple_sim.launch'
+# 6. run in a terminal 'roslaunch genmos_object_search_ros view_simple_sim.launch'
 # ------------------
 import numpy as np
 import time
@@ -23,19 +23,19 @@ import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 from visualization_msgs.msg import Marker, MarkerArray
-from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
-from sloop_object_search.grpc.client import SloopObjectSearchClient
-from sloop_object_search.grpc.utils import proto_utils
+from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
+from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.utils import proto_utils
 from sloop_mos_ros import ros_utils
-from sloop_object_search.utils.open3d_utils import draw_octree_dist
-from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
-from sloop_object_search.grpc import observation_pb2 as o_pb2
-from sloop_object_search.grpc import action_pb2 as a_pb2
-from sloop_object_search.grpc import common_pb2
-from sloop_object_search.grpc.constants import Message
-from sloop_object_search.grpc.common_pb2 import Status
-from sloop_object_search.utils.colors import lighter
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils.open3d_utils import draw_octree_dist
+from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
+from genmos_object_search.grpc import observation_pb2 as o_pb2
+from genmos_object_search.grpc import action_pb2 as a_pb2
+from genmos_object_search.grpc import common_pb2
+from genmos_object_search.grpc.constants import Message
+from genmos_object_search.grpc.common_pb2 import Status
+from genmos_object_search.utils.colors import lighter
+from genmos_object_search.utils import math as math_utils
 from test_simple_sim_env_navigation import make_nav_action
 from test_simple_sim_env_common import (TestSimpleEnvCase,
                                         observation_msg_to_proto,

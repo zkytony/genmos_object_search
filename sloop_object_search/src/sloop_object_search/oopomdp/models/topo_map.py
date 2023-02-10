@@ -1,9 +1,9 @@
 import numpy as np
 import uuid
 from collections import deque
-from sloop_object_search.utils.colors import lighter
-from sloop_object_search.utils.math import euclidean_dist
-from sloop_object_search.utils.graph import Node, Graph, Edge
+from genmos_object_search.utils.colors import lighter
+from genmos_object_search.utils.math import euclidean_dist
+from genmos_object_search.utils.graph import Node, Graph, Edge
 
 class TopoNode(Node):
     """TopoNode is a node on the topological graph."""

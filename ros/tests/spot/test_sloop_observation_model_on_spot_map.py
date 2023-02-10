@@ -10,7 +10,7 @@ from sloop.osm.models.heuristics.test import plot_belief
 from sloop.osm.models.heuristics.model import MixtureSLUModel
 from sloop.osm.models.nn.plotting import plot_foref
 import sloop.osm.models.heuristics.rules as R
-from sloop_object_search.ros.mapinfo_utils import (FILEPATHS,
+from genmos_object_search.ros.mapinfo_utils import (FILEPATHS,
                                                    MapInfoDataset,
                                                    register_map,
                                                    load_filepaths)

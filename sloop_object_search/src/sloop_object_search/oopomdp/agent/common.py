@@ -1,7 +1,7 @@
 import logging
 import pomdp_py
 import numpy as np
-from sloop_object_search.utils.misc import import_class, import_func
+from genmos_object_search.utils.misc import import_class, import_func
 from ..domain.observation import RobotLocalization, RobotObservation, JointObservation
 from ..domain.state import RobotState
 from ..models.search_region import SearchRegion2D, SearchRegion3D

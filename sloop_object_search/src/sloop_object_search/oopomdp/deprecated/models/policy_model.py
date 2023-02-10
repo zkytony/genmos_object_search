@@ -1,7 +1,7 @@
 import math
 import random
 import pomdp_py
-from sloop_object_search.utils.math import (euclidean_dist, fround)
+from genmos_object_search.utils.math import (euclidean_dist, fround)
 from ...models.sensors import yaw_facing
 from ...models.policy_model import PolicyModel
 from ...domain import action

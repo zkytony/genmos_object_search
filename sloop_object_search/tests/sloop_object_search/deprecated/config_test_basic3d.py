@@ -28,7 +28,7 @@ config = {
             "G": {
                 "class": "car",
                 "transition": {
-                    "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
+                    "class": "genmos_object_search.oopomdp.StaticObjectTransitionModel"
                 },
                 "color": [100, 200, 80]
             }
@@ -37,12 +37,12 @@ config = {
             "id": "robot0",
             "detectors": {
                 "G": {
-                    "class": "sloop_object_search.oopomdp.FrustumVoxelAlphaBeta",
+                    "class": "genmos_object_search.oopomdp.FrustumVoxelAlphaBeta",
                     "params": (dict(fov=60, near=0.1, far=5), (1e5, 0.1)),
                 }
             },
             "primitive_moves": {
-                "func": "sloop_object_search.oopomdp.domain.action.basic_discrete_moves3d",
+                "func": "genmos_object_search.oopomdp.domain.action.basic_discrete_moves3d",
                 "params": {
                     "step_size": 1,
                     "rotation": 90.0,

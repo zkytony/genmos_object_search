@@ -18,10 +18,10 @@ from viam.services.motion import MotionServiceClient
 import viam.proto.common as v_pb2
 import viam.proto.component.arm as varm_pb2
 
-import sloop_object_search.utils.math as math_utils
-from sloop_object_search.grpc import observation_pb2 as o_pb2
-from sloop_object_search.grpc import common_pb2
-from sloop_object_search.grpc.utils import proto_utils
+import genmos_object_search.utils.math as math_utils
+from genmos_object_search.grpc import observation_pb2 as o_pb2
+from genmos_object_search.grpc import common_pb2
+from genmos_object_search.grpc.utils import proto_utils
 
 
 ########### Robot-Specific viam functions ###########

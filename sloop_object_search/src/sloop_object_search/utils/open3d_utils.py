@@ -1,10 +1,10 @@
 import open3d as o3d
 import numpy as np
 import random
-from sloop_object_search.utils.colors import color_map, cmaps, lighter
-from sloop_object_search.utils import math as math_utils
-from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
-from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
+from genmos_object_search.utils.colors import color_map, cmaps, lighter
+from genmos_object_search.utils import math as math_utils
+from genmos_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
+from genmos_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
 
 def cube_unfilled(scale=1):
     # http://www.open3d.org/docs/0.9.0/tutorial/Basic/visualization.html

@@ -1,5 +1,5 @@
 import numpy as np
-from sloop_object_search.utils.math import euler_to_quat, quat_to_euler, approx_equal
+from genmos_object_search.utils.math import euler_to_quat, quat_to_euler, approx_equal
 
 
 euler_angle = np.array([ -45.00859394,   89.99189756, -134.99140606])

@@ -6,18 +6,18 @@ from collections import deque
 import pomdp_py
 from tqdm import tqdm
 from sloop.agent import SloopAgent
-from sloop_object_search.utils.osm import osm_map_to_grid_map
-from sloop_object_search.utils.math import euclidean_dist, normalize
-from sloop_object_search.oopomdp.deprecated.models.belief import Belief2D, BeliefTopo2D
+from genmos_object_search.utils.osm import osm_map_to_grid_map
+from genmos_object_search.utils.math import euclidean_dist, normalize
+from genmos_object_search.oopomdp.deprecated.models.belief import Belief2D, BeliefTopo2D
 from .basic2d import (init_detection_models,
                       init_object_transition_models)
-from sloop_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
+from genmos_object_search.oopomdp.models.observation_model import (GMOSObservationModel,
                                                                   RobotObservationModelTopo)
-from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
-from sloop_object_search.oopomdp.deprecated.models.policy_model import PolicyModelTopo
-from sloop_object_search.oopomdp.deprecated.models.transition_model import RobotTransTopo
-from sloop_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
-from sloop_object_search.oopomdp.deprecated.models.topo_map import TopoNode, TopoMap, TopoEdge
+from genmos_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from genmos_object_search.oopomdp.deprecated.models.policy_model import PolicyModelTopo
+from genmos_object_search.oopomdp.deprecated.models.transition_model import RobotTransTopo
+from genmos_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
+from genmos_object_search.oopomdp.deprecated.models.topo_map import TopoNode, TopoMap, TopoEdge
 
 
 class SloopMosTopo2DAgent(SloopAgent):

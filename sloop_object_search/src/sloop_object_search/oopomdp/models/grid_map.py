@@ -8,7 +8,7 @@ import json
 import sys
 import numpy as np
 from collections import deque
-from sloop_object_search.utils.math import remap, to_degrees, euclidean_dist
+from genmos_object_search.utils.math import remap, to_degrees, euclidean_dist
 
 def neighbors(x,y):
     return [(x+1, y), (x-1,y),

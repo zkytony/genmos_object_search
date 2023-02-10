@@ -1,5 +1,5 @@
 import rospy
-from sloop_object_search.ros.ros_utils import WaitForMessages
+from genmos_object_search.ros.ros_utils import WaitForMessages
 from geometry_msgs.msg import PoseStamped
 from rbd_spot_perception.msg import SimpleDetection3DArray
 

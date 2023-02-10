@@ -1,10 +1,10 @@
 import pytest
 import numpy as np
 import pomdp_py
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
-from sloop_object_search.oopomdp.domain import action
-from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
-from sloop_object_search.utils.math import (euler_to_quat,
+from genmos_object_search.oopomdp.domain.state import RobotState, ObjectState
+from genmos_object_search.oopomdp.domain import action
+from genmos_object_search.oopomdp.models.transition_model import RobotTransBasic3D
+from genmos_object_search.utils.math import (euler_to_quat,
                                             approx_equal,
                                             R_to_quat,
                                             R_quat)

@@ -28,7 +28,7 @@ import viam.proto.common as v_pb2
 from viam.proto.common import (Pose, PoseInFrame, Geometry, RectangularPrism,
                                GeometriesInFrame, Vector3, WorldState)
 
-from sloop_object_search.grpc.utils import proto_utils
+from genmos_object_search.grpc.utils import proto_utils
 
 ###################### test functions #######################
 def test_quat_ovec_conversion():

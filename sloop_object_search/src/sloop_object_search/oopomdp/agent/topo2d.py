@@ -16,9 +16,9 @@ from ..models import belief
 from .common import (MosAgent, init_object_transition_models,
                      interpret_localization_model, init_visualizer2d)
 from .basic2d import MosAgentBasic2D
-from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils.algo import PriorityQueue
-from sloop_object_search.utils import grid_map_utils
+from genmos_object_search.utils import math as math_utils
+from genmos_object_search.utils.algo import PriorityQueue
+from genmos_object_search.utils import grid_map_utils
 
 
 class MosAgentTopo2D(MosAgentBasic2D):
@@ -97,7 +97,7 @@ class MosAgentTopo2D(MosAgentBasic2D):
         _debug = self.topo_config.get("debug", False)
         if _debug:
             try:
-                from sloop_object_search.utils import visual2d
+                from genmos_object_search.utils import visual2d
                 viz = init_visualizer2d(visual2d.VizSloopMosTopo, self.agent_config,
                                         grid_map=self.search_region.grid_map,
                                         res=self.visual_config.get("res", 10))

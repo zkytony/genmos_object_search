@@ -16,7 +16,7 @@ config = {
     "task_config": {
         "max_steps": 100,
         "map_name": "austin",
-        "visualizer": "sloop_object_search.oopomdp.deprecated.agent.VizSloopMosBasic2D",
+        "visualizer": "genmos_object_search.oopomdp.deprecated.agent.VizSloopMosBasic2D",
         "viz_params": {
             "res": 20
         },
@@ -34,7 +34,7 @@ config = {
             "G": {
                 "class": "car",
                 "transition": {
-                    "class": "sloop_object_search.oopomdp.StaticObjectTransitionModel"
+                    "class": "genmos_object_search.oopomdp.StaticObjectTransitionModel"
                 },
                 "color": [100, 200, 80]
             },
@@ -47,12 +47,12 @@ config = {
             "id": "robot0",
             "detectors": {
                 "G": {
-                    "class": "sloop_object_search.oopomdp.deprecated.FanModelSimpleFP",
+                    "class": "genmos_object_search.oopomdp.deprecated.FanModelSimpleFP",
                     "params": (dict(fov=90, min_range=0, max_range=5), (0.9, 0.1, 0.25))
                 },
             },
             "primitive_moves": {
-                "func": "sloop_object_search.oopomdp.domain.action.basic_discrete_moves2d",
+                "func": "genmos_object_search.oopomdp.domain.action.basic_discrete_moves2d",
                 "params": {
                     "step_size": 3,
                     "h_rotation": 45.0

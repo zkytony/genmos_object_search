@@ -3,13 +3,13 @@ import pickle
 import open3d as o3d
 import pytest
 import random
-from sloop_object_search.oopomdp.models.belief\
+from genmos_object_search.oopomdp.models.belief\
     import object_belief_2d_to_3d, init_object_beliefs_2d
-from sloop_object_search.oopomdp.models.grid_map2 import GridMap2
-from sloop_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
-from sloop_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
-from sloop_object_search.utils import open3d_utils
-from sloop_object_search.utils.colors import cmaps
+from genmos_object_search.oopomdp.models.grid_map2 import GridMap2
+from genmos_object_search.oopomdp.models.search_region import SearchRegion2D, SearchRegion3D
+from genmos_object_search.oopomdp.models.octree_belief import OccupancyOctreeDistribution
+from genmos_object_search.utils import open3d_utils
+from genmos_object_search.utils.colors import cmaps
 
 @pytest.fixture
 def search_region2d():

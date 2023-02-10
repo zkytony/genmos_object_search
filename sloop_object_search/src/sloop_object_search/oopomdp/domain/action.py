@@ -6,7 +6,7 @@ is the job of individual domains
 """
 import math
 import pomdp_py
-from sloop_object_search.utils.math import euler_to_quat
+from genmos_object_search.utils.math import euler_to_quat
 
 ##################### Generic definitions ###########################
 class MotionAction(pomdp_py.SimpleAction):

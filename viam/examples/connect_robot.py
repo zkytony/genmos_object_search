@@ -37,8 +37,8 @@ async def main():
     # grab Viam's vision service to add a TF-lite model for detection
     vision = VisionServiceClient.from_robot(robot)
     params = {
-        "model_path": "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/models/effdet0.tflite",
-        "label_path": "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/models/effdet0_labels.txt",
+        "model_path": "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/viam/models/effdet0.tflite",
+        "label_path": "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/viam/models/effdet0_labels.txt",
         "num_threads": 1,
     }
     findThingDetector = VisModelConfig(

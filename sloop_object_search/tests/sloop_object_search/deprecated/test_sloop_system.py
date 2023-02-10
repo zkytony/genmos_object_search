@@ -5,15 +5,15 @@ import pomdp_py
 from pomdp_py.utils import typ
 import sloop.observation
 from sloop.osm.datasets import MapInfoDataset, FILEPATHS
-from sloop_object_search.utils.misc import import_class
-from sloop_object_search.utils.math import normalize
+from genmos_object_search.utils.misc import import_class
+from genmos_object_search.utils.math import normalize
 
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
-from sloop_object_search.oopomdp.domain.action import LookAction
-from sloop_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
-from sloop_object_search.oopomdp.deprecated.planner import make_planner
-from sloop_object_search.oopomdp.deprecated.planner.hier2d import HierarchicalPlanner
-from sloop_object_search.oopomdp.deprecated.agent import (SloopMosBasic2DAgent,
+from genmos_object_search.oopomdp.domain.state import RobotState, ObjectState
+from genmos_object_search.oopomdp.domain.action import LookAction
+from genmos_object_search.oopomdp.deprecated.domain.state import RobotStateTopo
+from genmos_object_search.oopomdp.deprecated.planner import make_planner
+from genmos_object_search.oopomdp.deprecated.planner.hier2d import HierarchicalPlanner
+from genmos_object_search.oopomdp.deprecated.agent import (SloopMosBasic2DAgent,
                                                          VizSloopMosBasic2D,
                                                          SloopMosTopo2DAgent)
 

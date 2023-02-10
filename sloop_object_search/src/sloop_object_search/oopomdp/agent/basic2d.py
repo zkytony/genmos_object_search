@@ -10,7 +10,7 @@ from ..domain.observation import JointObservation, ObjectDetection, FovVoxels, V
 from .common import MosAgent, init_object_transition_models, init_primitive_movements
 # open3d requires Ubuntu 18.04+ with GLIBC 2.27+
 try:
-    from sloop_object_search.utils import open3d_utils
+    from genmos_object_search.utils import open3d_utils
 except OSError as ex:
     logging.error("Failed to load open3d: {}".format(ex))
 

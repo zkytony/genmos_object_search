@@ -1,4 +1,4 @@
-# TODO: SHOULD REMOVE; Duplicate with sloop_object_search.utils.conversion
+# TODO: SHOULD REMOVE; Duplicate with genmos_object_search.utils.conversion
 # Copyright 2022 Kaiyu Zheng
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

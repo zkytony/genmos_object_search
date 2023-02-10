@@ -19,13 +19,13 @@ import time
 import numpy as np
 import sys
 import copy
-import sloop_object_search.utils.math as util
-from sloop_object_search.oopomdp.domain.state import ObjectState
+import genmos_object_search.utils.math as util
+from genmos_object_search.oopomdp.domain.state import ObjectState
 from .octree import DEFAULT_VAL, OctNode, Octree, verify_octree_integrity
 from ..grid_map2 import GridMap2
-from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
-from sloop_object_search.utils.algo import flood_fill_2d
-from sloop_object_search.utils import grid_map_utils
+from genmos_object_search.oopomdp.domain.observation import FovVoxels, Voxel
+from genmos_object_search.utils.algo import flood_fill_2d
+from genmos_object_search.utils import grid_map_utils
 
 
 class OctreeDistribution(pomdp_py.GenerativeDistribution):

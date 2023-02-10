@@ -14,7 +14,7 @@ from ..models.octree_belief import (Octree, OctreeBelief,
                                     verify_octree_dist_integrity,
                                     verify_octree_integrity)
 from ..domain.state import ObjectState, RobotState
-from sloop_object_search.utils.math import (quat_to_euler, euler_to_quat,
+from genmos_object_search.utils.math import (quat_to_euler, euler_to_quat,
                                             identity, divisible_by)
 
 

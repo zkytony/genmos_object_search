@@ -1,7 +1,7 @@
 import time
 import random
-from sloop_object_search.oopomdp.models.grid_map import GridMap
-from sloop_object_search.utils.visual import GridMapVisualizer
+from genmos_object_search.oopomdp.models.grid_map import GridMap
+from genmos_object_search.utils.visual import GridMapVisualizer
 from sloop_mos_ros.grid_map_utils import (cells_with_minimum_distance_from_obstacles,
                                           obstacles_around_free_locations)
 import matplotlib.pyplot as plt

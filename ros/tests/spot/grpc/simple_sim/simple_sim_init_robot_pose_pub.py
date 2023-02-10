@@ -2,7 +2,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from sloop_mos_ros import ros_utils
-from sloop_object_search.utils.math import euler_to_quat
+from genmos_object_search.utils.math import euler_to_quat
 
 def main():
     rospy.init_node("simple_sim_init_robot_pose_publisher")

@@ -1,8 +1,8 @@
 import pytest
-from sloop_object_search.oopomdp.models.detection_models import FrustumVoxelAlphaBeta
-from sloop_object_search.oopomdp.domain.state import RobotState, ObjectState
-from sloop_object_search.oopomdp.domain.observation import Voxel
-from sloop_object_search.utils.math import euler_to_quat
+from genmos_object_search.oopomdp.models.detection_models import FrustumVoxelAlphaBeta
+from genmos_object_search.oopomdp.domain.state import RobotState, ObjectState
+from genmos_object_search.oopomdp.domain.observation import Voxel
+from genmos_object_search.utils.math import euler_to_quat
 
 @pytest.fixture
 def init_robot_state():

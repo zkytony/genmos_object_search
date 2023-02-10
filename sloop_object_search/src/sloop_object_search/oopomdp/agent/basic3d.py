@@ -13,7 +13,7 @@ from ..models.policy_model import PolicyModelBasic3D
 from ..models.octree_belief import update_octree_belief
 from .common import MosAgent,\
     init_object_transition_models, init_primitive_movements, init_detection_models
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils import math as math_utils
 
 class MosAgentBasic3D(MosAgent):
 
@@ -174,9 +174,9 @@ def build_volumetric_observation(detection, camera_model, robot_pose, occupancy_
 #### useful debugging methods
 try:
     import open3d as o3d
-    from sloop_object_search.utils.open3d_utils\
+    from genmos_object_search.utils.open3d_utils\
         import draw_octree_dist, cube_unfilled, draw_robot_pose, draw_fov
-    from sloop_object_search.utils.colors import cmaps
+    from genmos_object_search.utils.colors import cmaps
 except OSError as ex:
     logging.error("Failed to load open3d: {}".format(ex))
 

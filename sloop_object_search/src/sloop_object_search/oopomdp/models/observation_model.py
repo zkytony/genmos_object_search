@@ -30,7 +30,7 @@ from ..domain.observation import (ObjectDetection,
                                   RobotObservation,
                                   RobotObservationTopo,
                                   GMOSObservation)
-from sloop_object_search.utils.math import identity
+from genmos_object_search.utils.math import identity
 
 ### Observation models
 class ObjectDetectionModel:

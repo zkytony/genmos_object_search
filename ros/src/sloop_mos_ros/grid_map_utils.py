@@ -3,8 +3,8 @@ import random
 from collections import deque
 import sys
 print(sys.path)
-from sloop_object_search_ros.msg import GridMap2d, GridMapLoc
-from sloop_object_search.oopomdp.models.grid_map import GridMap
+from genmos_object_search_ros.msg import GridMap2d, GridMapLoc
+from genmos_object_search.oopomdp.models.grid_map import GridMap
 
 def grid_map_to_ros_msg(grid_map, stamp=None):
     """

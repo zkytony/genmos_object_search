@@ -2,9 +2,9 @@
 # To run the test
 #
 # 1. In one terminal, run 'roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=<map_name>'
-# 2. In another terminal, run 'python -m sloop_object_search.grpc.server'
+# 2. In another terminal, run 'python -m genmos_object_search.grpc.server'
 # 3. In another terminal, run this test 'python test_get_object_beliefs_3d_with_point_cloud.py'
-# 4. In another terminal, run 'roslaunch sloop_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/fake_robot_pose'
+# 4. In another terminal, run 'roslaunch genmos_object_search_ros spot_local_cloud_publisher.launch robot_pose_topic:=/fake_robot_pose'
 #
 # Requires both point cloud and waypoints
 import rospy
@@ -16,11 +16,11 @@ from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point, Quaternion, Vector3
 
 from sloop_mos_ros import ros_utils
-from sloop_object_search.grpc.utils import proto_utils as pbutil
-from sloop_object_search.grpc.common_pb2 import Status, Voxel3D
-from sloop_object_search.utils.misc import hash16
-from sloop_object_search.utils.colors import cmaps
-from sloop_object_search.utils.open3d_utils import draw_octree_dist
+from genmos_object_search.grpc.utils import proto_utils as pbutil
+from genmos_object_search.grpc.common_pb2 import Status, Voxel3D
+from genmos_object_search.utils.misc import hash16
+from genmos_object_search.utils.colors import cmaps
+from genmos_object_search.utils.open3d_utils import draw_octree_dist
 
 from test_create_agent_3d_with_point_cloud import CreateAgentTestCase
 

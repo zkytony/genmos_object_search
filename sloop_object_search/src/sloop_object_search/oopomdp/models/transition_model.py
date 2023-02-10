@@ -21,7 +21,7 @@ from ..domain.state import (ObjectState,
 from ..domain.observation import *
 from ..domain.action import *
 from .sensors import yaw_facing, get_camera_direction3d, DEFAULT_3DCAMERA_LOOK_DIRECTION
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils import math as math_utils
 
 
 ##################### Object Transition ##############################

@@ -3,7 +3,7 @@ import pomdp_py
 import pytest
 from test_mos_agent_basic import config, search_region
 from sloop.osm.datasets.map_info_utils import register_map, load_filepaths
-from sloop_object_search.oopomdp.agent.topo2d import MosAgentTopo2D, SloopMosAgentTopo2D
+from genmos_object_search.oopomdp.agent.topo2d import MosAgentTopo2D, SloopMosAgentTopo2D
 
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 

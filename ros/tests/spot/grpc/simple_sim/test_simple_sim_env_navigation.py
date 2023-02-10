@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # 0. Run config_simple_sim_lab121_lidar.py to generate the .yaml configuration file
-# 1. To run the simple_sim_env, roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=<map_name>
+# 1. To run the simple_sim_env, roslaunch genmos_object_search_ros simple_sim_env.launch map_name:=<map_name>
 # 2. To get map point cloud, roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=<map_name>
-# 3. For rviz visualization, roslaunch sloop_object_search_ros view_simple_sim.launch
-# 4. Run this test: rosrun sloop_object_search_ros test_simple_sim_env_navigation.py
+# 3. For rviz visualization, roslaunch genmos_object_search_ros view_simple_sim.launch
+# 4. Run this test: rosrun genmos_object_search_ros test_simple_sim_env_navigation.py
 import rospy
 import std_msgs.msg as std_msgs
 from sloop_mos_ros import ros_utils
-from sloop_object_search_ros.msg import KeyValAction
-from sloop_object_search.utils.math import euler_to_quat
+from genmos_object_search_ros.msg import KeyValAction
+from genmos_object_search.utils.math import euler_to_quat
 
 def make_nav_action(pos, orien, goal_id=100):
     goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]

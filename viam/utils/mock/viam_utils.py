@@ -2,10 +2,10 @@
 # those under utils/viam_utils, but do not require
 # connection to viam server or any rpc to return.
 
-from sloop_object_search.grpc import observation_pb2 as o_pb2
-from sloop_object_search.grpc import common_pb2
-from sloop_object_search.grpc.utils import proto_utils
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.grpc import observation_pb2 as o_pb2
+from genmos_object_search.grpc import common_pb2
+from genmos_object_search.grpc.utils import proto_utils
+from genmos_object_search.utils import math as math_utils
 
 from ..viam_utils import Quaternion, OrientationVector, AxisAngle
 

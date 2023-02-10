@@ -7,7 +7,7 @@
 # class that can be the basis of that more general program.
 ##################################
 #
-# 1. run in one terminal, run 'python -m sloop_object_search.grpc.server'
+# 1. run in one terminal, run 'python -m genmos_object_search.grpc.server'
 # 2. run in one terminal, run 'python test_run_search_viamlab_ur5.py'
 # 3. run in one terminal, run 'roslaunch view_viam_search.launch'
 import asyncio
@@ -39,17 +39,17 @@ import sensor_msgs.msg as sensor_msgs
 from sloop_mos_ros import ros_utils
 from tf2_ros import TransformBroadcaster
 
-from sloop_object_search.grpc.client import SloopObjectSearchClient
-from sloop_object_search.grpc.utils import proto_utils
-from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
-from sloop_object_search.grpc import observation_pb2 as o_pb2
-from sloop_object_search.grpc import action_pb2 as a_pb2
-from sloop_object_search.grpc import common_pb2
-from sloop_object_search.grpc.common_pb2 import Status
-from sloop_object_search.grpc.constants import Message
-from sloop_object_search.utils.colors import lighter
-from sloop_object_search.utils import math as math_utils
-from sloop_object_search.utils.misc import import_class, hash16
+from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.utils import proto_utils
+from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
+from genmos_object_search.grpc import observation_pb2 as o_pb2
+from genmos_object_search.grpc import action_pb2 as a_pb2
+from genmos_object_search.grpc import common_pb2
+from genmos_object_search.grpc.common_pb2 import Status
+from genmos_object_search.grpc.constants import Message
+from genmos_object_search.utils.colors import lighter
+from genmos_object_search.utils import math as math_utils
+from genmos_object_search.utils.misc import import_class, hash16
 
 
 
@@ -101,7 +101,7 @@ class SloopMosViam:
 
     def setup_for_rviz(self):
         # This is an example of how to get started with using the
-        # sloop_object_search grpc-based package.
+        # genmos_object_search grpc-based package.
         rospy.init_node(self.name)
 
         # Initialize visualization marker publishers

@@ -2,8 +2,8 @@
 
 from setuptools import setup, find_packages
 
-setup(name='sloop_object_search',
-      packages=find_packages(),#['sloop_object_search', 'sloop'],
+setup(name='genmos_object_search',
+      packages=find_packages(),#['genmos_object_search', 'sloop'],
       package_dir={'': 'src'},
       version='0.2',
       description="SLOOP object search package",

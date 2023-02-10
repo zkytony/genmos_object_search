@@ -7,18 +7,18 @@ import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 from visualization_msgs.msg import Marker, MarkerArray
-from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
-from sloop_object_search.grpc.client import SloopObjectSearchClient
-from sloop_object_search.grpc.utils import proto_utils
+from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
+from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.utils import proto_utils
 from sloop_mos_ros import ros_utils
-from sloop_object_search.utils.open3d_utils import draw_octree_dist
-from sloop_object_search.grpc import sloop_object_search_pb2 as slpb2
-from sloop_object_search.grpc import observation_pb2 as o_pb2
-from sloop_object_search.grpc import action_pb2 as a_pb2
-from sloop_object_search.grpc import common_pb2
-from sloop_object_search.grpc.common_pb2 import Status
-from sloop_object_search.utils.colors import lighter
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils.open3d_utils import draw_octree_dist
+from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
+from genmos_object_search.grpc import observation_pb2 as o_pb2
+from genmos_object_search.grpc import action_pb2 as a_pb2
+from genmos_object_search.grpc import common_pb2
+from genmos_object_search.grpc.common_pb2 import Status
+from genmos_object_search.utils.colors import lighter
+from genmos_object_search.utils import math as math_utils
 
 WORLD_FRAME = "graphnav_map"
 
@@ -267,7 +267,7 @@ class TestSimpleEnvCase:
                  search_space_res_2d=SEARCH_SPACE_RESOLUTION_2D,
                  objloc_index=None):
         # This is an example of how to get started with using the
-        # sloop_object_search grpc-based package.
+        # genmos_object_search grpc-based package.
         rospy.init_node(name)
 
         # Initialize ROS stuff

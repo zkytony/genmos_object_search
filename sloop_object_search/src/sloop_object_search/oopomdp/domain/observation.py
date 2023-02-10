@@ -7,8 +7,8 @@ Note that for all observations that contain
 """
 import pomdp_py
 import numpy as np
-from sloop_object_search.utils.misc import det_dict_hash
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils.misc import det_dict_hash
+from genmos_object_search.utils import math as math_utils
 
 
 class ObjectDetection(pomdp_py.SimpleObservation):

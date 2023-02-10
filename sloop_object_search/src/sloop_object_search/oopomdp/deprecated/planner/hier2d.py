@@ -19,7 +19,7 @@ class HierarchicalPlanner(pomdp_py.Planner):
     configuration example (YAML format):
 
        planner_config:
-         planner: sloop_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
+         planner: genmos_object_search.oopomdp.planner.hier2d.HierarchicalPlanner
          high_level_planner_args:
            exploration_const: 1000
            max_depth: 20

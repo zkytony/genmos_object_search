@@ -11,8 +11,8 @@ import pomdp_py
 import time
 from collections import deque
 
-from . import sloop_object_search_pb2 as slpb2
-from . import sloop_object_search_pb2_grpc as slbp2_grpc
+from . import genmos_object_search_pb2 as slpb2
+from . import genmos_object_search_pb2_grpc as slbp2_grpc
 from .common_pb2 import Status
 from .utils import proto_utils
 from .utils import agent_utils
@@ -492,7 +492,7 @@ def serve(port=50051, max_message_length=MAX_MESSAGE_LENGTH):
         SloopObjectSearchServer(), server)
     server.add_insecure_port(f'[::]:{port}')
     server.start()
-    print("sloop_object_search started")
+    print("genmos_object_search started")
     server.wait_for_termination()
 
 def main():

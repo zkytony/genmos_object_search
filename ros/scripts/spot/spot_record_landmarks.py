@@ -26,17 +26,17 @@ import std_msgs.msg as std_msgs
 import rbd_spot
 import json
 from geometry_msgs.msg import PoseStamped
-from sloop_object_search.ros.ros_utils import tf2_transform
+from genmos_object_search.ros.ros_utils import tf2_transform
 from rbd_spot_perception.msg import SimpleDetection3DArray
-from sloop_object_search_ros.msg import GridMap2d
-from sloop_object_search.ros.grid_map_utils import ros_msg_to_grid_map
-from sloop_object_search.ros.mapinfo_utils import (FILEPATHS,
+from genmos_object_search_ros.msg import GridMap2d
+from genmos_object_search.ros.grid_map_utils import ros_msg_to_grid_map
+from genmos_object_search.ros.mapinfo_utils import (FILEPATHS,
                                                    MapInfoDataset,
                                                    register_map,
                                                    load_filepaths)
-from sloop_object_search.utils.visual import GridMapVisualizer
-from sloop_object_search.utils.colors import random_unique_color, rgb_to_hex
-from sloop_object_search.ros import ros_utils
+from genmos_object_search.utils.visual import GridMapVisualizer
+from genmos_object_search.utils.colors import random_unique_color, rgb_to_hex
+from genmos_object_search.ros import ros_utils
 
 def _confirm(message):
     while True:

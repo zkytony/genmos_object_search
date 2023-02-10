@@ -6,7 +6,7 @@ from ..agent.basic2d import project_fov_voxels_to_2d
 from ..agent.common import MosAgent
 from ..domain.action import StayAction
 from ..models import belief
-from sloop_object_search.utils.math import euclidean_dist
+from genmos_object_search.utils.math import euclidean_dist
 
 class HierPlanner(pomdp_py.Planner):
     def __init__(self, global_agent, **planner_params):

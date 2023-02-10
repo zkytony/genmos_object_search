@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from .basic2d import VizSloopMosBasic2D
-from sloop_object_search.utils.colors import lighter
+from genmos_object_search.utils.colors import lighter
 
 class VizSloopMosTopo(VizSloopMosBasic2D):
     def __init__(self, grid_map, **config):

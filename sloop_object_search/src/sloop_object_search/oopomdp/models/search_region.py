@@ -1,6 +1,6 @@
 import time
-from sloop_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
-from sloop_object_search.utils import grid_map_utils
+from genmos_object_search.utils.conversion import Frame, convert, convert_cov, convert_d
+from genmos_object_search.utils import grid_map_utils
 from .octree_belief import (OccupancyOctreeDistribution,
                             RegionalOctreeDistribution, DEFAULT_VAL, Octree)
 

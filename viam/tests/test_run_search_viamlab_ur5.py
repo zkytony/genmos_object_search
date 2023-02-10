@@ -3,7 +3,7 @@
 #
 # To run this test:
 # -----------------
-# 1. run in one terminal, run 'python -m sloop_object_search.grpc.server'
+# 1. run in one terminal, run 'python -m genmos_object_search.grpc.server'
 # 2. run in one terminal, run 'python test_run_search_viamlab_ur5.py'
 # 3. run in one terminal, run 'roslaunch view_viam_search.launch'
 
@@ -25,7 +25,7 @@ import viam.proto.common as v_pb2
 
 # the core functionality
 from sloop_mos_viam import SloopMosViam
-import sloop_object_search.utils.math as math_utils
+import genmos_object_search.utils.math as math_utils
 
 
 LAST_CANDIDATE = None

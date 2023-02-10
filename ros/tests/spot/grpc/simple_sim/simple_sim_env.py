@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # To run this, use the 'simple_sim_env.launch' file:
-#    roslaunch sloop_object_search_ros simple_sim_env.launch map_name:=<map_name>
+#    roslaunch genmos_object_search_ros simple_sim_env.launch map_name:=<map_name>
 # Also run:
 #    To get map point cloud, roslaunch rbd_spot_perception graphnav_map_publisher.launch map_name:=<map_name>
-#    For rviz, roslaunch sloop_object_search_ros view_simple_sim.launch
+#    For rviz, roslaunch genmos_object_search_ros view_simple_sim.launch
 # Then, you can run one of the test_* files.
 
 import rospy
@@ -18,23 +18,23 @@ from actionlib_msgs.msg import GoalStatus
 from std_msgs.msg import ColorRGBA, Header, String
 from geometry_msgs.msg import Point, Quaternion, Vector3, PoseStamped, TransformStamped
 from visualization_msgs.msg import Marker, MarkerArray
-from sloop_object_search_ros.msg import KeyValAction, KeyValObservation
+from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
 from tf2_ros import TransformBroadcaster
 
 from sloop_mos_ros import ros_utils
-from sloop_object_search.oopomdp.domain.state import ObjectState, RobotState
-from sloop_object_search.oopomdp.domain.action import MotionAction3D, FindAction
-from sloop_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation
-from sloop_object_search.oopomdp.models.transition_model import RobotTransBasic3D
-from sloop_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
-from sloop_object_search.oopomdp.models.detection_models import FanModelAlphaBeta, FrustumVoxelAlphaBeta
-from sloop_object_search.oopomdp.agent.common import (init_object_transition_models,
+from genmos_object_search.oopomdp.domain.state import ObjectState, RobotState
+from genmos_object_search.oopomdp.domain.action import MotionAction3D, FindAction
+from genmos_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation
+from genmos_object_search.oopomdp.models.transition_model import RobotTransBasic3D
+from genmos_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
+from genmos_object_search.oopomdp.models.detection_models import FanModelAlphaBeta, FrustumVoxelAlphaBeta
+from genmos_object_search.oopomdp.agent.common import (init_object_transition_models,
                                                       init_detection_models,
                                                       interpret_localization_model)
-from sloop_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
-from sloop_object_search.grpc.utils import proto_utils
-from sloop_object_search.utils.misc import hash16
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from genmos_object_search.grpc.utils import proto_utils
+from genmos_object_search.utils.misc import hash16
+from genmos_object_search.utils import math as math_utils
 
 
 

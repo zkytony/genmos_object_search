@@ -3,7 +3,7 @@ import sys
 ABS_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ABS_PATH, '../'))
 from viam_utils import OrientationVector, Quaternion, Vector3
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils import math as math_utils
 
 pose = {
     "x": 462.41402300101993,

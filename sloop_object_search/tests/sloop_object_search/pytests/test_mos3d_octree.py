@@ -20,17 +20,17 @@ import matplotlib.pyplot as plt
 
 from pomdp_py import OOTransitionModel
 
-from sloop_object_search.oopomdp.models.octree_belief\
+from genmos_object_search.oopomdp.models.octree_belief\
     import (OctreeBelief, OctreeDistribution, update_octree_belief,
             Octree, OctNode, DEFAULT_VAL,
             plot_octree_belief,
             verify_octree_dist_integrity,
             verify_octree_integrity)
 
-from sloop_object_search.oopomdp import ObjectState
-from sloop_object_search.utils.math import approx_equal
-from sloop_object_search.oopomdp.models.sensors import FrustumCamera
-from sloop_object_search.oopomdp.domain.observation import FovVoxels, Voxel
+from genmos_object_search.oopomdp import ObjectState
+from genmos_object_search.utils.math import approx_equal
+from genmos_object_search.oopomdp.models.sensors import FrustumCamera
+from genmos_object_search.oopomdp.domain.observation import FovVoxels, Voxel
 
 
 TEST_ALPHA = 100000

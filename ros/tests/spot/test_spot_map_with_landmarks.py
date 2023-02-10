@@ -7,13 +7,13 @@ import json
 import matplotlib.pyplot as plt
 import sloop.observation
 
-from sloop_object_search.oopomdp.models.grid_map import GridMap
-from sloop_object_search.utils.visual import GridMapVisualizer
-from sloop_object_search.ros.mapinfo_utils import (FILEPATHS,
+from genmos_object_search.oopomdp.models.grid_map import GridMap
+from genmos_object_search.utils.visual import GridMapVisualizer
+from genmos_object_search.ros.mapinfo_utils import (FILEPATHS,
                                                    MapInfoDataset,
                                                    register_map,
                                                    load_filepaths)
-from sloop_object_search.utils.colors import random_unique_color, rgb_to_hex
+from genmos_object_search.utils.colors import random_unique_color, rgb_to_hex
 
 def test():
     map_name = "lab121_lidar"

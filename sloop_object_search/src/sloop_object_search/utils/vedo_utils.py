@@ -1,9 +1,9 @@
 import vedo
 import numpy as np
-from sloop_object_search.utils.colors import color_map, cmaps
-from sloop_object_search.utils import math as math_utils
-from sloop_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
-from sloop_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
+from genmos_object_search.utils.colors import color_map, cmaps
+from genmos_object_search.utils import math as math_utils
+from genmos_object_search.oopomdp.models.octree_belief import RegionalOctreeDistribution, Octree
+from genmos_object_search.oopomdp.models.search_region import SearchRegion3D, SearchRegion2D
 
 
 def draw_search_region2d(search_region, grid_robot_position=None, points=None):

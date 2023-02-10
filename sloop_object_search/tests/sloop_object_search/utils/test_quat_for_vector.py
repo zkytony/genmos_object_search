@@ -2,7 +2,7 @@ import time
 import vedo
 import random
 import numpy as np
-from sloop_object_search.utils import math as math_utils
+from genmos_object_search.utils import math as math_utils
 
 
 tt = 0

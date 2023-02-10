@@ -4,10 +4,10 @@ import random
 import pomdp_py
 from pomdp_py.utils import typ
 
-from sloop_object_search.utils.misc import import_class
-from sloop_object_search.utils.math import normalize, euler_to_quat
-from sloop_object_search.oopomdp.planner import make_planner
-from sloop_object_search.oopomdp.agent.basic3d import MosBasic3DAgent
+from genmos_object_search.utils.misc import import_class
+from genmos_object_search.utils.math import normalize, euler_to_quat
+from genmos_object_search.oopomdp.planner import make_planner
+from genmos_object_search.oopomdp.agent.basic3d import MosBasic3DAgent
 
 from viztracer import VizTracer
 

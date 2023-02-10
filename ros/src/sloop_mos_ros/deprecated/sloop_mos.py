@@ -9,14 +9,14 @@ import geometry_msgs.msg as geometry_msgs
 from tf.transformations import euler_from_quaternion
 import sys
 print(sys.path)
-from sloop_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
-from sloop_object_search.oopomdp.planner import make_planner as make_sloop_mos_planner
-from sloop_object_search.oopomdp.agent.visual import visualize_step
-from sloop_object_search.oopomdp.domain.action import LookAction
-from sloop_object_search.oopomdp.domain.observation import RobotObservationTopo, GMOSObservation
-from sloop_object_search.utils.misc import import_class
-from sloop_object_search.utils.math import to_degrees
-from sloop_object_search_ros.msg import GridMap2d, KeyValAction
+from genmos_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
+from genmos_object_search.oopomdp.planner import make_planner as make_sloop_mos_planner
+from genmos_object_search.oopomdp.agent.visual import visualize_step
+from genmos_object_search.oopomdp.domain.action import LookAction
+from genmos_object_search.oopomdp.domain.observation import RobotObservationTopo, GMOSObservation
+from genmos_object_search.utils.misc import import_class
+from genmos_object_search.utils.math import to_degrees
+from genmos_object_search_ros.msg import GridMap2d, KeyValAction
 from sloop_mos_ros.grid_map_utils import (ros_msg_to_grid_map,
                                           cells_with_minimum_distance_from_obstacles,
                                           obstacles_around_free_locations)

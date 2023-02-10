@@ -1,4 +1,4 @@
-from sloop_object_search.oopomdp.domain.state import RobotState
+from genmos_object_search.oopomdp.domain.state import RobotState
 
 class RobotStateTopo(RobotState):
     """Represents a robot state on a topological graph. Note
