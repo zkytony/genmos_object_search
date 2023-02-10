@@ -3,8 +3,8 @@ middleware-independent GenMOS Object Search package.
 
 There are two packages:
 
-- genmos\_object\_search: the GenMOS package for generalized multi-object search (includes the POMDP and the gRPC implementations).
-- sloop: provides the spatial language observation model (adapted from [h2r/sloop](https://github.com/h2r/sloop)). This is legacy code; not yet integrated into GenMOS.
+- **genmos\_object\_search**: the GenMOS package for generalized multi-object search (includes the POMDP and the gRPC implementations).
+- **sloop**: provides the spatial language observation model (adapted from [h2r/sloop](https://github.com/h2r/sloop)). This is legacy code; not yet integrated into GenMOS.
 
 The POMDP implementation uses [pomdp_py](https://h2r.github.io/pomdp-py/html/).
 
