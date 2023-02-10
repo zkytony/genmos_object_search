@@ -7,9 +7,8 @@ There are two packages:
 - sloop: provides spatial language observation model (adapted from [h2r/sloop](https://github.com/h2r/sloop)).
 
 
-If you are using ROS, you should just build the ROS package.
 
-If not using ROS, you can install this package by
+Install this package by
 ```
 pip install -e .
 ```
