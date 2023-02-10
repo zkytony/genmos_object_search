@@ -1,7 +1,7 @@
 <launch>
   <!-- Action Executor for MOVO -->
   <node name="movo_action_executor"
-        pkg="sloop_object_search_ros" type="movo_action_executor.py" output="screen">
+        pkg="genmos_object_search_ros" type="movo_action_executor.py" output="screen">
     <param name="robot_id" value="movo"/>
     <param name="world_frame" value="map"/>
     <param name="check_before_execute" value="False" type="bool"/>

@@ -1,7 +1,7 @@
 <launch>
   <!-- publish local cloud -->
   <node name="spot_local_cloud_publisher"
-        pkg="sloop_object_search_ros" type="local_cloud_publisher" output="screen">
+        pkg="genmos_object_search_ros" type="local_cloud_publisher" output="screen">
     <param name="global_cloud_topic" value="/graphnav_map_publisher/graphnav_points"/>
     <param name="region_cloud_topic" value="region_points"/>
     <param name="robot_pose_topic" value="/spot_body_pose"/>
@@ -13,7 +13,7 @@
 
   <!-- publish octree belief -->
   <node name="spot_octree_belief_publisher"
-        pkg="sloop_object_search_ros" type="spot_octree_belief_publisher.py" output="screen"
+        pkg="genmos_object_search_ros" type="spot_octree_belief_publisher.py" output="screen"
         args="/spot_local_cloud_publisher/region_points --size 32 --res 0.125">
     <!-- res 0.125 = 4.0 / 32 -->
   </node>

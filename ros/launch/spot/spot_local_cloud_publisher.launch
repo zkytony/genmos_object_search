@@ -6,7 +6,7 @@
 
   <!-- publish local cloud -->
   <node name="spot_local_cloud_publisher"
-        pkg="sloop_object_search_ros" type="local_cloud_publisher" output="screen">
+        pkg="genmos_object_search_ros" type="local_cloud_publisher" output="screen">
     <param name="global_cloud_topic" value="/graphnav_map_publisher/graphnav_points"/>
     <param name="region_cloud_topic" value="region_points"/>
     <param name="robot_pose_topic" value="$(arg robot_pose_topic)"/>

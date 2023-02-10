@@ -1,6 +1,6 @@
 <launch>
   <node name="occupancy_to_cloud"
-        pkg="sloop_object_search_ros"
+        pkg="genmos_object_search_ros"
         type="occupancy_to_cloud"
         output="screen">
     <remap from="~grid_input" to="/map"/>

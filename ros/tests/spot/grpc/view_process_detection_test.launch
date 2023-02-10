@@ -1,3 +1,3 @@
 <launch>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find sloop_object_search_ros)/tests/spot/grpc/process_detection_test.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find genmos_object_search_ros)/tests/spot/grpc/process_detection_test.rviz" />
 </launch>

@@ -19,7 +19,7 @@
   <!-- ########################################################################## -->
 
   <!-- Stream movo camera pose -->
-  <node name="movo_stream_camera_pose" pkg="sloop_object_search_ros" type="stream_movo_camera_pose.py"
+  <node name="movo_stream_camera_pose" pkg="genmos_object_search_ros" type="stream_movo_camera_pose.py"
         output="screen"/>
 
   <!-- ########################################################################## -->
@@ -27,7 +27,7 @@
   <!-- ########################################################################## -->
 
   <!-- Run the occupancy to cloud converter -->
-  <node name="occupancy_to_cloud" pkg="sloop_object_search_ros" type="occupancy_to_cloud"
+  <node name="occupancy_to_cloud" pkg="genmos_object_search_ros" type="occupancy_to_cloud"
         output="screen">
     <remap from="~grid_input" to="/map"/>
     <remap from="~cloud_output" to="$(arg map_points)"/>
@@ -49,7 +49,7 @@
 
   <!-- Merge the map cloud with the kinect cloud -->
   <node name="point_cloud_merger"
-        pkg="sloop_object_search_ros" type="point_cloud_merger"
+        pkg="genmos_object_search_ros" type="point_cloud_merger"
         output="screen">
     <param name="input_topics"
            value="[$(arg map_points), $(arg kinect_points)]"
@@ -59,7 +59,7 @@
   </node>
 
   <group if="$(arg local_search)">
-    <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
+    <include file="$(find genmos_object_search_ros)/launch/local_cloud_publisher.launch">
       <arg name="robot_pose_topic" value="/local_region_center"/>
       <arg name="global_cloud_topic" value="/movo/local_region/input_points"/>
       <arg name="region_size_x" value="$(arg region_size_x)"/>
@@ -70,7 +70,7 @@
   </group>
 
   <group unless="$(arg local_search)">
-    <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
+    <include file="$(find genmos_object_search_ros)/launch/local_cloud_publisher.launch">
       <arg name="robot_pose_topic" value="/movo_camera_pose"/>
       <arg name="global_cloud_topic" value="/movo/local_region/input_points"/>
       <arg name="region_size_x" value="$(arg region_size_x)"/>
@@ -83,7 +83,7 @@
   <!-- ########################################################################## -->
   <!-- Object detection -->
   <!-- ########################################################################## -->
-  <node pkg="sloop_object_search_ros" type="stream_movo_yolov5_detections.py"
+  <node pkg="genmos_object_search_ros" type="stream_movo_yolov5_detections.py"
         name="stream_detections" args="-q sd" output="screen"></node>
 
 </launch>

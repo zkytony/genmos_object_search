@@ -10,15 +10,15 @@
 
     <!-- publish region center -->
     <node name="local_search_center_publisher"
-          pkg="sloop_object_search_ros"
+          pkg="genmos_object_search_ros"
           type="cit1f_atrium_$(arg map_type)_search_region_center.py" output="screen"></node>
 
     <!-- Run SLOOP object search decision making interface (POMDP planner) -->
     <node name="sloop_ros" ns="spot_$(arg spot)"
-          pkg="sloop_object_search_ros" type="run_search.py" output="screen">
+          pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"
-                file="$(find sloop_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
+                file="$(find genmos_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
       <param name="robot_id" value="spot_$(arg spot)"/>
       <param name="world_frame" value="graphnav_map"/>
       <remap from="~search_region_center" to="/local_region_center" />
@@ -35,10 +35,10 @@
 
     <!-- Run SLOOP object search decision making interface (POMDP planner) -->
     <node name="sloop_ros" ns="spot_$(arg spot)"
-          pkg="sloop_object_search_ros" type="run_search.py" output="screen">
+          pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"
-                file="$(find sloop_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
+                file="$(find genmos_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
       <param name="robot_id" value="spot_$(arg spot)"/>
       <param name="world_frame" value="graphnav_map"/>
       <remap from="~search_region_center" to="/spot_hand_pose" />

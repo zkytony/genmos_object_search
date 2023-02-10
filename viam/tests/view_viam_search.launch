@@ -1,3 +1,3 @@
 <launch>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d /home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/viam/tests/viam_search.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d /home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/viam/tests/viam_search.rviz" />
 </launch>

@@ -86,7 +86,7 @@
 
   <!-- Then, merge the points -->
   <node name="point_cloud_merger"
-        pkg="sloop_object_search_ros" type="point_cloud_merger"
+        pkg="genmos_object_search_ros" type="point_cloud_merger"
         output="screen">
     <param name="input_topics"
            value="[$(arg graphnav_map_points), $(arg frontleft_depth)/points, $(arg frontright_depth)/points]"
@@ -99,7 +99,7 @@
        at /local_region_center; Otherwise, it is spot's hand pose -->
   <group if="$(arg local_search)">
     <!-- Finally, publish local region -->
-    <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
+    <include file="$(find genmos_object_search_ros)/launch/local_cloud_publisher.launch">
       <arg name="robot_pose_topic" value="/local_region_center"/>
       <arg name="global_cloud_topic" value="/spot/local_region/input_points"/>
       <arg name="region_size_x" value="$(arg region_size_x)"/>
@@ -109,7 +109,7 @@
     </include>
   </group>
   <group unless="$(arg local_search)">
-    <include file="$(find sloop_object_search_ros)/launch/local_cloud_publisher.launch">
+    <include file="$(find genmos_object_search_ros)/launch/local_cloud_publisher.launch">
       <arg name="robot_pose_topic" value="/spot_hand_pose"/>
       <arg name="global_cloud_topic" value="/spot/local_region/input_points"/>
       <arg name="region_size_x" value="$(arg region_size_x)"/>

@@ -13,7 +13,7 @@
         name="spot_stream_hand_pose"></node> <!-- stream hand pose -->
 
   <!-- Publishing grid map projection -->
-  <node pkg="sloop_object_search_ros" type="spot_graphnav_cloud_to_grid_map.py"
+  <node pkg="genmos_object_search_ros" type="spot_graphnav_cloud_to_grid_map.py"
         name="graphnav_pcd_to_grid_map"
         args="--name $(arg map_name) --grid-size $(arg grid_size) --layout-cut $(arg layout_cut)" output="screen"/>
 
@@ -25,10 +25,10 @@
 
   <!-- Run SLOOP object search decision making interface (POMDP planner) -->
   <node name="run_sloop_mos_spot"
-        pkg="sloop_object_search_ros" type="run_agent" output="screen">
+        pkg="genmos_object_search_ros" type="run_agent" output="screen">
     <!-- So strange. you can't do ~config -->
     <rosparam param="config" command="load"
-              file="$(find sloop_object_search_ros)/config/sloop_mos_spot_$(arg map_name).yaml"/>
+              file="$(find genmos_object_search_ros)/config/sloop_mos_spot_$(arg map_name).yaml"/>
     <param name="~pomdp_name" value="sloop_mos_spot"/>
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
     <remap from="~observation/robot_pose" to="/spot_hand_pose"/>

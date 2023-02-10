@@ -4,7 +4,7 @@
   <arg name="layout_cut" default="0.1"/>
 
   <!-- Publishing grid map projection -->
-  <node pkg="sloop_object_search" type="spot_graphnav_cloud_to_grid_map.py"
+  <node pkg="genmos_object_search" type="spot_graphnav_cloud_to_grid_map.py"
         name="graphnav_pcd_to_grid_map"
         args="--name $(arg map_name) --grid-size $(arg grid_size) --layout-cut $(arg layout_cut)" output="screen"/>
 </launch>

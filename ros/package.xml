@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>sloop_object_search_ros</name>
+  <name>genmos_object_search_ros</name>
   <version>0.2.0</version>
-  <description>The sloop_object_search_ros package</description>
+  <description>The genmos_object_search_ros package</description>
   <maintainer email="kaiyutony@gmail.com">kaiyu</maintainer>
   <license>MIT</license>
   <buildtool_depend>catkin</buildtool_depend>
