@@ -9,7 +9,9 @@ There are two packages:
 The POMDP implementation uses [pomdp_py](https://h2r.github.io/pomdp-py/html/).
 
 
-Install this package by
+### Setup
+
+Install both packages by
 ```
 pip install -e .
 ```
