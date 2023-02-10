@@ -1,6 +1,6 @@
-* Example ROS package that uses sloop_object_search
+* Example ROS package that uses genmos_object_search
 
-Note that sloop_object_search is written in Python 3. For ROS, it is
+Note that genmos_object_search is written in Python 3. For ROS, it is
 best integrated with ROS Noetic.
 
 ** Setup
@@ -9,9 +9,9 @@ best integrated with ROS Noetic.
 
 Go to the `src` folder of your ROS workspace. Then run:
 #+begin_src
-ln -s path/to/sloop_object_search/ros sloop_object_search_ros
+ln -s path/to/genmos_object_search/ros genmos_object_search_ros
 #+end_src
-This effectively adds a ROS package called "sloop_object_search_ros" into your workspace
+This effectively adds a ROS package called "genmos_object_search_ros" into your workspace
 
 *** Install Dependencies
 
@@ -26,7 +26,13 @@ to install python dependencies.
 
 *** Build the ROS package
 #+begin_src
-catkin_make -DCATKIN_WHITELIST_PACKAGES="sloop_object_search_ros"
+catkin_make -DCATKIN_WHITELIST_PACKAGES="genmos_object_search_ros"
+#+end_src
+
+Note that if you are using the [robotdev Spot environment](https://github.com/zkytony/robotdev/tree/master/spot),
+you need to run the following command instead
+#+begin_src
+build_spot -DCATKIN_WHITELIST_PACKAGES="genmos_object_search_ros"
 #+end_src
 
 
@@ -47,9 +53,9 @@ python -m spacy download en_core_web_lg
 
 
 
-** Integrate sloop_object_search to Your ROS Robot
+** Integrate genmos_object_search to Your ROS Robot
 
-   The main logic of how the sloop_object_search gRPC-based package
+   The main logic of how the genmos_object_search gRPC-based package
    is in [[src/sloop_mos_ros/sloop_mos.py]]. The entry point (i.e. the
    executable script to start the search procedure) is in [[scripts/run_search.py]].
    The content of this executable script is very simple:

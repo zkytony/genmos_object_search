@@ -1,11 +1,20 @@
-* genmos_object_search
+* GenMOS (Generalized Multi-Object Search)
 
-GenMOS (Generalized Multi-Object Search)
+This repo is structured as follows:
+- ~genmos_object_search~: a robot-independent package for object search that implements the GenMOS system.
+- ~ros~: a ROS package that integrates ~genmos_object_search~ with ROS.
+- ~ros2~: a ROS 2 package that integrates ~genmos_object_search~ with ROS 2 (TODO)
+- ~viam~: a Viam client application that integrates ~genmos_object_search~ with [Viam](https://www.viam.com/).
+
+Check out the README in each directory for more information.
+Below is a documentation of the design of GenMOS as it was
+developed.
+
 
 ** GenMOS object search package design decisions
    <<design_decisions>>
 *** Objective (last updated 08/15/2022)
-    GenMOS object search package is an object search package that:
+    The GenMOS package is an object search package that:
 
      - [ ] Performs hierarchical object search with 3D local search and 2D global search
      - [ ] Allows specification of correlation between objects
@@ -179,26 +188,3 @@ GenMOS (Generalized Multi-Object Search)
     - visualize the plan or planned action
     - visualize the planning process
     - visualize the FOV and observations
-
-
-** Usage
-
-*** Launch the genmos_object_search gRPC server
-#+begin_src
-python -m genmos_object_search.grpc.server
-#+end_src
-
-
-** Set up genmos_object_search for ROS
-
-1. Go to the 'src' folder of your ROS workspace.
-2. Create a symbolic link to the `genmos_object_search/ros` folder, and name that
-   symbolic link "genmos_object_search." That is,
-   #+begin_src
-   ln -s /path/to/genmos_object_search/ros genmos_object_search_ros
-   #+end_src
-
-3. Compile the package
-   #+begin_src
-   catkin_make -DCATKLIN_WHITELIST_PACKAGES="genmos_object_search_ros"
-   #+end_src
