@@ -8,11 +8,11 @@ import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 from visualization_msgs.msg import Marker, MarkerArray
 from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenMOSClient
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_ros import ros_utils
 from genmos_object_search.utils.open3d_utils import draw_octree_dist
-from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
+from genmos_object_search.grpc import genmos_object_search_pb2 as gmpb2
 from genmos_object_search.grpc import observation_pb2 as o_pb2
 from genmos_object_search.grpc import action_pb2 as a_pb2
 from genmos_object_search.grpc import common_pb2
@@ -136,7 +136,7 @@ class TestSimpleEnvCase:
         self._octbelief_markers_pub.publish(clear_msg)
         self._topo_map_3d_markers_pub.publish(clear_msg)
 
-        response = self._sloop_client.getObjectBeliefs(
+        response = self._genmos_client.getObjectBeliefs(
             robot_id, header=proto_utils.make_header(self.world_frame))
         if response.status != Status.SUCCESSFUL:
             print("Failed to get 3D belief")
@@ -157,7 +157,7 @@ class TestSimpleEnvCase:
 
         # visualize topo map in robot belief
         markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
+        response_robot_belief = self._genmos_client.getRobotBelief(
             robot_id, header=proto_utils.make_header(self.world_frame))
         robot_belief_pb = response_robot_belief.robot_belief
         if robot_belief_pb.HasField("topo_map"):
@@ -179,7 +179,7 @@ class TestSimpleEnvCase:
         self._belief_2d_markers_pub.publish(clear_msg)
         self._topo_map_2d_markers_pub.publish(clear_msg)
 
-        response = self._sloop_client.getObjectBeliefs(
+        response = self._genmos_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got belief")
@@ -199,7 +199,7 @@ class TestSimpleEnvCase:
 
         # visualize topo map in robot belief
         markers = []
-        response_robot_belief = self._sloop_client.getRobotBelief(
+        response_robot_belief = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         robot_belief_pb = response_robot_belief.robot_belief
         if robot_belief_pb.HasField("topo_map"):
@@ -224,7 +224,7 @@ class TestSimpleEnvCase:
         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-        self._sloop_client.updateSearchRegion(header=cloud_pb.header,
+        self._genmos_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
@@ -254,7 +254,7 @@ class TestSimpleEnvCase:
             region_size_z=search_region_config.get("region_size_z", 2.4),
             debug=search_region_config.get("debug", False)
         )
-        self._sloop_client.updateSearchRegion(header=cloud_pb.header,
+        self._genmos_client.updateSearchRegion(header=cloud_pb.header,
                                               robot_id=robot_id,
                                               robot_pose=robot_pose_pb,
                                               point_cloud=cloud_pb,
@@ -312,13 +312,13 @@ class TestSimpleEnvCase:
                         "there should be an equal number of location configs for every object"
 
         # Initialize grpc client
-        self._sloop_client = SloopObjectSearchClient()
+        self._genmos_client = GenMOSClient()
         self.robot_id = self.agent_config["robot"]["id"]
         self.world_frame = WORLD_FRAME
 
     def run(self):
         # First, create an agent
-        self._sloop_client.createAgent(header=proto_utils.make_header(), config=self.agent_config,
+        self._genmos_client.createAgent(header=proto_utils.make_header(), config=self.agent_config,
                                        robot_id=self.robot_id)
         # the rest is determined by the child class
 
@@ -328,7 +328,7 @@ class TestSimpleEnvCase:
 
     def reset(self, reset_index=False):
         self.report = {}  # clear report
-        self._sloop_client.reset()
+        self._genmos_client.reset()
         rospy.loginfo("Server reset done.")
         if reset_index:
             # we want to start from objloc_index = 0

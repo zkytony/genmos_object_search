@@ -14,10 +14,10 @@
 # 3. run in a terminal 'python -m genmos_object_search.grpc.server'
 # 4. run in a terminal, "roslaunch genmos_object_search_ros genmos_movo_exp1_scili8_living_room.launch"
 # 5. run rviz, 'roslaunch genmos_object_search_ros view_movo_object_search.launch'
-from genmos_ros import SloopMosROS
+from genmos_ros import GenMOSROS
 
 def main():
-    sr = SloopMosROS()
+    sr = GenMOSROS()
     sr.setup()
     sr.run()
 

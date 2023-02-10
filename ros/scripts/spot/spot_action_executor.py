@@ -2,12 +2,12 @@
 
 import rospy
 import sys
-from genmos_spot.action_executor import SpotSloopActionExecutor
+from genmos_spot.action_executor import SpotGenMOSActionExecutor
 
 def main():
-    rospy.init_node("spot_sloop_action_executor")
+    rospy.init_node("spot_genmos_action_executor")
     print(f"initialized node {rospy.get_name()}")
-    s = SpotSloopActionExecutor()
+    s = SpotGenMOSActionExecutor()
     s.setup()
     rospy.spin()
 

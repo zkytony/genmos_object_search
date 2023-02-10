@@ -16,7 +16,7 @@ from genmos_ros.ros_utils import WaitForMessages
 from genmos_ros import ros_utils
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.grpc.common_pb2 import Pose2D
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenMOSClient
 from config_test_MosAgentBasic2D import TEST_CONFIG
 
 POINT_CLOUD_TOPIC = "/graphnav_map_publisher/graphnav_points"
@@ -45,10 +45,10 @@ class UpdateSearchRegion2DTestCase:
     def _setup(self):
         rospy.init_node(self.node_name)
         self._update_count = 0
-        self._sloop_client = SloopObjectSearchClient()
+        self._genmos_client = GenMOSClient()
 
     def run(self):
-        self._sloop_client.createAgent(config=TEST_CONFIG,
+        self._genmos_client.createAgent(config=TEST_CONFIG,
                                        robot_id=self.robot_id,
                                        header=proto_utils.make_header())
         for i in range(self.num_updates):
@@ -86,7 +86,7 @@ class UpdateSearchRegion2DTestCase:
                 region_size = -1
                 brush_size = 0.5
 
-            self._sloop_client.updateSearchRegion(
+            self._genmos_client.updateSearchRegion(
                 header=cloud_pb.header,
                 robot_id=self.robot_id,
                 is_3d=False,

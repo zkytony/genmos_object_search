@@ -26,3 +26,12 @@ To compile protos:
    ```
    python -m grpc_tools.protoc -I ../protos/ --python_out=. --grpc_python_out=. ../protos/sloop_object_search/grpc/sloop_object_search.proto
    ```
+
+(Optional) Download SL_OSM dataset and FoR inference models:
+```
+python download.py
+```
+
+Note: For now, GenMOS is not integrated with SLOOP. Although
+a predecessor system of GenMOS (which was ROS-specific)
+was indeed integrated; see [a robot demo video of that system](https://www.youtube.com/watch?v=Lh5tAU_5ChE&ab_channel=KaiyuZheng).

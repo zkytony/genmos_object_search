@@ -12,7 +12,7 @@ from . import ros_utils
 
 class ActionExecutor:
     """ActionExecutor is meant to be run as a node by itself,
-    which subscribes to the ~action topic that the SloopMosROS
+    which subscribes to the ~action topic that the GenMOSROS
     publishes when one planning step is performed.
 
     It:

@@ -17,7 +17,7 @@ from rbd_spot_perception.msg import GraphNavWaypointArray
 from genmos_ros.ros_utils import pose_tuple_to_pose_stamped, WaitForMessages
 from genmos_object_search.grpc.utils import proto_utils as pbutil
 from genmos_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion, Status
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenMOSClient
 from config_test_MosAgentBasic3D import TEST_CONFIG
 
 from test_update_search_region_3d_with_point_cloud import UpdateSearchRegion3DTestCase as BaseTestCase3D
@@ -26,14 +26,14 @@ from test_update_search_region_3d_with_point_cloud import POINT_CLOUD_TOPIC, WAY
 
 class CreateAgentTestCase(BaseTestCase3D):
     def run(self):
-        response = self._sloop_client.getAgentCreationStatus(self.robot_id)
+        response = self._genmos_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.FAILED
 
         self.config = TEST_CONFIG
-        self._sloop_client.createAgent(config=TEST_CONFIG,
+        self._genmos_client.createAgent(config=TEST_CONFIG,
                                        robot_id=self.robot_id,
                                        header=pbutil.make_header())
-        response = self._sloop_client.getAgentCreationStatus(self.robot_id)
+        response = self._genmos_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.PENDING
 
         cloud_msg, waypoints_msg = WaitForMessages(
@@ -43,8 +43,8 @@ class CreateAgentTestCase(BaseTestCase3D):
         self._update_search_region(cloud_msg, waypoints_msg)
 
         print("waiting for agent creation...")
-        self._sloop_client.waitForAgentCreation(self.robot_id)
-        response = self._sloop_client.getAgentCreationStatus(self.robot_id)
+        self._genmos_client.waitForAgentCreation(self.robot_id)
+        response = self._genmos_client.getAgentCreationStatus(self.robot_id)
         assert response.status == Status.SUCCESSFUL
 
         print("create agent test passed.")

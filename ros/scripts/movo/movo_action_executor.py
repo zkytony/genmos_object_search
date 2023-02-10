@@ -2,12 +2,12 @@
 
 import rospy
 import sys
-from genmos_movo.action_executor import MovoSloopActionExecutor
+from genmos_movo.action_executor import MovoGenMOSActionExecutor
 
 def main():
-    rospy.init_node("movo_sloop_action_executor")
+    rospy.init_node("movo_genmos_action_executor")
     print(f"initialized node {rospy.get_name()}")
-    s = MovoSloopActionExecutor()
+    s = MovoGenMOSActionExecutor()
     s.setup()
     rospy.spin()
 

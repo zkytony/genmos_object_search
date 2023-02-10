@@ -35,7 +35,7 @@ class GetObjectBeliefsTestCase(CreateAgentTestCase):
     def run(self, o3dviz=True):
         """o3dviz: visualize octree belief in open3d"""
         super().run()
-        response = self._sloop_client.getObjectBeliefs(
+        response = self._genmos_client.getObjectBeliefs(
             self.robot_id, header=pbutil.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         print("got belief")

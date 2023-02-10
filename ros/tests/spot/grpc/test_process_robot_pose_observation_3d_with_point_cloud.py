@@ -42,7 +42,7 @@ class ProcessRobotPoseObservationTestCase(CreateAgentTestCase):
         self.br = TransformBroadcaster()
 
     def get_and_visualize_robot_pose(self):
-        response = self._sloop_client.getRobotBelief(
+        response = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got robot belief")
@@ -65,7 +65,7 @@ class ProcessRobotPoseObservationTestCase(CreateAgentTestCase):
         new_robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(new_robot_pose)
         print("new pose:", (*new_robot_pose[:3], quat_to_euler(*new_robot_pose[3:])))
 
-        response = self._sloop_client.processObservation(
+        response = self._genmos_client.processObservation(
             self.robot_id, new_robot_pose_pb, frame_id=self.world_frame)
         assert response.status == Status.SUCCESSFUL
 

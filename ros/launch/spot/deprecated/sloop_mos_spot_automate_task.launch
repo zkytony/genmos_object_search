@@ -2,11 +2,11 @@
   <arg name="max_steps" default="50"/>
   <arg name="replan_freq" default="1.0"/>
   <!-- Action Executor for Spot -->
-  <node name="spot_sloop_mos_automate_task"
+  <node name="spot_genmos_automate_task"
         pkg="genmos_object_search_ros" type="automate_task" output="screen"
         args=" --max-steps $(arg max_steps)">
-    <param name="plan_goal_topic" value="/run_sloop_mos_spot/plan/goal"/>
-    <param name="progress_topic" value="/run_sloop_mos_spot/progress"/>
+    <param name="plan_goal_topic" value="/run_genmos_spot/plan/goal"/>
+    <param name="progress_topic" value="/run_genmos_spot/progress"/>
     <param name="spatial_lang_topic" value="/spatial_lang"/>
     <param name="action_status_topic" value="/spot_action_executor/status"/>
   </node>

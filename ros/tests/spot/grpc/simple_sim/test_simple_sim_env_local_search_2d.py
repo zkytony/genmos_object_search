@@ -21,11 +21,11 @@ import geometry_msgs.msg as geometry_msgs
 import std_msgs.msg as std_msgs
 from visualization_msgs.msg import Marker, MarkerArray
 from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenMOSClient
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_ros import ros_utils
 from genmos_object_search.utils.open3d_utils import draw_octree_dist
-from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
+from genmos_object_search.grpc import genmos_object_search_pb2 as gmpb2
 from genmos_object_search.grpc import observation_pb2 as o_pb2
 from genmos_object_search.grpc import action_pb2 as a_pb2
 from genmos_object_search.grpc import common_pb2
@@ -51,20 +51,20 @@ class TestSimpleEnvLocalSearch2D(TestSimpleEnvCase):
 
         # wait for agent creation
         rospy.loginfo("waiting for sloop agent creation...")
-        self._sloop_client.waitForAgentCreation(self.robot_id)
+        self._genmos_client.waitForAgentCreation(self.robot_id)
         rospy.loginfo("agent created!")
 
         self.get_and_visualize_belief_2d()
 
         # create planner
-        response = self._sloop_client.createPlanner(config=PLANNER_CONFIG,
+        response = self._genmos_client.createPlanner(config=PLANNER_CONFIG,
                                                     header=proto_utils.make_header(),
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
 
         # Send planning requests
         for step in range(TASK_CONFIG["max_steps"]):
-            response_plan = self._sloop_client.planAction(
+            response_plan = self._genmos_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
             action = proto_utils.interpret_planned_action(response_plan)
             action_id = response_plan.action_id
@@ -107,13 +107,13 @@ class TestSimpleEnvLocalSearch2D(TestSimpleEnvCase):
 
             # Now, send obseravtions for belief update
             header = proto_utils.make_header(frame_id=self.world_frame)
-            response_observation = self._sloop_client.processObservation(
+            response_observation = self._genmos_client.processObservation(
                 self.robot_id, robot_pose_pb,
                 object_detections=detections_pb,
                 objects_found=objects_found_pb,
                 header=header, return_fov=True,
                 action_id=action_id, action_finished=True, debug=False)
-            response_robot_belief = self._sloop_client.getRobotBelief(
+            response_robot_belief = self._genmos_client.getRobotBelief(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
 
             print(f"Step {step} robot belief:")

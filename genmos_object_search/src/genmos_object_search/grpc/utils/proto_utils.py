@@ -12,7 +12,7 @@ from genmos_object_search.grpc.common_pb2\
     import Vec2, Vec3, Header, Pose2D, Pose3D, Quaternion, Histogram, Voxel3D
 from genmos_object_search.grpc.action_pb2\
     import MoveViewpoint, Find, KeyValueAction, Motion2D, Motion3D
-from .. import genmos_object_search_pb2 as slpb2
+from .. import genmos_object_search_pb2 as gmpb2
 
 from genmos_object_search.oopomdp.domain import action as slpa
 from genmos_object_search.oopomdp.domain import observation as slpo
@@ -269,7 +269,7 @@ def interpret_planned_action(plan_action_reply):
     """Given the response from PlanActionReply,
     return the protobuf object corresponding to
     the action."""
-    assert isinstance(plan_action_reply, slpb2.PlanActionReply),\
+    assert isinstance(plan_action_reply, gmpb2.PlanActionReply),\
         "only interprets PlanActionReply"
     if plan_action_reply.HasField("move_action"):
         return plan_action_reply.move_action
@@ -324,7 +324,7 @@ def pomdp_object_beliefs_to_proto(object_beliefs, search_region):
                          values=hist_values,
                          probs=hist_probs)
         object_beliefs_proto.append(
-            slpb2.ObjectBelief(object_id=objid,
+            gmpb2.ObjectBelief(object_id=objid,
                                dist=dist))
     return object_beliefs_proto
 
@@ -363,7 +363,7 @@ def robot_belief_to_proto(robot_belief, search_region, header=None, **other_fiel
     objects_found_pb = o_pb2.ObjectsFound(
         header=header, robot_id=robot_id,
         object_ids=list(map(str, mpe_robot_state.objects_found)))
-    return slpb2.RobotBelief(robot_id=robot_id,
+    return gmpb2.RobotBelief(robot_id=robot_id,
                              objects_found=objects_found_pb,
                              pose=robot_pose_pb,
                              **other_fields)
@@ -417,7 +417,7 @@ def pomdp_robot_observation_from_request(request, agent, action=None,
     # 'camera_direction' field properly to respect the 'no_look' attribute
     # of the agent (i.e. whether the agent actively decides whether to
     # process observation about objects now).
-    assert isinstance(request, slpb2.ProcessObservationRequest),\
+    assert isinstance(request, gmpb2.ProcessObservationRequest),\
         "request must be ProcessObservationRequest"
     if request.robot_id != agent.robot_id\
        and request.robot_id + "_local" != agent.robot_id:
@@ -473,7 +473,7 @@ def pomdp_observation_from_request(request, agent, action=None):
     agent this request is for, return a pomdp Observation
     observation that represents that observation contained
     in the request."""
-    assert isinstance(request, slpb2.ProcessObservationRequest),\
+    assert isinstance(request, gmpb2.ProcessObservationRequest),\
         "request must be ProcessObservationRequest"
     if request.robot_id != agent.robot_id\
        and request.robot_id + "_local" != agent.robot_id:
@@ -525,11 +525,11 @@ def topo_map_to_proto(topo_map, search_region):
             node1, node2 = edge.nodes
             node1_pb = topo_node_to_proto(node1, search_region)
             node2_pb = topo_node_to_proto(node2, search_region)
-            edge_pb = slpb2.TopoEdge(id=str(eid),
+            edge_pb = gmpb2.TopoEdge(id=str(eid),
                                      node1=node1_pb,
                                      node2=node2_pb)
             edges_pb.append(edge_pb)
-    return slpb2.TopoMap(edges=edges_pb)
+    return gmpb2.TopoMap(edges=edges_pb)
 
 
 def topo_node_to_proto(node, search_region):
@@ -538,7 +538,7 @@ def topo_node_to_proto(node, search_region):
         pos = {"pos_2d": Vec2(x=pos_world[0], y=pos_world[1])}
     else:
         pos = {"pos_3d": Vec3(x=pos_world[0], y=pos_world[1], z=pos_world[2])}
-    node_pb = slpb2.TopoNode(id=str(node.id), **pos)
+    node_pb = gmpb2.TopoNode(id=str(node.id), **pos)
     return node_pb
 
 def pos_from_topo_node(node_pb):

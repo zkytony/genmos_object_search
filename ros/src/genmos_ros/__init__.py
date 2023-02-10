@@ -1,1 +1,1 @@
-from .genmos import SloopMosROS
+from .genmos_ros import GenMOSROS

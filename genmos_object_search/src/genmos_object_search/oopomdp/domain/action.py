@@ -1,5 +1,5 @@
 """
-SLOOP action. Here, we provide a few generic
+GenMOS action. Here, we provide a few generic
 action types, useful for multi-object search
 However, no specific implementation is provided, as that
 is the job of individual domains

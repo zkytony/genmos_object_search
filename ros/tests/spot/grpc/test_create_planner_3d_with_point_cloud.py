@@ -24,7 +24,7 @@ class CreatePlannerTestCase(CreateAgentTestCase):
                 "num_sims": 100
             }
         }
-        response = self._sloop_client.createPlanner(config=planner_config,
+        response = self._genmos_client.createPlanner(config=planner_config,
                                                     header=pbutil.make_header(),
                                                     robot_id=self.robot_id)
         assert response.status == Status.SUCCESSFUL

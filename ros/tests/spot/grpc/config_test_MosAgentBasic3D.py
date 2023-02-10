@@ -40,7 +40,7 @@ TEST_CONFIG = {
                           'seed': 1509,
                           'sep': 4.0},
         'topo_trans_args': {'h_angle_res': 45.0},
-        'visualizer': 'genmos_object_search.oopomdp.agent.VizSloopMosTopo',
+        'visualizer': 'genmos_object_search.oopomdp.agent.VizGenMOSTopo',
         'viz_params': {'init': {'res': 20},
                        'render': {'show_img_flip_horizontally': True}}},
     'planner_config': {'high_level_planner_args': {'exploration_const': 1000,

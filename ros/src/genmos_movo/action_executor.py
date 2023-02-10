@@ -32,7 +32,7 @@ MAX_TILT = 45
 MIN_TILT = -45
 
 
-class MovoSloopActionExecutor(ActionExecutor):
+class MovoGenMOSActionExecutor(ActionExecutor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._robot_pose_topic = "~robot_pose"

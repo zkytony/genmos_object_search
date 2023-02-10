@@ -39,9 +39,9 @@ import sensor_msgs.msg as sensor_msgs
 from genmos_ros import ros_utils
 from tf2_ros import TransformBroadcaster
 
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenMOSClient
 from genmos_object_search.grpc.utils import proto_utils
-from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
+from genmos_object_search.grpc import genmos_object_search_pb2 as gmpb2
 from genmos_object_search.grpc import observation_pb2 as o_pb2
 from genmos_object_search.grpc import action_pb2 as a_pb2
 from genmos_object_search.grpc import common_pb2
@@ -92,7 +92,7 @@ class SloopMosViam:
         self.world_frame = world_frame  # fixed frame of the world
 
         # Initialize grpc client
-        self.sloop_client = SloopObjectSearchClient()
+        self.sloop_client = GenMOSClient()
 
         # Planning-related
         self.last_action = None

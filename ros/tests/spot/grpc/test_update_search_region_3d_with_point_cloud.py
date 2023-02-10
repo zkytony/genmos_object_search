@@ -17,7 +17,7 @@ from rbd_spot_perception.msg import GraphNavWaypointArray
 from genmos_ros import ros_utils
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
-from genmos_object_search.grpc.client import SloopObjectSearchClient
+from genmos_object_search.grpc.client import GenMOSClient
 from genmos_object_search.utils.math import euler_to_quat, quat_to_euler
 from config_test_MosAgentBasic3D import TEST_CONFIG
 
@@ -52,10 +52,10 @@ class UpdateSearchRegion3DTestCase:
             FAKE_ROBOT_POSE_TOPIC, geometry_msgs.PoseStamped, queue_size=10)
         self._update_count = 0
 
-        self._sloop_client = SloopObjectSearchClient()
+        self._genmos_client = GenMOSClient()
 
     def run(self):
-        self._sloop_client.createAgent(config=TEST_CONFIG,
+        self._genmos_client.createAgent(config=TEST_CONFIG,
                                        robot_id=self.robot_id,
                                        header=proto_utils.make_header())
         for i in range(self.num_updates):
@@ -100,7 +100,7 @@ class UpdateSearchRegion3DTestCase:
                           0.45,
                           *euler_to_quat(0, 0, 90))
             robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
-            self._sloop_client.updateSearchRegion(
+            self._genmos_client.updateSearchRegion(
                 header=cloud_pb.header,
                 robot_id=self.robot_id,
                 is_3d=True,

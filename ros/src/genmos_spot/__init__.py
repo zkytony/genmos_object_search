@@ -1,1 +1,1 @@
-from .action_executor import SpotSloopActionExecutor
+from .action_executor import SpotGenMOSActionExecutor

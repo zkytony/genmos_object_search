@@ -16,7 +16,7 @@ from test_create_planner_3d_with_point_cloud import CreatePlannerTestCase
 class PlanActionTestcase(CreatePlannerTestCase):
     def run(self):
         super().run()
-        response = self._sloop_client.planAction(
+        response = self._genmos_client.planAction(
             self.robot_id,
             header=proto_utils.make_header(frame_id=self.world_frame))
         assert response.status == Status.SUCCESSFUL
@@ -27,7 +27,7 @@ class PlanActionTestcase(CreatePlannerTestCase):
         action_id = response.action_id
 
         # Request again. This time should fail.
-        response = self._sloop_client.planAction(
+        response = self._genmos_client.planAction(
             self.robot_id,
             header=proto_utils.make_header(frame_id=self.world_frame))
         assert response.status == Status.FAILED
@@ -37,7 +37,7 @@ class PlanActionTestcase(CreatePlannerTestCase):
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
         header = proto_utils.make_header(frame_id=self.world_frame)
         detections_pb = o_pb2.ObjectDetectionArray(header=header, robot_id=self.robot_id, detections=[])
-        response = self._sloop_client.processObservation(
+        response = self._genmos_client.processObservation(
             self.robot_id, robot_pose_pb,
             object_detections=detections_pb,
             header=header,
@@ -48,7 +48,7 @@ class PlanActionTestcase(CreatePlannerTestCase):
         # Actual successful request to mark action finished
         header = proto_utils.make_header(frame_id=self.world_frame)
         detections_pb = o_pb2.ObjectDetectionArray(header=header, robot_id=self.robot_id, detections=[])
-        response = self._sloop_client.processObservation(
+        response = self._genmos_client.processObservation(
             self.robot_id, robot_pose_pb,
             object_detections=detections_pb,
             header=header,
@@ -61,7 +61,7 @@ class PlanActionTestcase(CreatePlannerTestCase):
         # If we do it again, we will fail
         header = proto_utils.make_header(frame_id=self.world_frame)
         detections_pb = o_pb2.ObjectDetectionArray(header=header, robot_id=self.robot_id, detections=[])
-        response = self._sloop_client.processObservation(
+        response = self._genmos_client.processObservation(
             self.robot_id, robot_pose_pb,
             object_detections=detections_pb,
             header=header,

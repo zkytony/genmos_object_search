@@ -30,12 +30,12 @@ SPOT_HAND_TO_BODY_DISTANCE = 0.65
 NAV_DISTANCE_VERY_SHORT = 0.25
 NAV_HEIGHT = 0.25
 
-class SpotSloopActionExecutor(ActionExecutor):
+class SpotGenMOSActionExecutor(ActionExecutor):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # We do want lease access
-        self.conn = rbd_spot.SpotSDKConn(sdk_name="SpotSloopActionExecutorClient",
+        self.conn = rbd_spot.SpotSDKConn(sdk_name="SpotGenMOSActionExecutorClient",
                                          acquire_lease=True,
                                          take_lease=True)
         self.graphnav_client = rbd_spot.graphnav.create_client(self.conn)

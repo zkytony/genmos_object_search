@@ -12,8 +12,8 @@ import yaml
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from . import genmos_object_search_pb2 as slpb2
-from . import genmos_object_search_pb2_grpc as slpb2_grpc
+from . import genmos_object_search_pb2 as gmpb2
+from . import genmos_object_search_pb2_grpc as gmpb2_grpc
 from . import observation_pb2 as o_pb2
 from .common_pb2 import Pose2D, Status
 from .server import MAX_MESSAGE_LENGTH
@@ -23,7 +23,7 @@ from .utils import proto_utils
 DEFAULT_RPC_TIMEOUT = 60
 
 
-class SloopObjectSearchClient:
+class GenMOSClient:
 
     def __init__(self, server_address='localhost:50051',
                  max_message_length=MAX_MESSAGE_LENGTH,
@@ -33,7 +33,7 @@ class SloopObjectSearchClient:
                    ('grpc.max_send_message_length', max_message_length)]
         # one client has one channel
         self.channel = grpc.insecure_channel(self.server_address, options=options)
-        self.stub = slpb2_grpc.SloopObjectSearchStub(self.channel)
+        self.stub = gmpb2_grpc.GenMOSStub(self.channel)
         self.executor = ThreadPoolExecutor()
         self.futures = []
 
@@ -61,19 +61,19 @@ class SloopObjectSearchClient:
                 config_str = f.read()
 
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.CreateAgentRequest(
+        request = gmpb2.CreateAgentRequest(
             config=config_str.encode(encoding='utf-8'),
             **kwargs)
         return self.call(self.stub.CreateAgent, request, timeout=timeout)
 
     def updateSearchRegion(self, **kwargs):
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.UpdateSearchRegionRequest(**kwargs)
+        request = gmpb2.UpdateSearchRegionRequest(**kwargs)
         return self.call(self.stub.UpdateSearchRegion, request, timeout=timeout)
 
     def getAgentCreationStatus(self, robot_id, **kwargs):
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.GetAgentCreationStatusRequest(
+        request = gmpb2.GetAgentCreationStatusRequest(
             header=proto_utils.make_header(),
             robot_id=robot_id)
         return self.call(self.stub.GetAgentCreationStatus, request, timeout=timeout)
@@ -89,7 +89,7 @@ class SloopObjectSearchClient:
     def createPlanner(self, config=None, **kwargs):
         config_str = yaml.dump(config)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.CreatePlannerRequest(
+        request = gmpb2.CreatePlannerRequest(
             config=config_str.encode(encoding='utf-8'),
             **kwargs
         )
@@ -111,7 +111,7 @@ class SloopObjectSearchClient:
         are with respect to."""
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.PlanActionRequest(
+        request = gmpb2.PlanActionRequest(
             header=header,
             robot_id=robot_id,
             **kwargs
@@ -126,7 +126,7 @@ class SloopObjectSearchClient:
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
         if object_ids is None:
             object_ids = []
-        request = slpb2.GetObjectBeliefsRequest(
+        request = gmpb2.GetObjectBeliefsRequest(
             header=header,
             robot_id=robot_id,
             object_ids=object_ids)
@@ -135,7 +135,7 @@ class SloopObjectSearchClient:
     def getRobotBelief(self, robot_id, **kwargs):
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.GetRobotBeliefRequest(
+        request = gmpb2.GetRobotBeliefRequest(
             header=header,
             robot_id=robot_id,
             **kwargs)
@@ -148,7 +148,7 @@ class SloopObjectSearchClient:
             "robot_pose_pb must be a RobotPose proto."
         header = self._require_header_or_frame_id(kwargs)
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.ProcessObservationRequest(
+        request = gmpb2.ProcessObservationRequest(
             header=header,
             robot_id=robot_id,
             robot_pose=robot_pose_pb,
@@ -159,7 +159,7 @@ class SloopObjectSearchClient:
         """Asynchronously listen to the server. Upon receiving
         a message from the server, the callback will be called.
         Non-blocking."""
-        request = slpb2.ListenServerRequest(header=proto_utils.make_header(),
+        request = gmpb2.ListenServerRequest(header=proto_utils.make_header(),
                                             robot_id=robot_id)
         response_iterator = self.stub.ListenServer(request)
         future = self.executor.submit(self._server_message_watcher,
@@ -175,5 +175,5 @@ class SloopObjectSearchClient:
 
     def reset(self, **kwargs):
         timeout = kwargs.pop('timeout', DEFAULT_RPC_TIMEOUT)
-        request = slpb2.ResetRequest(header=proto_utils.make_header())
+        request = gmpb2.ResetRequest(header=proto_utils.make_header())
         return self.call(self.stub.Reset, request, timeout=timeout)

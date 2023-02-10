@@ -335,8 +335,8 @@ class GridMap2Visualizer(Visualizer2D):
         return img
 
 
-########### VizSloopMos*Basic2D* visualizer ###############
-class VizSloopMosBasic2D(GridMap2Visualizer):
+########### VizGenMOS*Basic2D* visualizer ###############
+class VizGenMOSBasic2D(GridMap2Visualizer):
     def __init__(self, grid_map, **config):
         super().__init__(grid_map=grid_map, **config)
 
@@ -369,7 +369,7 @@ class VizSloopMosBasic2D(GridMap2Visualizer):
         img = self.draw_robot(img, x, y, th, (255, 20, 20))
         if draw_fov is not None:
             for objid in sorted(draw_fov):
-                img = VizSloopMosBasic2D.draw_fov(
+                img = VizGenMOSBasic2D.draw_fov(
                     self, img, agent.sensor(objid),
                     robot_state,
                     inverse_color_rgb(self.get_color(
@@ -386,7 +386,7 @@ class VizSloopMosBasic2D(GridMap2Visualizer):
 
 
 ########### VizSloopMos*Topo* visualizer ###############
-class VizSloopMosTopo(VizSloopMosBasic2D):
+class VizGenMOSTopo(VizGenMOSBasic2D):
     def __init__(self, grid_map, **config):
         super().__init__(grid_map=grid_map, **config)
         self._draw_topo_grid_path = config.get("draw_topo_grid_path", False)

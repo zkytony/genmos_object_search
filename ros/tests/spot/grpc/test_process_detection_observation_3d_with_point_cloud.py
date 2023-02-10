@@ -74,7 +74,7 @@ class ProcessDetectionObservationTestCase(CreatePlannerTestCase):
         self._fovs_markers_pub.publish(MarkerArray(markers))
 
     def get_and_visualize_belief(self, o3dviz=True):
-        response = self._sloop_client.getObjectBeliefs(
+        response = self._genmos_client.getObjectBeliefs(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got belief")
@@ -91,7 +91,7 @@ class ProcessDetectionObservationTestCase(CreatePlannerTestCase):
         rospy.loginfo("belief visualized")
 
     def get_and_visualize_robot_pose(self):
-        response = self._sloop_client.getRobotBelief(
+        response = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         rospy.loginfo("got robot belief")
@@ -148,7 +148,7 @@ class ProcessDetectionObservationTestCase(CreatePlannerTestCase):
         object_detection = ObjectDetectionArray(header=header_pb,
                                                 robot_id=self.robot_id,
                                                 detections=detections)
-        response = self._sloop_client.processObservation(
+        response = self._genmos_client.processObservation(
             self.robot_id, robot_pose_pb,
             object_detections=object_detection,
             header=header_pb, return_fov=True)

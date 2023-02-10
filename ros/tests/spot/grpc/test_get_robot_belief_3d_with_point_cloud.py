@@ -33,7 +33,7 @@ class GetRobotBeliefTestCase(CreateAgentTestCase):
 
     def run(self):
         super().run()
-        response = self._sloop_client.getRobotBelief(
+        response = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
         assert response.status == Status.SUCCESSFUL
         print("got robot belief")

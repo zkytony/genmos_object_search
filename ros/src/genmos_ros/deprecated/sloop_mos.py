@@ -27,7 +27,7 @@ from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map, load_filepat
 from .framework import BaseAgentROSBridge
 
 
-class SloopMosAgentROSBridge(BaseAgentROSBridge):
+class GenMOSAgentROSBridge(BaseAgentROSBridge):
     """
     Interfaces between SLOOP MOS Agent and ROS.
 

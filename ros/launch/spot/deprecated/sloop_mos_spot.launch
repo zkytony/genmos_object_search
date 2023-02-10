@@ -23,13 +23,13 @@
   <!-- <node pkg="rbd_spot_perception" type="stream_fiducial_markers.py" -->
   <!--       name="stream_fiducial_markers" output="log"></node> -->
 
-  <!-- Run SLOOP object search decision making interface (POMDP planner) -->
-  <node name="run_sloop_mos_spot"
+  <!-- Run GENMOS object search decision making interface (POMDP planner) -->
+  <node name="run_genmos_spot"
         pkg="genmos_object_search_ros" type="run_agent" output="screen">
     <!-- So strange. you can't do ~config -->
     <rosparam param="config" command="load"
-              file="$(find genmos_object_search_ros)/config/sloop_mos_spot_$(arg map_name).yaml"/>
-    <param name="~pomdp_name" value="sloop_mos_spot"/>
+              file="$(find genmos_object_search_ros)/config/genmos_spot_$(arg map_name).yaml"/>
+    <param name="~pomdp_name" value="genmos_spot"/>
     <remap from="~observation/grid_map"  to="/graphnav_gridmap"/>
     <remap from="~observation/robot_pose" to="/spot_hand_pose"/>
     <remap from="~observation/detection_3d" to="/spot/segmentation/$(arg object_detection_camera)/result_boxes3d"/>
