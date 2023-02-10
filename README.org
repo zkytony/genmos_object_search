@@ -14,15 +14,8 @@ developed.
 ** GenMOS object search package design decisions
    <<design_decisions>>
 *** Objective (last updated 08/15/2022)
-    The GenMOS package is an object search package that:
-
-     - [ ] Performs hierarchical object search with 3D local search and 2D global search
-     - [ ] Allows specification of correlation between objects
-     - [ ] Allows incremental update of the underlying search region
-     - [ ] Permits the use of spatial language over the 2D global search region.
-       - [ ] In fact, allows resolution of spatial language tuples incrementally,
-             as unknown landmarks essentially serve as correlated objects.
-             (A demo/experiment of this is more impressive)
+    The GenMOS package is an object search package
+    that performs hierarchical object search with 3D local search and 2D global search.
 
 *** gRPC calls as the core interface (last updated 08/15/2022)
     - GenMOS is a middleware-independent package who
@@ -188,3 +181,18 @@ developed.
     - visualize the plan or planned action
     - visualize the planning process
     - visualize the FOV and observations
+
+** Future work
+   The following is part of the original objective, yet
+   incomplete within time for ICRA submission -- they
+   still require decent effort and is non-trivial. For example,
+   considering correlation between objects on top of the
+   octree belief representation for 3D object search is
+   yet to be solved.  We leave these for future work:
+
+     - [ ] Allows specification of correlation between objects
+     - [ ] Allows incremental update of the underlying search region
+     - [ ] Permits the use of spatial language over the 2D global search region.
+       - [ ] In fact, allows resolution of spatial language tuples incrementally,
+             as unknown landmarks essentially serve as correlated objects.
+             (A demo/experiment of this is more impressive)
