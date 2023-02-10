@@ -9,7 +9,7 @@ import "genmos_object_search/grpc/observation.proto";
 import "genmos_object_search/grpc/action.proto";
 
 
-service SloopObjectSearch {
+service GenMOS {
 
   rpc CreateAgent(CreateAgentRequest) returns (CreateAgentReply) {}
 
