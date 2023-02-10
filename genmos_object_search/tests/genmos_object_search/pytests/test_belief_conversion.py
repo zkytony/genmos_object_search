@@ -29,6 +29,7 @@ def search_region3d():
         search_region3d = pickle.load(f)
     return search_region3d
 
+@pytest.mark.skip(reason="no way of testing this; .pkl files lost.")
 def test_belief_conversion_2dto3d(bobj2d, search_region2d, search_region3d):
     bobj3d = object_belief_2d_to_3d(bobj2d, search_region2d, search_region3d, res=8)
     print("2D->3D")
