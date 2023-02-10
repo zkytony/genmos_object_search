@@ -1,10 +1,10 @@
-middleware-independent SLOOP Object Search package.
+middleware-independent GenMOS Object Search package.
 
 
 There are two packages:
 
-- sloop: provides spatial language observation model
-- sloop\_object\_search: combines SLOOP with multi-object search.
+- genmos\_object\_search: combines SLOOP with multi-object search.
+- sloop: provides spatial language observation model (adapted from [h2r/sloop](https://github.com/h2r/sloop)).
 
 
 If you are using ROS, you should just build the ROS package.
