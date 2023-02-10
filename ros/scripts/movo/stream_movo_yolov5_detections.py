@@ -32,7 +32,7 @@ from std_msgs.msg import ColorRGBA
 from vision_msgs.msg import (Detection2D, Detection2DArray, Detection3D,
                              Detection3DArray, BoundingBox2D, BoundingBox3D,
                              VisionInfo, ObjectHypothesisWithPose)
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search.utils.vision.detector import bbox3d_from_points
 
 ABS_FILE_PATH = os.path.dirname(os.path.abspath(__file__))

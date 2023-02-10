@@ -9,8 +9,8 @@ import diagnostic_msgs
 from pomdp_py.utils import typ
 
 from genmos_object_search_ros.msg import KeyValAction
-from sloop_mos_ros.action_executor import ActionExecutor
-from sloop_mos_ros import ros_utils
+from genmos_ros.action_executor import ActionExecutor
+from genmos_ros import ros_utils
 from visualization_msgs.msg import Marker, MarkerArray
 from actionlib_msgs.msg import GoalStatus
 import std_msgs.msg as std_msgs

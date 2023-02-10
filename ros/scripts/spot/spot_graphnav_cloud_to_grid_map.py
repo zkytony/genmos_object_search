@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# See implementation of the grid map publisher at sloop_mos_spot/grid_map_publisher.py
+# See implementation of the grid map publisher at genmos_spot/grid_map_publisher.py
 import rospy
 import argparse
-from sloop_mos_spot.grid_map_publisher import GraphNavPointCloudToGridMapPublisher
+from genmos_spot.grid_map_publisher import GraphNavPointCloudToGridMapPublisher
 
 def main():
     parser = argparse.ArgumentParser("PointCloud2 to GridMap2d")

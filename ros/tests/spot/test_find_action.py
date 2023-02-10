@@ -18,7 +18,7 @@ def test_find_action(pub, wait=5):
 
 def test():
     rospy.init_node("test_find_action")
-    pub = rospy.Publisher("/run_sloop_mos_spot/action", KeyValAction, queue_size=10, latch=True)
+    pub = rospy.Publisher("/run_genmos_spot/action", KeyValAction, queue_size=10, latch=True)
     test_find_action(pub)
 
 

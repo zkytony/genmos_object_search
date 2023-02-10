@@ -2,7 +2,7 @@
 
 import rospy
 import sys
-from sloop_mos_movo.action_executor import MovoSloopActionExecutor
+from genmos_movo.action_executor import MovoSloopActionExecutor
 
 def main():
     rospy.init_node("movo_sloop_action_executor")

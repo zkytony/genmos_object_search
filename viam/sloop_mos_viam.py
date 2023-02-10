@@ -36,7 +36,7 @@ import std_msgs.msg as std_msgs
 import geometry_msgs.msg as geometry_msgs
 import visualization_msgs.msg as viz_msgs
 import sensor_msgs.msg as sensor_msgs
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from tf2_ros import TransformBroadcaster
 
 from genmos_object_search.grpc.client import SloopObjectSearchClient

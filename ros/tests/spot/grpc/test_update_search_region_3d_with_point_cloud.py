@@ -14,7 +14,7 @@ import geometry_msgs.msg as geometry_msgs
 from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.grpc.common_pb2 import Pose3D, Vec3, Quaternion
 from genmos_object_search.grpc.client import SloopObjectSearchClient

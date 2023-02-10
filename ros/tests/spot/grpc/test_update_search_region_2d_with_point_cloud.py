@@ -12,8 +12,8 @@ import message_filters
 from sensor_msgs.msg import PointCloud2
 from rbd_spot_perception.msg import GraphNavWaypointArray
 
-from sloop_mos_ros.ros_utils import WaitForMessages
-from sloop_mos_ros import ros_utils
+from genmos_ros.ros_utils import WaitForMessages
+from genmos_ros import ros_utils
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.grpc.common_pb2 import Pose2D
 from genmos_object_search.grpc.client import SloopObjectSearchClient

@@ -2,7 +2,7 @@
 import rospy
 import tf2_ros
 import geometry_msgs, std_msgs
-from sloop_mos_ros.ros_utils import transform_to_pose_stamped
+from genmos_ros.ros_utils import transform_to_pose_stamped
 
 def main():
     rospy.init_node("movo_stream_camera_pose")

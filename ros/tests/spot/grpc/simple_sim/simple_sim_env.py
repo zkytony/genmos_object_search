@@ -21,7 +21,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
 from tf2_ros import TransformBroadcaster
 
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search.oopomdp.domain.state import ObjectState, RobotState
 from genmos_object_search.oopomdp.domain.action import MotionAction3D, FindAction
 from genmos_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation

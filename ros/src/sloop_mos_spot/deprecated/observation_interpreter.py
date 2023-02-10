@@ -11,14 +11,14 @@ from genmos_object_search.oopomdp.domain.observation import (
     ObjectDetection, GMOSObservation, RobotObservationTopo)
 from genmos_object_search.oopomdp.domain.action import FindAction
 from genmos_object_search.oopomdp.models.detection_models import FanModelSimpleFPLabelOnly
-from sloop_mos_ros.framework import ObservationInterpreter
-from sloop_mos_ros.grid_map_utils import ros_msg_to_grid_map
-from sloop_mos_ros.mapinfo_utils import FILEPATHS, register_map
-from sloop_mos_ros.sloop_mos import (grid_map_msg_callback,
+from genmos_ros.framework import ObservationInterpreter
+from genmos_ros.grid_map_utils import ros_msg_to_grid_map
+from genmos_ros.mapinfo_utils import FILEPATHS, register_map
+from genmos_ros.genmos import (grid_map_msg_callback,
                                      robot_pose_msg_callback,
                                      interpret_grid_map_msg,
                                      interpret_robot_pose_msg)
-from sloop_mos_ros.ros_utils import tf2_transform
+from genmos_ros.ros_utils import tf2_transform
 
 import tf2_ros
 

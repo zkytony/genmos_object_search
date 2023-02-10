@@ -26,7 +26,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from genmos_object_search_ros.msg import KeyValAction, KeyValObservation
 from genmos_object_search.grpc.client import SloopObjectSearchClient
 from genmos_object_search.grpc.utils import proto_utils
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search.utils.open3d_utils import draw_octree_dist
 from genmos_object_search.grpc import genmos_object_search_pb2 as slpb2
 from genmos_object_search.grpc import observation_pb2 as o_pb2

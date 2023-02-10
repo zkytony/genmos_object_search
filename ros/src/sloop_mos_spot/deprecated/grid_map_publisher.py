@@ -22,7 +22,7 @@ from rbd_spot_perception.msg import GraphNavWaypointArray
 from genmos_object_search.oopomdp.models.grid_map import GridMap
 from genmos_object_search.utils.math import remap, in_region
 from genmos_object_search.utils.visual import GridMapVisualizer
-from sloop_mos_ros.grid_map_utils import grid_map_to_ros_msg
+from genmos_ros.grid_map_utils import grid_map_to_ros_msg
 
 GRID_MAP_PUBLISHED = False
 

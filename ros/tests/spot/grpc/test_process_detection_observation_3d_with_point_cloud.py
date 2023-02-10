@@ -18,7 +18,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point, Quaternion, Vector3
 from tf2_ros import TransformBroadcaster
 
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.grpc.common_pb2\
     import Status, Voxel3D, Box3D, Pose3D, Vec3

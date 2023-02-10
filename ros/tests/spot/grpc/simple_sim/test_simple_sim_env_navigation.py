@@ -6,7 +6,7 @@
 # 4. Run this test: rosrun genmos_object_search_ros test_simple_sim_env_navigation.py
 import rospy
 import std_msgs.msg as std_msgs
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search_ros.msg import KeyValAction
 from genmos_object_search.utils.math import euler_to_quat
 

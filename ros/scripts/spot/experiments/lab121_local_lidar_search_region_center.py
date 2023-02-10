@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from geometry_msgs.msg import PoseStamped
-from sloop_mos_ros import ros_utils
+from genmos_ros import ros_utils
 from genmos_object_search.utils.math import euler_to_quat
 
 def main():

@@ -2,7 +2,7 @@
 
 import rospy
 import sys
-from sloop_mos_spot.action_executor import SpotSloopActionExecutor
+from genmos_spot.action_executor import SpotSloopActionExecutor
 
 def main():
     rospy.init_node("spot_sloop_action_executor")

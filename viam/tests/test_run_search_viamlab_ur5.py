@@ -24,7 +24,7 @@ from utils import viam_utils
 import viam.proto.common as v_pb2
 
 # the core functionality
-from sloop_mos_viam import SloopMosViam
+from genmos_viam import SloopMosViam
 import genmos_object_search.utils.math as math_utils
 
 
@@ -66,16 +66,16 @@ async def signal_find_func(viam_robot):
     success = await viam_utils.viam_signal_find(self.viam_robot)
     return success
 
-async def move_viewpoint_ur5(dest, sloop_mos_viam):
+async def move_viewpoint_ur5(dest, genmos_viam):
     """moves the arm to goal pose.
 
     dest is the goal pose in my frame (not viam's).
     """
     global LAST_CANDIDATE
-    viam_robot = sloop_mos_viam.viam_robot
+    viam_robot = genmos_viam.viam_robot
 
     # account for frame difference (viam vs me)
-    dest_viam = sloop_mos_viam.output_viam_pose(dest)
+    dest_viam = genmos_viam.output_viam_pose(dest)
 
     candidates = CANDIDATE_VIEWPOINTS
     if LAST_CANDIDATE is not None:
@@ -89,14 +89,14 @@ async def move_viewpoint_ur5(dest, sloop_mos_viam):
     await viam_utils.viam_move_to_joint_positions(
         viam_robot,
         approx_dest["joint_positions"],
-        sloop_mos_viam.viam_names["arm"])
+        genmos_viam.viam_names["arm"])
     LAST_CANDIDATE = approx_dest['name']
     # Whatever the movement is, we will try to rotate the last joint
     # to level it. Basically, get the rotation around the z axis (cuz
     # we are getting viam pose), and undo it by setting a joint angle
     # for the last joint.
     await viam_utils.viam_level_ur5gripper(viam_robot,
-                                           sloop_mos_viam.viam_names["arm"])
+                                           genmos_viam.viam_names["arm"])
     # sleep for 0.25 seconds for the detection result to come through
     time.sleep(0.25)
     return True

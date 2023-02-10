@@ -9,18 +9,18 @@ import geometry_msgs.msg as geometry_msgs
 from tf.transformations import euler_from_quaternion
 import sys
 print(sys.path)
-from genmos_object_search.oopomdp.agent import make_agent as make_sloop_mos_agent
-from genmos_object_search.oopomdp.planner import make_planner as make_sloop_mos_planner
+from genmos_object_search.oopomdp.agent import make_agent as make_genmos_agent
+from genmos_object_search.oopomdp.planner import make_planner as make_genmos_planner
 from genmos_object_search.oopomdp.agent.visual import visualize_step
 from genmos_object_search.oopomdp.domain.action import LookAction
 from genmos_object_search.oopomdp.domain.observation import RobotObservationTopo, GMOSObservation
 from genmos_object_search.utils.misc import import_class
 from genmos_object_search.utils.math import to_degrees
 from genmos_object_search_ros.msg import GridMap2d, KeyValAction
-from sloop_mos_ros.grid_map_utils import (ros_msg_to_grid_map,
+from genmos_ros.grid_map_utils import (ros_msg_to_grid_map,
                                           cells_with_minimum_distance_from_obstacles,
                                           obstacles_around_free_locations)
-import sloop_mos_ros.ros_utils as ros_utils
+import genmos_ros.ros_utils as ros_utils
 
 ## For ROS-related programs, we should import FILEPATHS and MapInfoDataset this way.
 from .mapinfo_utils import FILEPATHS, MapInfoDataset, register_map, load_filepaths
@@ -62,7 +62,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def init_agent(self, config):
         if self.agent is not None:
             raise ValueError("Agent already initialized")
-        agent = make_sloop_mos_agent(config,
+        agent = make_genmos_agent(config,
                                      init_pose=self.init_robot_pose,
                                      grid_map=self.grid_map)
         self.set_agent(agent)
@@ -70,7 +70,7 @@ class SloopMosAgentROSBridge(BaseAgentROSBridge):
     def init_planner(self, config):
         if self._planner is not None:
             raise ValueError("Planner already initialized")
-        self._planner = make_sloop_mos_planner(config["planner_config"],
+        self._planner = make_genmos_planner(config["planner_config"],
                                                self.agent)
 
     def _observation_cb(self, observation_msg):
