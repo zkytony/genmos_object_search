@@ -2,8 +2,6 @@
 
 [<img src='./docs/genmos_demogrid.png' width='450px'>](https://www.youtube.com/watch?v=TfCe2ZVwypU)
 
-![spot cat search](./docs/spot_cat_search.gif)
-
 **Video:** https://www.youtube.com/watch?v=TfCe2ZVwypU
 
 
