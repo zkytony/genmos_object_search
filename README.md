@@ -1,9 +1,8 @@
-# GenMOS (Generalized Multi-Object Search)
 
 [<img src='./docs/genmos_demogrid.png' width='450px'>](https://www.youtube.com/watch?v=TfCe2ZVwypU)
 
-**Video:** https://www.youtube.com/watch?v=TfCe2ZVwypU
 
+# GenMOS (Generalized Multi-Object Search)
 
 To get started, check out [this wiki page](https://github.com/zkytony/genmos_object_search/wiki/GenMOS:-A-System-for-Generalized-Multi-Object-Search).
 
@@ -16,6 +15,8 @@ This repo is structured as follows:
 Check out the README in each directory for more information.
 
 [Design.org](./Design.org) contains a documentation of the design of GenMOS as it was developed.
+
+**Demo video:** https://www.youtube.com/watch?v=TfCe2ZVwypU
 
 
 ## Paper Reference
