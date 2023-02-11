@@ -21,7 +21,7 @@ agent_config:
       - 0.15
       - 0.8
       transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
   robot:
     action:
@@ -42,7 +42,7 @@ agent_config:
         sep: 0.3
     detectors:
       Cup:
-        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 10000000.0
