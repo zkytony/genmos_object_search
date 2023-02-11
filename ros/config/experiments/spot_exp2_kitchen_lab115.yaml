@@ -21,7 +21,7 @@ agent_config:
       - 0.01
       - 0.8
       transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
     Cat:
       class: Cat
@@ -31,7 +31,7 @@ agent_config:
       - 0.15
       - 0.8
       transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
     Pringles:
       class: Pringles
@@ -41,7 +41,7 @@ agent_config:
       - 0.01
       - 0.8
       transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
   robot:
     action:
@@ -60,21 +60,21 @@ agent_config:
         sep: 0.75
     detectors:
       Bowl:
-        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 100000000.0
           - 0.2
           sensor: hand_camera
       Cat:
-        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 100000000.0
           - 0.2
           sensor: hand_camera
       Pringles:
-        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 100000000.0

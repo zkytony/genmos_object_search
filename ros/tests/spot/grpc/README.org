@@ -65,7 +65,7 @@ Traceback (most recent call last):
   File "test_process_robot_pose_observation_3d_with_point_cloud.py", line 83, in run
     self.test_one_round((0, 0, 0, 0, 0, 0))
   File "test_process_robot_pose_observation_3d_with_point_cloud.py", line 68, in test_one_round
-    response = self._sloop_client.processObservation(
+    response = self._genmos_client.processObservation(
 TypeError: processObservation() takes 3 positional arguments but 4 were given
   #+end_src
 
@@ -74,7 +74,7 @@ TypeError: processObservation() takes 3 positional arguments but 4 were given
 Traceback (most recent call last):
   File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_server.py", line 443, in _call_behavior
     response_or_iterator = behavior(argument, context)
-  File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/server.py", line 411, in ProcessObservation
+  File "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/genmos_object_search/src/genmos_object_search/grpc/server.py", line 411, in ProcessObservation
     planner = self._planners[request.robot_id]
 KeyError: 'robot0'
   #+end_src
@@ -87,9 +87,9 @@ KeyError: 'robot0'
    Traceback (most recent call last):
      File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_server.py", line 443, in _call_behavior
        response_or_iterator = behavior(argument, context)
-     File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/server.py", line 427, in ProcessObservation
+     File "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/genmos_object_search/src/genmos_object_search/grpc/server.py", line 427, in ProcessObservation
        agent_utils.update_planner(planner, agent, observation, action)
-     File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/utils/agent_utils.py", line 451, in update_planner
+     File "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/genmos_object_search/src/genmos_object_search/grpc/utils/agent_utils.py", line 451, in update_planner
        planning_zobjs = {agent.robot_id: observation.z(agent.robot_id)}
    AttributeError: 'RobotObservation' object has no attribute 'z'
    #+end_src
@@ -100,10 +100,10 @@ KeyError: 'robot0'
       File "test_plan_action_3d_with_point_cloud.py", line 67, in <module>
         PlanActionTestcase(node_name="test_plan_action_3d_with_point_cloud",
       File "test_plan_action_3d_with_point_cloud.py", line 47, in run
-        response = self._sloop_client.processObservation(
-      File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/client.py", line 156, in processObservation
+        response = self._genmos_client.processObservation(
+      File "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/genmos_object_search/src/genmos_object_search/grpc/client.py", line 156, in processObservation
         return self.call(self.stub.ProcessObservation, request, timeout=timeout)
-      File "/home/kaiyu/repo/robotdev/shared/ros/sloop_object_search/sloop_object_search/src/sloop_object_search/grpc/client.py", line 44, in call
+      File "/home/kaiyu/repo/robotdev/shared/ros/genmos_object_search/genmos_object_search/src/genmos_object_search/grpc/client.py", line 44, in call
         return rpc_method(request, timeout=timeout)
       File "/home/kaiyu/repo/robotdev/spot/venv/spot/lib/python3.8/site-packages/grpc/_channel.py", line 946, in __call__
         return _end_unary_response_blocking(state, call, False, None)

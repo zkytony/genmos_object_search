@@ -26,7 +26,7 @@ agent_config:
       - 0.15
       - 0.8
       transition:
-        class: sloop_object_search.oopomdp.StaticObjectTransitionModel
+        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
       viz_type: cube
   robot:
     action:
@@ -49,7 +49,7 @@ agent_config:
         sep: 0.75
     detectors:
       Cat:
-        class: sloop_object_search.oopomdp.FanModelAlphaBeta
+        class: genmos_object_search.oopomdp.FanModelAlphaBeta
         params:
           quality:
           - 100000.0
@@ -57,7 +57,7 @@ agent_config:
           sensor: hand_fan
     detectors_local:
       Cat:
-        class: sloop_object_search.oopomdp.FrustumVoxelAlphaBeta
+        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
           - 100000000.0
@@ -99,7 +99,7 @@ agent_config:
   targets:
   - Cat
 planner_config:
-  planner: sloop_object_search.oopomdp.planner.hier.HierPlanner
+  planner: genmos_object_search.oopomdp.planner.hier.HierPlanner
   planner_params:
     global:
       exploration_const: 1000
