@@ -1,6 +1,6 @@
 * GenMOS (Generalized Multi-Object Search)
 
-To get started, check out [[https://github.com/zkytony/genmos_object_search/wiki/GenMOS:-A-System-for-Generalized-Multi-Object-Search][this wiki page].
+To get started, check out [[https://github.com/zkytony/genmos_object_search/wiki/GenMOS:-A-System-for-Generalized-Multi-Object-Search][this wiki page]].
 
 This repo is structured as follows:
 - [[./genmos_object_search][genmos_object_search]]: a robot-independent package for object search that implements the GenMOS system.
