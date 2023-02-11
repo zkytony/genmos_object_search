@@ -1,25 +1,3 @@
-* GenMOS (Generalized Multi-Object Search)
-
-[[file:docs/genmos_demogrid.png]]
-
-file:docs/spot_cat_search.gif
-
-*Video:* https://www.youtube.com/watch?v=TfCe2ZVwypU
-
-
-To get started, check out [[https://github.com/zkytony/genmos_object_search/wiki/GenMOS:-A-System-for-Generalized-Multi-Object-Search][this wiki page]].
-
-This repo is structured as follows:
-- [[./genmos_object_search][genmos_object_search]]: a robot-independent package for object search that implements the GenMOS system.
-- [[./ros][ros]]: a ROS package that integrates ~genmos_object_search~ with ROS.
-- [[./ros2][ros2]]: a ROS 2 package that integrates ~genmos_object_search~ with ROS 2 (TODO)
-- [[./viam][viam]]: a Viam client application that integrates ~genmos_object_search~ with [[https://www.viam.com/][Viam]].
-
-Check out the README in each directory for more information.
-Below is a documentation of the design of GenMOS as it was
-developed.
-
-
 ** GenMOS object search package design decisions
    <<design_decisions>>
 *** Objective (last updated 08/15/2022)
