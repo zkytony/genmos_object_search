@@ -66,30 +66,6 @@ movo/src/kinova-movo/DONE_SETUP
 
 */venv/*
 
-# Files generated when building using custom script (e.g. setup_turtlebot.bash)
-.DONE_SETUP
-DONE_SETUP
-
-thirdparty/libfreenect2  # its own repo
-thirdparty/ORB_SLAM3
-thirdparty/
-
-
-spot/ros_ws/src/rbd_spot_perception/analysis/results
-spot/ros_ws/src/rbd_spot_perception/maps/*.db
-spot/ros_ws/src/rtabmap_ros
-
-# point clouds
-spot/ros_ws/src/rbd_spot_perception/maps/*.ply
-
-# temporary map files
-spot/ros_ws/src/rbd_spot_perception/maps/.map_name
-spot/ros_ws/src/rbd_spot_perception/maps/backup
-
-# 2d maps
-spot/ros_ws/src/rbd_spot_perception/maps/*.pgm
-spot/ros_ws/src/rbd_spot_perception/maps/*.yaml
-
 # bag files (too large)
 *.bag
 
