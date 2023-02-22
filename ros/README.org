@@ -21,8 +21,19 @@ Before building this package, make sure you have activated a virtualenv. Then, r
 #+begin_src
 source install_dependencies.bash
 #+end_src
-
 to install python dependencies.
+
+*Note* that we use [[https://github.com/eric-wieser/ros_numpy][ros_numpy]] to convert point cloud ROS message to numpy array,
+so that point cloud observation can be used to update the search region (see [[./src/genmos_ros/genmos_ros.py#117][code]]).
+Typically, one installs ros_numpy by ~sudo apt-get install ros-noetic-ros-numpy~.
+However, there are two issues (1) [[https://github.com/eric-wieser/ros_numpy/issues/37][this issue]] where numpy > 1.24 causes an AttributeError on `numpy.float`,
+and that (2) the ros_numpy package was no longer maintained.
+
+As a result, we folded the source code of ros_numpy into our repository,
+under [[./thirdparty/ros_numpy]]. It is modified to be a standard Python
+package that can be pip-installed. The installation is, still, handled
+by ~source install_dependencies.bash~ so you do not need to do anything.
+
 
 *** Build the ROS package
 #+begin_src
