@@ -1,5 +1,5 @@
 set -o xtrace
-pip install 'numpy>=1.20.3'
+pip install 'numpy>=1.20.3,<1.24.0'
 pip install 'opencv-contrib-python>=4.5.1.48'
 pip install 'opencv-python>=4.1.1.26'
 pip install 'pandas>=1.1.2'
