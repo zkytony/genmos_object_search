@@ -80,7 +80,7 @@ def fields_to_dtype(fields, point_step):
     while offset < point_step:
         np_dtype_list.append(('%s%d' % (DUMMY_FIELD_PREFIX, offset), np.uint8))
         offset += 1
-        
+
     return np_dtype_list
 
 
@@ -107,8 +107,8 @@ def dtype_to_fields(dtype):
 
 @converts_to_numpy(PointCloud2)
 def pointcloud2_to_array(cloud_msg, squeeze=True):
-    ''' Converts a rospy PointCloud2 message to a numpy recordarray 
-    
+    ''' Converts a rospy PointCloud2 message to a numpy recordarray
+
     Reshapes the returned array to have shape (height, width), even if the height is 1.
 
     The reason for using np.frombuffer rather than struct.unpack is speed... especially
@@ -123,7 +123,7 @@ def pointcloud2_to_array(cloud_msg, squeeze=True):
     # remove the dummy fields that were added
     cloud_arr = cloud_arr[
         [fname for fname, _type in dtype_list if not (fname[:len(DUMMY_FIELD_PREFIX)] == DUMMY_FIELD_PREFIX)]]
-    
+
     if squeeze and cloud_msg.height == 1:
         return np.reshape(cloud_arr, (cloud_msg.width,))
     else:
@@ -161,7 +161,7 @@ def merge_rgb_fields(cloud_arr):
     '''
     r = np.asarray(cloud_arr['r'], dtype=np.uint32)
     g = np.asarray(cloud_arr['g'], dtype=np.uint32)
-    b = np.asarray(cloud_arr['b'], dtype=np.uint32)    
+    b = np.asarray(cloud_arr['b'], dtype=np.uint32)
     rgb_arr = np.array((r << 16) | (g << 8) | (b << 0), dtype=np.uint32)
 
     # not sure if there is a better way to do this. i'm changing the type of the array
@@ -175,7 +175,7 @@ def merge_rgb_fields(cloud_arr):
         if field_name not in ('r', 'g', 'b'):
             new_dtype.append((field_name, field_type))
     new_dtype.append(('rgb', np.float32))
-    new_cloud_arr = np.zeros(cloud_arr.shape, new_dtype)    
+    new_cloud_arr = np.zeros(cloud_arr.shape, new_dtype)
 
     # fill in the new array
     for field_name in new_cloud_arr.dtype.names:
@@ -183,7 +183,7 @@ def merge_rgb_fields(cloud_arr):
             new_cloud_arr[field_name] = rgb_arr
         else:
             new_cloud_arr[field_name] = cloud_arr[field_name]
-        
+
     return new_cloud_arr
 
 def split_rgb_field(cloud_arr):
@@ -197,7 +197,7 @@ def split_rgb_field(cloud_arr):
     r = np.asarray((rgb_arr >> 16) & 255, dtype=np.uint8)
     g = np.asarray((rgb_arr >> 8) & 255, dtype=np.uint8)
     b = np.asarray(rgb_arr & 255, dtype=np.uint8)
-    
+
     # create a new array, without rgb, but with r, g, and b fields
     new_dtype = []
     for field_name in cloud_arr.dtype.names:
@@ -206,9 +206,9 @@ def split_rgb_field(cloud_arr):
             new_dtype.append((field_name, field_type))
     new_dtype.append(('r', np.uint8))
     new_dtype.append(('g', np.uint8))
-    new_dtype.append(('b', np.uint8))    
+    new_dtype.append(('b', np.uint8))
     new_cloud_arr = np.zeros(cloud_arr.shape, new_dtype)
-    
+
     # fill in the new array
     for field_name in new_cloud_arr.dtype.names:
         if field_name == 'r':
@@ -229,7 +229,7 @@ def get_xyz_points(cloud_array, remove_nans=True, dtype=np.float):
     if remove_nans:
         mask = np.isfinite(cloud_array['x']) & np.isfinite(cloud_array['y']) & np.isfinite(cloud_array['z'])
         cloud_array = cloud_array[mask]
-    
+
     # pull out x, y, and z values
     points = np.zeros(cloud_array.shape + (3,), dtype=dtype)
     points[...,0] = cloud_array['x']
