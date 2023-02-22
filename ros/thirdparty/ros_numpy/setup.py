@@ -1,11 +1,10 @@
-## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
+#!/usr/bin/env
 
-from distutils.core import setup
-from catkin_pkg.python_setup import generate_distutils_setup
+from setuptools import setup, find_packages
 
-# fetch values from package.xml
-setup_args = generate_distutils_setup(
-    packages=['ros_numpy'],
-    package_dir={'': 'src'})
-
-setup(**setup_args)
+setup(name='ros_numpy',
+      packages=find_packages(),#['genmos_object_search', 'sloop'],
+      package_dir={'': 'src'},
+      version='noetic-p1',
+      description="Tools for converting ROS messages to and from numpy arrays. (version Noetic patch 1)"
+)
