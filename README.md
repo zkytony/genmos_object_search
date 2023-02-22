@@ -1,10 +1,11 @@
 
 [<img src='./docs/genmos_demogrid.png' width='450px'>](https://www.youtube.com/watch?v=TfCe2ZVwypU)
 
+(click image to watch video)
 
 # GenMOS (Generalized Multi-Object Search)
 
-To get started, check out [this wiki page](https://github.com/zkytony/genmos_object_search/wiki/GenMOS:-A-System-for-Generalized-Multi-Object-Search).
+To get started, check out [this wiki page](https://github.com/zkytony/genmos_object_search/wiki/100-GenMOS:-A-System-for-Generalized-Multi-Object-Search).
 
 This repo is structured as follows:
 - [genmos_object_search](./genmos_object_search): a robot-independent package for object search that implements the GenMOS system.
