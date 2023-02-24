@@ -1,6 +1,5 @@
 <launch>
-  <arg name="spot" value="002"/>
-  <arg name="map_type" default="lidar"/>
+  <arg name="spot"/>
   <arg name="exp_name" value="spot_exp1_local_lab121"/>
   <arg name="local_search" default="false"/>
 
