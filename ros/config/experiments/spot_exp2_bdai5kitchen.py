@@ -1,18 +1,18 @@
 ######### SEARCH TRIAL CONFIGURATIONS ######
 TARGET_OBJECTS = ["Cat", "Lyzol", ]  #"ToyPlane", "Pringles"]
 
-SEARCH_REGION_3D = {"res": 0.1,
+SEARCH_REGION_3D = {"res": 0.15,
                     "octree_size": 32,
                     "region_size_x": 4.0,
-                    "region_size_y": 4.0,
-                    "region_size_z": 2.2,
-                    "center_x": -17.014184951782227,
-                    "center_y": -9.86181640625,
+                    "region_size_y": 5.0,
+                    "region_size_z": 2.5,
+                    "center_x": 0.7050081253051758,
+                    "center_y": 4.158568382263184,
                     "center_z": 0.0,
                     "center_qx": 0.0,
                     "center_qy": 0.0,
-                    "center_qz": 0.7707250899684661,
-                    "center_qw": 0.6371678238055495,
+                    "center_qz": 0.9993078786023883,
+                    "center_qw": 0.03719897529763721,
                     "debug": False}
 
 
@@ -47,6 +47,15 @@ LOCAL_TOPO = {'num_nodes': 10,
               'sep': 0.75,
               'debug': False,
               'resample_thres': 0.4,
+              # # the 3D box within which samples of viewpoint positions will be drawn.
+              # 'sample_space': {
+              #       "center_x": 1.5050081253051758,
+              #       "center_y": 4.158568382263184,
+              #       "center_z": 0.0,
+              #     "size_x": 2.00,
+              #     "size_y": 1.50,
+              #     "size_z": 2.00
+              # },
               '3d_proj_2d': {'layout_cut': 0.4,
                              'floor_cut': 0.15,
                              'brush_size': 0.2,
