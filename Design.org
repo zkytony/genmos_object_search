@@ -1,11 +1,12 @@
 ** GenMOS object search package design decisions
    <<design_decisions>>
+
 *** Objective
     The GenMOS package is an object search package
     that performs hierarchical object search with 3D local search and 2D global search.
 
 *** gRPC calls as the core interface
-    - GenMOS is a middleware-independent package who
+    - genmos object search is a middleware-independent package who
       is intended to be run as a gRPC server, and offers its functionality
       through handling gRPC calls.
 
@@ -50,32 +51,75 @@
      The inflation radius of obstacles can be a function in GridMap2 - it is
      simply a matter of adding more obstacles close to existing ones.
 
-*** POMDP Agent Implementation
-    - belief is handled by pomdp_py.OOBelief. There is no
-      need for additional belief class.
-
+*** POMDP Agent Types
     - ~MosAgent~ is the high-level class for a multi-object search agent.
       It does not assume if the world is 2D or 3D. The code is general.
 
-      ~SloopMosAgent~ is an agent that applies SLOOP to MOS (the parent class is
-      ~SloopAgent~, which has a spatial language observation space & model).
-      Because MosAgent is not grounded to any world representation, I have left
-      ~_init_oopomdp~ unimplemented.
+      ~SloopMosAgent~ is a sloop agent whose underlying OOPOMDP is
+      a MosAgent. Because MosAgent is not grounded to any world
+      representation, I have left ~_init_oopomdp~ unimplemented.
+      *TODO: Is SloopMosAgent still valid? 09/06/22*
 
-    - We will implement: ~MosAgentBasic2D~, which is just a 2D local
-      search agent (with primitive actions); There should be not
-      much work in putting this one together. Will implement ~SloopMosAgentBasic2D~
-      even though we will probably not use it for real robot experiments.
+    - ~MosAgentBasic2D~ is just a 2D local search agent (with primitive actions);
+      The corresponding ~SloopMosAgentBasic2D~ will probably not use it for real
+      robot experiments. *TODO: Is SloopMosAgentBasic2D still valid? 09/06/22*
 
       ~MosAgentTopo2D~, which is an agent with topo map action space.
       This should also not be too much work. With that, I can implement
       the ~SloopMosAgentTopo2D~, which is our global search agent.
+      *TODO: Is SloopMosAgentTopo2D still valid? 09/06/22*
+
+    - ~MosAgentBasic3D~ is a 3D local search agent with primitive actions.
+      ~MosAgentTopo3D~ inherits ~MosAgentBasic3D~ and differs in using a
+      topo graph-based action space.
 
     - Parameters for sensors are in metric units when being specified
       by the user (for a real robot scenario), but converted into POMDP
       coordinate units when passed in for creating an agent. This conversion
       is handled by us.
+*** Coordinate Frames
+     The POMDP agent uses a discretized coordinate frame, where
+     the coordinates are integers (could be positive or negative).
+     This frame is translated and scaled with respect to the world
+     frame. There is no rotation difference between them.
 
+     Code inside genmos_object_search/oopomdp are by default working with
+     POMDP frame (except for, e.g. SearchRegion which connects the two).
+     Code inside genmos_object_search/grpc assume client and server communicate
+     with messages that by default contain coordinates in the world frame.
+
+     The camera model by default looks at +x (both for 2D and 3D).
+
+*** Belief over robot pose
+     The POMDP agent allows the robot to have uncertainty over its pose.
+     It expects a localization module on the system will output estimates
+     about the robot pose, with uncertainty represented by a covariance
+     matrix. Therefore, the POMDP agent will model the belief over robot
+     pose as a Gaussian. During planning, the POMDP agent samples robot
+     poses from this belief. See ~RobotObservationModel~.
+
+*** Belief over objects
+    - belief is handled by pomdp_py.OOBelief. There is no
+      need for additional belief class.
+
+*** 3D vs. 2D Agent
+    A 3D agent should receive 3D object detections and 3D robot pose estimations.
+    A 2D agent should receive 2D object detections and 2D robot pose estimations.
+*** RobotLocalization, RobotObservation and RobotObservationTopo
+     There are two types of robot observations we care about.
+
+     The first type can be thought of as observations about real robot
+     localization. This is done by an on-board localization module, which
+     outputs mean and covariance of the current robot pose. These observations
+     are used to update the robot's belief about its own pose in the POMDP
+     model.  We require ~RobotLocalization~ to represent the pose estimation
+     observation, and ~RobotObservation~ to capture the observation of the
+     localization as well as other attributes (created based on a ~ProcessObservationRequest~).
+
+     The second type can be thought of as obseravtions sampled during
+     planning (MCTS). These observations are generated based on the
+     sampled state from the belief. For such, ~RobotObservation~ or ~RobotObservationTopo~
+     may be used, depending on the agent.
 
 *** ProcessObservation vs. UpdateSearchRegion
     Even though both are related to updating the agent's model of
@@ -83,39 +127,6 @@
     rpc methods. This clarifies and simplifies the implementation,
     as both are concerned with quite distinct issues and are called
     likely in different frequency.
-
-*** Visualization functions in ros_utils
-    Visualization functions in ~ros_utils.py~ that begin with ~make_*~ should be
-    general in the sense that it doesn't rely on, for example, the assumption in
-    the OOPOMDP camera model which by-default looks at -z while ROS by-default
-    looks at +x.  These functions just return visualization markers for the
-    poses and headers that are given, and don't make any assumption about what
-    frames those poses are for. Users of those functions should carefully pass
-    in the appropriate header and pose - *what is visualized is what you pass in*.
-
-    Visualization functions that do not begin with ~make_*~ do not follow the
-    above convention. Example ~viz_msgs_for_robot_pose_proto~ will return RVIZ
-    marker and tf2 message that account for the default rotation differences
-    between the camera in ROS and the camera in GenMOS.
-*** Belief over robot pose
-    The POMDP agent allows the robot to have uncertainty over its pose.
-    It expects a localization module on the system will output estimates
-    about the robot pose, with uncertainty represented by a covariance
-    matrix. Therefore, the POMDP agent will model the belief over robot
-    pose as a Gaussian. During planning, the POMDP agent samples robot
-    poses from this belief to run MCTS, and these samples will be used
-    /as is/ as observations about the robot pose.
-
-*** Coordinate Frames
-    The POMDP agent uses a discretized coordinate frame, where
-    the coordinates are integers (could be positive or negative).
-    This frame is translated and scaled with respect to the world
-    frame. There is no rotation difference between them.
-
-    Code inside genmos_object_search/oopomdp are by default working with
-    POMDP frame (except for, e.g. SearchRegion which connects the two).
-    Code inside genmos_object_search/grpc assume client and server communicate
-    with messages that by default contain coordinates in the world frame.
 *** Object detection precision in POMDP frame
     Although ~pomdp_detection_from_proto~ allows specifying position
     and rotation precisions when converting object detection from
@@ -123,10 +134,6 @@
     to configure those precisions because the default settings
     is already appropriate for the POMDP model (positions are
     integers, and rotation/size precision to 0.001 is fine-grained).
-*** Action id and planning
-    Each ~PlanActionReply~ contains an 'action_id', which is used to:
-    - Inform the server that the action execution has finished
-    - Label a ProcessObservationRequest to be related to the action.
 *** ObjectDetection, Voxel and ObjectVoxel
     regarding the observation of objects in the 3D object search model,
     there are three types. ObjectDetection is what the robot would
@@ -135,11 +142,50 @@
     ObjectVoxel is specific to an object $i$, used to refer to a voxel
     in $V_i$, the field of view of object i. This is used during planning
     and updating the planner.
-*** Object detection types
-    We can handle:
-    - 3D object detection bounding boxes. If not available:
-    - label-only object detection.
 
+*** Hierarchical Planning
+    <<hierarchical-planning>>
+    - Hierarchical planning works as follows. First, a global agent is created
+      based on client's agent configuration in the "CreateAgent" request. The global
+      agent should be a ~MosAgentTopo2D~ or a ~MosAgentTopo3D~. The agent config
+      should contain both "sensors"/"detectors" and "sensors_local" and
+      "detectors_local" fields, as the sensor model may be different for the
+      global POMDP agent and the local POMDP agent.
+
+      Then, the client sends a CreatePlanner request, specifying "HierPlanner"
+      as the planner. The HierPlanner will recognize the agent with robot_id
+      in the request as the global agent. Suppose robot_id="hrobot0"
+
+      Then, the client sends a PlanAction request. The HierPlanner performs
+      planning for the global agent. If the output is a non-stay action,
+      it is returned to the client for execution. If the output *is a stay action*,
+      then:
+
+          (1) the server creates a placeholder for agent "hrobot0_local"
+          (2) the server sends the client a message requesting a UpdateSearchRegion
+              for "hrobot0_local". This is necessary in order to provide
+              the search region to create the local search agent.
+          (3) Upon receiving UpdateSearchRegion for "hrobot0_local", the
+              local search agent is created.
+          (4) The HierPlanner is given the local search agent, and plans
+              an action for this agent to be executed by the client.
+
+      The client _should be aware of the local agent, and know that they can
+      request, for example GetObjectBeliefs, with the robot_id field equal to
+      "hrobot0_local". However, PlanAction request should be sent regarding
+      the global agent "hrobot0". The local agent does not accept planning request
+      directly.
+
+
+    - To use hierarchical planning, in "agent_config" (part of the config for CreateAgent rpc),
+      the "agent_type" should be set to "hierarchical" and the "agent_class" should be "MosAgentTopo2D".
+
+      Note that "agent_type" should only be either "hierarchical" or "local"
+
+*** Action id and planning
+    Each ~PlanActionReply~ contains an 'action_id', which is used to:
+    - Inform the server that the action execution has finished
+    - Label a ProcessObservationRequest to be related to the action.
 *** Server and Client: A Concrete Use Case
     The server runs planner, holds agent's beliefs, etc.
     So ideally, the server is a powerful machine. It is
@@ -169,6 +215,24 @@
     - visualize the plan or planned action
     - visualize the planning process
     - visualize the FOV and observations
+*** Visualization functions in ros_utils
+    Visualization functions in ~ros_utils.py~ that begin with ~make_*~ should be
+    general. These functions just return visualization markers for the
+    poses and headers that are given, and don't make any assumption about what
+    frames those poses are for. Users of those functions should carefully pass
+    in the appropriate header and pose - *what is visualized is what you pass in*.
+
+    Visualization functions that do not begin with ~make_*~ do not follow the
+    above convention. Example ~viz_msgs_for_robot_pose_proto~ will return RVIZ
+    marker and tf2 message that account for the default rotation differences
+    between the camera in ROS and the camera in GenMOS.
+
+
+
+
+
+
+
 
 ** Future work
    The following is part of the original objective, yet
