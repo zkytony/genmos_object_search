@@ -6,9 +6,13 @@ SEARCH_REGION_3D = {"res": 0.1,
                     "region_size_x": 3.0,
                     "region_size_y": 3.0,
                     "region_size_z": 1.5,
-                    "center_x": -0.5,
-                    "center_y": -1.65,
-                    "center_z": -0.25,
+                    "center_x": 4.392292499542236,
+                    "center_y": 0.2871408462524414,
+                    "center_z": -0.15,
+                    "center_qx": 0.0,
+                    "center_qy": 0.0,
+                    "center_qz": 0.5939991018421823,
+                    "center_qw": 0.804465702818138,
                     "debug": False}
 
 
