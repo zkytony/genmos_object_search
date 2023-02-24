@@ -1,10 +1,20 @@
-<!-- Launches the task client - the process that talks to the
+<!--
+    Launches
+    - local point cloud publisher that takes in full point cloud
+      and filters out points outside of a region (box).
+      (this point cloud should be at /spot/local_region/input_points)
+
+     - the task client - the process that talks to the
      GenMOS gRPC server and responsible for interfacing with
-     the actual robot to receive observations & execute actions -->
+     the actual robot to receive observations & execute actions-->
 <launch>
-  <arg name="spot"/>
   <arg name="exp_name"/>
   <arg name="local_search" default="true"/>
+  <arg name="search_region_3d_config_prefix"
+       value="/spot/genmos_ros/config/agent_config/search_region/3d"/>
+  <!-- how much points from map point cloud do we keep (e.g. 0.2 means 20%) -->
+  <arg name="retain_ratio" default="0.2"/>
+
 
   <!-- If we are doing local search, then the search region center is published
        at /local_region_center; Otherwise, it is spot's hand pose -->
@@ -13,19 +23,18 @@
     <!-- publish region center -->
     <node name="local_search_center_publisher"
           pkg="genmos_object_search_ros" type="local_search_center_publisher.py"
-          ns="spot_$(arg spot)" output="screen">
-      <param name="search_region_3d_config_prefix"
-             value="/spot_$(arg spot)/genmos_ros/config/agent_config/search_region/3d"/>
+          ns="spot" output="screen">
+      <param name="search_region_3d_config_prefix" value="$(arg search_region_3d_config_prefix)"/>
       <param name="world_frame" value="graphnav_map"/>
     </node>
 
     <!-- Run GENMOS object search decision making interface (POMDP planner) -->
-    <node name="genmos_ros" ns="spot_$(arg spot)"
+    <node name="genmos_ros" ns="spot"
           pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"
                 file="$(find genmos_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
-      <param name="robot_id" value="spot_$(arg spot)"/>
+      <param name="robot_id" value="spot"/>
       <param name="world_frame" value="graphnav_map"/>
       <param name="dynamic_update" value="False"/>
       <remap from="~search_region_center" to="/local_region_center" />
@@ -34,7 +43,7 @@
       <remap from="~robot_pose" to="/spot_hand_pose"/>
       <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/>
       <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/>
-      <remap from="~action_done" to="/spot_$(arg spot)/action_executor/done"/>
+      <remap from="~action_done" to="/spot/action_executor/done"/>
     </node>
   </group>
 
@@ -43,12 +52,12 @@
   <group unless="$(arg local_search)">
 
     <!-- Run GENMOS object search decision making interface (POMDP planner) -->
-    <node name="genmos_ros" ns="spot_$(arg spot)"
+    <node name="genmos_ros" ns="spot"
           pkg="genmos_object_search_ros" type="run_search.py" output="screen">
       <!-- So strange. you can't do ~config -->
       <rosparam param="config" command="load"
                 file="$(find genmos_object_search_ros)/config/experiments/$(arg exp_name).yaml"/>
-      <param name="robot_id" value="spot_$(arg spot)"/>
+      <param name="robot_id" value="spot"/>
       <param name="world_frame" value="graphnav_map"/>
       <remap from="~search_region_center" to="/spot_hand_pose" />
       <remap from="~search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
@@ -56,10 +65,36 @@
       <remap from="~robot_pose" to="/spot_hand_pose"/>
       <remap from="~object_detections" to="/spot/segmentation/hand/result_boxes3d"/>
       <remap from="~vision_info" to="/spot/segmentation/hand/vision_info"/>
-      <remap from="~action_done" to="/spot_$(arg spot)/action_executor/done"/>
+      <remap from="~action_done" to="/spot/action_executor/done"/>
     </node>
-
   </group>
+
+
+
+  <!-- If we are doing local search, then the search region center is published
+       at /local_region_center; Otherwise, it is spot's hand pose -->
+  <group if="$(arg local_search)">
+    <!-- Finally, publish local region -->
+    <include file="$(find genmos_object_search_ros)/launch/local_cloud_publisher.launch">
+      <arg name="robot_pose_topic" value="/local_region_center"/>
+      <arg name="global_cloud_topic" value="/spot/local_region/input_points"/>
+      <arg name="region_size_x" value="$(arg search_region_3d_config_prefix)/region_size_x"/>
+      <arg name="region_size_y" value="$(arg search_region_3d_config_prefix)/region_size_y"/>
+      <arg name="region_size_z" value="$(arg search_region_3d_config_prefix)/region_size_z"/>
+      <arg name="retain_ratio" value="$(arg retain_ratio)"/>
+    </include>
+  </group>
+  <group unless="$(arg local_search)">
+    <include file="$(find genmos_object_search_ros)/launch/local_cloud_publisher.launch">
+      <arg name="robot_pose_topic" value="/spot_hand_pose"/>
+      <arg name="global_cloud_topic" value="/spot/local_region/input_points"/>
+      <arg name="region_size_x" value="$(arg search_region_3d_config_prefix)/region_size_x"/>
+      <arg name="region_size_y" value="$(arg search_region_3d_config_prefix)/region_size_y"/>
+      <arg name="region_size_z" value="$(arg search_region_3d_config_prefix)/region_size_z"/>
+      <arg name="retain_ratio" value="$(arg retain_ratio)"/>
+    </include>
+  </group>
+
 
 
 </launch>
