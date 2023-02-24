@@ -1,10 +1,10 @@
 ** GenMOS object search package design decisions
    <<design_decisions>>
-*** Objective (last updated 08/15/2022)
+*** Objective
     The GenMOS package is an object search package
     that performs hierarchical object search with 3D local search and 2D global search.
 
-*** gRPC calls as the core interface (last updated 08/15/2022)
+*** gRPC calls as the core interface
     - GenMOS is a middleware-independent package who
       is intended to be run as a gRPC server, and offers its functionality
       through handling gRPC calls.
@@ -16,13 +16,13 @@
       quantities to POMDP frames (or back). Quantities that are fed into
       POMDP models should by default be in POMDP frame.
 
-*** Specification of Search Region (last updated 08/15/2022)
+*** Specification of Search Region
     2D search region, designed for global search, is fundamentally a occupancy grid map.
         this can be built from a point cloud or an occupancy grid map
     3D search region, designed for local search, is fundamentally an occupancy octree
         this can be built from a point cloud
 
-*** Specification of Reachable Viewpoints (last updated 08/15/2022)
+*** Specification of Reachable Viewpoints
     There is no direct specification of reachable viewpoints.
 
     Instead, one could specify /unreachable/ viewpoints through:
@@ -34,7 +34,7 @@
       position inflation radius", and "planning region" (which limits the search
       space considered during planning)
 
-*** Specification of (Primitive) Actions (last updated 08/15/2022)
+*** Specification of (Primitive) Actions
     The global search agent's action space is based on topological graph nodes.
     The local search agent's action space is based on either relative moves,
        or a set of sampled viewpoints within the local region (like a topograph but fully connected)
@@ -42,7 +42,7 @@
     When the action is a viewpoint, it will respect the reachable viewpoints
     specification (see above)
 
-*** Labels in GridMap2 (last updated 08/15/2022)
+*** Labels in GridMap2
      Don't use labels there for the purpose of plain reachability. The
      obstacles set is sufficient for that - see design decision on reachable points
      ([[reachable_viewpoints_design_1]]).
@@ -50,7 +50,7 @@
      The inflation radius of obstacles can be a function in GridMap2 - it is
      simply a matter of adding more obstacles close to existing ones.
 
-*** POMDP Agent Implementation (last updated 08/16/2022)
+*** POMDP Agent Implementation
     - belief is handled by pomdp_py.OOBelief. There is no
       need for additional belief class.
 
@@ -77,12 +77,13 @@
       is handled by us.
 
 
-*** ProcessObservation vs. UpdateSearchRegion (last updated 08/20/2022)
+*** ProcessObservation vs. UpdateSearchRegion
     Even though both are related to updating the agent's model of
     the world (and/or the belief), we will separate them into two
     rpc methods. This clarifies and simplifies the implementation,
     as both are concerned with quite distinct issues and are called
     likely in different frequency.
+
 *** Visualization functions in ros_utils
     Visualization functions in ~ros_utils.py~ that begin with ~make_*~ should be
     general in the sense that it doesn't rely on, for example, the assumption in
