@@ -3,9 +3,9 @@ TARGET_OBJECTS = ["Cat", "Lyzol", ]  #"ToyPlane", "Pringles"]
 
 SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
-                    "region_size_x": 3.0,
-                    "region_size_y": 3.0,
-                    "region_size_z": 1.5,
+                    "region_size_x": 4.0,
+                    "region_size_y": 4.0,
+                    "region_size_z": 2.2,
                     "center_x": 4.392292499542236,
                     "center_y": 0.2871408462524414,
                     "center_z": -0.15,
@@ -55,8 +55,8 @@ LOCAL_TOPO = {'num_nodes': 10,
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 0.5,
-                   "max_height": 1.2}
+LOCAL_REACHABLE = {"min_height": 1.3,
+                   "max_height": 1.6}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
                         "planner_params": {
