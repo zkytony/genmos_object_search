@@ -112,9 +112,13 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
-      center_x: -0.5
-      center_y: -1.65
-      center_z: -0.25
+      center_qw: 0.804465702818138
+      center_qx: 0.0
+      center_qy: 0.0
+      center_qz: 0.5939991018421823
+      center_x: 4.392292499542236
+      center_y: 0.2871408462524414
+      center_z: -0.15
       debug: false
       octree_size: 32
       region_size_x: 3.0
