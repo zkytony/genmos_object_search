@@ -54,17 +54,13 @@ from test_simple_sim_env_navigation import make_nav_action
 from test_simple_sim_env_common import (TestSimpleEnvCase,
                                         observation_msg_to_proto,
                                         wait_for_robot_pose,
-                                        REGION_POINT_CLOUD_TOPIC,
-                                        INIT_ROBOT_POSE_TOPIC,
-                                        ACTION_DONE_TOPIC, OBSERVATION_TOPIC,
-                                        AGENT_CONFIG, PLANNER_CONFIG,
-                                        TASK_CONFIG)
+                                        ACTION_DONE_TOPIC, OBSERVATION_TOPIC)
 
 
 
 class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
 
-    def run(self, o3dviz=False):
+    def run(self, planner_config, task_config, o3dviz=False):
         super().run()
         self.update_search_region_3d()
 
@@ -79,7 +75,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
         self.get_and_visualize_belief_3d(o3dviz=o3dviz)
 
         # create planner
-        response = self._genmos_client.createPlanner(config=PLANNER_CONFIG,
+        response = self._genmos_client.createPlanner(config=planner_config,
                                                     header=proto_utils.make_header(),
                                                     robot_id=self.robot_id)
         rospy.loginfo("planner created!")
@@ -87,7 +83,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
         _start_time = time.time()
 
         # Send planning requests
-        for step in range(TASK_CONFIG["max_steps"]):
+        for step in range(task_config["max_steps"]):
             _time = time.time()
             response_plan = self._genmos_client.planAction(
                 self.robot_id, header=proto_utils.make_header(self.world_frame))
@@ -174,12 +170,12 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
             self.get_and_visualize_belief_3d(o3dviz=o3dviz)
 
             # Check if we are done
-            if objects_found == set(AGENT_CONFIG["targets"]):
+            if objects_found == set(self.agent_config["targets"]):
                 rospy.loginfo("Done!")
                 self.report["success"] = True
                 break
             self.report["total_time"] += _planning_time + _action_time + _observation_and_belief_update_time
-            if self.report["total_time"] > TASK_CONFIG.get("max_time", float('inf')):
+            if self.report["total_time"] > Task_config.get("max_time", float('inf')):
                 rospy.loginfo("Time out!")
                 break
             time.sleep(1)
@@ -292,7 +288,6 @@ def main():
                 "planner_params": {}
             }
 
-
     name = f"{args.prior}-{args.planner}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
     objloc_index = 0
     for i in range(20):
@@ -304,7 +299,8 @@ def main():
             test.reset(reset_index=True)
 
         try:
-            test.run()
+            test.run(planner_config=config["planner_config"],
+                     task_config=config["task_config"])
             save_report(name, test.report, test._objloc_index)
         except TimeoutError as ex:
             rospy.logerr("timed out when waiting for some messages. Trial not saved")

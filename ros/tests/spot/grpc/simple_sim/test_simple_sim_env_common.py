@@ -31,10 +31,12 @@ RESET_TOPIC = "/simple_sim_env/reset"
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
 OBSERVATION_TOPIC = "/simple_sim_env/pomdp_observation"
 
+# default resolution
 SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
 
+# Default configurations
 import yaml
 with open("./config_simple_sim_lab121_lidar.yaml") as f:
     CONFIG = yaml.safe_load(f)
@@ -248,7 +250,7 @@ class TestSimpleEnvCase:
         search_region_config = self.agent_config.get("search_region", {}).get("3d", {})
         search_region_params_3d = dict(
             octree_size=search_region_config.get("octree_size", 32),
-            search_space_resolution=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_3D),
+            search_space_resolution=self.search_space_res_3d,
             region_size_x=search_region_config.get("region_size_x", 4.0),
             region_size_y=search_region_config.get("region_size_y", 4.0),
             region_size_z=search_region_config.get("region_size_z", 2.4),
@@ -284,9 +286,6 @@ class TestSimpleEnvCase:
         self._belief_2d_markers_pub = rospy.Publisher(
             "~belief_2d", MarkerArray, queue_size=10, latch=True)
 
-        self.search_space_res_3d = search_space_res_3d
-        self.search_space_res_2d = search_space_res_2d
-
         # For bookkeeping
         self.report = {}
 
@@ -294,6 +293,11 @@ class TestSimpleEnvCase:
         if agent_config is None:
             agent_config = AGENT_CONFIG
         self.agent_config = agent_config
+
+        search_region_config_3d = self.agent_config.get("search_region", {}).get("3d", {})
+        search_region_config_2d = self.agent_config.get("search_region", {}).get("3d", {})
+        self.search_space_res_3d = search_region_config_3d.get("res", SEARCH_SPACE_RESOLUTION_3D)
+        self.search_space_res_2d = search_region_config_2d.get("res", SEARCH_SPACE_RESOLUTION_2D)
 
         # objloc index for different configurations, useful only for groundtruth prior
         self._objloc_index = objloc_index if objloc_index is not None else 0
