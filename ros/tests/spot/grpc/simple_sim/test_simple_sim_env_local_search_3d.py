@@ -279,20 +279,18 @@ def main():
             }
         }
     elif args.planner == "greedy":
-        config["planner_config"] =  {
+        config["planner_config"] = \
             {
                 "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
                 "planner_params": {}
             }
-        }
     else:
         assert args.planner == "random", f"planner {args.planner} is invalid"
-        config["planner_config"] =  {
+        config["planner_config"] = \
             {
                 "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
                 "planner_params": {}
             }
-        }
 
 
     name = f"{args.prior}-{args.planner}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
