@@ -175,7 +175,7 @@ class TestSimpleEnvLocalSearch(TestSimpleEnvCase):
                 self.report["success"] = True
                 break
             self.report["total_time"] += _planning_time + _action_time + _observation_and_belief_update_time
-            if self.report["total_time"] > Task_config.get("max_time", float('inf')):
+            if self.report["total_time"] > task_config.get("max_time", float('inf')):
                 rospy.loginfo("Time out!")
                 break
             time.sleep(1)
