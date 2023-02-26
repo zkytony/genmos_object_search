@@ -134,16 +134,20 @@ CONFIG_LOCAL = {
     #     "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
     #     "planner_params": {}
     # }
-
     {
-        "planner": "pomdp_py.POUCT",
-        "planner_params": {
-            "exploration_const": 1000,
-            "max_depth": 8,
-            "num_sims": 200,
-            "show_progress": True
-        }
+        "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
+        "planner_params": {}
     }
+
+    # {
+    #     "planner": "pomdp_py.POUCT",
+    #     "planner_params": {
+    #         "exploration_const": 1000,
+    #         "max_depth": 8,
+    #         "num_sims": 200,
+    #         "show_progress": True
+    #     }
+    # }
 }
 
 

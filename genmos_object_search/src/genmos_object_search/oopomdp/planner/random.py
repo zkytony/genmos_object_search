@@ -3,12 +3,13 @@ import random
 from genmos_object_search.oopomdp.domain.action import FindAction, Find
 from genmos_object_search.oopomdp.domain.observation import Voxel
 
+
 class RandomPlanner(pomdp_py.Planner):
     """Outputs action uniformly at random. The default
     behavior will exclude Find in the uniform sampling,
     and will take Find when a target was observed in
     the observation upon update."""
-    def __init__(self, seed=None):
+    def __init__(self, _, seed=None):
         self._rand = random.Random(seed)
         self._find_next = False
 
