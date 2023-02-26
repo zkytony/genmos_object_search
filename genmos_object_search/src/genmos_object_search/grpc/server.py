@@ -245,7 +245,7 @@ class GenMOSServer(gmpb2_grpc.GenMOSServicer):
         return gmpb2.CreatePlannerReply(
             header=proto_utils.make_header(),
             status=Status.SUCCESSFUL,
-            message=self._loginfo(f"Planner created for {request.robot_id}"))
+            message=self._loginfo(f"Planner created for {request.robot_id} (planner: {planner_config['planner']})"))
 
     def PlanAction(self, request, context):
         """The agent can only plan and execute one action at a time.
