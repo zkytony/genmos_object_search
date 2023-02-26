@@ -304,7 +304,7 @@ def main():
             save_report(name, test.report, test._objloc_index)
         except TimeoutError as ex:
             rospy.logerr("timed out when waiting for some messages. Trial not saved")
-            save_report(name, test.report, test._objloc_index, error="timeout")
+            save_report(name, test.report, test._objloc_index, error="timeout waiting for ROS message")
         except Exception as ex:
             rospy.logerr(f"Test failed: {str(ex)}")
             save_report(name, test.report, test._objloc_index, error="exception")
