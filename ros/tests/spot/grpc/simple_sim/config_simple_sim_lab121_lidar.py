@@ -129,7 +129,13 @@ CONFIG_LOCAL = {
         "max_time": 180
     },
 
-    "planner_config": {
+    "planner_config":
+    # {
+    #     "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
+    #     "planner_params": {}
+    # }
+
+    {
         "planner": "pomdp_py.POUCT",
         "planner_params": {
             "exploration_const": 1000,

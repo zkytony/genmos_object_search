@@ -344,11 +344,13 @@ def create_planner(planner_config, agent):
         planner = import_class(planner_class)(**planner_config["planner_params"],
                                               rollout_policy=agent.policy_model)
         return planner
-    elif planner_class.endswith("HierPlanner"):
-        planner = import_class(planner_class)(agent, **planner_config["planner_params"])
-        return planner
     else:
-        raise NotImplementedError(f"Planner {planner_class} is unrecognized.")
+        try:
+            planner = import_class(planner_class)(agent, **planner_config["planner_params"])
+            return planner
+        except ValueError:
+            # error during import_class -- planner is not implemented.
+            raise NotImplementedError(f"Planner {planner_class} is unrecognized.")
 
 
 def make_local_agent_config(hier_agent_config, belief_config=None):
