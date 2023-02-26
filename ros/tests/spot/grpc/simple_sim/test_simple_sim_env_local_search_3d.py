@@ -233,6 +233,8 @@ def main():
                         help='path to .yaml config file')
     parser.add_argument('--res', type=float, default=0.1,
                         help="resolution (side length, in meters). e.g. 0.1")
+    parser.add_argument('--planner', type=str, default="pouct",
+                        choices=['pouct', 'greedy', 'random'])
     args = parser.parse_args()
 
     with open(args.config_file) as f:
@@ -266,7 +268,34 @@ def main():
         "octree_size": args.octree_size
     }
 
-    name = f"{args.prior}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
+    if args.planner == "pouct":
+        config["planner_config"] = {
+            "planner": "pomdp_py.POUCT",
+            "planner_params": {
+                "exploration_const": 1000,
+                "max_depth": 8,
+                "num_sims": 200,
+                "show_progress": True
+            }
+        }
+    elif args.planner == "greedy":
+        config["planner_config"] =  {
+            {
+                "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
+                "planner_params": {}
+            }
+        }
+    else:
+        assert args.planner == "random", f"planner {args.planner} is invalid"
+        config["planner_config"] =  {
+            {
+                "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
+                "planner_params": {}
+            }
+        }
+
+
+    name = f"{args.prior}-{args.planner}-{args.octree_size}x{args.octree_size}x{args.octree_size}"
     objloc_index = 0
     for i in range(20):
         test = TestSimpleEnvLocalSearch(o3dviz=False, prior=prior,

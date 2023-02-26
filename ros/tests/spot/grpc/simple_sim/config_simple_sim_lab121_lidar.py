@@ -129,16 +129,18 @@ CONFIG_LOCAL = {
         "max_time": 180
     },
 
-    "planner_config":
+    "planner_config":  {
+        # to be filled automatically
+    }
+    # some possibilities for planner_config:
     # {
     #     "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
     #     "planner_params": {}
-    # }
-    {
-        "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
-        "planner_params": {}
-    }
-
+    # } or,
+    # {
+    #     "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
+    #     "planner_params": {}
+    # } or,f
     # {
     #     "planner": "pomdp_py.POUCT",
     #     "planner_params": {
