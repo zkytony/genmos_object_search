@@ -307,7 +307,7 @@ def main():
             save_report(name, test.report, test._objloc_index, error="timeout waiting for ROS message")
         except Exception as ex:
             rospy.logerr(f"Test failed: {str(ex)}")
-            save_report(name, test.report, test._objloc_index, error="exception")
+            save_report(name, test.report, test._objloc_index, error=f"exception ({str(ex)})")
         finally:
             objloc_index = test.bump_objloc_index()
             test.reset()
