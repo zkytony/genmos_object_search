@@ -299,18 +299,21 @@ def main():
             test.reset(reset_index=True)
 
         try:
+            bump = True
             test.run(planner_config=config["planner_config"],
                      task_config=config["task_config"])
             save_report(name, test.report, test._objloc_index)
         except TimeoutError as ex:
             rospy.logerr("timed out when waiting for some messages. Trial not saved")
             save_report(name, test.report, test._objloc_index, error="timeout waiting for ROS message")
+            bump = False
         except Exception as ex:
             rospy.logerr(f"Test failed: {str(ex)}")
             save_report(name, test.report, test._objloc_index, error=f"exception ({str(ex)})")
+            bump = False
         finally:
-            objloc_index = test.bump_objloc_index()
-            test.reset()
+            test.reset(bump=bump)
+            objloc_index = test._objloc_index
         print(f"----------------------{i}------------------------------------")
         print("--------------------------------------------------------------")
         print("--------------------------------------------------------------")

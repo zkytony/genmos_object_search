@@ -137,6 +137,9 @@ class SimpleSimEnv(pomdp_py.Environment):
         self._objloc_index = (self._objloc_index + 1) % self._num_objloc_configs
         return self._objloc_index
 
+    def keep_objloc_index(self):
+        return self._objloc_index
+
     def reset_objloc_index(self):
         self._objloc_index = 0
         return self._objloc_index
@@ -258,8 +261,10 @@ class SimpleSimEnvROSNode:
         if "[reset index]" in msg.data:
             rospy.logwarn('Objloc Index Reset!')
             objloc_index = self.env.reset_objloc_index()
-        else:
+        elif "[bump index]" in msg.data:
             objloc_index = self.env.bump_objloc_index()
+        else:
+            objloc_index = self.env.keep_objloc_index()
         self.env = SimpleSimEnv(self._init_config, objloc_index=objloc_index)
         self._navigating = False
         # First, clear existing belief messages

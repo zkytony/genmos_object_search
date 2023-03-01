@@ -330,13 +330,16 @@ class TestSimpleEnvCase:
         self._objloc_index = (self._objloc_index + 1) % self._num_objloc_configs
         return self._objloc_index
 
-    def reset(self, reset_index=False):
+    def reset(self, reset_index=False, bump=False):
         self.report = {}  # clear report
         self._genmos_client.reset()
         rospy.loginfo("Server reset done.")
         if reset_index:
             # we want to start from objloc_index = 0
             self._reset_pub.publish(std_msgs.String("reset [reset index]"))
+        elif bump:
+            self.bump_objloc_index()
+            self._reset_pub.publish(std_msgs.String("reset [bump index]"))
         else:
             self._reset_pub.publish(std_msgs.String("reset"))
         time.sleep(5)
