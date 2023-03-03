@@ -6,7 +6,7 @@ agent_config:
       num_samples: 3000
       occupancy_blow_up_res: 4
       occupancy_fill_height: true
-      occupancy_height_thres: 0.2
+      occupancy_height_thres: -1.0
       prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
@@ -19,36 +19,6 @@ agent_config:
       - 0.67
       - 0.61
       - 0.15
-      - 0.8
-      transition:
-        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
-      viz_type: cube
-    Lyzol:
-      class: Lyzol
-      color:
-      - 0.8
-      - 0.75
-      - 0.54
-      - 0.8
-      transition:
-        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
-      viz_type: cube
-    Pringles:
-      class: Pringles
-      color:
-      - 0.25
-      - 0.72
-      - 0.01
-      - 0.8
-      transition:
-        class: genmos_object_search.oopomdp.StaticObjectTransitionModel
-      viz_type: cube
-    ToyPlane:
-      class: ToyPlane
-      color:
-      - 0.01
-      - 0.76
-      - 0.85
       - 0.8
       transition:
         class: genmos_object_search.oopomdp.StaticObjectTransitionModel
@@ -76,32 +46,11 @@ agent_config:
           - 10000000.0
           - 0.2
           sensor: hand_camera
-      Lyzol:
-        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
-        params:
-          quality:
-          - 10000000.0
-          - 0.2
-          sensor: hand_camera
-      Pringles:
-        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
-        params:
-          quality:
-          - 10000000.0
-          - 0.2
-          sensor: hand_camera
-      ToyPlane:
-        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
-        params:
-          quality:
-          - 10000000.0
-          - 0.2
-          sensor: hand_camera
     id: robot0
     no_look: true
     reachable:
       max_height: 1.2
-      min_height: 0.5
+      min_height: 0.4
     sensors:
     - name: hand_camera
       params:
@@ -112,14 +61,14 @@ agent_config:
         occlusion_enabled: true
   search_region:
     3d:
-      center_qw: 0.804465702818138
+      center_qw: 0.7837748310218198
       center_qx: 0.0
       center_qy: 0.0
-      center_qz: 0.5939991018421823
-      center_x: 4.392292499542236
-      center_y: 0.2871408462524414
-      center_z: -0.15
-      debug: false
+      center_qz: -0.621045098408093
+      center_x: 4.4958882331848145
+      center_y: -2.278994083404541
+      center_z: -0.1
+      debug: true
       octree_size: 32
       region_size_x: 3.0
       region_size_y: 3.0
@@ -127,9 +76,6 @@ agent_config:
       res: 0.1
   targets:
   - Cat
-  - ToyPlane
-  - Lyzol
-  - Pringles
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
