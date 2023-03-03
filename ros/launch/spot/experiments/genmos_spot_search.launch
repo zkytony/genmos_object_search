@@ -13,7 +13,7 @@
   <arg name="search_region_3d_config_prefix"
        value="/spot/genmos_ros/config/agent_config/search_region/3d"/>
   <!-- how much points from map point cloud do we keep (e.g. 0.2 means 20%) -->
-  <arg name="retain_ratio" default="0.2"/>
+  <arg name="retain_ratio" default="0.5"/>
 
 
   <!-- If we are doing local search, then the search region center is published
