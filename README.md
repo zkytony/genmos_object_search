@@ -21,6 +21,17 @@ Check out the README in each directory for more information.
 
 
 ## Paper Reference
- I am still working on the camera-ready of the paper. For now, you can check out chapter 5 of my thesis for the latest writing about this project.
 
-https://kaiyuzheng.me/documents/papers/dissertation.pdf (6.7MB)
+[*A System for Generalized 3D Multi-Object Search*](https://kaiyuzheng.me/documents/papers/icra23-genmos.pdf).
+Kaiyu Zheng, Anirudha Paul, Stefanie Tellex. International Conference on Robotics and Automation (ICRA) 2023
+```bibtex
+@inproceedings{zheng2023asystem,
+  title={A System for Generalized 3D Multi-Object Search,
+  booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
+  author={Zheng, Kaiyu and Paul, Anirudha and Tellex, Stefanie},
+  year={2023}
+}
+```
+Additionally, refer to Kaiyu's PhD Thesis [*Generalized Object Search*](https://kaiyuzheng.me/documents/papers/dissertation.pdf) (6.7MB) for (1) details on the additional deployment of GenMOS on the Universal Robotics UR5e arm using [Viam](https://www.viam.com/) as the middleware;  (2) a literature survey and taxonomy on object search; (3) and more...
+
+
