@@ -1,25 +1,25 @@
 ######### SEARCH TRIAL CONFIGURATIONS ######
-TARGET_OBJECTS = ["Cat"]#, "Lyzol", ]  #"ToyPlane", "Pringles"]
+TARGET_OBJECTS = ["Lyzol"] #"Cat"]#, "Lyzol", ]  #"ToyPlane", "Pringles"]
 
 SEARCH_REGION_3D = {"res": 0.1,
                     "octree_size": 32,
                     "region_size_x": 3.0,
                     "region_size_y": 3.0,
-                    "region_size_z": 1.5,
+                    "region_size_z": 1.2,
                     "center_x": 4.4958882331848145,
                     "center_y": -2.278994083404541,
-                    "center_z": -0.1,
+                    "center_z": -0.5,
                     "center_qx": 0.0,
                     "center_qy": 0.0,
                     "center_qz": -0.621045098408093,
                     "center_qw": 0.7837748310218198,
-                    "debug": True}
+                    "debug": False}
 
 
 ######### COMMON CONFIGURATIONS ######
-LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 150,
-                                          "step_size": 0.2,
-                                          "voxel_res": 2},
+LOCAL_BELIEF = {"visible_volume_params": {"num_rays": 200,
+                                          "step_size": 0.1,
+                                          "voxel_res": 1},
                 "init_params": {"num_samples": 3000,
                                 "prior_from_occupancy": True,
                                 "occupancy_height_thres": -1.0,
@@ -55,7 +55,7 @@ LOCAL_TOPO = {'num_nodes': 10,
 LOCAL_ACTION = {'topo': LOCAL_TOPO,
                 'policy': {'cost_scaling_factor': 1.0}}
 
-LOCAL_REACHABLE = {"min_height": 0.4,
+LOCAL_REACHABLE = {"min_height": 0.3,
                    "max_height": 1.2}
 
 LOCAL_PLANNER_CONFIG = {"planner": "pomdp_py.POUCT",
