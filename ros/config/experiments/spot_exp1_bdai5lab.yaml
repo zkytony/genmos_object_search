@@ -9,16 +9,16 @@ agent_config:
       occupancy_height_thres: -1.0
       prior_from_occupancy: true
     visible_volume_params:
-      num_rays: 150
-      step_size: 0.2
-      voxel_res: 2
+      num_rays: 200
+      step_size: 0.1
+      voxel_res: 1
   objects:
-    Cat:
-      class: Cat
+    Lyzol:
+      class: Lyzol
       color:
-      - 0.67
-      - 0.61
-      - 0.15
+      - 0.8
+      - 0.75
+      - 0.54
       - 0.8
       transition:
         class: genmos_object_search.oopomdp.StaticObjectTransitionModel
@@ -39,7 +39,7 @@ agent_config:
         resample_thres: 0.4
         sep: 0.75
     detectors:
-      Cat:
+      Lyzol:
         class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
         params:
           quality:
@@ -50,7 +50,7 @@ agent_config:
     no_look: true
     reachable:
       max_height: 1.2
-      min_height: 0.4
+      min_height: 0.3
     sensors:
     - name: hand_camera
       params:
@@ -67,15 +67,15 @@ agent_config:
       center_qz: -0.621045098408093
       center_x: 4.4958882331848145
       center_y: -2.278994083404541
-      center_z: -0.1
-      debug: true
+      center_z: -0.5
+      debug: false
       octree_size: 32
       region_size_x: 3.0
       region_size_y: 3.0
-      region_size_z: 1.5
+      region_size_z: 1.2
       res: 0.1
   targets:
-  - Cat
+  - Lyzol
 planner_config:
   planner: pomdp_py.POUCT
   planner_params:
