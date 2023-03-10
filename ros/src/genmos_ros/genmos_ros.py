@@ -493,7 +493,7 @@ class GenMOSROS:
             action_id=action_id, action_finished=True, debug=False)
         response_robot_belief = self._genmos_client.getRobotBelief(
             self.robot_id, header=proto_utils.make_header(self.world_frame))
-        return response_observation, response_robot_belief
+        return response_observation, response_robot_belief, detections_pb
 
     def run(self):
         # First, create an agent
@@ -535,9 +535,11 @@ class GenMOSROS:
             if self.dynamic_update:
                 self.update_search_region()
 
-            response_observation, response_robot_belief =\
+            response_observation, response_robot_belief, detections_pb =\
                 self.wait_observation_and_update_belief(action_id)
-            print(f"Step {step} robot belief:")
+            print(f"Step {step} detections:")
+            print(proto_utils.parse_detections_proto(detections_pb))
+            print("robot belief:")
             robot_belief_pb = response_robot_belief.robot_belief
             objects_found = set(robot_belief_pb.objects_found.object_ids)
             self.objects_found.update(objects_found)

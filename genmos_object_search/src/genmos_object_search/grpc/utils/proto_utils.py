@@ -550,3 +550,23 @@ def pos_from_topo_node(node_pb):
     else:
         return (node_pb.pos_2d.x,
                 node_pb.pos_2d.y)
+
+def parse_detections_proto(detections_pb):
+    """Given an ObjectDetectionArray proto object, output a
+    dictionary mapping detection label to a box in the center
+    representation (if 3D) or (x,y,x,y) box (if 2D)x."""
+    det_map = {}
+    for det_pb in detections_pb.detections:
+        if det_pb.HasField("box_3d"):
+            det_map[det_pb.label] = ((det_pb.box_3d.center.position.x,
+                                      det_pb.box_3d.center.position.y,
+                                      det_pb.box_3d.center.position.z),
+                                     det_pb.box_3d.sizes.x,
+                                     det_pb.box_3d.sizes.y,
+                                     det_pb.box_3d.sizes.z)
+        else:
+            det_map[det_pb.label] = (det_pb.box_2d.x_min,
+                                     det_pb.box_2d.y_min,
+                                     det_pb.box_2d.x_max,
+                                     det_pb.box_2d.y_max)
+    return det_map
