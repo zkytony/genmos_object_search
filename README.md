@@ -15,7 +15,7 @@ This repo is structured as follows:
 
 Check out the README in each directory for more information.
 
-[Design.org](./Design.org) contains a system architecture diagram and a documentation of the design of GenMOS as it was developed.
+[Design.org](./Design.org) contains a system architecture diagram and a documentation of the different design aspects of GenMOS.
 
 **Demo video:** https://www.youtube.com/watch?v=TfCe2ZVwypU
 
