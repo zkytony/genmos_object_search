@@ -15,7 +15,7 @@ This repo is structured as follows:
 
 Check out the README in each directory for more information.
 
-[Design.org](./Design.org) contains a documentation of the design of GenMOS as it was developed.
+[Design.org](./Design.org) contains a system architecture diagram and a documentation of the design of GenMOS as it was developed.
 
 **Demo video:** https://www.youtube.com/watch?v=TfCe2ZVwypU
 
@@ -33,5 +33,3 @@ Kaiyu Zheng, Anirudha Paul, Stefanie Tellex. International Conference on Robotic
 }
 ```
 Additionally, refer to Kaiyu's PhD Thesis [*Generalized Object Search*](https://kaiyuzheng.me/documents/papers/dissertation.pdf) (6.7MB) for (1) details on the additional deployment of GenMOS on the Universal Robotics UR5e arm using [Viam](https://www.viam.com/) as the middleware;  (2) a literature survey and taxonomy on object search; (3) and more...
-
-

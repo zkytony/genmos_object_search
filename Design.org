@@ -1,6 +1,9 @@
 ** GenMOS object search package design decisions
    <<design_decisions>>
 
+   [[file:./docs/system.png]]
+
+
 *** Objective
     The GenMOS package is an object search package
     that performs hierarchical object search with 3D local search and 2D global search.
