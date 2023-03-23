@@ -1,0 +1,24 @@
+hardstatus alwayslastline
+hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'
+
+escape ^Oo
+
+# huge scrollback buffer
+defscrollback 5000
+
+# 256 colors
+attrcolor b ".I"
+termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+defbce on
+
+
+# screenrc when testing in simple sim env
+
+screen -t graphnav_map
+screen -t local_region
+screen -t simple_env
+screen -t server
+screen -t client
+screen -t rviz
+screen -t emacs
+screen -t bash
