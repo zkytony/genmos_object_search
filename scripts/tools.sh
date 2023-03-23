@@ -1,3 +1,4 @@
+# Copyright [2023] Boston Dynamics AI Institute, Inc.
 # Echo styles
 export YELLOW='\033[1;33m'
 export RED='\033[0;31m'
@@ -132,6 +133,24 @@ function useros() {
         false
     fi
 }
+
+
+function useros2() {
+    # sources the ROS2 setup.bash; nothing bdai-specific
+    if [ -f /.dockerenv ]; then
+        if ubuntu_version_equal 22.04; then
+            source /opt/ros/humble/setup.bash
+            true && return
+        else
+            echo -e "No suitable ROS version installed"
+            false
+        fi
+    else
+        color_echo "$RED" "Command only works inside docker container"
+        false
+    fi
+}
+
 
 function rosactions() {
     # reference: https://answers.ros.org/question/222748/list-action-servers/?answer=222759#post-id-222759
