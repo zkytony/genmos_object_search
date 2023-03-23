@@ -23,7 +23,6 @@ function echo_warning
 function echo_error
 {
     color_echo "$RED" "$1"
-    exit 1
 }
 
 function echo_info
