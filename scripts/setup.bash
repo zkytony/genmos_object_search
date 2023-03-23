@@ -67,7 +67,7 @@ echo_success "genmos package pytest passed."
 # We just need to build this package here.
 echo_info "Setting up ROS 2 package..."
 cd $genmos_repo_root
-if [ ! -f $bdai_path/projects/search/ws/src/genmos_object_search_ros2 ]; then
+if [ ! -d $bdai_path/projects/search/ws/src/genmos_object_search_ros2 ]; then
     echo_error "genmos ROS2 package does not exist under $bdai_path/projects/search. Abort."
     exit_on_error
 fi
