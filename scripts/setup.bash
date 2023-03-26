@@ -75,7 +75,6 @@ useros2
 cd $bdai_path/projects/search/ws
 colcon build --packages-select genmos_object_search_ros2
 
-
 # Run a simulation test under ROS2
 if confirm "Run simulation search test in ROS2?"; then
     echo_error "Not yet implemented."

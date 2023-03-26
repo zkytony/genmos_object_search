@@ -13,7 +13,12 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-# Install Python modules
+# Install genmos-related Python modules
 ament_python_install_package(genmos_ros2)
+install(
+  PROGRAMS
+  tests/simple_sim/simple_sim_env_ros2.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
