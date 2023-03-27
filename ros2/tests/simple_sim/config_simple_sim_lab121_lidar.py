@@ -339,8 +339,6 @@ CONFIG_HIER = {
 #### SET WHICH CONFIG TO USE ###
 CONFIG = CONFIG_LOCAL
 
-
-
 import yaml
 def main():
     with open("config_simple_sim_lab121_lidar.yaml", "w") as f:

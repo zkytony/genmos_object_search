@@ -4,8 +4,10 @@
 
   <node pkg="genmos_object_search_ros2"
         exec="simple_sim_env_ros2.py"
-        name="simple_sim_env">
-    <param from="$(find-pkg-share genmos_object_search_ros2)/tests/spot/grpc/simple_sim/config_simple_sim_$(var map_name).yaml"/>
+        name="simple_sim_env"
+        args="$(find-pkg-share genmos_object_search_ros2)/config_simple_sim_$(var map_name).yaml">
+    <param name="state_pub_rate" value="10"/>
+    <param name="world_frame" value="$(var world_frame)"/>
   </node>
   <!-- <node pkg="genmos_object_search_ros" -->
   <!--       name="simple_sim_env" type="simple_sim_env.py" output="screen"> -->

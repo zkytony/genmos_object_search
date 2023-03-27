@@ -21,4 +21,11 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# since ROS2 only accesses from within install,
+install(
+  FILES
+  tests/simple_sim/config_simple_sim_lab121_lidar.yaml
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_package()

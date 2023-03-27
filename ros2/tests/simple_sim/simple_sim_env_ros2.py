@@ -1,12 +1,20 @@
 #!/usr/bin/env python
+#
+# Example command to run:
+# ros2 run genmos_object_search_ros2 simple_sim_env_ros2.py config_simple_sim_lab121_lidar.yaml
+# ros2 launch simple_sim_env_ros2.launch map_name:=lab121_lidar
 import math
 import time
 import numpy as np
 import copy
+import argparse
+import yaml
 import pomdp_py
 
 import rclpy
 from rclpy.node import Node
+
+from genmos_ros2 import ros2_utils
 
 
 class SimpleSimEnv(pomdp_py.Environment):
@@ -144,7 +152,7 @@ class SimpleSimEnv(pomdp_py.Environment):
         return pomdp_py.OOState(sobjs)
 
 
-class SimpleSimEnvROSNode(Node):
+class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
     """
     note that all messages that this node receives
     should be in the world frame.
@@ -157,16 +165,19 @@ class SimpleSimEnvROSNode(Node):
       ~state_markers (MarkerArray)
       ~pomdp_observation (KeyValObservation)
     """
-    def __init__(self, node_name="simple_sim_env"):
-        super().__init__(node_name)
-        self.get_logger().info("HELLO WORLD!!!")
+    NODE_NAME="simple_sim_env"
+    def __init__(self, config, verbose=True):
+        super().__init__(SimpleSimEnvROSNode.NODE_NAME,
+                         params=[("state_pub_rate", 10),
+                                 ("observation_pub_rate", 3),
+                                 ("world_frame", "map")],
+                         verbose=verbose)
+        self._init_config = config
 
-        # rospy.init_node(self.name)
-        # config = rospy.get_param("~config")  # access parameters together as a dictionary
-        # self._init_config = config
-        # state_pub_rate = rospy.get_param("~state_pub_rate", 10)
-        # observation_pub_rate = rospy.get_param("~observation_pub_rate", 3)
-        # self.world_frame = rospy.get_param("~world_frame")  # fixed frame of the world
+        state_pub_rate = self.get_parameter("state_pub_rate")
+        observation_pub_rate = self.get_parameter("observation_pub_rate")
+        self.world_frame = self.get_parameter("world_frame")  # fixed frame of the world
+
         # self.br = TransformBroadcaster()
 
         # action_topic = "~pomdp_action"
@@ -198,9 +209,21 @@ class SimpleSimEnvROSNode(Node):
 
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    n = SimpleSimEnvROSNode()
+def main():
+    parser = argparse.ArgumentParser(
+        description="Starts the SimpleSim environment")
+    parser.add_argument("config_file", type=str,
+                        help="path to YAML configuration file"\
+                             "(plain dictionary, non-ROS2 format)")
+    args, node_cmd_args = parser.parse_known_args()
+    if len(node_cmd_args) == 0:
+        node_cmd_args = None
+
+    rclpy.init(args=node_cmd_args)
+    with open(args.config_file) as f:
+        config = yaml.safe_load(f)
+
+    n = SimpleSimEnvROSNode(config)
     rclpy.spin(n)
     n.destroy_node()
     rclpy.shutdown()
