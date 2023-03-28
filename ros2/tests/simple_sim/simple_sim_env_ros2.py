@@ -180,11 +180,11 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
 
         # self.br = TransformBroadcaster()
 
-        # action_topic = "~pomdp_action"
-        # reset_topic = "~reset"
-        # state_markers_topic = "~state_markers"
-        # robot_pose_topic = "~robot_pose"
-        # observation_topic = "~pomdp_observation"
+        action_topic = "~/pomdp_action"
+        reset_topic = "~/reset"
+        state_markers_topic = "~/state_markers"
+        robot_pose_topic = "~/robot_pose"
+        observation_topic = "~/pomdp_observation"
         # self.env = SimpleSimEnv(config)
         # self.action_sub = rospy.Subscriber(action_topic, KeyValAction, self._action_cb)
         # self.reset_sub = rospy.Subscriber(reset_topic, String, self._reset_cb)
