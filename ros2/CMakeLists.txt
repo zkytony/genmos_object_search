@@ -18,14 +18,15 @@ ament_python_install_package(genmos_ros2)
 install(
   PROGRAMS
   tests/simple_sim/simple_sim_env_ros2.py
+  tests/simple_sim/simple_sim_init_pose_pub_ros2.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
 # since ROS2 only accesses from within install,
 install(
-  FILES
-  tests/simple_sim/config_simple_sim_lab121_lidar.yaml
-  DESTINATION share/${PROJECT_NAME}
+  DIRECTORY
+  tests/simple_sim/
+  DESTINATION share/${PROJECT_NAME}/tests/simple_sim
 )
 
 ament_package()
