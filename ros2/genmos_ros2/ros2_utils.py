@@ -130,16 +130,13 @@ class WaitForMessagesNode(Node):
             self.get_logger().info("WaitForMessages: got messages!")
         self.messages = messages
 
-def wait_for_messages(*args, **kwargs):
-    def _wait_till_received(wfm_node):
-        while wfm_node.messages is None and not wfm_node.has_timed_out:
-            rclpy.spin_once(wfm_node)
 
+def wait_for_messages(*args, **kwargs):
+    """A wrapper for running WaitForMessagesNode."""
     wfm_node = WaitForMessagesNode(*args, **kwargs)
     try:
-        thread = threading.Thread(target=_wait_till_received, args=(wfm_node,), daemon=False)
-        thread.start()
-        thread.join()
+        while wfm_node.messages is None and not wfm_node.has_timed_out:
+            rclpy.spin_once(wfm_node)
     except TimeoutError as ex:
         raise ex
     finally:
