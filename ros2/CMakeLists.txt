@@ -25,8 +25,9 @@ install(
 # since ROS2 only accesses from within install,
 install(
   DIRECTORY
-  tests/simple_sim/
-  DESTINATION share/${PROJECT_NAME}/tests/simple_sim
+  tests/
+  DESTINATION share/${PROJECT_NAME}/tests/
 )
+
 
 ament_package()
