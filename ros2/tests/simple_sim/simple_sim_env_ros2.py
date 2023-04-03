@@ -3,6 +3,10 @@
 # Example command to run:
 # ros2 run genmos_object_search_ros2 simple_sim_env_ros2.py install/genmos_object_search_ros2/share/genmos_object_search_ros2/tests/simple_sim/config_simple_sim_lab121_lidar.yaml
 # ros2 launch simple_sim_env_ros2.launch map_name:=lab121_lidar
+#
+# To run test:
+# ros2 launch spot_funcs graphnav_map_publisher.launch map_name:=lab121_lidar
+# ros2 launch genmos_object_search_ros2 simple_sim_env_ros2.launch map_name:=lab121_lidar
 import math
 import time
 import numpy as np
@@ -12,11 +16,42 @@ import yaml
 import pomdp_py
 
 import rclpy
-from rclpy.node import Node
+import tf2_ros
 import geometry_msgs.msg
+from rclpy.node import Node
+
+from genmos_ros2 import ros2_utils
+from genmos_object_search_ros2.msg import KeyValAction, KeyValObservation
 
 import genmos_object_search
-from genmos_ros2 import ros2_utils
+from genmos_object_search.oopomdp.domain.state import ObjectState, RobotState
+from genmos_object_search.oopomdp.domain.action import MotionAction3D, FindAction
+from genmos_object_search.oopomdp.domain.observation import ObjectVoxel, Voxel, ObjectDetection, GMOSObservation
+from genmos_object_search.oopomdp.models.transition_model import RobotTransBasic3D
+from genmos_object_search.oopomdp.models.observation_model import RobotObservationModel, GMOSObservationModel
+from genmos_object_search.oopomdp.models.detection_models import FanModelAlphaBeta, FrustumVoxelAlphaBeta
+from genmos_object_search.oopomdp.agent.common import (init_object_transition_models,
+                                                      init_detection_models,
+                                                      interpret_localization_model)
+from genmos_object_search.oopomdp.models.reward_model import GoalBasedRewardModel
+from genmos_object_search.grpc.utils import proto_utils
+from genmos_object_search.utils.misc import hash16
+from genmos_object_search.utils import math as math_utils
+
+
+def ensure_detection_model_3d(detection_model):
+    if isinstance(detection_model, FanModelAlphaBeta):
+        near = detection_model.sensor.min_range
+        far = detection_model.sensor.max_range
+        fov = detection_model.sensor.fov
+        quality = [detection_model.alpha, detection_model.beta]
+        return FrustumVoxelAlphaBeta(detection_model.objid,
+                                     dict(near=near, far=far, fov=fov, occlusion_enabled=True),
+                                     quality)
+    elif isinstance(detection_model, FrustumVoxelAlphaBeta):
+        return detection_model
+    else:
+        raise NotImplementedError()
 
 
 class SimpleSimEnv(pomdp_py.Environment):
@@ -170,10 +205,19 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
     """
     NODE_NAME="simple_sim_env"
     def __init__(self, config, verbose=True):
+        general_params = [
+            ("state_pub_rate", 10),
+            ("observation_pub_rate", 3),
+            ("world_frame", "map")
+        ]
+        nav_params = [
+            ("step_duration", 0.1), # amount of time to execute one step
+            ("translation_step_size", 0.1),  # in meters
+            ("rotation_step_size", 5)  # in degreesw
+        ]
+        params = general_params + nav_params
         super().__init__(SimpleSimEnvROSNode.NODE_NAME,
-                         params=[("state_pub_rate", 10),
-                                 ("observation_pub_rate", 3),
-                                 ("world_frame", "map")],
+                         params=params,
                          verbose=verbose)
         self._init_config = config
 
@@ -181,7 +225,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         observation_pub_rate = self.get_parameter("observation_pub_rate")
         self.world_frame = self.get_parameter("world_frame")  # fixed frame of the world
 
-        # self.br = TransformBroadcaster()
+        self.br = tf2_ros.TransformBroadcaster(self)
 
         action_topic = "~/pomdp_action"
         reset_topic = "~/reset"
@@ -189,26 +233,175 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         robot_pose_topic = "~/robot_pose"
         observation_topic = "~/pomdp_observation"
         self.env = SimpleSimEnv(config)
-        # self.action_sub = rospy.Subscriber(action_topic, KeyValAction, self._action_cb)
-        # self.reset_sub = rospy.Subscriber(reset_topic, String, self._reset_cb)
+        self.action_sub = self.create_subscription(
+            KeyValAction, action_topic, self._action_cb, 10)
+        self.reset_sub = self.create_subscription(
+            String, reset_topic, self._reset_cb, 10)
 
-        # self.state_markers_pub = rospy.Publisher(state_markers_topic, MarkerArray, queue_size=10)
-        # self.state_pub_rate = state_pub_rate
+        self.state_markers_pub = self.create_publisher(
+            MarkerArray, state_markers_topic, 10)
+        self.state_pub_rate = state_pub_rate
 
-        # self.robot_pose_pub = rospy.Publisher(robot_pose_topic, PoseStamped, queue_size=10)
+        self.robot_pose_pub = self.create_publisher(
+            PoseStamped, robot_pose_topic, 10)
 
-        # # observation
-        # self.observation_pub = rospy.Publisher(observation_topic, KeyValObservation, queue_size=10)
-        # self.observation_pub_rate = observation_pub_rate
+        # observation
+        self.observation_pub = self.create_publisher(
+            KeyValObservation, observation_topic, 10)
+        self.observation_pub_rate = observation_pub_rate
 
-        # # navigation related
-        # self.nav_step_duration = rospy.get_param("~step_duration", 0.1)  # amount of time to execute one step
-        # self.translation_step_size = rospy.get_param("~translation_step_size", 0.1)  # in meters
-        # self.rotation_step_size = rospy.get_param("~rotation_step_size", 5)  # in degreesw
-        # assert self.translation_step_size > 0, "translation_step_size must be > 0"
-        # assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
-        # self._navigating = False
-        # self._action_done_pub = rospy.Publisher("~action_done", String, queue_size=10, latch=True)  # publishes when action is done
+        # navigation related
+        self.nav_step_duration = self.get_parameter("step_duration")  # amount of time to execute one step
+        self.translation_step_size = self.get_parameter("translation_step_size")
+        self.rotation_step_size = self.get_parameter("rotation_step_size")
+        assert self.translation_step_size > 0, "translation_step_size must be > 0"
+        assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
+        self._navigating = False
+        self._action_done_pub = self.create_publisher(
+            String, "action_done", queue_size=10,
+            qos_profile=ros2_utils.latch(depth=10))  # publishes when action is done latch
+
+    def _action_cb(self, action_msg):
+        rospy.loginfo("received action to execute")
+        if action_msg.type == "nav":
+            if not self._navigating:
+                kv = {action_msg.keys[i]: action_msg.values[i] for i in range(len(action_msg.keys))}
+                goal_id = kv["goal_id"]
+                goal_x = float(kv["goal_x"])
+                goal_y = float(kv["goal_y"])
+                goal_z = float(kv["goal_z"])
+                goal_qx = float(kv["goal_qx"])
+                goal_qy = float(kv["goal_qy"])
+                goal_qz = float(kv["goal_qz"])
+                goal_qw = float(kv["goal_qw"])
+                goal = (goal_x, goal_y, goal_z, goal_qx, goal_qy, goal_qz, goal_qw)
+                rospy.loginfo(f"navigation to {goal}")
+                self._navigating = True
+                self.navigate_to(goal)
+                rospy.loginfo(f"navigation done")
+                self._navigating = False
+                self._action_done_pub.publish(String(data=f"nav to {goal_id} done."))
+
+            else:
+                rospy.loginfo(f"navigation is in progress. Goal ignored.")
+
+        elif action_msg.type == "find":
+            self.find()
+            time.sleep(0.1)
+            self._action_done_pub.publish(String(data=f"find action is done."))
+
+
+    def _make_state_messages_for_pub(self, state):
+        markers = []
+        tf2msgs = []
+        header = Header(stamp=rospy.Time.now(),
+                        frame_id=self.world_frame)
+        for objid in state.object_states:
+            if objid == self.env.robot_id:
+                continue  # we draw the robot separately
+            sobj = state.s(objid)
+            viz_type_name = self.env.object_spec(objid).get("viz_type", "cube")
+            viz_type = eval(f"Marker.{viz_type_name.upper()}")
+            color = self.env.object_spec(objid).get("color", [0.0, 0.8, 0.0, 0.8])
+            objsizes = self.env.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
+            obj_marker = ros_utils.make_viz_marker_for_object(
+                sobj.id, sobj.loc, header, viz_type=viz_type,
+                color=color, lifetime=1.0, scale=Vector3(x=objsizes[0],
+                                                         y=objsizes[1],
+                                                         z=objsizes[2]))
+            markers.append(obj_marker)
+            # get a tf transform from world to object
+            tobj = ros_utils.tf2msg_from_object_loc(
+                sobj.loc, self.world_frame, objid)
+            tf2msgs.append(tobj)
+
+        srobot = state.s(self.env.robot_id)
+        color = self.env.agent_config["robot"].get("color", [0.9, 0.1, 0.1, 0.9])
+        robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
+            srobot.pose, self.world_frame, self.env.robot_id,
+            color=color, lifetime=1.0,
+            scale=Vector3(x=0.6, y=0.08, z=0.08))
+        markers.append(robot_marker)
+        # get a tf transform from world to robot
+        tf2msgs.append(trobot)
+        # get robot pose message (in world frame)
+        robot_pose_msg = ros_utils.transform_to_pose_stamped(
+            trobot.transform, self.world_frame, stamp=trobot.header.stamp)
+        return MarkerArray(markers), tf2msgs, robot_pose_msg
+
+    def find(self):
+        """calls the find action"""
+        action = FindAction()
+        self.env.state_transition(action, execute=True)
+
+    def navigate_to(self, goal_pose):
+        """Super simple navigation. Will first level the camera,
+        then rotate the camera in yaw towards the goal, and then
+        go in a straightline, and finally rotate it to the goal rotation."""
+        current_pose = self.env.state.s(self.env.robot_id).pose
+
+        # First rotate, then translate. We will not animate rotation, but do so for translation.
+        next_robot_state = RobotState(self.env.robot_id,
+                                      (*current_pose[:3], *goal_pose[3:]),
+                                      self.env.state.s(self.env.robot_id).objects_found,
+                                      self.env.state.s(self.env.robot_id).camera_direction)
+        next_object_states = copy.deepcopy(self.env.state.object_states)
+        next_object_states[self.env.robot_id] = next_robot_state
+        self.env.apply_transition(pomdp_py.OOState(next_object_states))
+        rate = rospy.Rate(1./self.nav_step_duration)
+        # dx
+        dx_actions = self._axis_actions_towards(current_pose[0], goal_pose[0], "dx", 0)
+        # dy
+        dy_actions = self._axis_actions_towards(current_pose[1], goal_pose[1], "dy", 1)
+        # dz
+        dz_actions = self._axis_actions_towards(current_pose[2], goal_pose[2], "dz", 2)
+        all_actions = dx_actions + dy_actions + dz_actions
+        for action in all_actions:
+            self.env.state_transition(action, execute=True)
+            rospy.loginfo(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
+            rate.sleep()
+
+    def _axis_actions_towards(self, curval, desval, dtype, coord_index):
+        """Generates a list of MotionAction3D objects that moves one
+        coordinate from current value to desired value, that increments
+        by certain step size"""
+        actions = []
+        diffval = desval - curval
+        if abs(diffval) < 1e-2:  # 0.01
+            diffval = 0  # avoid numerical instability
+        if dtype in {"dx", "dy", "dz"}:
+            step_size = self.translation_step_size
+            dapply_index = 0
+        else:
+            step_size = self.rotation_step_size
+            dapply_index = 1
+        num_dsteps = int(abs(diffval // step_size))
+        dstep = [0, 0, 0]
+        if diffval > 0:
+            dstep[coord_index] = step_size
+        else:
+            dstep[coord_index] = -step_size
+
+        dmotion = [(0, 0, 0), (0, 0, 0)]
+        dmotion[dapply_index] = tuple(dstep)
+        dstep_action = MotionAction3D(tuple(dmotion), motion_name=f"move-{dtype}")
+        actions.extend([dstep_action]*num_dsteps)
+
+        # there may be remaining bit, will add one more if needed
+        remain_diff = abs(diffval) - num_dsteps*step_size
+        if abs(remain_diff) < 1e-2:
+            remain_diff = 0
+        if remain_diff > 0:
+            dstep_last = [0,0,0]
+            if diffval > 0:
+                dstep_last[coord_index] = remain_diff
+            else:
+                dstep_last[coord_index] = -remain_diff
+            dmotion_last = [(0, 0, 0), (0, 0, 0)]
+            dmotion_last[dapply_index] = tuple(dstep_last)
+            dstep_action_last = MotionAction3D(tuple(dmotion_last), motion_name=f"move-{dtype}")
+            actions.append(dstep_action_last)
+        return actions
 
 
 
@@ -233,14 +426,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# #!/usr/bin/env python
-# import rclpy
-# from rclpy.node import Node
-# def main(args=None):
-#     rclpy.init(args=args)
-#     node = Node('my_node_name')
-#     rclpy.spin(node)
-#     rclpy.shutdown()
-# if __name__ == '__main__':
-#     main()

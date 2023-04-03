@@ -12,6 +12,8 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 # Install genmos-related Python modules
 ament_python_install_package(genmos_ros2)
@@ -29,5 +31,11 @@ install(
   DESTINATION share/${PROJECT_NAME}/tests/
 )
 
+# Messages
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/KeyValAction.msg"
+  "msg/KeyValObservation.msg"
+  DEPENDENCIES builtin_interfaces
+)
 
 ament_package()
