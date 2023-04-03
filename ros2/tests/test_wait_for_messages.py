@@ -1,7 +1,4 @@
-# To run this test, run
-#
-# ros2 topic pub "test1" std_msgs/msg/String "data: 'hello'
-# ros2 topic pub "test2" std_msgs/msg/String "data: 'hello'
+# To run this test, run 'python test_wait_for_messages.py'
 import threading
 
 import rclpy
