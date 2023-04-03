@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Example command to run:
-# ros2 run genmos_object_search_ros2 simple_sim_env_ros2.py config_simple_sim_lab121_lidar.yaml
+# ros2 run genmos_object_search_ros2 simple_sim_env_ros2.py install/genmos_object_search_ros2/share/genmos_object_search_ros2/tests/simple_sim/config_simple_sim_lab121_lidar.yaml
 # ros2 launch simple_sim_env_ros2.launch map_name:=lab121_lidar
 import math
 import time
@@ -13,7 +13,9 @@ import pomdp_py
 
 import rclpy
 from rclpy.node import Node
+import geometry_msgs.msg
 
+import genmos_object_search
 from genmos_ros2 import ros2_utils
 
 
@@ -27,10 +29,11 @@ class SimpleSimEnv(pomdp_py.Environment):
 
         # agent config is the same format as what is given to a SLOOP MosAgent creation.
         self.agent_config = env_config["agent_config"]
-        self._robot_pose_topic = "~init_robot_pose"
-        robot_pose_msg = ros_utils.WaitForMessages([self._robot_pose_topic], [PoseStamped], verbose=True)\
-                                  .messages[0]
-        init_robot_pose = ros_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
+        self._robot_pose_topic = "/simple_sim_env/init_robot_pose"
+        robot_pose_msg = ros2_utils.wait_for_messages(
+            [self._robot_pose_topic], [geometry_msgs.msg.PoseStamped],
+            verbose=True, latched_topics={self._robot_pose_topic})[0]
+        init_robot_pose = ros2_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
 
         self.robot_id = self.agent_config["robot"].get("id", "robot")
         init_robot_state = RobotState(self.robot_id,
@@ -185,7 +188,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         state_markers_topic = "~/state_markers"
         robot_pose_topic = "~/robot_pose"
         observation_topic = "~/pomdp_observation"
-        # self.env = SimpleSimEnv(config)
+        self.env = SimpleSimEnv(config)
         # self.action_sub = rospy.Subscriber(action_topic, KeyValAction, self._action_cb)
         # self.reset_sub = rospy.Subscriber(reset_topic, String, self._reset_cb)
 

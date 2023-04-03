@@ -22,6 +22,7 @@ def print_parameters(node, names):
 def latch(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL):
     return QoSProfile(depth=depth, durability=durability)
 
+
 class WrappedNode(Node):
     def __init__(self, node_name, params=None, verbose=True):
         """
@@ -74,7 +75,7 @@ class WaitForMessagesNode(Node):
     a tuple of messages that were received."""
     def __init__(self, topics, mtypes, queue_size=10, delay=0.2,
                  allow_headerless=False, sleep=0.5, timeout=None,
-                 verbose=False, exception_on_timeout=False):
+                 verbose=False, exception_on_timeout=False, latched_topics=None):
         """
         Args:
             topics (list) List of topics
@@ -88,6 +89,8 @@ class WaitForMessagesNode(Node):
             timeout (float or None): Time in seconds to wait. None if forever.
                 If exceeded timeout, self.messages will contain None for
                 each topic.
+            latched_topics (set): a set of topics for which the publisher latches (i.e.
+                sets QoS durability to transient_local).
         """
         super().__init__('wait_for_messages')
         self.messages = None
@@ -96,10 +99,13 @@ class WaitForMessagesNode(Node):
         self.timeout = timeout
         self.exception_on_timeout = exception_on_timeout
         self.has_timed_out = False
+        if latched_topics is None:
+            latched_topics = set()
+        self.latched_topics = latched_topics
 
         if self.verbose:
             self.get_logger().info("initializing message filter ApproximateTimeSynchronizer")
-        self.subs = [message_filters.Subscriber(self, mtype, topic)
+        self.subs = [self._message_filters_subscriber(mtype, topic)
                      for topic, mtype in zip(topics, mtypes)]
         self.ts = message_filters.ApproximateTimeSynchronizer(
             self.subs, queue_size, delay, allow_headerless=allow_headerless)
@@ -107,6 +113,14 @@ class WaitForMessagesNode(Node):
 
         self._start_time = self.get_clock().now()
         self.timer = self.create_timer(sleep, self.check_messages_received)
+
+    def _message_filters_subscriber(self, mtype, topic):
+        if topic in self.latched_topics:
+            return message_filters.Subscriber(
+                self, mtype, topic,
+                qos_profile=QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
+        else:
+            return message_filters.Subscriber(self, mtype, topic)
 
     def check_messages_received(self):
         if self.messages is not None:

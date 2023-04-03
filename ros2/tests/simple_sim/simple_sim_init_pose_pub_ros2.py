@@ -15,9 +15,16 @@ class SimpleSimEnvInitPosePublisher(ros2_utils.WrappedNode):
                                  ("thx", 0.0),
                                  ("thy", 0.0),
                                  ("thz", 0.0),
-                                 ("world_frame", "graphnav_map")])
-        self.publisher = self.create_publisher(PoseStamped, "/simple_sim_env/init_robot_pose",
-                                               qos_profile=ros2_utils.latch(depth=10))
+                                 ("world_frame", "graphnav_map"),
+                                 ("latch", True)])
+        self.latch = self.get_parameter("latch").value
+        if self.latch:
+            qos_profile = ros2_utils.latch(depth=10)
+            self._msg_is_published = False
+        else:
+            qos_profile = 10
+        self.publisher = self.create_publisher(
+            PoseStamped, "/simple_sim_env/init_robot_pose", qos_profile)
         x = self.get_parameter("x").value
         y = self.get_parameter("y").value
         z = self.get_parameter("z").value
@@ -25,36 +32,28 @@ class SimpleSimEnvInitPosePublisher(ros2_utils.WrappedNode):
         thy = self.get_parameter("thy").value
         thz = self.get_parameter("thz").value
         qx, qy, qz, qw = euler_to_quat(thx, thy, thz)
+        self._init_pose = (x,y,z,qx,qy,qz,qw)
 
-        world_frame = self.get_parameter("world_frame").value
+        self.world_frame = self.get_parameter("world_frame").value
+        self.timer = self.create_timer(0.5, self.publish_msg)
+
+    def publish_msg(self):
+        if self.latch and self._msg_is_published:
+            return
         msg = ros2_utils.pose_tuple_to_pose_stamped(
-            (x,y,z,qx,qy,qz,qw), world_frame, node=self)
-
+            self._init_pose, self.world_frame, node=self)
         self.publisher.publish(msg)
-        rate = self.create_rate(2)
-        while rclpy.ok():
-            rate.sleep()
+        self.get_logger().info("published initial pose")
+        self._msg_is_published = True
 
 
 def main():
     rclpy.init()
     node = SimpleSimEnvInitPosePublisher()
-    thread = threading.Thread(target=rclpy.spin, args=(node, ), daemon=True)
-    thread.start()
+    while rclpy.ok():
+        rclpy.spin_once(node)
     node.destroy_node()
     rclpy.shutdown()
-
-    # pose_pub = rospy.Publisher("/simple_sim_env/init_robot_pose",
-    #                            PoseStamped, queue_size=10, latch=True)
-
-    # msg = ros2_utils.pose_tuple_to_pose_stamped(
-    #     (x,y,z,qx,qy,qz,qw), world_frame, node=node)
-    # pose_pub.publish(msg)
-    # print("Published initial pose")
-    # rospy.Timer(rospy.Duration(1/10),
-    #             lambda event: pose_pub.publish(ros_utils.pose_tuple_to_pose_stamped(
-    #                 (x,y,z,qx,qy,qz,qw), world_frame)))
-    # rospy.spin()
 
 if __name__ == "__main__":
     main()
