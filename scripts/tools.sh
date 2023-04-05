@@ -310,7 +310,7 @@ function in_venv {
 
 
 function python_package_installed {
-    python -c "import $1"
+    python -c "import $1; assert $1.__file__ is not None"
     if [ $? -eq 0 ]; then
         true && return
     else
