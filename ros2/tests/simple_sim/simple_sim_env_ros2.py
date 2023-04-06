@@ -7,6 +7,7 @@
 # To run test:
 # ros2 launch spot_funcs graphnav_map_publisher.launch map_name:=lab121_lidar
 # ros2 launch genmos_object_search_ros2 simple_sim_env_ros2.launch map_name:=lab121_lidar
+# ros2 launch genmos_object_search_ros2 view_simple_sim_ros2.launch
 import math
 import time
 import numpy as np
@@ -18,6 +19,8 @@ import pomdp_py
 import rclpy
 import tf2_ros
 import geometry_msgs.msg
+import std_msgs.msg
+import visualization_msgs.msg
 from rclpy.node import Node
 
 from genmos_ros2 import ros2_utils
@@ -221,9 +224,9 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
                          verbose=verbose)
         self._init_config = config
 
-        state_pub_rate = self.get_parameter("state_pub_rate")
-        observation_pub_rate = self.get_parameter("observation_pub_rate")
-        self.world_frame = self.get_parameter("world_frame")  # fixed frame of the world
+        state_pub_rate = self.get_parameter("state_pub_rate").value
+        observation_pub_rate = self.get_parameter("observation_pub_rate").value
+        self.world_frame = self.get_parameter("world_frame").value  # fixed frame of the world
 
         self.br = tf2_ros.TransformBroadcaster(self)
 
@@ -236,14 +239,14 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self.action_sub = self.create_subscription(
             KeyValAction, action_topic, self._action_cb, 10)
         self.reset_sub = self.create_subscription(
-            String, reset_topic, self._reset_cb, 10)
+            std_msgs.msg.String, reset_topic, self._reset_cb, 10)
 
         self.state_markers_pub = self.create_publisher(
-            MarkerArray, state_markers_topic, 10)
+            visualization_msgs.msg.MarkerArray, state_markers_topic, 10)
         self.state_pub_rate = state_pub_rate
 
         self.robot_pose_pub = self.create_publisher(
-            PoseStamped, robot_pose_topic, 10)
+            geometry_msgs.msg.PoseStamped, robot_pose_topic, 10)
 
         # observation
         self.observation_pub = self.create_publisher(
@@ -251,15 +254,72 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self.observation_pub_rate = observation_pub_rate
 
         # navigation related
-        self.nav_step_duration = self.get_parameter("step_duration")  # amount of time to execute one step
-        self.translation_step_size = self.get_parameter("translation_step_size")
-        self.rotation_step_size = self.get_parameter("rotation_step_size")
+        self.nav_step_duration = self.get_parameter("step_duration").value  # amount of time to execute one step
+        self.translation_step_size = self.get_parameter("translation_step_size").value
+        self.rotation_step_size = self.get_parameter("rotation_step_size").value
         assert self.translation_step_size > 0, "translation_step_size must be > 0"
         assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
         self._navigating = False
         self._action_done_pub = self.create_publisher(
-            String, "action_done", queue_size=10,
+            std_msgs.msg.String, "action_done",
             qos_profile=ros2_utils.latch(depth=10))  # publishes when action is done latch
+
+        # Starts spinning...
+        self.get_logger().info("publishing observations")
+        self.create_timer(1./self.observation_pub_rate, self.publish_observation)
+        self.get_logger().info("publishing state markers")
+        self.create_timer(1./self.state_pub_rate, self.publish_state)
+
+    def publish_state(self):
+        print(self.env.state)
+        state_markers_msg, tf2_msgs, robot_pose_msg =\
+            self._make_state_messages_for_pub(self.env.state)
+        self.state_markers_pub.publish(state_markers_msg)
+        self.robot_pose_pub.publish(robot_pose_msg)
+        for t in tf2_msgs:
+            self.br.sendTransform(t)
+
+    def _reset_cb(self, msg):
+        if "[reset index]" in msg.data:
+            self.get_logger().warning('Objloc Index Reset!')
+            objloc_index = self.env.reset_objloc_index()
+        else:
+            objloc_index = self.env.bump_objloc_index()
+        self.env = SimpleSimEnv(self._init_config, objloc_index=objloc_index)
+        self._navigating = False
+        # First, clear existing belief messages
+        header = std_msgs.msg.Header(stamp=self.get_stamp_now(),
+                                     frame_id=self.world_frame)
+        clear_msg = ros2_utils.clear_markers(header, ns="")
+        self.state_markers_pub.publish(clear_msg)
+        self.get_logger().info("======================= RESET =========================")
+
+    def publish_observation(self):
+        observation = self.env.provide_observation()
+        keys = []
+        values = []
+        # First, make robot observation
+        o_robot = observation.z(self.env.robot_id)
+        keys.extend(["robot_id", "robot_pose", "objects_found"])
+        values.extend([self.env.robot_id,
+                       str(o_robot.pose),
+                       str(o_robot.objects_found)])
+
+        for objid in observation:
+            if objid == self.env.robot_id:
+                continue
+            zobj = observation.z(objid)
+            keys.extend([f"loc_{objid}", f"sizes_{objid}"])
+            values.extend([str(zobj.loc), str(zobj.sizes)])
+        obs_msg = KeyValObservation(stamp=self.get_stamp_now(),
+                                    type="joint",
+                                    keys=keys,
+                                    values=values)
+        self.observation_pub.publish(obs_msg)
+
+    @property
+    def navigating(self):
+        return self._navigating
 
     def _action_cb(self, action_msg):
         rospy.loginfo("received action to execute")
@@ -280,7 +340,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
                 self.navigate_to(goal)
                 rospy.loginfo(f"navigation done")
                 self._navigating = False
-                self._action_done_pub.publish(String(data=f"nav to {goal_id} done."))
+                self._action_done_pub.publish(std_msgs.msg.String(data=f"nav to {goal_id} done."))
 
             else:
                 rospy.loginfo(f"navigation is in progress. Goal ignored.")
@@ -288,46 +348,45 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         elif action_msg.type == "find":
             self.find()
             time.sleep(0.1)
-            self._action_done_pub.publish(String(data=f"find action is done."))
+            self._action_done_pub.publish(std_msgs.msg.String(data=f"find action is done."))
 
 
     def _make_state_messages_for_pub(self, state):
         markers = []
         tf2msgs = []
-        header = Header(stamp=rospy.Time.now(),
-                        frame_id=self.world_frame)
+        header = std_msgs.msg.Header(stamp=self.get_stamp_now(),
+                                     frame_id=self.world_frame)
         for objid in state.object_states:
             if objid == self.env.robot_id:
                 continue  # we draw the robot separately
             sobj = state.s(objid)
             viz_type_name = self.env.object_spec(objid).get("viz_type", "cube")
-            viz_type = eval(f"Marker.{viz_type_name.upper()}")
+            viz_type = eval(f"visualization_msgs.msg.Marker.{viz_type_name.upper()}")
             color = self.env.object_spec(objid).get("color", [0.0, 0.8, 0.0, 0.8])
             objsizes = self.env.object_spec(objid).get("sizes", [0.12, 0.12, 0.12])
-            obj_marker = ros_utils.make_viz_marker_for_object(
+            obj_marker = ros2_utils.make_viz_marker_for_object(
                 sobj.id, sobj.loc, header, viz_type=viz_type,
-                color=color, lifetime=1.0, scale=Vector3(x=objsizes[0],
-                                                         y=objsizes[1],
-                                                         z=objsizes[2]))
+                color=color, lifetime=1.0,
+                scale=geometry_msgs.msg.Vector3(x=objsizes[0], y=objsizes[1], z=objsizes[2]))
             markers.append(obj_marker)
             # get a tf transform from world to object
-            tobj = ros_utils.tf2msg_from_object_loc(
-                sobj.loc, self.world_frame, objid)
+            tobj = ros2_utils.tf2msg_from_object_loc(
+                sobj.loc, self.world_frame, objid, node=self)
             tf2msgs.append(tobj)
 
         srobot = state.s(self.env.robot_id)
         color = self.env.agent_config["robot"].get("color", [0.9, 0.1, 0.1, 0.9])
-        robot_marker, trobot = ros_utils.viz_msgs_for_robot_pose(
+        robot_marker, trobot = ros2_utils.viz_msgs_for_robot_pose(
             srobot.pose, self.world_frame, self.env.robot_id,
-            color=color, lifetime=1.0,
-            scale=Vector3(x=0.6, y=0.08, z=0.08))
+            node=self, color=color, lifetime=1.0,
+            scale=geometry_msgs.msg.Vector3(x=0.6, y=0.08, z=0.08))
         markers.append(robot_marker)
         # get a tf transform from world to robot
         tf2msgs.append(trobot)
         # get robot pose message (in world frame)
-        robot_pose_msg = ros_utils.transform_to_pose_stamped(
+        robot_pose_msg = ros2_utils.transform_to_pose_stamped(
             trobot.transform, self.world_frame, stamp=trobot.header.stamp)
-        return MarkerArray(markers), tf2msgs, robot_pose_msg
+        return visualization_msgs.msg.MarkerArray(markers=markers), tf2msgs, robot_pose_msg
 
     def find(self):
         """calls the find action"""
