@@ -1,0 +1,12 @@
+<launch>
+  <arg name="config_file"/>
+  <arg name="robot_id" default="robot0"/>
+
+  <node pkg="genmos_object_search_ros2"
+        name="run_search"
+        exec="run_search.py">
+    <param name="config_file" value="$(var config_file)"/>
+    <param name="robot_id" value="$(var robot_id)"/>
+    <param name="world_frame" value="graphnav_map"/>
+  </node>
+</launch>
