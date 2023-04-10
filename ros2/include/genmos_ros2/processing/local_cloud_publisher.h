@@ -27,15 +27,14 @@ class LocalCloudPublisher : public rclcpp::Node {
 public:
     LocalCloudPublisher(const rclcpp::NodeOptions &options);
 
-    void cloudPoseCallback(const PointCloud2 &cloud, const PoseStamped &pose);
-
-    ~LocalCloudPublisher();
+    void cloudPoseCallback(const PointCloud2::SharedPtr &cloud,
+                           const PoseStamped::SharedPtr &pose);
 
 private:
     rclcpp::Publisher<PointCloud2>::SharedPtr pcl_local_pub_;
-    message_filters::Subscriber<PointCloud2> *pcl_global_sub_;
-    message_filters::Subscriber<PoseStamped> *robot_pose_sub_;
-    CloudPoseSync *sync_;
+    std::shared_ptr<message_filters::Subscriber<PointCloud2>> pcl_global_sub_;
+    std::shared_ptr<message_filters::Subscriber<PoseStamped>> robot_pose_sub_;
+    std::shared_ptr<CloudPoseSync> sync_;
 
     double region_size_x_;
     double region_size_y_;

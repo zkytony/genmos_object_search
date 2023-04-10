@@ -1,0 +1,25 @@
+<launch>
+  <arg name="robot_pose_topic" />
+  <arg name="robot_pose_latched" default="false"/>
+  <arg name="global_cloud_topic" default="graphnav_points"/>
+  <arg name="output" default="region_points"/>
+  <arg name="name" default="local_cloud_publisher"/>
+  <arg name="region_size_x" default="4.0"/>
+  <arg name="region_size_y" default="4.0"/>
+  <arg name="region_size_z" default="2.4"/>
+  <arg name="retain_ratio" default="0.1"/>
+
+  <!-- publish local cloud -->
+  <node name="$(var name)"
+        pkg="genmos_object_search_ros2" exec="local_cloud_publisher" output="screen">
+    <param name="global_cloud_topic" value="$(var global_cloud_topic)"/>
+    <param name="region_cloud_topic" value="region_points"/>
+    <param name="robot_pose_topic" value="$(var robot_pose_topic)"/>
+    <param name="robot_pose_latched" value="$(var robot_pose_latched)"/>
+    <param name="region_size_x" value="$(var region_size_x)"/>
+    <param name="region_size_y" value="$(var region_size_y)"/>
+    <param name="region_size_z" value="$(var region_size_z)"/>
+    <param name="retain_ratio" value="$(var retain_ratio)"/>
+    <remap from="region_points" to="$(var output)" />
+  </node>
+</launch>

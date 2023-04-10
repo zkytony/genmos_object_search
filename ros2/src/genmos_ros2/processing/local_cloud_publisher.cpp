@@ -15,20 +15,23 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include "local_cloud_publisher.h"
+#include "utils/ros2_utils.h"
 
 using std::string;
 using sensor_msgs::msg::PointCloud2;
 using geometry_msgs::msg::PoseStamped;
 using std::vector;
+using namespace std::placeholders;
 
-void LocalCloudPublisher::cloudPoseCallback(const PointCloud2 &cloud, const PoseStamped &pose_stamped) {
+void LocalCloudPublisher::cloudPoseCallback(const PointCloud2::SharedPtr &cloud,
+                                            const PoseStamped::SharedPtr &pose_stamped) {
     std::cout << "Received message!" << std::endl;
-    double robot_x = pose_stamped.pose.position.x;
-    double robot_y = pose_stamped.pose.position.y;
-    double robot_z = pose_stamped.pose.position.z;
+    double robot_x = pose_stamped->pose.position.x;
+    double robot_y = pose_stamped->pose.position.y;
+    double robot_z = pose_stamped->pose.position.z;
 
     pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
-    pcl::fromROSMsg(cloud, pcl_cloud);
+    pcl::fromROSMsg(*cloud, pcl_cloud);
     pcl::PointCloud<pcl::PointXYZ> points_in_region;
 
     Uniform uniform(0.0, 1.0);
@@ -45,7 +48,7 @@ void LocalCloudPublisher::cloudPoseCallback(const PointCloud2 &cloud, const Pose
 
     PointCloud2 pcl_msg;
     pcl::toROSMsg(points_in_region, pcl_msg);
-    pcl_msg.header.frame_id = cloud.header.frame_id;
+    pcl_msg.header.frame_id = cloud->header.frame_id;
     pcl_msg.header.stamp = this->now();
     this->pcl_local_pub_->publish(pcl_msg);
     std::cout << "Published points!" << std::endl;
@@ -54,11 +57,12 @@ void LocalCloudPublisher::cloudPoseCallback(const PointCloud2 &cloud, const Pose
 LocalCloudPublisher::LocalCloudPublisher(const rclcpp::NodeOptions &options)
   : Node("local_cloud_publisher") {
 
-    this->declare_parameter("region_x", 2.0);
-    this->declare_parameter("region_y", 2.0);
-    this->declare_parameter("region_z", 1.5);
-    this->declare_parameter("global_cloud_points", "global_points");
+    this->declare_parameter("region_size_x", 2.0);
+    this->declare_parameter("region_size_y", 2.0);
+    this->declare_parameter("region_size_z", 1.5);
+    this->declare_parameter("global_cloud_topic", "global_points");
     this->declare_parameter("robot_pose_topic", "robot_pose");
+    this->declare_parameter("robot_pose_latched", true);
     this->declare_parameter("region_cloud_topic", "region_points");
     this->declare_parameter("retain_ratio", 0.7);
 
@@ -70,24 +74,28 @@ LocalCloudPublisher::LocalCloudPublisher(const rclcpp::NodeOptions &options)
 
     string global_cloud_topic = this->get_parameter("global_cloud_topic").get_parameter_value().get<string>();
     string robot_pose_topic   = this->get_parameter("robot_pose_topic").get_parameter_value().get<string>();
-    pcl_global_sub_ = new message_filters::Subscriber<PointCloud2>(this, global_cloud_topic);
-    robot_pose_sub_ = new message_filters::Subscriber<PoseStamped>(this, robot_pose_topic);
+    bool robot_pose_latched = this->get_parameter("robot_pose_latched").get_parameter_value().get<bool>();
+
+    pcl_global_sub_ = std::make_shared<message_filters::Subscriber<PointCloud2>>(this, global_cloud_topic);
+
+    // if the robot pose topic is latched on the publisher side, we need to make the subscriber side
+    // have the same QoS profile.
+    rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
+    if (robot_pose_latched) {
+        qos_profile = rmw_qos_profile_latch;
+    }
+    robot_pose_sub_ = std::make_shared<message_filters::Subscriber<PoseStamped>>(this, robot_pose_topic, qos_profile);
 
     string region_cloud_topic = this->get_parameter("region_cloud_topic").get_parameter_value().get<string>();
-    pcl_local_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(region_cloud_topic, 10);
+    pcl_local_pub_ = this->create_publisher<PointCloud2>(region_cloud_topic, 10);
 
-    sync_ = new CloudPoseSync(CloudPoseSyncPolicy(10), *pcl_global_sub_, *robot_pose_sub_);
+    sync_ = std::make_shared<CloudPoseSync>(CloudPoseSyncPolicy(10), *pcl_global_sub_, *robot_pose_sub_);
     sync_->registerCallback(&LocalCloudPublisher::cloudPoseCallback, this);
-}
-
-LocalCloudPublisher::~LocalCloudPublisher() {
-    delete pcl_global_sub_;
-    delete robot_pose_sub_;
-    delete sync_;
 }
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<LocalCloudPublisher>(rclcpp::NodeOptions()));
     rclcpp::shutdown();
+    return 0;
 }
