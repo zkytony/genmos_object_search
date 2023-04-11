@@ -473,10 +473,8 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         self.obdelay = self.get_parameter("obs_delay").value
         self.dynamic_update = self.get_parameter("dynamic_update").value
 
-        # Need to wait for vision info
-        vinfo_msg = ros2_utils.wait_for_messages([self._detection_vision_info_topic],
-                                                 [vision_msgs.VisionInfo], verbose=True).messages[0]
-        self.detection_class_names = self.get_parameter("/" + vinfo_msg.database_location).value
+        # object detector model's output class names
+        self.detection_class_names = self.config["ros2"]["detection_class_names"]
 
         # Planning-related
         self.last_action = None

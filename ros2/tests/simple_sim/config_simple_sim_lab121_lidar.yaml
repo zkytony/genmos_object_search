@@ -268,6 +268,10 @@ object_locations:
     - 2.10052156
     - -0.12615938
 planner_config: {}
+ros2:
+  detection_class_names:
+  - book
+  - cup
 task_config:
   max_steps: 100
   max_time: 180
