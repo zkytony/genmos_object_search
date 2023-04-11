@@ -153,7 +153,7 @@ CONFIG_LOCAL = {
         #####################################
     },
 
-    "misc": {
+    "ros2": {
         "detection_class_names": ["book", "cup"]
     }
 }

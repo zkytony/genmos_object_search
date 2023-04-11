@@ -1,5 +1,4 @@
-Below is the table of all parameters that is considered in the GenMOS system
-that is general (i.e. not middleware-specific).
+Below are tables all parameters that is considered in the GenMOS system.
 
 Each role of the table corresponds to an entry in the configuration dictionary.
 The string in "Category" corresponds to the (sequence of) keys leading up
@@ -21,6 +20,8 @@ To understand the information in this table:
 * In `Category`, a string `a.b`
 
 
+
+Parameters general across all middleware
 | **Category**                  | **Name of Parameter** | **Description**                                                                                                                                                          | **Example**                                                             |
 |-------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | agent_config                  | agent_class           | (str) Python class name of the GenMOS POMDP agent.                                                                                                                       | MosAgentBasic2D, MosAgentBasic3D, MosAgentTopo2D, MosAgentTopo3D        |
@@ -32,3 +33,9 @@ To understand the information in this table:
 | agent_config.search_region.3d | center_q{x\|\y\|z}    | (float) world-frame coordinates (in meters) of the search region's center __orientation__.                                                                               | 0.78737748                                                              |
 | agent_config.search_region.3d | debug                 | (bool) Turn on debug mode for search region initialization (an Open3D visualization window may pop up)                                                                    | False                                                                 |
 |                               |                       |                                                                                                                                                                          |                                                                         |
+
+
+Parameters specific to ROS2
+| **Category** | **Name of Parameter** | **Description**                                                                                                          | **Example** |
+|--------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------|-------------|
+| ros2         | detection_class_names | (list) a list of names that should correspond one-to-one to the object detector model's list of possible output classes. | ["person", "bicycle", "car"...] Example from [YOLOv5 trained on COCO](https://github.com/ultralytics/yolov5/blob/master/data/coco.yaml)           |

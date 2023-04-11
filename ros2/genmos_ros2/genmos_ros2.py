@@ -412,6 +412,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
                   ("config_file", ""),
                   ("obs_queue_size", 200),
                   ("obs_delay", 1.0),
+                  ("requires_vision_info", True),
                   ("dynamic_update", False)]
         super().__init__(name, params=params, verbose=verbose)
         self.name = name
@@ -455,7 +456,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         # tf; need to create listener early enough before looking up to let tf propagate into buffer
         # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
         self.tfbuffer = tf2_ros.Buffer()
-        self.tflistener = tf2_ros.TransformListener(self.tfbuffer)
+        self.tflistener = tf2_ros.TransformListener(self.tfbuffer, self)
 
         # Remap these topics that we subscribe to, if needed.
         self._search_region_2d_point_cloud_topic = "~/search_region_cloud_2d"
@@ -468,14 +469,14 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         self._action_done_topic = "~/action_done"
 
         # additional parameters
-        self.obqueue_size = self.get_parameter("obs_queue_size", 200).value
-        self.obdelay = self.get_parameter("obs_delay", 1.0).value
-        self.dynamic_update = self.get_parameter("dynamic_update", False).value
+        self.obqueue_size = self.get_parameter("obs_queue_size").value
+        self.obdelay = self.get_parameter("obs_delay").value
+        self.dynamic_update = self.get_parameter("dynamic_update").value
 
         # Need to wait for vision info
-        vinfo_msg = ros_utils.wait_for_messages([self._detection_vision_info_topic],
-                                                [vision_msgs.VisionInfo], verbose=True).messages[0]
-        self.detection_class_names = rclcpp.get_parameter("/" + vinfo_msg.database_location).value
+        vinfo_msg = ros2_utils.wait_for_messages([self._detection_vision_info_topic],
+                                                 [vision_msgs.VisionInfo], verbose=True).messages[0]
+        self.detection_class_names = self.get_parameter("/" + vinfo_msg.database_location).value
 
         # Planning-related
         self.last_action = None
