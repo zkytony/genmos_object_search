@@ -131,25 +131,31 @@ CONFIG_LOCAL = {
 
     "planner_config":  {
         # to be filled automatically
+        ####################################
+        # some possibilities for planner_config:
+        #
+        #     "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
+        #     "planner_params": {}
+        #  or,
+        #
+        #     "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
+        #     "planner_params": {}
+        #  or,
+        #
+        #     "planner": "pomdp_py.POUCT",
+        #     "planner_params": {
+        #         "exploration_const": 1000,
+        #         "max_depth": 8,
+        #         "num_sims": 200,
+        #         "show_progress": True
+        #     }
+        #
+        #####################################
+    },
+
+    "misc": {
+        "detection_class_names": ["book", "cup"]
     }
-    # some possibilities for planner_config:
-    # {
-    #     "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
-    #     "planner_params": {}
-    # } or,
-    # {
-    #     "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
-    #     "planner_params": {}
-    # } or,f
-    # {
-    #     "planner": "pomdp_py.POUCT",
-    #     "planner_params": {
-    #         "exploration_const": 1000,
-    #         "max_depth": 8,
-    #         "num_sims": 200,
-    #         "show_progress": True
-    #     }
-    # }
 }
 
 
