@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rclpy
 import threading
+from rclpy.time import Duration
 
 from geometry_msgs.msg import PoseStamped
 from genmos_ros2 import ros2_utils
@@ -16,7 +17,8 @@ class SimpleSimEnvInitPosePublisher(ros2_utils.WrappedNode):
                                  ("thy", 0.0),
                                  ("thz", 0.0),
                                  ("world_frame", "graphnav_map"),
-                                 ("latch", True)])
+                                 ("latch", True),
+                                 ("lifetime", 0)])
         self.latch = self.get_parameter("latch").value
         if self.latch:
             qos_profile = ros2_utils.latch(depth=10)
@@ -33,9 +35,12 @@ class SimpleSimEnvInitPosePublisher(ros2_utils.WrappedNode):
         thz = self.get_parameter("thz").value
         qx, qy, qz, qw = euler_to_quat(thx, thy, thz)
         self._init_pose = (x,y,z,qx,qy,qz,qw)
-
         self.world_frame = self.get_parameter("world_frame").value
+        self.lifetime = Duration(seconds=0)
+        if self.get_parameter("lifetime").value != 0:
+            self.lifetime = Duration(nanoseconds=self.get_parameter("lifetime").value * 1e9)
         self.timer = self.create_timer(0.5, self.publish_msg)
+
 
     def publish_msg(self):
         if self.latch and self._msg_is_published:
@@ -50,8 +55,15 @@ class SimpleSimEnvInitPosePublisher(ros2_utils.WrappedNode):
 def main():
     rclpy.init()
     node = SimpleSimEnvInitPosePublisher()
-    while rclpy.ok():
+    start_time = node.get_clock().now()
+    times_up = False
+    while not times_up and rclpy.ok():
         rclpy.spin_once(node)
+        time_elapsed = node.get_clock().now() - start_time
+        node.get_logger().info(f"{time_elapsed}, {node.lifetime}")
+        if node.lifetime != Duration(seconds=0) and time_elapsed > node.lifetime:
+            node.get_logger().info("Times up. Shutdown.")
+            break
     node.destroy_node()
     rclpy.shutdown()
 

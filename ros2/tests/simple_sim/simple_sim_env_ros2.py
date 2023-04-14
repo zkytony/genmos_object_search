@@ -70,7 +70,7 @@ class SimpleSimEnv(pomdp_py.Environment):
         self._robot_pose_topic = "/simple_sim_env/init_robot_pose"
         robot_pose_msg = ros2_utils.wait_for_messages(
             [self._robot_pose_topic], [geometry_msgs.msg.PoseStamped],
-            verbose=True, latched_topics={self._robot_pose_topic})[0]
+            verbose=True)[0]
         init_robot_pose = ros2_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
 
         self.robot_id = self.agent_config["robot"].get("id", "robot")

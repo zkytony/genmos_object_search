@@ -28,5 +28,6 @@
     <param name="thz" value="90.0"/>
     <param name="world_frame" value="$(var world_frame)"/>
     <param name="latch" value="false"/>
+    <param name="lifetime" value="3"/>
   </node>
 </launch>
