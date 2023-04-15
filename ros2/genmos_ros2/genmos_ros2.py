@@ -1,3 +1,5 @@
+# to test:
+# ros2 launch genmos_object_search_ros2 run_search_client.launch config_file:=src/genmos_object_search_ros2/tests/simple_sim/config_simple_sim_lab121_lidar.yaml
 import rclpy
 import tf2_ros
 import math
@@ -47,18 +49,18 @@ def make_nav_action(pos, orien, action_id, nav_type):
 
 
 class GenMOSROS2(ros2_utils.WrappedNode):
-#     def server_message_callback(self, message):
-#         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
-#             local_robot_id = Message.forwhom(message)
-#             rospy.loginfo(f"will send a update search request to {local_robot_id}")
-#             self.update_search_region_3d(robot_id=local_robot_id)
-#             self._local_robot_id = local_robot_id
-#         elif Message.match(message) == Message.LOCAL_AGENT_REMOVED:
-#             local_robot_id = Message.forwhom(message)
-#             rospy.loginfo(f"local agent {local_robot_id} removed.")
-#             if local_robot_id != self._local_robot_id:
-#                 rospy.logerr("removed local agent has an unexpected ID")
-#             self._local_robot_id = None
+    def server_message_callback(self, message):
+        if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
+            local_robot_id = Message.forwhom(message)
+            rospy.loginfo(f"will send a update search request to {local_robot_id}")
+            self.update_search_region_3d(robot_id=local_robot_id)
+            self._local_robot_id = local_robot_id
+        elif Message.match(message) == Message.LOCAL_AGENT_REMOVED:
+            local_robot_id = Message.forwhom(message)
+            rospy.loginfo(f"local agent {local_robot_id} removed.")
+            if local_robot_id != self._local_robot_id:
+                rospy.logerr("removed local agent has an unexpected ID")
+            self._local_robot_id = None
 
 #     def update_search_region_2d(self, robot_id=None):
 #         # need to get a region point cloud and a pose use that as search region
@@ -412,7 +414,6 @@ class GenMOSROS2(ros2_utils.WrappedNode):
                   ("config_file", ""),
                   ("obs_queue_size", 200),
                   ("obs_delay", 1.0),
-                  ("requires_vision_info", True),
                   ("dynamic_update", False)]
         super().__init__(name, params=params, verbose=verbose)
         self.name = name
@@ -465,7 +466,6 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         self._robot_pose_topic = "~/robot_pose"
         # Note for object detections, we accept 3D bounding-box-based detections.
         self._object_detections_topic = "~/object_detections"
-        self._detection_vision_info_topic = "~/vision_info"
         self._action_done_topic = "~/action_done"
 
         # additional parameters

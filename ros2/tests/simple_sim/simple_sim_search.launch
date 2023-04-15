@@ -10,6 +10,9 @@
     <param name="world_frame" value="graphnav_map"/>
     <remap from="~/search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
     <remap from="~/search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
-    <remap from="~/search_region_center" to="/"/>
+    <remap from="~/search_region_center" to="/simple_sim_env/robot_pose"/>
+    <remap from="~/robot_pose" to="/simple_sim_env/robot_pose"/>
+    <remap from="~/object_detections" to=""/>
+    <remap from="~/object_detections" to=""/>
   </node>
 </launch>
