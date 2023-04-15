@@ -8,5 +8,8 @@
     <param name="config_file" value="$(var config_file)"/>
     <param name="robot_id" value="$(var robot_id)"/>
     <param name="world_frame" value="graphnav_map"/>
+    <remap from="~/search_region_cloud_3d" to="/local_cloud_publisher/region_points"/>
+    <remap from="~/search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
+    <remap from="~/search_region_center" to="/"/>
   </node>
 </launch>
