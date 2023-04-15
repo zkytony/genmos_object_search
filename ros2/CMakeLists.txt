@@ -8,21 +8,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
-############ Executables (Python) ##############
-# ~~~~~~~~~~ Setting up dependencies ~~~~~~ #
-find_package(rclpy REQUIRED)
-find_package(builtin_interfaces REQUIRED)
-
-ament_python_install_package(genmos_ros2)
-install(
-  PROGRAMS
-  tests/simple_sim/simple_sim_env_ros2.py
-  tests/simple_sim/simple_sim_init_pose_pub_ros2.py
-  scripts/run_search.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-
 ############ Executables (C++) ##############
 # ~~~~~~~~~~ Setting up dependencies ~~~~~~ #
 find_package(rclcpp REQUIRED)
@@ -87,6 +72,19 @@ install(TARGETS
   # point_cloud_merger
   DESTINATION lib/${PROJECT_NAME})
 
+############ Executables (Python) ##############
+# ~~~~~~~~~~ Setting up dependencies ~~~~~~ #
+find_package(rclpy REQUIRED)
+
+ament_python_install_package(genmos_ros2)
+install(
+  PROGRAMS
+  tests/simple_sim/simple_sim_env_ros2.py
+  tests/simple_sim/simple_sim_init_pose_pub_ros2.py
+  scripts/run_search.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 ############ Files to install ##############
 # since ROS2 only accesses from within install,
@@ -102,12 +100,12 @@ install(
 )
 
 ############ Messages ##############
+find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/KeyValAction.msg"
   "msg/KeyValObservation.msg"
   DEPENDENCIES builtin_interfaces
 )
-
 
 ament_package()
