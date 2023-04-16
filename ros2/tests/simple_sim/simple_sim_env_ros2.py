@@ -262,7 +262,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
         self._navigating = False
         self._action_done_pub = self.create_publisher(
-            std_msgs.msg.String, "action_done",
+            std_msgs.msg.String, "~/action_done",
             qos_profile=ros2_utils.latch(depth=10))  # publishes when action is done latch
 
         # Starts spinning...

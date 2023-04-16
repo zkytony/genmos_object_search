@@ -52,12 +52,12 @@ class GenMOSROS2(ros2_utils.WrappedNode):
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
             local_robot_id = Message.forwhom(message)
-            rospy.loginfo(f"will send a update search request to {local_robot_id}")
+            self.get_logger().info(f"will send a update search request to {local_robot_id}")
             self.update_search_region_3d(robot_id=local_robot_id)
             self._local_robot_id = local_robot_id
         elif Message.match(message) == Message.LOCAL_AGENT_REMOVED:
             local_robot_id = Message.forwhom(message)
-            rospy.loginfo(f"local agent {local_robot_id} removed.")
+            self.get_logger().info(f"local agent {local_robot_id} removed.")
             if local_robot_id != self._local_robot_id:
                 rospy.logerr("removed local agent has an unexpected ID")
             self._local_robot_id = None
@@ -66,7 +66,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         # need to get a region point cloud and a pose use that as search region
 #         if robot_id is None:
 #             robot_id = self.robot_id
-#         rospy.loginfo("Sending request to update search region (2D)")
+#         self.get_logger().info("Sending request to update search region (2D)")
 
 #         region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
 #             [self._search_region_2d_point_cloud_topic, self._search_region_center_topic],
@@ -113,8 +113,8 @@ class GenMOSROS2(ros2_utils.WrappedNode):
             [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=100, verbose=True)
-        cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-        robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+        cloud_pb = ros2_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+        robot_pose = ros2_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
         # parameters
@@ -214,7 +214,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         if response.status != Status.SUCCESSFUL:
 #             print("Failed to get 3D belief")
 #             return
-#         rospy.loginfo("got belief")
+#         self.get_logger().info("got belief")
 
 #         # visualize the belief
 #         header = std_msgs.Header(stamp=rospy.Time.now(),
@@ -235,7 +235,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #                 break
 #         self._octbelief_markers_pub.publish(MarkerArray(markers))
 
-#         rospy.loginfo("belief visualized")
+#         self.get_logger().info("belief visualized")
 
 #         # visualize topo map in robot belief
 #         markers = []
@@ -251,7 +251,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #                 node_thickness=self.search_space_res_3d)
 #             markers.extend(msg.markers)
 #         self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
-#         rospy.loginfo("belief visualized")
+#         self.get_logger().info("belief visualized")
 
 #     def get_and_visualize_belief_2d(self):
 #         # First, clear existing belief messages
@@ -264,7 +264,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         response = self._genmos_client.getObjectBeliefs(
 #             self.robot_id, header=proto_utils.make_header(self.world_frame))
 #         assert response.status == Status.SUCCESSFUL
-#         rospy.loginfo("got belief")
+#         self.get_logger().info("got belief")
 
 #         # height for 2d markers
 #         _pos_z = self.ros_visual_config.get("marker2d_z", 0.1)
@@ -297,7 +297,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #                 pos_z=_pos_z + 0.05)
 #             markers.extend(msg.markers)
 #         self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
-#         rospy.loginfo("belief visualized")
+#         self.get_logger().info("belief visualized")
 
 #     def get_and_visualize_belief(self):
 #         if self.agent_config["agent_type"] == "local":
@@ -394,7 +394,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 
 #             nav_action = make_nav_action(dest[:3], dest[3:], action_id, nav_type)
 #             self._action_pub.publish(nav_action)
-#             rospy.loginfo("published nav action for execution")
+#             self.get_logger().info("published nav action for execution")
 
 #         elif isinstance(action_pb, a_pb2.Find):
 #             find_action = KeyValAction(stamp=rospy.Time.now(),
@@ -402,7 +402,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #                                        keys=["action_id"],
 #                                        values=[action_id])
 #             self._action_pub.publish(find_action)
-#             rospy.loginfo("published find action for execution")
+#             self.get_logger().info("published find action for execution")
 
 #     @property
 #     def ros_visual_config(self):
@@ -486,7 +486,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #             self.robot_id, header=proto_utils.make_header(self.world_frame))
 #         action_pb = proto_utils.interpret_planned_action(response_plan)
 #         action_id = response_plan.action_id
-#         rospy.loginfo("plan action finished. Action ID: {}".format(typ.info(action_id)))
+#         self.get_logger().info("plan action finished. Action ID: {}".format(typ.info(action_id)))
 #         self.last_action = action_pb
 #         return action_id, action_pb
 
@@ -520,9 +520,9 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         self.update_search_region()
 
         # wait for agent creation
-        rospy.loginfo("waiting for genmos agent creation...")
+        self.get_logger().info("waiting for genmos agent creation...")
         self._genmos_client.waitForAgentCreation(self.robot_id)
-        rospy.loginfo("agent created!")
+        self.get_logger().info("agent created!")
 
         # visualize initial belief
         self.get_and_visualize_belief()
@@ -531,7 +531,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         response = self._genmos_client.createPlanner(config=self.planner_config,
                                                     header=proto_utils.make_header(),
                                                     robot_id=self.robot_id)
-        rospy.loginfo("planner created!")
+        self.get_logger().info("planner created!")
 
         # Send planning requests
         for step in range(self.config["task_config"]["max_steps"]):
@@ -540,7 +540,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
             self.execute_action(action_id, action_pb)
             ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
-            rospy.loginfo(typ.success("action done."))
+            self.get_logger().info(typ.success("action done."))
 
             if self.dynamic_update:
                 self.update_search_region()
@@ -564,6 +564,6 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 
             # Check if we are done
             if objects_found == set(self.agent_config["targets"]):
-                rospy.loginfo("Done!")
+                self.get_logger().info("Done!")
                 break
             time.sleep(1)

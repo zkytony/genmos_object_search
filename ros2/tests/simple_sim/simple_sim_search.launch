@@ -12,7 +12,7 @@
     <remap from="~/search_region_cloud_2d" to="/local_cloud_publisher/region_points"/>
     <remap from="~/search_region_center" to="/simple_sim_env/robot_pose"/>
     <remap from="~/robot_pose" to="/simple_sim_env/robot_pose"/>
-    <remap from="~/object_detections" to=""/>
-    <remap from="~/action_done" to=""/>
+    <remap from="~/object_detections" to="/simple_sim_env/object_detections"/>
+    <remap from="~/action_done" to="/simple_sim_env/action_done"/>
   </node>
 </launch>

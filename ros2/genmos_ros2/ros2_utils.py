@@ -11,7 +11,12 @@ import message_filters
 import geometry_msgs.msg
 import std_msgs.msg
 import vision_msgs.msg
+import ros2_numpy
 
+import google.protobuf.timestamp_pb2
+import genmos_object_search.grpc.common_pb2 as common_pb2
+import genmos_object_search.grpc.observation_pb2 as o_pb2
+import genmos_object_search.grpc.common_pb2 as c_pb2
 from genmos_object_search import utils
 from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.utils import math as math_utils
@@ -530,3 +535,26 @@ def viz_msgs_for_robot_pose_proto(robot_pose_proto, world_frame, robot_frame, st
     direction between ROS and SLOOP."""
     robot_pose = proto_utils.robot_pose_from_proto(robot_pose_proto)
     return viz_msgs_for_robot_pose(robot_pose, world_frame, robot_frame, stamp=stamp, node=node, **kwargs)
+
+
+### Sensor messages ###
+def pointcloud2_to_pointcloudproto(cloud_msg):
+    """
+    Converts a PointCloud2 message to a PointCloud proto message.
+
+    Args:
+       cloud_msg (sensor_msgs.PointCloud2)
+    """
+    pcl_raw_array = ros2_numpy.point_cloud2.pointcloud2_to_array(cloud_msg)
+    points_xyz_array = ros2_numpy.point_cloud2.get_xyz_points(pcl_raw_array)
+
+    points_pb = []
+    for p in points_xyz_array:
+        point_pb = o_pb2.PointCloud.Point(pos=c_pb2.Vec3(x=p[0], y=p[1], z=p[2]))
+        points_pb.append(point_pb)
+
+    header = c_pb2.Header(stamp=google.protobuf.timestamp_pb2.Timestamp().GetCurrentTime(),
+                          frame_id=cloud_msg.header.frame_id)
+    cloud_pb = o_pb2.PointCloud(header=header,
+                                points=points_pb)
+    return cloud_pb
