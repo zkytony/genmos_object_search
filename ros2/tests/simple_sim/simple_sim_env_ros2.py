@@ -21,6 +21,7 @@ import tf2_ros
 import geometry_msgs.msg
 import std_msgs.msg
 import visualization_msgs.msg
+import vision_msgs.msg
 from rclpy.node import Node
 
 from genmos_ros2 import ros2_utils
@@ -210,7 +211,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
     def __init__(self, config, verbose=True):
         general_params = [
             ("state_pub_rate", 10),
-            ("observation_pub_rate", 3),
+            ("detections_pub_rate", 3),
             ("world_frame", "map")
         ]
         nav_params = [
@@ -225,7 +226,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self._init_config = config
 
         state_pub_rate = self.get_parameter("state_pub_rate").value
-        observation_pub_rate = self.get_parameter("observation_pub_rate").value
+        detections_pub_rate = self.get_parameter("detections_pub_rate").value
         self.world_frame = self.get_parameter("world_frame").value  # fixed frame of the world
 
         self.br = tf2_ros.TransformBroadcaster(self)
@@ -234,7 +235,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         reset_topic = "~/reset"
         state_markers_topic = "~/state_markers"
         robot_pose_topic = "~/robot_pose"
-        observation_topic = "~/pomdp_observation"
+        detections_topic = "~/object_detections"
         self.env = SimpleSimEnv(config)
         self.action_sub = self.create_subscription(
             KeyValAction, action_topic, self._action_cb, 10)
@@ -248,10 +249,10 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self.robot_pose_pub = self.create_publisher(
             geometry_msgs.msg.PoseStamped, robot_pose_topic, 10)
 
-        # observation
-        self.observation_pub = self.create_publisher(
-            KeyValObservation, observation_topic, 10)
-        self.observation_pub_rate = observation_pub_rate
+        # observation (object detections)
+        self.detections_pub = self.create_publisher(
+            vision_msgs.msg.Detection3DArray, detections_topic, 10)
+        self.detections_pub_rate = detections_pub_rate
 
         # navigation related
         self.nav_step_duration = self.get_parameter("step_duration").value  # amount of time to execute one step
@@ -266,7 +267,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
 
         # Starts spinning...
         self.get_logger().info("publishing observations")
-        self.create_timer(1./self.observation_pub_rate, self.publish_observation)
+        self.create_timer(1./self.detections_pub_rate, self.publish_observation)
         self.get_logger().info("publishing state markers")
         self.create_timer(1./self.state_pub_rate, self.publish_state)
 
@@ -295,27 +296,28 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self.get_logger().info("======================= RESET =========================")
 
     def publish_observation(self):
+        # publish object observations as Detection3DArray.
         observation = self.env.provide_observation()
-        keys = []
-        values = []
-        # First, make robot observation
-        o_robot = observation.z(self.env.robot_id)
-        keys.extend(["robot_id", "robot_pose", "objects_found"])
-        values.extend([self.env.robot_id,
-                       str(o_robot.pose),
-                       str(o_robot.objects_found)])
 
+        det3d_msgs = []
+        header = std_msgs.msg.Header(stamp=self.get_stamp_now(),
+                                     frame_id=self.world_frame)
         for objid in observation:
             if objid == self.env.robot_id:
                 continue
             zobj = observation.z(objid)
-            keys.extend([f"loc_{objid}", f"sizes_{objid}"])
-            values.extend([str(zobj.loc), str(zobj.sizes)])
-        obs_msg = KeyValObservation(stamp=self.get_stamp_now(),
-                                    type="joint",
-                                    keys=keys,
-                                    values=values)
-        self.observation_pub.publish(obs_msg)
+            objhyp = vision_msgs.msg.ObjectHypothesisWithPose(
+                hypothesis=vision_msgs.msg.ObjectHypothesis(
+                    class_id=objid, score=1.0))
+            if zobj.loc is not None:
+                bbox3d = ros2_utils.make_bbox3d_msg(zobj.loc, zobj.sizes)
+                det3d = vision_msgs.msg.Detection3D(header=header,
+                                                    results=[objhyp],
+                                                    bbox=bbox3d)
+                det3d_msgs.append(det3d)
+        det3d_array = vision_msgs.msg.Detection3DArray(
+            header=header, detections=det3d_msgs)
+        self.detections_pub.publish(det3d_array)
 
     @property
     def navigating(self):

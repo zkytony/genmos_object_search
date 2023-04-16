@@ -10,6 +10,7 @@ from rclpy.executors import SingleThreadedExecutor
 import message_filters
 import geometry_msgs.msg
 import std_msgs.msg
+import vision_msgs.msg
 
 from genmos_object_search import utils
 from genmos_object_search.grpc.utils import proto_utils
@@ -77,7 +78,7 @@ def pose_tuple_from_pose_stamped(pose_stamped_msg):
     return (position.x, position.y, position.z, orientation.x, orientation.y, orientation.z, orientation.w)
 
 
-
+### Node ###
 class WrappedNode(Node):
     def __init__(self, node_name, params=None, verbose=True):
         """
@@ -115,6 +116,22 @@ class WrappedNode(Node):
 
 def latch(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL):
     return QoSProfile(depth=depth, durability=durability)
+
+### vision_msgs ###
+def make_bbox3d_msg(center, sizes):
+    if len(center) == 7:
+        x, y, z, qx, qy, qz, qw = center
+        q = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    else:
+        x, y, z = center
+        q = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
+    s1, s2, s3 = sizes
+    msg = vision_msgs.msg.BoundingBox3D()
+    msg.center.position = geometry_msgs.msg.Point(x=x, y=y, z=z)
+    msg.center.orientation = q
+    msg.size = geometry_msgs.msg.Vector3(x=s1, y=s2, z=s3)
+    return msg
+
 
 
 ### Communication ###
