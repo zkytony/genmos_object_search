@@ -41,7 +41,7 @@ def make_nav_action(pos, orien, action_id, nav_type):
         raise ValueError("nav_type should be '2d' or '3d'")
     goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]
     goal_values = [*pos, *orien]
-    nav_action = KeyValAction(stamp=rospy.Time.now(),
+    nav_action = KeyValAction(stamp=self.get_clock().now().to_msg(),
                               type="nav",
                               keys=["action_id"] + goal_keys + ["nav_type"],
                               values=list(map(str, [action_id] + goal_values + [nav_type])))
@@ -59,7 +59,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
             local_robot_id = Message.forwhom(message)
             self.get_logger().info(f"local agent {local_robot_id} removed.")
             if local_robot_id != self._local_robot_id:
-                rospy.logerr("removed local agent has an unexpected ID")
+                self.get_logger().error("removed local agent has an unexpected ID")
             self._local_robot_id = None
 
 #     def update_search_region_2d(self, robot_id=None):
@@ -68,13 +68,13 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #             robot_id = self.robot_id
 #         self.get_logger().info("Sending request to update search region (2D)")
 
-#         region_cloud_msg, pose_stamped_msg = ros_utils.WaitForMessages(
+#         region_cloud_msg, pose_stamped_msg = ros2_utils.WaitForMessages(
 #             [self._search_region_2d_point_cloud_topic, self._search_region_center_topic],
 #             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
 #             delay=10000, verbose=True).messages
 
-#         cloud_pb = ros_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-#         robot_pose = ros_utils.pose_to_tuple(pose_stamped_msg.pose)
+#         cloud_pb = ros2_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+#         robot_pose = ros2_utils.pose_to_tuple(pose_stamped_msg.pose)
 #         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
 #         search_region_config = self.agent_config.get("search_region", {}).get("2d", {})
@@ -151,26 +151,26 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 
 #     def clear_fovs_markers(self):
 #         # Clear markers
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
+#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
 #                                  frame_id=self.world_frame)
-#         clear_msg = ros_utils.clear_markers(header, ns="")
+#         clear_msg = ros2_utils.clear_markers(header, ns="")
 #         self._fovs_markers_pub.publish(clear_msg)
 
 #     def clear_octree_markers(self):
 #         # Clear markers
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
+#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
 #                                  frame_id=self.world_frame)
-#         clear_msg = ros_utils.clear_markers(header, ns="")
+#         clear_msg = ros2_utils.clear_markers(header, ns="")
 #         self._octbelief_markers_pub.publish(clear_msg)
 
 #     def visualize_fovs_3d(self, response):
 #         # Clear markers
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
+#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
 #                                  frame_id=self.world_frame)
-#         clear_msg = ros_utils.clear_markers(header, ns="")
+#         clear_msg = ros2_utils.clear_markers(header, ns="")
 #         self._fovs_markers_pub.publish(clear_msg)
 
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
+#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
 #                                  frame_id=self.world_frame)
 #         fovs = json.loads(response.fovs.decode('utf-8'))
 #         markers = []
@@ -186,78 +186,78 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #                 voxel = tuple(voxel)
 #                 if voxel in obstacles_hit:
 #                     continue
-#                 m = ros_utils.make_viz_marker_for_voxel(
+#                 m = ros2_utils.make_viz_marker_for_voxel(
 #                     objid, voxel, header, color=free_color, ns="fov",
 #                     lifetime=0, alpha=0.7)
 #                 markers.append(m)
 #             for voxel in obstacles_hit:
-#                 m = ros_utils.make_viz_marker_for_voxel(
+#                 m = ros2_utils.make_viz_marker_for_voxel(
 #                     objid, voxel, header, color=hit_color, ns="fov",
 #                     lifetime=0, alpha=0.7)
 #                 markers.append(m)
 #             break  # just visualize one
 #         self._fovs_markers_pub.publish(MarkerArray(markers))
 
-#     def get_and_visualize_belief_3d(self, robot_id=None, o3dviz=True):
-#         if robot_id is None:
-#             robot_id = self.robot_id
+    def get_and_visualize_belief_3d(self, robot_id=None, o3dviz=True):
+        if robot_id is None:
+            robot_id = self.robot_id
 
-#         # Clear markers
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
-#                                  frame_id=self.world_frame)
-#         clear_msg = ros_utils.clear_markers(header, ns="")
-#         self._octbelief_markers_pub.publish(clear_msg)
-#         self._topo_map_3d_markers_pub.publish(clear_msg)
+        # Clear markers
+        header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros2_utils.clear_markers(header, ns="")
+        self._octbelief_markers_pub.publish(clear_msg)
+        self._topo_map_3d_markers_pub.publish(clear_msg)
 
-#         response = self._genmos_client.getObjectBeliefs(
-#             robot_id, header=proto_utils.make_header(self.world_frame))
-#         if response.status != Status.SUCCESSFUL:
-#             print("Failed to get 3D belief")
-#             return
-#         self.get_logger().info("got belief")
+        response = self._genmos_client.getObjectBeliefs(
+            robot_id, header=proto_utils.make_header(self.world_frame))
+        if response.status != Status.SUCCESSFUL:
+            print("Failed to get 3D belief")
+            return
+        self.get_logger().info("got belief")
 
-#         # visualize the belief
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
-#                                  frame_id=self.world_frame)
-#         markers = []
-#         # First, visualize the belief of detected objects
-#         for bobj_pb in response.object_beliefs:
-#             if bobj_pb.object_id in self.objects_found:
-#                 msg = ros_utils.make_octree_belief_proto_markers_msg(
-#                     bobj_pb, header, alpha_scaling=2.0, prob_thres=0.5)
-#                 markers.extend(msg.markers)
-#         # For the other objects, just visualize one is enough.
-#         for bobj_pb in response.object_beliefs:
-#             if bobj_pb.object_id not in self.objects_found:
-#                 msg = ros_utils.make_octree_belief_proto_markers_msg(
-#                     bobj_pb, header, alpha_scaling=1.0)
-#                 markers.extend(msg.markers)
-#                 break
-#         self._octbelief_markers_pub.publish(MarkerArray(markers))
+        # visualize the belief
+        header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
+                                 frame_id=self.world_frame)
+        markers = []
+        # First, visualize the belief of detected objects
+        for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id in self.objects_found:
+                msg = ros2_utils.make_octree_belief_proto_markers_msg(
+                    bobj_pb, header, alpha_scaling=2.0, prob_thres=0.5)
+                markers.extend(msg.markers)
+        # For the other objects, just visualize one is enough.
+        for bobj_pb in response.object_beliefs:
+            if bobj_pb.object_id not in self.objects_found:
+                msg = ros2_utils.make_octree_belief_proto_markers_msg(
+                    bobj_pb, header, alpha_scaling=1.0)
+                markers.extend(msg.markers)
+                break
+        self._octbelief_markers_pub.publish(MarkerArray(markers=markers))
 
-#         self.get_logger().info("belief visualized")
+        self.get_logger().info("belief visualized")
 
-#         # visualize topo map in robot belief
-#         markers = []
-#         response_robot_belief = self._genmos_client.getRobotBelief(
-#             robot_id, header=proto_utils.make_header(self.world_frame))
-#         robot_belief_pb = response_robot_belief.robot_belief
-#         if robot_belief_pb.HasField("topo_map"):
-#             msg = ros_utils.make_topo_map_proto_markers_msg(
-#                 robot_belief_pb.topo_map,
-#                 header, self.search_space_res_3d,
-#                 node_color=[0.82, 0.01, 0.08, 0.8],
-#                 edge_color=[0.24, 0.82, 0.01, 0.8],
-#                 node_thickness=self.search_space_res_3d)
-#             markers.extend(msg.markers)
-#         self._topo_map_3d_markers_pub.publish(MarkerArray(markers))
-#         self.get_logger().info("belief visualized")
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._genmos_client.getRobotBelief(
+            robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros2_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, self.search_space_res_3d,
+                node_color=[0.82, 0.01, 0.08, 0.8],
+                edge_color=[0.24, 0.82, 0.01, 0.8],
+                node_thickness=self.search_space_res_3d)
+            markers.extend(msg.markers)
+        self._topo_map_3d_markers_pub.publish(MarkerArray(markers=markers))
+        self.get_logger().info("belief visualized")
 
 #     def get_and_visualize_belief_2d(self):
 #         # First, clear existing belief messages
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
+#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
 #                                  frame_id=self.world_frame)
-#         clear_msg = ros_utils.clear_markers(header, ns="")
+#         clear_msg = ros2_utils.clear_markers(header, ns="")
 #         self._belief_2d_markers_pub.publish(clear_msg)
 #         self._topo_map_2d_markers_pub.publish(clear_msg)
 
@@ -270,13 +270,13 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         _pos_z = self.ros_visual_config.get("marker2d_z", 0.1)
 
 #         # visualize object belief
-#         header = std_msgs.Header(stamp=rospy.Time.now(),
+#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
 #                                  frame_id=self.world_frame)
 #         markers = []
 #         for bobj_pb in response.object_beliefs:
 #             color = self.agent_config["objects"][bobj_pb.object_id].get(
 #                 "color", [0.2, 0.7, 0.2])[:3]
-#             msg = ros_utils.make_object_belief2d_proto_markers_msg(
+#             msg = ros2_utils.make_object_belief2d_proto_markers_msg(
 #                 bobj_pb, header, self.search_space_res_2d,
 #                 color=color, pos_z=_pos_z)
 #             markers.extend(msg.markers)
@@ -290,7 +290,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #             self.robot_id, header=proto_utils.make_header(self.world_frame))
 #         robot_belief_pb = response_robot_belief.robot_belief
 #         if robot_belief_pb.HasField("topo_map"):
-#             msg = ros_utils.make_topo_map_proto_markers_msg(
+#             msg = ros2_utils.make_topo_map_proto_markers_msg(
 #                 robot_belief_pb.topo_map,
 #                 header, self.search_space_res_2d,
 #                 node_thickness=0.05,
@@ -299,28 +299,28 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
 #         self.get_logger().info("belief visualized")
 
-#     def get_and_visualize_belief(self):
-#         if self.agent_config["agent_type"] == "local":
-#             if self.agent_config["agent_class"].endswith("3D"):
-#                 self.get_and_visualize_belief_3d()
-#             else:
-#                 header = std_msgs.Header(stamp=rospy.Time.now(),
-#                                          frame_id=self.world_frame)
-#                 clear_msg = ros_utils.clear_markers(header, ns="")
-#                 self._fovs_markers_pub.publish(clear_msg)
-#                 self._octbelief_markers_pub.publish(clear_msg)
-#                 self._topo_map_3d_markers_pub.publish(clear_msg)
-#                 self.get_and_visualize_belief_2d()
-#         elif self.agent_config["agent_type"] == "hierarchical":
-#             # local agent in hierarchical planning will get its search region
-#             # through server-client communication. Here, the client only needs
-#             # to send over the search region info for the global agent.
-#             if self._local_robot_id is not None:
-#                 self.get_and_visualize_belief_3d(robot_id=self._local_robot_id)
-#             self.get_and_visualize_belief_2d()
-#         else:
-#             raise ValueError("Unexpected agent type: {}"\
-#                              .format(self.agent_config["agent_type"]))
+    def get_and_visualize_belief(self):
+        if self.agent_config["agent_type"] == "local":
+            if self.agent_config["agent_class"].endswith("3D"):
+                self.get_and_visualize_belief_3d()
+            else:
+                header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
+                                         frame_id=self.world_frame)
+                clear_msg = ros2_utils.clear_markers(header, ns="")
+                self._fovs_markers_pub.publish(clear_msg)
+                self._octbelief_markers_pub.publish(clear_msg)
+                self._topo_map_3d_markers_pub.publish(clear_msg)
+                self.get_and_visualize_belief_2d()
+        elif self.agent_config["agent_type"] == "hierarchical":
+            # local agent in hierarchical planning will get its search region
+            # through server-client communication. Here, the client only needs
+            # to send over the search region info for the global agent.
+            if self._local_robot_id is not None:
+                self.get_and_visualize_belief_3d(robot_id=self._local_robot_id)
+            self.get_and_visualize_belief_2d()
+        else:
+            raise ValueError("Unexpected agent type: {}"\
+                             .format(self.agent_config["agent_type"]))
 
 #     def wait_for_observation(self):
 #         """We wait for the robot pose (PoseStamped) and the
@@ -329,17 +329,17 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         Returns:
 #             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
 #         # robot pose may be much higher in frequency than object detection.
-#         robot_pose_msg, object_detections_msg = ros_utils.WaitForMessages(
+#         robot_pose_msg, object_detections_msg = ros2_utils.WaitForMessages(
 #             [self._robot_pose_topic, self._object_detections_topic],
 #             [geometry_msgs.PoseStamped, vision_msgs.Detection3DArray],
 #             queue_size=self.obqueue_size, delay=self.obdelay, verbose=True).messages
 
 #         if robot_pose_msg.header.frame_id != self.world_frame:
 #             # Need to convert robot pose to world frame
-#             robot_pose_msg = ros_utils.tf2_transform(self.tfbuffer, robot_pose_msg, self.world_frame)
+#             robot_pose_msg = ros2_utils.tf2_transform(self.tfbuffer, robot_pose_msg, self.world_frame)
 
 #         # Detection proto
-#         detections_pb = ros_utils.detection3darray_to_proto(
+#         detections_pb = ros2_utils.detection3darray_to_proto(
 #             object_detections_msg, self.robot_id, self.detection_class_names,
 #             target_frame=self.world_frame, tf2buf=self.tfbuffer)
 
@@ -356,7 +356,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #             object_ids=sorted(list(self.objects_found)))
 
 #         # Robot pose proto
-#         robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+#         robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
 #         robot_pose_pb = o_pb2.RobotPose(
 #             header=header,
 #             robot_id=self.robot_id,
@@ -364,10 +364,10 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #         return detections_pb, robot_pose_pb, objects_found_pb
 
 #     def wait_for_robot_pose(self):
-#         robot_pose_msg = ros_utils.WaitForMessages(
+#         robot_pose_msg = ros2_utils.WaitForMessages(
 #             [self._robot_pose_topic], [geometry_msgs.PoseStamped],
 #             verbose=True).messages[0]
-#         robot_pose_tuple = ros_utils.pose_to_tuple(robot_pose_msg.pose)
+#         robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
 #         return robot_pose_tuple
 
 #     def execute_action(self, action_id, action_pb):
@@ -397,7 +397,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #             self.get_logger().info("published nav action for execution")
 
 #         elif isinstance(action_pb, a_pb2.Find):
-#             find_action = KeyValAction(stamp=rospy.Time.now(),
+#             find_action = KeyValAction(stamp=self.get_clock().now().to_msg(),
 #                                        type="find",
 #                                        keys=["action_id"],
 #                                        values=[action_id])
@@ -538,7 +538,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
             action_id, action_pb = self.plan_action()
             self.clear_fovs_markers()  # clear fovs markers before executing action
             self.execute_action(action_id, action_pb)
-            ros_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
+            ros2_utils.WaitForMessages([self._action_done_topic], [std_msgs.String],
                                       allow_headerless=True, verbose=True)
             self.get_logger().info(typ.success("action done."))
 

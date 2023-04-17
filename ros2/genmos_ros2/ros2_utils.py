@@ -23,7 +23,6 @@ from genmos_object_search.utils import math as math_utils
 from genmos_object_search.utils.misc import hash16
 from genmos_object_search.utils.colors import color_map, cmaps, lighter_with_alpha
 
-
 ### Pose and Transforms ###
 def pose_to_tuple(pose):
     """
@@ -129,7 +128,7 @@ def make_bbox3d_msg(center, sizes):
         q = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
     else:
         x, y, z = center
-        q = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
+        q = geometry_msgs.msg.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
     s1, s2, s3 = sizes
     msg = vision_msgs.msg.BoundingBox3D()
     msg.center.position = geometry_msgs.msg.Point(x=x, y=y, z=z)
@@ -294,9 +293,9 @@ def make_viz_marker_for_line_segment(start_point, end_point, header, **kwargs):
     marker = Marker(header=header)
     _id = kwargs.pop("id", hash16((start_point, end_point)))
     marker.id = _id
-    marker.points = [geometry_msgs.msg.Point(*start_point),
-                     geometry_msgs.msg.Point(*end_point)]
-    marker.pose.position = geometry_msgs.msg.Point(0.0, 0.0, 0.0)
+    marker.points = [geometry_msgs.msg.Point(**unravel_args(["x","y","z"], start_point)),
+                     geometry_msgs.msg.Point(**unravel_args(["x","y","z"], end_point))]
+    marker.pose.position = geometry_msgs.msg.Point(x=0.0, y=0.0, z=0.0)
     marker.pose.orientation = geometry_msgs.msg.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
     kwargs["viz_type"] = Marker.LINE_STRIP
     _fill_viz_marker(marker, **kwargs)
@@ -307,8 +306,10 @@ def make_viz_marker_cylinder(_id, pose, header, **kwargs):
     marker = Marker(header=header)
     marker.id = _id
     x, y, z, qx ,qy ,qz, qw = pose
-    marker.pose.position = geometry_msgs.msg.Point(x,y,z)
-    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    marker.pose.position = geometry_msgs.msg.Point(
+        x=float(x),y=float(y),z=float(z))
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(
+        x=float(qx), y=float(qy), z=float(qz), w=float(qw))
     kwargs["viz_type"] = Marker.CYLINDER
     _fill_viz_marker(marker, **kwargs)
     return marker
@@ -318,8 +319,10 @@ def make_viz_marker_cube(_id, pose, header, **kwargs):
     marker = Marker(header=header)
     marker.id = _id
     x, y, z, qx ,qy ,qz, qw = pose
-    marker.pose.position = geometry_msgs.msg.Point(x,y,z)
-    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=qx, y=qy, z=qz, w=qw)
+    marker.pose.position = geometry_msgs.msg.Point(
+        x=float(x),y=float(y),z=float(z))
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(
+        x=float(qx), y=float(qy), z=float(qz), w=float(qw))
     kwargs["viz_type"] = Marker.CUBE
     _fill_viz_marker(marker, **kwargs)
     return marker
@@ -357,7 +360,7 @@ def make_octnode_marker_msg(objid, pos, res, header, alpha=1.0,
     marker.pose.position = geometry_msgs.msg.Point(x=pos[0] + res/2,
                                                    y=pos[1] + res/2,
                                                    z=pos[2] + res/2)
-    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=0, y=0, z=0, w=1)
+    marker.pose.orientation = geometry_msgs.msg.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
     marker.scale = geometry_msgs.msg.Vector3(x=res, y=res, z=res)
     marker.action = Marker.ADD
     marker.lifetime = rclpy.duration.Duration(seconds=lifetime).to_msg()
@@ -558,3 +561,9 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
     cloud_pb = o_pb2.PointCloud(header=header,
                                 points=points_pb)
     return cloud_pb
+
+### ROS2 Generic helpers ###
+def unravel_args(fields, tup):
+    """convenient function that outputs a 1-1 dictionary
+    between the given fields and tuple"""
+    return {fields[i]:tup[i] for i in range(len(tup))}
