@@ -324,11 +324,11 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         return self._navigating
 
     def _action_cb(self, action_msg):
-        rospy.loginfo("received action to execute")
+        self.get_logger().info("received action to execute")
         if action_msg.type == "nav":
             if not self._navigating:
                 kv = {action_msg.keys[i]: action_msg.values[i] for i in range(len(action_msg.keys))}
-                goal_id = kv["goal_id"]
+                action_id = kv["action_id"]
                 goal_x = float(kv["goal_x"])
                 goal_y = float(kv["goal_y"])
                 goal_z = float(kv["goal_z"])
@@ -337,15 +337,15 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
                 goal_qz = float(kv["goal_qz"])
                 goal_qw = float(kv["goal_qw"])
                 goal = (goal_x, goal_y, goal_z, goal_qx, goal_qy, goal_qz, goal_qw)
-                rospy.loginfo(f"navigation to {goal}")
+                self.get_logger().info(f"navigation to {goal}")
                 self._navigating = True
                 self.navigate_to(goal)
-                rospy.loginfo(f"navigation done")
+                self.get_logger().info(f"navigation done")
                 self._navigating = False
-                self._action_done_pub.publish(std_msgs.msg.String(data=f"nav to {goal_id} done."))
+                self._action_done_pub.publish(std_msgs.msg.String(data=f"nav to {action_id} done."))
 
             else:
-                rospy.loginfo(f"navigation is in progress. Goal ignored.")
+                self.get_logger().info(f"navigation is in progress. Goal ignored.")
 
         elif action_msg.type == "find":
             self.find()
@@ -409,7 +409,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         next_object_states = copy.deepcopy(self.env.state.object_states)
         next_object_states[self.env.robot_id] = next_robot_state
         self.env.apply_transition(pomdp_py.OOState(next_object_states))
-        rate = rospy.Rate(1./self.nav_step_duration)
+        rate = self.create_rate(1./self.nav_step_duration)
         # dx
         dx_actions = self._axis_actions_towards(current_pose[0], goal_pose[0], "dx", 0)
         # dy
@@ -419,7 +419,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         all_actions = dx_actions + dy_actions + dz_actions
         for action in all_actions:
             self.env.state_transition(action, execute=True)
-            rospy.loginfo(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
+            self.get_logger().info(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
             rate.sleep()
 
     def _axis_actions_towards(self, curval, desval, dtype, coord_index):

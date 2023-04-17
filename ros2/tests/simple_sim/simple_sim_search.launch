@@ -3,7 +3,7 @@
   <arg name="robot_id" default="robot0"/>
 
   <node pkg="genmos_object_search_ros2"
-        name="run_search"
+        name="simple_sim_search"
         exec="run_search.py">
     <param name="config_file" value="$(find-pkg-share genmos_object_search_ros2)/tests/simple_sim/config_simple_sim_$(var map_name).yaml"/>
     <param name="robot_id" value="$(var robot_id)"/>

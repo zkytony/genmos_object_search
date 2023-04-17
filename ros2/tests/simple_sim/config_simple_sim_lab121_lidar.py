@@ -130,9 +130,15 @@ CONFIG_LOCAL = {
     },
 
     "planner_config":  {
-        # to be filled automatically
+        "planner": "pomdp_py.POUCT",
+        "planner_params": {
+            "exploration_const": 1000,
+            "max_depth": 8,
+            "num_sims": 200,
+            "show_progress": True
+        }
         ####################################
-        # some possibilities for planner_config:
+        # some other possibilities for planner_config:
         #
         #     "planner": "genmos_object_search.oopomdp.planner.random.RandomPlanner",
         #     "planner_params": {}
@@ -140,14 +146,6 @@ CONFIG_LOCAL = {
         #
         #     "planner": "genmos_object_search.oopomdp.planner.greedy.GreedyPlanner",
         #     "planner_params": {}
-        #  or,
-        #
-        #     "planner": "pomdp_py.POUCT",
-        #     "planner_params": {
-        #         "exploration_const": 1000,
-        #         "max_depth": 8,
-        #         "num_sims": 200,
-        #         "show_progress": True
         #     }
         #
         #####################################

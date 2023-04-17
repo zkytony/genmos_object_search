@@ -267,7 +267,13 @@ object_locations:
   - - -0.65922832
     - 2.10052156
     - -0.12615938
-planner_config: {}
+planner_config:
+  planner: pomdp_py.POUCT
+  planner_params:
+    exploration_const: 1000
+    max_depth: 8
+    num_sims: 200
+    show_progress: true
 ros2:
   detection_class_names:
   - book
