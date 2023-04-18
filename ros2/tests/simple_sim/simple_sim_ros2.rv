@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /state1
       Splitter Ratio: 0.5
     Tree Height: 1052
   - Class: rviz_common/Selection
@@ -65,7 +66,7 @@ Visualization Manager:
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: global points
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
@@ -83,10 +84,9 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray
+      Name: state
       Namespaces:
-        "": true
-        object: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
