@@ -81,6 +81,8 @@ install(
   PROGRAMS
   tests/simple_sim/simple_sim_env_ros2.py
   tests/simple_sim/simple_sim_init_pose_pub_ros2.py
+  tests/simple_sim/view_simple_sim_ros2.sh
+  tests/simple_sim/test_simple_sim_env_ros2_navigation.py
   scripts/run_search.py
   DESTINATION lib/${PROJECT_NAME}
 )

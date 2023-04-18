@@ -12,6 +12,8 @@ import geometry_msgs.msg
 import std_msgs.msg
 import vision_msgs.msg
 import ros2_numpy
+import tf2_ros
+import tf2_geometry_msgs.tf2_geometry_msgs
 
 import google.protobuf.timestamp_pb2
 import genmos_object_search.grpc.common_pb2 as common_pb2
@@ -22,6 +24,12 @@ from genmos_object_search.grpc.utils import proto_utils
 from genmos_object_search.utils import math as math_utils
 from genmos_object_search.utils.misc import hash16
 from genmos_object_search.utils.colors import color_map, cmaps, lighter_with_alpha
+
+### Logging ###
+from rclpy.impl import rcutils_logger
+LOGGER_NAME = "ros2_utils"
+RCUTILS_LOGGER = rcutils_logger.RcutilsLogger(name=LOGGER_NAME)
+
 
 ### Pose and Transforms ###
 def pose_to_tuple(pose):
@@ -227,6 +235,54 @@ def wait_for_messages(*args, **kwargs):
         wfm_node.destroy_node()
     return wfm_node.messages
 
+
+### TF2 ###
+def tf2_frame_eq(f1, f2):
+    if f1[0] == "/":
+        f1 = f1[1:]
+    if f2[0] == "/":
+        f2 = f2[1:]
+    return f1 == f2
+
+def tf2_frame(f):
+    # Remove leading slash in tf base frame (you can't have leading slashes on TF2 frame names);
+    # reference: https://github.com/ros-planning/navigation/issues/794#issuecomment-433465562
+    if f[0] == "/":
+        f = f[1:]
+    return f
+
+def tf2_header(h):
+    h.frame_id = tf2_frame(h.frame_id)
+    return h
+
+def tf2_transform(tf2buf, object_stamped, target_frame):
+    """
+    transforms the stamped object into the target frame.
+    """
+    # remove leading slash in frame if it exists (tf2's requirement)
+    object_stamped.header = tf2_header(object_stamped.header)
+    result_stamped = None
+    try:
+        result_stamped = tf2buf.transform(object_stamped, target_frame)
+    except:
+        einfo = sys.exc_info()
+        msg = "{}: {}".format(einfo[0], einfo[1])
+        RCUTILS_LOGGER.error(msg)
+    finally:
+        return result_stamped
+
+def tf2_lookup_transform(tf2buf, target_frame, source_frame, timestamp):
+    """If timestamp is None, will get the most recent transform"""
+    try:
+        return tf2buf.lookup_transform(tf2_frame(target_frame),
+                                       tf2_frame(source_frame),
+                                       timestamp)
+    except tf2_ros.LookupException:
+        RCUTILS_LOGGER.error("Error looking up transform from {} to {}"\
+                             .format(target_frame, source_frame))
+
+def tf2_do_transform(pose_stamped, trans):
+    return tf2_geometry_msgs.do_transform_pose(pose_stamped, trans)
 
 
 ### Visualization ###
@@ -562,7 +618,65 @@ def pointcloud2_to_pointcloudproto(cloud_msg):
                                 points=points_pb)
     return cloud_pb
 
-### ROS2 Generic helpers ###
+### Vision Messages ###
+def detection3d_to_proto(d3d_msg, class_names,
+                         target_frame=None, tf2buf=None):
+    """Given vision_msgs.Detection3D, return a proto Detection object with a 3D
+    box. because the label in d3d_msg have integer id, we will need to map them
+    to strings according to indexing in 'class_names'.
+
+    If the message contains multiple object hypotheses, will only
+    consider the one with the highest score
+    """
+    hypos = {h.hypothesis.class_id: h.hypothesis.score
+             for h in d3d_msg.results}
+    label_id = max(hypos, key=hypos.get)
+    if type(label_id) == int:
+        label = class_names[label_id]
+    elif type(label_id) == str:
+        label = label_id
+    confidence = hypos[label_id]
+    bbox_center = d3d_msg.bbox.center  # a Pose msg
+
+    # transform pose to target frame if wanted
+    if target_frame is not None:
+        if tf2buf is None:
+            tf2buf = tf2_ros.Buffer()
+        bbox_center_stamped = geometry_msgs.msg.PoseStamped(header=d3d_msg.header, pose=bbox_center)
+        bbox_center_stamped_T_target = tf2_transform(tf2buf, bbox_center_stamped, target_frame)
+        bbox_center = bbox_center_stamped_T_target.pose
+    center_tuple = pose_to_tuple(bbox_center)
+    center_pb = proto_utils.posetuple_to_poseproto(center_tuple)
+    box = common_pb2.Box3D(center=center_pb,
+                           sizes=common_pb2.Vec3(x=d3d_msg.bbox.size.x,
+                                                 y=d3d_msg.bbox.size.y,
+                                                 z=d3d_msg.bbox.size.z))
+    return o_pb2.Detection(label=label,
+                           confidence=confidence,
+                           box_3d=box)
+
+def detection3darray_to_proto(d3darr_msg, robot_id, class_names,
+                              target_frame=None, tf2buf=None):
+    """Given a vision_msgs.Detection3DArray message,
+    return an ObjectDetectionArray proto. 'robot_id'
+    is the robot that made this detetcion"""
+    stamp = google.protobuf.timestamp_pb2.Timestamp(seconds=d3darr_msg.header.stamp.sec,
+                                                    nanos=d3darr_msg.header.stamp.nanosec)
+    if target_frame is None:
+        header = proto_utils.make_header(frame_id=d3darr_msg.header.frame_id, stamp=stamp)
+    else:
+        header = proto_utils.make_header(frame_id=target_frame, stamp=stamp)
+    detections_pb = []
+    for d3d_msg in d3darr_msg.detections:
+        det3d_pb = detection3d_to_proto(
+            d3d_msg, class_names, target_frame=target_frame, tf2buf=tf2buf)
+        detections_pb.append(det3d_pb)
+    return o_pb2.ObjectDetectionArray(header=header,
+                                      robot_id=robot_id,
+                                      detections=detections_pb)
+
+
+### MISC ###
 def unravel_args(fields, tup):
     """convenient function that outputs a 1-1 dictionary
     between the given fields and tuple"""

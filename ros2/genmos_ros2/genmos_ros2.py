@@ -184,7 +184,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
                     lifetime=0, alpha=0.7)
                 markers.append(m)
             break  # just visualize one
-        self._fovs_markers_pub.publish(MarkerArray(markers))
+        self._fovs_markers_pub.publish(MarkerArray(markers=markers))
 
     def get_and_visualize_belief_3d(self, robot_id=None, o3dviz=True):
         if robot_id is None:
@@ -270,7 +270,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #             markers.extend(msg.markers)
 #             if bobj_pb.object_id not in self.objects_found:
 #                 break  # just visualize one, unless it's found
-#         self._belief_2d_markers_pub.publish(MarkerArray(markers))
+#         self._belief_2d_markers_pub.publish(MarkerArray(markers=markers))
 
 #         # visualize topo map in robot belief
 #         markers = []
@@ -284,7 +284,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 #                 node_thickness=0.05,
 #                 pos_z=_pos_z + 0.05)
 #             markers.extend(msg.markers)
-#         self._topo_map_2d_markers_pub.publish(MarkerArray(markers))
+#         self._topo_map_2d_markers_pub.publish(MarkerArray(markers=markers))
 #         self.get_logger().info("belief visualized")
 
     def get_and_visualize_belief(self):
@@ -310,53 +310,55 @@ class GenMOSROS2(ros2_utils.WrappedNode):
             raise ValueError("Unexpected agent type: {}"\
                              .format(self.agent_config["agent_type"]))
 
-#     def wait_for_observation(self):
-#         """We wait for the robot pose (PoseStamped) and the
-#         object detections (vision_msgs.Detection3DArray)
+    def wait_for_observation(self):
+        """We wait for the robot pose (PoseStamped) and the
+        object detections (vision_msgs.Detection3DArray)
 
-#         Returns:
-#             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
-#         # robot pose may be much higher in frequency than object detection.
-#         robot_pose_msg, object_detections_msg = ros2_utils.WaitForMessages(
-#             [self._robot_pose_topic, self._object_detections_topic],
-#             [geometry_msgs.PoseStamped, vision_msgs.Detection3DArray],
-#             queue_size=self.obqueue_size, delay=self.obdelay, verbose=True).messages
+        Returns:
+            a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
+        # robot pose may be much higher in frequency than object detection.
+        robot_pose_msg, object_detections_msg = ros2_utils.wait_for_messages(
+            [self._robot_pose_topic, self._object_detections_topic],
+            [geometry_msgs.PoseStamped, vision_msgs.Detection3DArray],
+            queue_size=self.obqueue_size, delay=self.obdelay, verbose=True)
 
-#         if robot_pose_msg.header.frame_id != self.world_frame:
-#             # Need to convert robot pose to world frame
-#             robot_pose_msg = ros2_utils.tf2_transform(self.tfbuffer, robot_pose_msg, self.world_frame)
+        if robot_pose_msg.header.frame_id != self.world_frame:
+            # Need to convert robot pose to world frame
+            robot_pose_msg = ros2_utils.tf2_transform(self.tfbuffer, robot_pose_msg, self.world_frame)
 
-#         # Detection proto
-#         detections_pb = ros2_utils.detection3darray_to_proto(
-#             object_detections_msg, self.robot_id, self.detection_class_names,
-#             target_frame=self.world_frame, tf2buf=self.tfbuffer)
+        # Detection proto
+        detections_pb = ros2_utils.detection3darray_to_proto(
+            object_detections_msg, self.robot_id, self.detection_class_names,
+            target_frame=self.world_frame, tf2buf=self.tfbuffer)
+        self.get_logger().info(f"Detections:\n {detections_pb}")
 
-#         # Objects found proto
-#         # If the last action is "find", and we receive object detections
-#         # that contain target objects, then these objects will be considered 'found'
-#         if isinstance(self.last_action, a_pb2.Find):
-#             for det_pb in detections_pb.detections:
-#                 if det_pb.label in self.agent_config["targets"]:
-#                     self.objects_found.add(det_pb.label)
-#         header = proto_utils.make_header(frame_id=self.world_frame)
-#         objects_found_pb = o_pb2.ObjectsFound(
-#             header=header, robot_id=self.robot_id,
-#             object_ids=sorted(list(self.objects_found)))
+        # Objects found proto
+        # If the last action is "find", and we receive object detections
+        # that contain target objects, then these objects will be considered 'found'
+        if isinstance(self.last_action, a_pb2.Find):
+            for det_pb in detections_pb.detections:
+                if det_pb.label in self.agent_config["targets"]:
+                    self.objects_found.add(det_pb.label)
+            self.get_logger().info(f"{self.objects_found} !!!!!!!!")
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        objects_found_pb = o_pb2.ObjectsFound(
+            header=header, robot_id=self.robot_id,
+            object_ids=sorted(list(self.objects_found)))
 
-#         # Robot pose proto
-#         robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
-#         robot_pose_pb = o_pb2.RobotPose(
-#             header=header,
-#             robot_id=self.robot_id,
-#             pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
-#         return detections_pb, robot_pose_pb, objects_found_pb
+        # Robot pose proto
+        robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
+        robot_pose_pb = o_pb2.RobotPose(
+            header=header,
+            robot_id=self.robot_id,
+            pose_3d=proto_utils.posetuple_to_poseproto(robot_pose_tuple))
+        return detections_pb, robot_pose_pb, objects_found_pb
 
-#     def wait_for_robot_pose(self):
-#         robot_pose_msg = ros2_utils.WaitForMessages(
-#             [self._robot_pose_topic], [geometry_msgs.PoseStamped],
-#             verbose=True).messages[0]
-#         robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
-#         return robot_pose_tuple
+    def wait_for_robot_pose(self):
+        robot_pose_msg = ros2_utils.wait_for_messages(
+            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True)[0]
+        robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
+        return robot_pose_tuple
 
     def make_nav_action(self, pos, orien, action_id, nav_type):
         if nav_type not in {"2d", "3d"}:
@@ -489,20 +491,20 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         self.last_action = action_pb
         return action_id, action_pb
 
-#     def wait_observation_and_update_belief(self, action_id):
-#         # Now, wait for observation, and then update belief
-#         detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
-#         # send obseravtions for belief update
-#         header = proto_utils.make_header(frame_id=self.world_frame)
-#         response_observation = self._genmos_client.processObservation(
-#             self.robot_id, robot_pose_pb,
-#             object_detections=detections_pb,
-#             objects_found=objects_found_pb,
-#             header=header, return_fov=True,
-#             action_id=action_id, action_finished=True, debug=False)
-#         response_robot_belief = self._genmos_client.getRobotBelief(
-#             self.robot_id, header=proto_utils.make_header(self.world_frame))
-#         return response_observation, response_robot_belief, detections_pb
+    def wait_observation_and_update_belief(self, action_id):
+        # Now, wait for observation, and then update belief
+        detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
+        # send obseravtions for belief update
+        header = proto_utils.make_header(frame_id=self.world_frame)
+        response_observation = self._genmos_client.processObservation(
+            self.robot_id, robot_pose_pb,
+            object_detections=detections_pb,
+            objects_found=objects_found_pb,
+            header=header, return_fov=True,
+            action_id=action_id, action_finished=True, debug=False)
+        response_robot_belief = self._genmos_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        return response_observation, response_robot_belief, detections_pb
 
     def run(self):
         # First, create an agent
@@ -525,6 +527,7 @@ class GenMOSROS2(ros2_utils.WrappedNode):
 
         # visualize initial belief
         self.get_and_visualize_belief()
+        self.get_logger().info("belief visualized!")
 
         # create planner
         response = self._genmos_client.createPlanner(config=self.planner_config,

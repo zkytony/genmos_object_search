@@ -2,7 +2,7 @@
   <arg name="robot_pose_topic" />
   <arg name="robot_pose_latched" default="false"/>
   <arg name="global_cloud_topic" default="graphnav_points"/>
-  <arg name="output" default="region_points"/>
+  <arg name="output" default="~/region_points"/>
   <arg name="name" default="local_cloud_publisher"/>
   <arg name="region_size_x" default="4.0"/>
   <arg name="region_size_y" default="4.0"/>

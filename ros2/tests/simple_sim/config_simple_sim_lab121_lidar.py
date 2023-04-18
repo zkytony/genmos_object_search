@@ -343,6 +343,14 @@ CONFIG_HIER = {
 #### SET WHICH CONFIG TO USE ###
 CONFIG = CONFIG_LOCAL
 
+GROUNDTRUTH_PRIOR = True
+OBJLOC_INDEX = 0  # this must match the objloc_index field in the SimpleSimEnv object.
+if GROUNDTRUTH_PRIOR:
+    CONFIG["agent_config"]["belief"]["prior"] = {}
+    for objid in CONFIG["agent_config"]["targets"]:
+        CONFIG["agent_config"]["belief"]["prior"][objid]\
+            = [[CONFIG["object_locations"][objid][OBJLOC_INDEX], 0.99]]
+
 import yaml
 def main():
     with open("config_simple_sim_lab121_lidar.yaml", "w") as f:

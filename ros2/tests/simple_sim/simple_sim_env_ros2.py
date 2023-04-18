@@ -7,7 +7,7 @@
 # To run test:
 # ros2 launch spot_funcs graphnav_map_publisher.launch map_name:=lab121_lidar
 # ros2 launch genmos_object_search_ros2 simple_sim_env_ros2.launch map_name:=lab121_lidar
-# ros2 launch genmos_object_search_ros2 view_simple_sim_ros2.launch
+# ros2 run genmos_object_search_ros2 view_simple_sim_ros2.sh
 import math
 import time
 import numpy as np
@@ -238,7 +238,8 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         detections_topic = "~/object_detections"
         self.env = SimpleSimEnv(config)
         self.action_sub = self.create_subscription(
-            KeyValAction, action_topic, self._action_cb, 10)
+            KeyValAction, action_topic, self._action_cb,
+            ros2_utils.latch(depth=10))
         self.reset_sub = self.create_subscription(
             std_msgs.msg.String, reset_topic, self._reset_cb, 10)
 
@@ -336,7 +337,9 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
                 goal_qy = float(kv["goal_qy"])
                 goal_qz = float(kv["goal_qz"])
                 goal_qw = float(kv["goal_qw"])
+                self.get_logger().info("DD")
                 goal = (goal_x, goal_y, goal_z, goal_qx, goal_qy, goal_qz, goal_qw)
+                self.get_logger().info("BB")
                 self.get_logger().info(f"navigation to {goal}")
                 self._navigating = True
                 self.navigate_to(goal)
@@ -480,9 +483,11 @@ def main():
     with open(args.config_file) as f:
         config = yaml.safe_load(f)
 
-    n = SimpleSimEnvROSNode(config)
-    rclpy.spin(n)
-    n.destroy_node()
+    node = SimpleSimEnvROSNode(config)
+    executor = rclpy.executors.MultiThreadedExecutor(2)
+    executor.add_node(node)
+    executor.spin()
+    node.destroy_node()
     rclpy.shutdown()
 
 if __name__ == "__main__":

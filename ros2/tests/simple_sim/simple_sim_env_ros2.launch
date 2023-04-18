@@ -12,7 +12,6 @@
         args="$(find-pkg-share genmos_object_search_ros2)/tests/simple_sim/config_simple_sim_$(var map_name).yaml">
     <param name="state_pub_rate" value="10"/>
     <param name="world_frame" value="$(var world_frame)"/>
-    <remap from="~/pomdp_action" to="/simple_sim_search/action"/>
 
   <!--   <param name="step_duration" value="0.1"/> -->
   <!--   <param name="translation_step_size" value="0.1"/> -->
@@ -30,6 +29,6 @@
     <param name="thz" value="90.0"/>
     <param name="world_frame" value="$(var world_frame)"/>
     <param name="latch" value="false"/>
-    <param name="lifetime" value="0"/>
+    <param name="lifetime" value="1"/>
   </node>
 </launch>
