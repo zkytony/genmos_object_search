@@ -211,7 +211,9 @@ class SimpleSimEnvRunner:
     """
     NODE_NAME="simple_sim_env"
     def __init__(self, config, verbose=True):
-        node = rclpy.create_node(SimpleSimEnvRunner.NODE_NAME)
+        self._node = rclpy.create_node(SimpleSimEnvRunner.NODE_NAME)
+
+        # Parameters
         general_params = [
             ("state_pub_rate", 4),
             ("detections_pub_rate", 3),
@@ -223,57 +225,59 @@ class SimpleSimEnvRunner:
             ("rotation_step_size", 5)  # in degreesw
         ]
         params = general_params + nav_params
-        ros2_utils.declare_params(node, params)
-        ros2_utils.print_parameters(node, [p[0] for p in params])
+        ros2_utils.declare_params(self._node, params)
+        ros2_utils.print_parameters(self._node, [p[0] for p in params])
 
-        self._init_config = config
+        self.state_pub_rate = self._node.get_parameter("state_pub_rate").value
+        self.detections_pub_rate = self._node.get_parameter("detections_pub_rate").value
+        self.world_frame = self._node.get_parameter("world_frame").value  # fixed frame of the world
+        ## navigation related
+        self.nav_step_duration = self._node.get_parameter("step_duration").value  # amount of time to execute one step
+        self.translation_step_size = self._node.get_parameter("translation_step_size").value
+        self.rotation_step_size = self._node.get_parameter("rotation_step_size").value
+        assert self.translation_step_size > 0, "translation_step_size must be > 0"
+        assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
 
-        state_pub_rate = node.get_parameter("state_pub_rate").value
-        detections_pub_rate = node.get_parameter("detections_pub_rate").value
-        self.world_frame = node.get_parameter("world_frame").value  # fixed frame of the world
-
-        self.br = tf2_ros.TransformBroadcaster(node)
-
+        # Topics
         action_topic = "~/pomdp_action"
         reset_topic = "~/reset"
         state_markers_topic = "~/state_markers"
         robot_pose_topic = "~/robot_pose"
         detections_topic = "~/object_detections"
-        self.env = SimpleSimEnv(config)
-        self.action_sub = node.create_subscription(
+
+        # subscribers
+        self.action_sub = self._node.create_subscription(
             KeyValAction, action_topic, self._action_cb,
             ros2_utils.latch(depth=10))
-        self.reset_sub = node.create_subscription(
+        self.reset_sub = self._node.create_subscription(
             std_msgs.msg.String, reset_topic, self._reset_cb, 10)
 
-        self.state_markers_pub = node.create_publisher(
+        # publishers
+        self.state_markers_pub = self._node.create_publisher(
             visualization_msgs.msg.MarkerArray, state_markers_topic, 10)
-        self.state_pub_rate = state_pub_rate
-
-        self.robot_pose_pub = node.create_publisher(
+        self.robot_pose_pub = self._node.create_publisher(
             geometry_msgs.msg.PoseStamped, robot_pose_topic, 10)
-
-        # observation (object detections)
-        self.detections_pub = node.create_publisher(
+        self.detections_pub = self._node.create_publisher(
             vision_msgs.msg.Detection3DArray, detections_topic, 10)
-        self.detections_pub_rate = detections_pub_rate
-
-        # navigation related
-        self.nav_step_duration = node.get_parameter("step_duration").value  # amount of time to execute one step
-        self.translation_step_size = node.get_parameter("translation_step_size").value
-        self.rotation_step_size = node.get_parameter("rotation_step_size").value
-        assert self.translation_step_size > 0, "translation_step_size must be > 0"
-        assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
-        self._navigating = False
-        self._action_done_pub = node.create_publisher(
+        self._action_done_pub = self._node.create_publisher(
             std_msgs.msg.String, "~/action_done",
             qos_profile=ros2_utils.latch(depth=10))  # publishes when action is done latch
 
+        # TF
+        self.br = tf2_ros.TransformBroadcaster(self._node)
+
+        # set up the POMDP environment
+        self._init_config = config
+        self.env = SimpleSimEnv(config)
+
+        # internal states
+        self._navigating = False
+
         # Starts spinning...
-        node.get_logger().info("publishing observations")
-        node.create_timer(1./self.detections_pub_rate, self.publish_observation)
-        node.get_logger().info("publishing state markers")
-        node.create_timer(1./self.state_pub_rate, self.publish_state)
+        self._node.get_logger().info("publishing observations")
+        self._node.create_timer(1./self.detections_pub_rate, self.publish_observation)
+        self._node.get_logger().info("publishing state markers")
+        self._node.create_timer(1./self.state_pub_rate, self.publish_state)
 
     def publish_state(self):
         self.get_logger().info(f"{self.env.state}")
