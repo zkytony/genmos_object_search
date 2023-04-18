@@ -1,3 +1,0 @@
-<launch>
-  <node name="rviz2" pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share genmos_object_search_ros2)/tests/simple_sim/simple_sim_ros2.rviz" />
-</launch>
