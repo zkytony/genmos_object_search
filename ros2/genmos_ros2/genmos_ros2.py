@@ -9,6 +9,7 @@ import pickle
 import yaml
 import json
 from pomdp_py.utils import typ
+from rclpy.node import Node
 
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
@@ -36,7 +37,7 @@ SEARCH_SPACE_RESOLUTION_3D = 0.1
 SEARCH_SPACE_RESOLUTION_2D = 0.3
 
 
-class GenMOSROS2(ros2_utils.WrappedNode):
+class GenMOSROS2(Node):
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
             local_robot_id = Message.forwhom(message)
@@ -411,13 +412,17 @@ class GenMOSROS2(ros2_utils.WrappedNode):
         return self.agent_config.get("misc", {}).get("ros_visual", {})
 
     def __init__(self, name="genmos_ros2", verbose=True):
+        super().__init__(name)
         params = [("robot_id", "robot0"),
                   ("world_frame", "graphnav_map"),
                   ("config_file", ""),
                   ("obs_queue_size", 200),
                   ("obs_delay", 1.0),
                   ("dynamic_update", False)]
-        super().__init__(name, params=params, verbose=verbose)
+        param_names = [p[0] for p in params]
+        ros2_utils.declare_params(self, params)
+        ros2_utils.print_parameters(self, param_names)
+
         self.name = name
         self._genmos_client = None
 

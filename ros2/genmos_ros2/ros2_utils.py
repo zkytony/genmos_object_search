@@ -91,40 +91,15 @@ def pose_tuple_from_pose_stamped(pose_stamped_msg):
 
 
 ### Node ###
-class WrappedNode(Node):
-    def __init__(self, node_name, params=None, verbose=True):
-        """
-        The Wrapped ROS2 Node.
+def declare_params(node, params):
+    """params (list): list of (parameter name, default value) tuples."""
+    for param_name, default_value in params:
+        node.declare_parameter(param_name, default_value)
 
-        Args:
-            node_name (str): name of node
-            params (list): list of (parameter name, default value) tuples.
-        """
-        super().__init__(node_name)
-        self._param_names = set()
-        if params is None:
-            params = []
-        for param_name, default_value in params:
-            self.declare_parameter(param_name, default_value)
-            self._param_names.add(param_name)
-
-        # print parameters on start
-        if verbose:
-            self.log_info("Initializing node {}. Parameters:".format(self.get_name()))
-            self._print_parameters(self._param_names)
-
-    def log_info(self, note):
-        self.get_logger().info(note)
-
-    def _print_parameters(self, names):
-        rclparams = self.get_parameters(names)
-        for rclparam, name in zip(rclparams, names):
-            self.get_logger().info(f"- {name}: {rclparam.value}")
-
-    def get_stamp_now(self):
-        return self.get_clock().now().to_msg()
-
-
+def print_parameters(node, names):
+    rclparams = node.get_parameters(names)
+    for rclparam, name in zip(rclparams, names):
+        self.get_logger().info(f"- {name}: {rclparam.value}")
 
 def latch(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL):
     return QoSProfile(depth=depth, durability=durability)
@@ -180,6 +155,7 @@ class WaitForMessagesNode(Node):
         if latched_topics is None:
             latched_topics = set()
         self.latched_topics = latched_topics
+        self._timer_threads = {}
 
         if self.verbose:
             self.get_logger().info("initializing message filter ApproximateTimeSynchronizer")

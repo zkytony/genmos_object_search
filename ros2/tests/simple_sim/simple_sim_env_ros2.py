@@ -15,6 +15,7 @@ import copy
 import argparse
 import yaml
 import pomdp_py
+import threading
 
 import rclpy
 import tf2_ros
@@ -194,11 +195,12 @@ class SimpleSimEnv(pomdp_py.Environment):
         return pomdp_py.OOState(sobjs)
 
 
-class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
+class SimpleSimEnvRunner:
     """
     note that all messages that this node receives
     should be in the world frame.
 
+    Internally maintains a ROS2 node that
     Subscribes:
       ~pomdp_action (KeyValAction)
       ~reset (String)
@@ -209,8 +211,9 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
     """
     NODE_NAME="simple_sim_env"
     def __init__(self, config, verbose=True):
+        node = rclpy.create_node(SimpleSimEnvRunner.NODE_NAME)
         general_params = [
-            ("state_pub_rate", 10),
+            ("state_pub_rate", 4),
             ("detections_pub_rate", 3),
             ("world_frame", "map")
         ]
@@ -220,16 +223,16 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
             ("rotation_step_size", 5)  # in degreesw
         ]
         params = general_params + nav_params
-        super().__init__(SimpleSimEnvROSNode.NODE_NAME,
-                         params=params,
-                         verbose=verbose)
+        ros2_utils.declare_params(node, params)
+        ros2_utils.print_parameters(node, [p[0] for p in params])
+
         self._init_config = config
 
-        state_pub_rate = self.get_parameter("state_pub_rate").value
-        detections_pub_rate = self.get_parameter("detections_pub_rate").value
-        self.world_frame = self.get_parameter("world_frame").value  # fixed frame of the world
+        state_pub_rate = node.get_parameter("state_pub_rate").value
+        detections_pub_rate = node.get_parameter("detections_pub_rate").value
+        self.world_frame = node.get_parameter("world_frame").value  # fixed frame of the world
 
-        self.br = tf2_ros.TransformBroadcaster(self)
+        self.br = tf2_ros.TransformBroadcaster(node)
 
         action_topic = "~/pomdp_action"
         reset_topic = "~/reset"
@@ -237,43 +240,43 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         robot_pose_topic = "~/robot_pose"
         detections_topic = "~/object_detections"
         self.env = SimpleSimEnv(config)
-        self.action_sub = self.create_subscription(
+        self.action_sub = node.create_subscription(
             KeyValAction, action_topic, self._action_cb,
             ros2_utils.latch(depth=10))
-        self.reset_sub = self.create_subscription(
+        self.reset_sub = node.create_subscription(
             std_msgs.msg.String, reset_topic, self._reset_cb, 10)
 
-        self.state_markers_pub = self.create_publisher(
+        self.state_markers_pub = node.create_publisher(
             visualization_msgs.msg.MarkerArray, state_markers_topic, 10)
         self.state_pub_rate = state_pub_rate
 
-        self.robot_pose_pub = self.create_publisher(
+        self.robot_pose_pub = node.create_publisher(
             geometry_msgs.msg.PoseStamped, robot_pose_topic, 10)
 
         # observation (object detections)
-        self.detections_pub = self.create_publisher(
+        self.detections_pub = node.create_publisher(
             vision_msgs.msg.Detection3DArray, detections_topic, 10)
         self.detections_pub_rate = detections_pub_rate
 
         # navigation related
-        self.nav_step_duration = self.get_parameter("step_duration").value  # amount of time to execute one step
-        self.translation_step_size = self.get_parameter("translation_step_size").value
-        self.rotation_step_size = self.get_parameter("rotation_step_size").value
+        self.nav_step_duration = node.get_parameter("step_duration").value  # amount of time to execute one step
+        self.translation_step_size = node.get_parameter("translation_step_size").value
+        self.rotation_step_size = node.get_parameter("rotation_step_size").value
         assert self.translation_step_size > 0, "translation_step_size must be > 0"
         assert self.rotation_step_size > 0, "rotation_step_size must be > 0"
         self._navigating = False
-        self._action_done_pub = self.create_publisher(
+        self._action_done_pub = node.create_publisher(
             std_msgs.msg.String, "~/action_done",
             qos_profile=ros2_utils.latch(depth=10))  # publishes when action is done latch
 
         # Starts spinning...
-        self.get_logger().info("publishing observations")
-        self.create_timer(1./self.detections_pub_rate, self.publish_observation)
-        self.get_logger().info("publishing state markers")
-        self.create_timer(1./self.state_pub_rate, self.publish_state)
+        node.get_logger().info("publishing observations")
+        node.create_timer(1./self.detections_pub_rate, self.publish_observation)
+        node.get_logger().info("publishing state markers")
+        node.create_timer(1./self.state_pub_rate, self.publish_state)
 
     def publish_state(self):
-        print(self.env.state)
+        self.get_logger().info(f"{self.env.state}")
         state_markers_msg, tf2_msgs, robot_pose_msg =\
             self._make_state_messages_for_pub(self.env.state)
         self.state_markers_pub.publish(state_markers_msg)
@@ -290,7 +293,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self.env = SimpleSimEnv(self._init_config, objloc_index=objloc_index)
         self._navigating = False
         # First, clear existing belief messages
-        header = std_msgs.msg.Header(stamp=self.get_stamp_now(),
+        header = std_msgs.msg.Header(stamp=self.get_clock().now().to_msg(),
                                      frame_id=self.world_frame)
         clear_msg = ros2_utils.clear_markers(header, ns="")
         self.state_markers_pub.publish(clear_msg)
@@ -301,7 +304,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         observation = self.env.provide_observation()
 
         det3d_msgs = []
-        header = std_msgs.msg.Header(stamp=self.get_stamp_now(),
+        header = std_msgs.msg.Header(stamp=self.get_clock().now().to_msg(),
                                      frame_id=self.world_frame)
         for objid in observation:
             if objid == self.env.robot_id:
@@ -359,7 +362,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
     def _make_state_messages_for_pub(self, state):
         markers = []
         tf2msgs = []
-        header = std_msgs.msg.Header(stamp=self.get_stamp_now(),
+        header = std_msgs.msg.Header(stamp=self.get_clock().now().to_msg(),
                                      frame_id=self.world_frame)
         for objid in state.object_states:
             if objid == self.env.robot_id:
@@ -399,6 +402,14 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         self.env.state_transition(action, execute=True)
 
     def navigate_to(self, goal_pose):
+        """since ROS2's create_timer shares the same thread as
+        the spin-thread, the navigation loop would have to be
+        run on a different thread in order to not block the timer."""
+        t = threading.Thread(target=self._navigate_to, args=(goal_pose,), daemon=False)
+        t.start()
+        t.join()
+
+    def _navigate_to(self, goal_pose):
         """Super simple navigation. Will first level the camera,
         then rotate the camera in yaw towards the goal, and then
         go in a straightline, and finally rotate it to the goal rotation."""
@@ -412,7 +423,6 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         next_object_states = copy.deepcopy(self.env.state.object_states)
         next_object_states[self.env.robot_id] = next_robot_state
         self.env.apply_transition(pomdp_py.OOState(next_object_states))
-        rate = self.create_rate(1./self.nav_step_duration)
         # dx
         dx_actions = self._axis_actions_towards(current_pose[0], goal_pose[0], "dx", 0)
         # dy
@@ -423,7 +433,7 @@ class SimpleSimEnvROSNode(ros2_utils.WrappedNode):
         for action in all_actions:
             self.env.state_transition(action, execute=True)
             self.get_logger().info(f"navigating ({action.name}) ... current pose: {self.env.state.s(self.env.robot_id).pose}")
-            rate.sleep()
+            time.sleep(self.nav_step_duration)
 
     def _axis_actions_towards(self, curval, desval, dtype, coord_index):
         """Generates a list of MotionAction3D objects that moves one
@@ -484,7 +494,7 @@ def main():
         config = yaml.safe_load(f)
 
     node = SimpleSimEnvROSNode(config)
-    executor = rclpy.executors.MultiThreadedExecutor(2)
+    executor = rclpy.executors.MultiThreadedExecutor(4)
     executor.add_node(node)
     executor.spin()
     node.destroy_node()
