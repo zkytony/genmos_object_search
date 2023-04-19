@@ -38,13 +38,13 @@ class NodeSol(Node):
         self.action_done_pub = self.create_publisher(
             std_msgs.msg.String, "~/action_done",
             QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
-        self.timer = self.create_timer(0.3, self.publish_state)
+        self.timer = self.create_timer(0.1, self.publish_state)
         self._executing = False
 
     def publish_state(self):
         self._state.header.stamp = self.get_clock().now().to_msg()
         self.state_pub.publish(self._state)
-        self.get_logger().info("state published! ({}, {}, {})"\
+        self.get_logger().info("state published! ({:.3f}, {:.3f}, {:.3f})"\
                                .format(self._state.point.x,
                                        self._state.point.y,
                                        self._state.point.z))
@@ -54,8 +54,19 @@ class NodeSol(Node):
             self.get_logger().info("action ignored - another action is executing")
         else:
             self.get_logger().info("action received!")
-            self.action_done_pub.publish(std_msgs.msg.String(data="done"))
             self._executing = True
+            # self.execute_action(msg.data)
+            self.action_done_pub.publish(std_msgs.msg.String(data="done"))
+            self._executing = False
+
+    def execute_action(self, action):
+        """changes the state according to the action -- the action doesn't
+        matter; the point is, this function will take some time to finish.
+        """
+        for i in range(10):
+            self._state.point.x += 0.1
+            time.sleep(0.1)
+
 
 
 class NodeActionPub(Node):
@@ -66,10 +77,10 @@ class NodeActionPub(Node):
         self.action_pub = self.create_publisher(
             std_msgs.msg.String, "/node_sol/action",
             QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
-        self.timer = self.create_timer(0.7, self.publish_action)
+        self.timer = self.create_timer(1.0, self.publish_action)
 
     def publish_action(self):
-        self.action_pub.publish(std_msgs.msg.String(data="+x"))
+        self.action_pub.publish(std_msgs.msg.String(data="action"))
 
 
 def test():
