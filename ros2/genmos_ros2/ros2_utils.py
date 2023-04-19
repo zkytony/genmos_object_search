@@ -97,9 +97,20 @@ def declare_params(node, params):
         node.declare_parameter(param_name, default_value)
 
 def print_parameters(node, names):
+    """
+    Args:
+        node (Node): the node for which we care about the parameter values
+        names (list): either a list of [param_name ... ] or [(param_name, default_value)...]
+    """
+    if len(names) > 0:
+        if hasattr(names[0], "__len__"):
+            if len(names[0]) != 2:
+                raise TypeError("expecting 'names' to be [param_name ... ] or [(param_name, default_value)...]")
+            else:
+                names = [p[0] for p in names]
     rclparams = node.get_parameters(names)
     for rclparam, name in zip(rclparams, names):
-        self.get_logger().info(f"- {name}: {rclparam.value}")
+        node.get_logger().info(f"- {name}: {rclparam.value}")
 
 def latch(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL):
     return QoSProfile(depth=depth, durability=durability)
