@@ -16,8 +16,14 @@ import time
 import rclpy
 import geometry_msgs.msg
 import std_msgs.msg
+import threading
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
+
+STATE_PUB_RATE = 10
+ACTION_PUB_RATE = 1.0
+EXEC_ACTION_TOTAL_TIME = 1.0
+EXEC_ACTION_STEP_TIME = 0.1
 
 
 class NodeSol(Node):
@@ -38,7 +44,7 @@ class NodeSol(Node):
         self.action_done_pub = self.create_publisher(
             std_msgs.msg.String, "~/action_done",
             QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
-        self.timer = self.create_timer(0.1, self.publish_state)
+        self.timer = self.create_timer(1./STATE_PUB_RATE, self.publish_state)
         self._executing = False
 
     def publish_state(self):
@@ -55,18 +61,18 @@ class NodeSol(Node):
         else:
             self.get_logger().info("action received!")
             self._executing = True
-            # self.execute_action(msg.data)
-            self.action_done_pub.publish(std_msgs.msg.String(data="done"))
-            self._executing = False
+            thread = threading.Thread(target=self.execute_action, args=(msg.data, ), daemon=False)
+            thread.start()
 
-    def execute_action(self, action):
+    def execute_action(self, action, time_needed=EXEC_ACTION_TOTAL_TIME, sleep=EXEC_ACTION_STEP_TIME):
         """changes the state according to the action -- the action doesn't
         matter; the point is, this function will take some time to finish.
         """
-        for i in range(10):
+        for i in range(int(time_needed/sleep)):
             self._state.point.x += 0.1
-            time.sleep(0.1)
-
+            time.sleep(sleep)
+        self.action_done_pub.publish(std_msgs.msg.String(data="done"))
+        self._executing = False
 
 
 class NodeActionPub(Node):
@@ -77,7 +83,7 @@ class NodeActionPub(Node):
         self.action_pub = self.create_publisher(
             std_msgs.msg.String, "/node_sol/action",
             QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
-        self.timer = self.create_timer(1.0, self.publish_action)
+        self.timer = self.create_timer(1./ACTION_PUB_RATE, self.publish_action)
 
     def publish_action(self):
         self.action_pub.publish(std_msgs.msg.String(data="action"))
