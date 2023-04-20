@@ -46,6 +46,8 @@ class NodeSol(Node):
             QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
         self.timer = self.create_timer(1./STATE_PUB_RATE, self.publish_state)
         self._executing = False
+        self._action_cb_lock = threading.Lock()
+        self._execute_action_lock = threading.Lock()
 
     def publish_state(self):
         self._state.header.stamp = self.get_clock().now().to_msg()
@@ -56,30 +58,32 @@ class NodeSol(Node):
                                        self._state.point.z))
 
     def action_cb(self, msg):
-        if self._executing:
-            self.get_logger().info("action ignored - another action is executing")
-        else:
-            self.get_logger().info("action received!")
-            self._executing = True
-            thread = threading.Thread(target=self.execute_action, args=(msg.data, ), daemon=False)
-            thread.start()
+        with self._action_cb_lock:
+            if self._executing:
+                self.get_logger().info("action ignored - another action is executing")
+            else:
+                self.get_logger().info("action received ::::::::::::::::::::::::::::::::::::::::::::")
+                self._executing = True
+                thread = threading.Thread(target=self.execute_action, args=(msg.data, ), daemon=False)
+                thread.start()
 
     def execute_action(self, action, time_needed=EXEC_ACTION_TOTAL_TIME, sleep=EXEC_ACTION_STEP_TIME):
         """changes the state according to the action -- the action doesn't
         matter; the point is, this function will take some time to finish.
         """
-        for i in range(int(time_needed/sleep)):
-            self._state.point.x += 0.1
-            time.sleep(sleep)
-        self.action_done_pub.publish(std_msgs.msg.String(data="done"))
-        self._executing = False
+        with self._execute_action_lock:
+            for i in range(int(time_needed/sleep)):
+                self._state.point.x += 0.1
+                time.sleep(sleep)
+            self.action_done_pub.publish(std_msgs.msg.String(data="done"))
+            self._executing = False
 
 
 class NodeActionPub(Node):
     """a node used to publish actions for testing;
     """
-    def __init__(self):
-        super().__init__("node_action_pub")
+    def __init__(self, n=0):
+        super().__init__(f"node_action_pub_{n}")
         self.action_pub = self.create_publisher(
             std_msgs.msg.String, "/node_sol/action",
             QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
@@ -92,17 +96,16 @@ class NodeActionPub(Node):
 def test():
     rclpy.init()
     node_sol = NodeSol()
-    node_action_pub = NodeActionPub()
-    executor = rclpy.executors.MultiThreadedExecutor(3)
+    node_action_pubs = []
+    executor = rclpy.executors.MultiThreadedExecutor(100)
     executor.add_node(node_sol)
-    executor.add_node(node_action_pub)
+
+    for i in range(100):
+        na_pub = NodeActionPub(n=i)
+        node_action_pubs.append(na_pub)
+        executor.add_node(na_pub)
     executor.spin()
-
-    node_foo.destroy_node()
-    node_bar.destroy_node()
-    syncer.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == "__main__":
     test()
