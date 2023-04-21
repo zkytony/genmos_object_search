@@ -25,6 +25,7 @@ from genmos_object_search.utils import math as math_utils
 from genmos_object_search.utils.misc import hash16
 from genmos_object_search.utils.colors import color_map, cmaps, lighter_with_alpha
 
+
 ### Logging ###
 from rclpy.impl import rcutils_logger
 LOGGER_NAME = "ros2_utils"
@@ -134,28 +135,9 @@ def make_bbox3d_msg(center, sizes):
 
 ### Communication ###
 class WaitForMessagesNode(Node):
-    """deals with waiting for messages to arrive at multiple
-    topics. Uses ApproximateTimeSynchronizer. Simply returns
-    a tuple of messages that were received."""
     def __init__(self, topics, mtypes, queue_size=10, delay=0.2,
                  allow_headerless=False, sleep=0.5, timeout=None,
                  verbose=False, exception_on_timeout=False, latched_topics=None):
-        """
-        Args:
-            topics (list) List of topics
-            mtypes (list) List of message types, one for each topic.
-            delay  (float) The delay in seconds for which the messages
-                could be synchronized.
-            allow_headerless (bool): Whether it's ok for there to be
-                no header in the messages.
-            sleep (float) the amount of time to wait before checking
-                whether messages are received
-            timeout (float or None): Time in seconds to wait. None if forever.
-                If exceeded timeout, self.messages will contain None for
-                each topic.
-            latched_topics (set): a set of topics for which the publisher latches (i.e.
-                sets QoS durability to transient_local).
-        """
         super().__init__('wait_for_messages')
         self.messages = None
         self.verbose = verbose
@@ -211,7 +193,30 @@ class WaitForMessagesNode(Node):
 
 
 def wait_for_messages(*args, **kwargs):
-    """A wrapper for running WaitForMessagesNode."""
+    """A wrapper for running WaitForMessagesNode.
+
+    deals with waiting for messages to arrive at multiple
+    topics. Uses ApproximateTimeSynchronizer. Simply returns
+    a tuple of messages that were received.
+
+    limitation of WaitForMessages that if any topic is latched, then calling
+    this method again will immediately receive the latched message again.
+
+     Args:
+         topics (list) List of topics
+         mtypes (list) List of message types, one for each topic.
+         delay  (float) The delay in seconds for which the messages
+             could be synchronized.
+         allow_headerless (bool): Whether it's ok for there to be
+             no header in the messages.
+         sleep (float) the amount of time to wait before checking
+             whether messages are received
+         timeout (float or None): Time in seconds to wait. None if forever.
+             If exceeded timeout, self.messages will contain None for
+             each topic.
+         latched_topics (set): a set of topics for which the publisher latches (i.e.
+             sets QoS durability to transient_local).
+    """
     wfm_node = WaitForMessagesNode(*args, **kwargs)
     try:
         while wfm_node.messages is None and not wfm_node.has_timed_out:
