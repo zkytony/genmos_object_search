@@ -247,12 +247,17 @@ class SimpleSimEnvRunner(Node):
         robot_pose_topic = "~/robot_pose"
         detections_topic = "~/object_detections"
 
+        # callback groups
+        adhoc_cb_group = MutuallyExclusiveCallbackGroup()
+        periodic_cb_group = MutuallyExclusiveCallbackGroup()
+
         # subscribers
         action_sub = self.create_subscription(
-            KeyValAction, action_topic, self._action_cb,
-            ros2_utils.latch(depth=10))
+            KeyValAction, action_topic, self._action_cb, ros2_utils.latch(depth=10),
+            callback_group=adhoc_cb_group)
         reset_sub = self.create_subscription(
-            std_msgs.msg.String, reset_topic, self._reset_cb, 10)
+            std_msgs.msg.String, reset_topic, self._reset_cb, 10,
+            callback_group=adhoc_cb_group)
 
         # publishers
         self.state_markers_pub = self.create_publisher(
@@ -277,9 +282,9 @@ class SimpleSimEnvRunner(Node):
 
         # Starts spinning...
         self.get_logger().info("publishing observations")
-        self.create_timer(1./self.detections_pub_rate, self.publish_observation)
+        self.create_timer(1./self.detections_pub_rate, self.publish_observation, callback_group=periodic_cb_group)
         self.get_logger().info("publishing state markers")
-        self.create_timer(1./self.state_pub_rate, self.publish_state)
+        self.create_timer(1./self.state_pub_rate, self.publish_state, callback_group=periodic_cb_group)
 
     def publish_state(self):
         if self.verbose:
