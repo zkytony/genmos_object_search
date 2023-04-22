@@ -422,8 +422,23 @@ class SimpleSimEnvRunner(Node):
 
     def find(self):
         """calls the find action"""
-        action = FindAction()
-        self.env.state_transition(action, execute=True)
+        # We should not do anything here.  If an agent interacts with this
+        # SimpleSimEnv environment, and 'objects_found' (part of robot
+        # state maintained by the environment) is updated upon 'find', then
+        # the following would occur and will result in the agent not being
+        # able to receive object detection about the found object, which is
+        # undesirable.
+        #   Find action taken
+        #   -> SimpleSimEnv state update
+        #   -> object found updated
+        #   -> skipped producing observation for that object
+        #   -> no object detection (received by the agent)
+        # Hence, the objects_found tracked by the SimpleSimEnv state does
+        # not matter; what matters whether the SimpleSimEnv can provide the
+        # correct robot pose and object detections (as if it is the real
+        # world - the real world doesn't care about what objects are
+        # 'found').
+        pass
 
 
     def navigate_to(self, goal_pose):
@@ -511,7 +526,7 @@ def main():
     with open(args.config_file) as f:
         config = yaml.safe_load(f)
 
-    runner = SimpleSimEnvRunner()
+    runner = SimpleSimEnvRunner(verbose=False)
     executor = rclpy.executors.MultiThreadedExecutor(4)
     executor.add_node(runner)
     t_ex = threading.Thread(target=executor.spin, args=(), daemon=False)

@@ -446,7 +446,6 @@ class GenMOSROS2(Node):
             for det_pb in detections_pb.detections:
                 if det_pb.label in self.agent_config["targets"]:
                     self.objects_found.add(det_pb.label)
-            self.get_logger().info(f"{self.objects_found} !!!!!!!!")
         header = proto_utils.make_header(frame_id=self.world_frame)
         objects_found_pb = o_pb2.ObjectsFound(
             header=header, robot_id=self.robot_id,
