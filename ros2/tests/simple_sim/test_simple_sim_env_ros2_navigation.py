@@ -47,7 +47,7 @@ def test():
                                        allow_headerless=True, verbose=True)[0]
     print(msg.data)
 
-    goal_pos = (4, 2, 2)
+    goal_pos = (0, 0, 2)
     goal_orien = euler_to_quat(0, 90, 0)
     nav_action = make_nav_action(goal_pos, goal_orien, action_id="nav2", node=node)
     action_pub.publish(nav_action)
@@ -56,7 +56,7 @@ def test():
                                        allow_headerless=True, verbose=True)[0]
     print(msg.data)
 
-    goal_pos = (-2, 4, 1)
+    goal_pos = (4, 2, 1)
     goal_orien = euler_to_quat(0, 90, 90)
     nav_action = make_nav_action(goal_pos, goal_orien, action_id="nav3", node=node)
     action_pub.publish(nav_action)
