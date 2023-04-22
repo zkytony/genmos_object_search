@@ -9,6 +9,7 @@ import pickle
 import yaml
 import json
 from rclpy.node import Node
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 import sensor_msgs.msg as sensor_msgs
 import geometry_msgs.msg as geometry_msgs
@@ -38,8 +39,37 @@ SEARCH_SPACE_RESOLUTION_2D = 0.3
 
 
 class GenMOSROS2(Node):
+    """This node essentially funnels sensor messages from
+    ROS2 to GenMOS and processes planned actions to be
+    executed on the robot through ROS2, and manages the
+    running of the search task.
+
+    Note that this Node does not constantly subscribes
+    to any topic, but only reads messages from certain
+    topics from time to time based on need, through the
+    blocking ros2_utils.wait_for_messages call.
+
+    Subscribes:
+      ~/search_region_cloud_2d (sensor_msgs.PointCloud2)
+      ~/search_region_cloud_3d (sensor_msgs.PointCloud2)
+      ~/search_region_center (geometry_msgs.PoseStamped)
+      ~/robot_pose (geometry_msgs.PoseStamped)
+      ~/object_detections (geometry_msgs.PoseStamped)
+      ~/action_done (std_msgs.String)
+
+    Publishes:
+      ~/action (KeyValAction)
+      ~/octree_belief (MarkerArray)
+      ~/fovs (MarkerArray)
+      ~/topo_map_3d (MarkerArray)
+      ~/topo_map_2d (MarkerArray)
+      ~/belief_2d (MarkerArray)
+
+    """
     def __init__(self, name="genmos_ros2", verbose=True):
         super().__init__(name)
+
+        # Parameters
         params = [("robot_id", "robot0"),
                   ("world_frame", "graphnav_map"),
                   ("config_file", ""),
@@ -49,6 +79,10 @@ class GenMOSROS2(Node):
         param_names = [p[0] for p in params]
         ros2_utils.declare_params(self, params)
         ros2_utils.print_parameters(self, param_names)
+
+        #
+
+
 
         self.name = name
         self._genmos_client = None
@@ -87,6 +121,11 @@ class GenMOSROS2(Node):
             MarkerArray, "~/topo_map_2d", ros2_utils.latch(depth=10))
         self._belief_2d_markers_pub = self.create_publisher(
             MarkerArray, "~/belief_2d", ros2_utils.latch(depth=10))
+
+        # callback groups
+        self.wfm_cb_group = MutuallyExclusiveCallbackGroup()
+        self.adhoc_cb_group = MutuallyExclusiveCallbackGroup()
+        self.periodic_cb_group = MutuallyExclusiveCallbackGroup()
 
         # tf; need to create listener early enough before looking up to let tf propagate into buffer
         # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
@@ -175,7 +214,7 @@ class GenMOSROS2(Node):
             robot_id = self.robot_id
         self.get_logger().info("Sending request to update search region (3D)")
         region_cloud_msg, pose_stamped_msg = ros2_utils.wait_for_messages(
-            [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
+            self, [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
             delay=100, verbose=True)
         cloud_pb = ros2_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
