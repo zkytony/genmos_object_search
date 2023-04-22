@@ -7,17 +7,18 @@
 import rclpy
 import threading
 import std_msgs.msg as std_msgs
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from genmos_ros2 import ros2_utils
 from genmos_object_search_ros2.msg import KeyValAction
 from genmos_object_search.utils.math import euler_to_quat
 
-def make_nav_action(pos, orien, goal_id=100, node=None):
+def make_nav_action(pos, orien, action_id=100, node=None):
     goal_keys = ["goal_x", "goal_y", "goal_z", "goal_qx", "goal_qy", "goal_qz", "goal_qw"]
     goal_values = [*pos, *orien]
     nav_action = KeyValAction(stamp=node.get_clock().now().to_msg(),
                               type="nav",
                               keys=["action_id"] + goal_keys,
-                              values=list(map(str, [goal_id] + goal_values)))
+                              values=list(map(str, [action_id] + goal_values)))
     return nav_action
 
 ACTION_DONE_TOPIC = "/simple_sim_env/action_done"
@@ -39,33 +40,31 @@ def test():
     # Set a pose for testing
     goal_pos = (2, 0, 3)
     goal_orien = euler_to_quat(90, 90, 0)
-    nav_action = make_nav_action(goal_pos, goal_orien, goal_id="nav1", node=node)
+    nav_action = make_nav_action(goal_pos, goal_orien, action_id="nav1", node=node)
     action_pub.publish(nav_action)
 
-    msg = ros2_utils.wait_for_messages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                       allow_headerless=True, verbose=True,
-                                       latched_topics={ACTION_DONE_TOPIC})[0]
+    msg = ros2_utils.wait_for_messages(node, [ACTION_DONE_TOPIC], [std_msgs.String],
+                                       allow_headerless=True, verbose=True)[0]
     print(msg.data)
 
     goal_pos = (4, 2, 2)
     goal_orien = euler_to_quat(0, 90, 0)
-    nav_action = make_nav_action(goal_pos, goal_orien, goal_id="nav2")
+    nav_action = make_nav_action(goal_pos, goal_orien, action_id="nav2", node=node)
     action_pub.publish(nav_action)
 
-    msg = ros2_utils.wait_for_messages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                       allow_headerless=True, verbose=True,
-                                       latched_topics={ACTION_DONE_TOPIC})[0]
+    msg = ros2_utils.wait_for_messages(node, [ACTION_DONE_TOPIC], [std_msgs.String],
+                                       allow_headerless=True, verbose=True)[0]
     print(msg.data)
 
     goal_pos = (-2, 4, 1)
     goal_orien = euler_to_quat(0, 90, 90)
-    nav_action = make_nav_action(goal_pos, goal_orien, goal_id="nav3")
+    nav_action = make_nav_action(goal_pos, goal_orien, action_id="nav3", node=node)
     action_pub.publish(nav_action)
 
-    msg = ros2_utils.wait_for_messages([ACTION_DONE_TOPIC], [std_msgs.String],
-                                       allow_headerless=True, verbose=True,
-                                       latched_topics={ACTION_DONE_TOPIC})[0]
+    msg = ros2_utils.wait_for_messages(node, [ACTION_DONE_TOPIC], [std_msgs.String],
+                                       allow_headerless=True, verbose=True)[0]
     print(msg.data)
+
     node.destroy_node()
     rclpy.shutdown()
 

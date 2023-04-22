@@ -152,17 +152,6 @@ def wait_for_messages(node, topics, mtypes, **kwargs):
     Requires the user to pass in a node, since
     message_filters.Subscriber requires a node upon construction.
 
-    More detail on why no private node is created internally: Calls to
-    this function should not lead to the creation of new nodes. Since
-    new nodes always consume the most recent message from a latched
-    topic, instead of blocking.  So let's say topic '/foo' is latched,
-    and the user calls wait_for_messages(['/foo'], ...). For the first
-    time, the user should get the most recent message from '/foo'. But
-    for the second time, the user should expect to not get anything --
-    because the newest message has been consumed by the previous
-    call. Implementing this in ROS2 requires the access of a
-    persisting node throughout those two calls.
-
     Args:
         node (rclpy.Node): the node being attached
         topics (list) List of topics

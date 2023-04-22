@@ -24,7 +24,7 @@ import std_msgs.msg
 import visualization_msgs.msg
 import vision_msgs.msg
 from rclpy.node import Node
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 from genmos_ros2 import ros2_utils
 from genmos_object_search_ros2.msg import KeyValAction, KeyValObservation
@@ -208,7 +208,7 @@ class SimpleSimEnvRunner(Node):
       ~pomdp_observation (KeyValObservation)
     """
     NODE_NAME="simple_sim_env"
-    def __init__(self, config, verbose=False):
+    def __init__(self, verbose=False):
         super().__init__(SimpleSimEnvRunner.NODE_NAME)
         self.verbose = verbose
 
@@ -266,17 +266,14 @@ class SimpleSimEnvRunner(Node):
         self.detections_pub = self.create_publisher(
             vision_msgs.msg.Detection3DArray, detections_topic, 10)
         self._action_done_pub = self.create_publisher(
-            std_msgs.msg.String, "~/action_done",
-            qos_profile=ros2_utils.latch(depth=1))  # publishes when action is done latch
+            std_msgs.msg.String, "~/action_done", 10)  # publishes when action is done latch
 
         # TF
         self.br = tf2_ros.TransformBroadcaster(self)
 
-        # set up the POMDP environment
-        self._init_config = config
-
         # internal states
         self._navigating = False
+        self._init_config = None
         self.env = None
 
         # Starts spinning...
@@ -287,13 +284,14 @@ class SimpleSimEnvRunner(Node):
         self.create_timer(1./self.state_pub_rate, self.publish_state,
                           callback_group=self.periodic_cb_group)
 
-    def setup_env(self):
+    def setup_env(self, config):
         """Should be called after the node has started spinning"""
         robot_pose_msg = ros2_utils.wait_for_messages(
             self, ["/simple_sim_env/init_robot_pose"], [geometry_msgs.msg.PoseStamped],
             verbose=True, callback_group=self.wfm_cb_group)[0]
         init_robot_pose = ros2_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
         self.get_logger().info(typ.info("received initial robot pose"))
+        self._init_config = config
         self.env = SimpleSimEnv(self._init_config, init_robot_pose)
         self.get_logger().info(typ.success("created SimpleSimEnv"))
 
@@ -513,12 +511,13 @@ def main():
     with open(args.config_file) as f:
         config = yaml.safe_load(f)
 
-    runner = SimpleSimEnvRunner(config)
+    runner = SimpleSimEnvRunner()
     executor = rclpy.executors.MultiThreadedExecutor(4)
     executor.add_node(runner)
     t_ex = threading.Thread(target=executor.spin, args=(), daemon=False)
     t_ex.start()
-    runner.setup_env()
+    runner.setup_env(config)
+    t_ex.join()
 
     runner.destroy_node()
     rclpy.shutdown()

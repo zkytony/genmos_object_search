@@ -2,23 +2,27 @@
 import rclpy
 import threading
 from rclpy.time import Duration
+from rclpy.node import Node
 
 from geometry_msgs.msg import PoseStamped
 from genmos_ros2 import ros2_utils
 from genmos_object_search.utils.math import euler_to_quat
 
-class SimpleSimEnvInitPosePublisher(ros2_utils.WrappedNode):
+class SimpleSimEnvInitPosePublisher(Node):
     def __init__(self):
-        super().__init__("simple_sim_init_robot_pose_publisher",
-                         params=[("x", 0.0),
-                                 ("y", 0.0),
-                                 ("z", 0.0),
-                                 ("thx", 0.0),
-                                 ("thy", 0.0),
-                                 ("thz", 0.0),
-                                 ("world_frame", "graphnav_map"),
-                                 ("latch", True),
-                                 ("lifetime", 0)])
+        super().__init__("simple_sim_init_robot_pose_publisher")
+        params = [("x", 0.0),
+                  ("y", 0.0),
+                  ("z", 0.0),
+                  ("thx", 0.0),
+                  ("thy", 0.0),
+                  ("thz", 0.0),
+                  ("world_frame", "graphnav_map"),
+                  ("latch", True),
+                  ("lifetime", 0)]
+        ros2_utils.declare_params(self, params)
+        ros2_utils.print_parameters(self, params)
+
         self.latch = self.get_parameter("latch").value
         if self.latch:
             qos_profile = ros2_utils.latch(depth=10)

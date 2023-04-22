@@ -8,7 +8,6 @@ import time
 import pickle
 import yaml
 import json
-from pomdp_py.utils import typ
 from rclpy.node import Node
 
 import sensor_msgs.msg as sensor_msgs
@@ -30,6 +29,7 @@ from genmos_object_search.grpc.constants import Message
 from genmos_object_search.utils.colors import lighter
 from genmos_object_search.utils import math as math_utils
 from genmos_object_search.utils.misc import import_class
+from genmos_object_search.utils import typ
 from . import ros2_utils
 
 
