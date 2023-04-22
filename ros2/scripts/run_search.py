@@ -21,10 +21,11 @@ from genmos_ros2 import GenMOSROS2
 
 def main():
     rclpy.init()
-
     genmos_node = GenMOSROS2()
-    t = threading.Thread(target=rclpy.spin, args=(genmos_node,), daemon=False)
-
+    executor = rclpy.executors.MultiThreadedExecutor(4)
+    executor.add_node(genmos_node)
+    t = threading.Thread(target=executor.spin, args=(), daemon=False)
+    t.start()
     genmos_node.run()
 
     genmos_node.destroy_node()

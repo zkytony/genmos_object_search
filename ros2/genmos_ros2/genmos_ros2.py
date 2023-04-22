@@ -8,6 +8,7 @@ import time
 import pickle
 import yaml
 import json
+import threading
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
@@ -424,9 +425,10 @@ class GenMOSROS2(Node):
             a tuple: (detections_pb, robot_pose_pb, objects_found_pb)"""
         # robot pose may be much higher in frequency than object detection.
         robot_pose_msg, object_detections_msg = ros2_utils.wait_for_messages(
-            [self._robot_pose_topic, self._object_detections_topic],
+            self, [self._robot_pose_topic, self._object_detections_topic],
             [geometry_msgs.PoseStamped, vision_msgs.Detection3DArray],
-            queue_size=self.obqueue_size, delay=self.obdelay, verbose=True)
+            queue_size=self.obqueue_size, delay=self.obdelay, verbose=True,
+            callback_group=self.wfm_cb_group)
 
         if robot_pose_msg.header.frame_id != self.world_frame:
             # Need to convert robot pose to world frame
@@ -528,7 +530,8 @@ class GenMOSROS2(Node):
 
     def wait_observation_and_update_belief(self, action_id):
         # Now, wait for observation, and then update belief
-        detections_pb, robot_pose_pb, objects_found_pb = self.wait_for_observation()
+        detections_pb, robot_pose_pb, objects_found_pb =\
+            self.wait_for_observation()
         # send obseravtions for belief update
         header = proto_utils.make_header(frame_id=self.world_frame)
         response_observation = self._genmos_client.processObservation(
@@ -575,9 +578,10 @@ class GenMOSROS2(Node):
             action_id, action_pb = self.plan_action()
             self.clear_fovs_markers()  # clear fovs markers before executing action
             self.execute_action(action_id, action_pb)
-            ros2_utils.wait_for_messages([self._action_done_topic], [std_msgs.String],
-                                         allow_headerless=True, verbose=True,
-                                         latched_topics={self._action_done_topic})
+            ros2_utils.wait_for_messages(
+                self, [self._action_done_topic], [std_msgs.String],
+                allow_headerless=True, verbose=True,
+                callback_group=self.wfm_cb_group)
             self.get_logger().info(typ.success("action done."))
 
             if self.dynamic_update:
@@ -604,4 +608,4 @@ class GenMOSROS2(Node):
             if objects_found == set(self.agent_config["targets"]):
                 self.get_logger().info("Done!")
                 break
-            time.sleep(1)
+            time.sleep(100)

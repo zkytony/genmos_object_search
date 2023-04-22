@@ -112,7 +112,7 @@ def print_parameters(node, names):
         names (list): either a list of [param_name ... ] or [(param_name, default_value)...]
     """
     if len(names) > 0:
-        if hasattr(names[0], "__len__"):
+        if type(names[0]) in {tuple, set, list}:
             if len(names[0]) != 2:
                 raise TypeError("expecting 'names' to be [param_name ... ] or [(param_name, default_value)...]")
             else:
@@ -194,12 +194,15 @@ class _WaitForMessages:
             self.subs, queue_size, delay, allow_headerless=allow_headerless)
         self.ts.registerCallback(self._cb)
 
-        self._start_time = self.node.get_clock().now()
-        rate = self.node.create_rate(1./sleep)
-        while self.messages is None and not self.has_timed_out:
-            if self.check_messages_received():
-                break
-            rate.sleep()
+        try:
+            self._start_time = self.node.get_clock().now()
+            rate = self.node.create_rate(1./sleep)
+            while self.messages is None and not self.has_timed_out:
+                if self.check_messages_received():
+                    break
+                rate.sleep()
+        finally:
+            self.destroy_subs()
 
     def _message_filters_subscriber(self, mtype, topic, callback_group=None):
         if topic in self.latched_topics:
@@ -232,6 +235,12 @@ class _WaitForMessages:
         if self.verbose:
             log_info("WaitForMessages: callback got messages!")
         self.messages = messages
+
+    def destroy_subs(self):
+        """destroy all message filter subscribers"""
+        for mf_sub in self.subs:
+            self.node.destroy_subscription(mf_sub.sub)
+        self.subs = None
 
 
 ### TF2 ###

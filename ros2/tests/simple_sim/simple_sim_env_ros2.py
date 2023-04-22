@@ -200,12 +200,12 @@ class SimpleSimEnvRunner(Node):
     Internally maintains ROS2 nodes that
     Subscribes:
       ~/init_robot_pose (geometry_msgs.PoseStamped)
-      ~pomdp_action (KeyValAction)
-      ~reset (String)
+      ~/pomdp_action (KeyValAction)
+      ~/reset (String)
     Publishes:
-      ~robot_pose (PoseStamped)
-      ~state_markers (MarkerArray)
-      ~pomdp_observation (KeyValObservation)
+      ~/robot_pose (PoseStamped)
+      ~/state_markers (MarkerArray)
+      ~/pomdp_observation (KeyValObservation)
     """
     NODE_NAME="simple_sim_env"
     def __init__(self, verbose=False):
