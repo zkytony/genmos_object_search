@@ -4,19 +4,10 @@ agent_config:
   belief:
     init_params:
       num_samples: 3000
-    prior:
-      book:
-      - - &id001
-          - -0.44932237
-          - -0.29711649
-          - 0.4289201
-        - 0.99
-      cup:
-      - - &id002
-          - -0.37163266
-          - 1.10503125
-          - 0.54144536
-        - 0.99
+      occupancy_blow_up_res: 4
+      occupancy_fill_height: true
+      occupancy_height_thres: 0.0
+      prior_from_occupancy: true
     visible_volume_params:
       num_rays: 150
       step_size: 0.4
@@ -99,7 +90,9 @@ agent_config:
   - cup
 object_locations:
   book:
-  - *id001
+  - - -0.44932237
+    - -0.29711649
+    - 0.4289201
   - - -0.17160062
     - 0.59915698
     - -0.1856396
@@ -188,7 +181,9 @@ object_locations:
     - 1.77725625
     - 0.46473926
   cup:
-  - *id002
+  - - -0.37163266
+    - 1.10503125
+    - 0.54144536
   - - -0.41113988
     - 1.78431857
     - -0.03150767

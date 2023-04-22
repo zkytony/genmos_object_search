@@ -86,7 +86,11 @@ CONFIG_LOCAL = {
         'belief': {"visible_volume_params": {"num_rays": 150,
                                              "step_size": 0.4,
                                              "voxel_res": 2},
-                   "init_params": {"num_samples": 3000}},
+                   "init_params": {"num_samples": 3000,
+                                   "prior_from_occupancy": True,
+                                   "occupancy_height_thres": 0.0,
+                                   "occupancy_blow_up_res": 4,
+                                   "occupancy_fill_height": True}},
         "search_region": {},
         'robot': {
             'id': 'robot0',
@@ -343,7 +347,7 @@ CONFIG_HIER = {
 #### SET WHICH CONFIG TO USE ###
 CONFIG = CONFIG_LOCAL
 
-GROUNDTRUTH_PRIOR = True
+GROUNDTRUTH_PRIOR = False
 OBJLOC_INDEX = 0  # this must match the objloc_index field in the SimpleSimEnv object.
 if GROUNDTRUTH_PRIOR:
     CONFIG["agent_config"]["belief"]["prior"] = {}
