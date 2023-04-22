@@ -574,6 +574,7 @@ class GenMOSROS2(Node):
 
         # Send planning requests
         for step in range(self.config["task_config"]["max_steps"]):
+            self.get_logger().info(typ.cyan(f"Step {step}"))
             action_id, action_pb = self.plan_action()
             self.clear_fovs_markers()  # clear fovs markers before executing action
             self.execute_action(action_id, action_pb)
@@ -588,15 +589,12 @@ class GenMOSROS2(Node):
 
             response_observation, response_robot_belief, detections_pb =\
                 self.wait_observation_and_update_belief(action_id)
-            self.get_logger().info(typ.cyan(f"Step {step}"))
             self.get_logger().info(f"\n detections:\n {proto_utils.parse_detections_proto(detections_pb)}")
             robot_belief_pb = response_robot_belief.robot_belief
             objects_found = set(robot_belief_pb.objects_found.object_ids)
             self.objects_found.update(objects_found)
-            self.get_logger().info(f"\nrobot belief:\n  pose: {robot_belief_pb.pose.pose_3d}")
-            self.get_logger().info(f"\n  objects found: {objects_found}")
-            self.get_logger().info("-----------")
-
+            self.get_logger().info(f"\nrobot belief:\n  pose: {robot_belief_pb.pose.pose_3d}"\
+                                   f"\n  objects found: {objects_found}")
             # visualize FOV and belief
             self.get_and_visualize_belief()
             if response_observation.HasField("fovs"):
@@ -606,4 +604,5 @@ class GenMOSROS2(Node):
             if objects_found == set(self.agent_config["targets"]):
                 self.get_logger().info("Done!")
                 break
+            self.get_logger().info("--------------")
             time.sleep(1)
