@@ -185,7 +185,7 @@ class _WaitForMessages:
     def __init__(self, node, topics, mtypes, queue_size=10, delay=0.2,
                  allow_headerless=False, sleep=0.5, timeout=None,
                  verbose=False, exception_on_timeout=False,
-                 latched_topics=None):
+                 latched_topics=None, callback_group=None):
         self.node = node
         self.messages = None
         self.verbose = verbose
@@ -199,7 +199,7 @@ class _WaitForMessages:
 
         if self.verbose:
             log_info("initializing message filter ApproximateTimeSynchronizer")
-        self.subs = [self._message_filters_subscriber(mtype, topic)
+        self.subs = [self._message_filters_subscriber(mtype, topic, callback_group=callback_group)
                      for topic, mtype in zip(topics, mtypes)]
         self.ts = message_filters.ApproximateTimeSynchronizer(
             self.subs, queue_size, delay, allow_headerless=allow_headerless)
@@ -212,13 +212,15 @@ class _WaitForMessages:
                 break
             rate.sleep()
 
-    def _message_filters_subscriber(self, mtype, topic):
+    def _message_filters_subscriber(self, mtype, topic, callback_group=None):
         if topic in self.latched_topics:
             return message_filters.Subscriber(
                 self.node, mtype, topic,
-                qos_profile=QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
+                qos_profile=QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL),
+                callback_group=callback_group)
         else:
-            return message_filters.Subscriber(self.node, mtype, topic)
+            return message_filters.Subscriber(self.node, mtype, topic,
+                                              callback_group=callback_group)
 
     def check_messages_received(self):
         if self.messages is not None:

@@ -15,6 +15,7 @@ import copy
 import argparse
 import yaml
 import pomdp_py
+import threading
 
 import rclpy
 import tf2_ros
@@ -64,18 +65,13 @@ class SimpleSimEnv(pomdp_py.Environment):
     """This is a simple 3D environment. All of its coordinates should
     be in the world frame, as this is meant to support the underlying
     simulation of an object search scenario in ROS 2."""
-    def __init__(self, env_config, objloc_index=None):
+    def __init__(self, env_config, init_robot_pose,
+                 objloc_index=None):
         # Get initial robot pose
         self.env_config = env_config
 
         # agent config is the same format as what is given to a SLOOP MosAgent creation.
         self.agent_config = env_config["agent_config"]
-        self._robot_pose_topic = "/simple_sim_env/init_robot_pose"
-        robot_pose_msg = ros2_utils.wait_for_messages(
-            [self._robot_pose_topic], [geometry_msgs.msg.PoseStamped],
-            verbose=True)[0]
-        init_robot_pose = ros2_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
-
         self.robot_id = self.agent_config["robot"].get("id", "robot")
         init_robot_state = RobotState(self.robot_id,
                                       init_robot_pose, (), None)
@@ -203,6 +199,7 @@ class SimpleSimEnvRunner(Node):
 
     Internally maintains ROS2 nodes that
     Subscribes:
+      ~/init_robot_pose (geometry_msgs.PoseStamped)
       ~pomdp_action (KeyValAction)
       ~reset (String)
     Publishes:
@@ -246,18 +243,20 @@ class SimpleSimEnvRunner(Node):
         state_markers_topic = "~/state_markers"
         robot_pose_topic = "~/robot_pose"
         detections_topic = "~/object_detections"
+        init_robot_pose_topic = "~/init_robot_pose"
 
         # callback groups
-        adhoc_cb_group = MutuallyExclusiveCallbackGroup()
-        periodic_cb_group = MutuallyExclusiveCallbackGroup()
+        self.wfm_cb_group = MutuallyExclusiveCallbackGroup()
+        self.adhoc_cb_group = MutuallyExclusiveCallbackGroup()
+        self.periodic_cb_group = MutuallyExclusiveCallbackGroup()
 
         # subscribers
         action_sub = self.create_subscription(
             KeyValAction, action_topic, self._action_cb, ros2_utils.latch(depth=10),
-            callback_group=adhoc_cb_group)
+            callback_group=self.adhoc_cb_group)
         reset_sub = self.create_subscription(
             std_msgs.msg.String, reset_topic, self._reset_cb, 10,
-            callback_group=adhoc_cb_group)
+            callback_group=self.adhoc_cb_group)
 
         # publishers
         self.state_markers_pub = self.create_publisher(
@@ -268,25 +267,40 @@ class SimpleSimEnvRunner(Node):
             vision_msgs.msg.Detection3DArray, detections_topic, 10)
         self._action_done_pub = self.create_publisher(
             std_msgs.msg.String, "~/action_done",
-            qos_profile=ros2_utils.latch(depth=10))  # publishes when action is done latch
+            qos_profile=ros2_utils.latch(depth=1))  # publishes when action is done latch
 
         # TF
         self.br = tf2_ros.TransformBroadcaster(self)
 
         # set up the POMDP environment
         self._init_config = config
-        self.env = SimpleSimEnv(config)
 
         # internal states
         self._navigating = False
+        self.env = None
 
         # Starts spinning...
         self.get_logger().info("publishing observations")
-        self.create_timer(1./self.detections_pub_rate, self.publish_observation, callback_group=periodic_cb_group)
+        self.create_timer(1./self.detections_pub_rate, self.publish_observation,
+                          callback_group=self.periodic_cb_group)
         self.get_logger().info("publishing state markers")
-        self.create_timer(1./self.state_pub_rate, self.publish_state, callback_group=periodic_cb_group)
+        self.create_timer(1./self.state_pub_rate, self.publish_state,
+                          callback_group=self.periodic_cb_group)
+
+    def setup_env(self):
+        """Should be called after the node has started spinning"""
+        robot_pose_msg = ros2_utils.wait_for_messages(
+            self, ["/simple_sim_env/init_robot_pose"], [geometry_msgs.msg.PoseStamped],
+            verbose=True, callback_group=self.wfm_cb_group)[0]
+        init_robot_pose = ros2_utils.pose_tuple_from_pose_stamped(robot_pose_msg)
+        self.get_logger().info(typ.info("received initial robot pose"))
+        self.env = SimpleSimEnv(self._init_config, init_robot_pose)
+        self.get_logger().info(typ.success("created SimpleSimEnv"))
+
 
     def publish_state(self):
+        if self.env is None:
+            return
         if self.verbose:
             self.get_logger().info(f"{self.env.state}")
         state_markers_msg, tf2_msgs, robot_pose_msg =\
@@ -297,6 +311,8 @@ class SimpleSimEnvRunner(Node):
             self.br.sendTransform(t)
 
     def _reset_cb(self, msg):
+        if self.env is None:
+            return
         if "[reset index]" in msg.data:
             self.get_logger().warning('Objloc Index Reset!')
             objloc_index = self.env.reset_objloc_index()
@@ -313,6 +329,8 @@ class SimpleSimEnvRunner(Node):
 
     def publish_observation(self):
         # publish object observations as Detection3DArray.
+        if self.env is None:
+            return
         observation = self.env.provide_observation()
 
         det3d_msgs = []
@@ -498,7 +516,9 @@ def main():
     runner = SimpleSimEnvRunner(config)
     executor = rclpy.executors.MultiThreadedExecutor(4)
     executor.add_node(runner)
-    executor.spin()
+    t_ex = threading.Thread(target=executor.spin, args=(), daemon=False)
+    t_ex.start()
+    runner.setup_env()
 
     runner.destroy_node()
     rclpy.shutdown()
