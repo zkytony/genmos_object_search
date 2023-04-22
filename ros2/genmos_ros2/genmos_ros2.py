@@ -438,7 +438,6 @@ class GenMOSROS2(Node):
         detections_pb = ros2_utils.detection3darray_to_proto(
             object_detections_msg, self.robot_id, self.detection_class_names,
             target_frame=self.world_frame, tf2buf=self.tfbuffer)
-        self.get_logger().info(f"Detections:\n {detections_pb}")
 
         # Objects found proto
         # If the last action is "find", and we receive object detections
@@ -589,15 +588,14 @@ class GenMOSROS2(Node):
 
             response_observation, response_robot_belief, detections_pb =\
                 self.wait_observation_and_update_belief(action_id)
-            print(f"Step {step} detections:")
-            print(proto_utils.parse_detections_proto(detections_pb))
-            print("robot belief:")
+            self.get_logger().info(typ.cyan(f"Step {step}"))
+            self.get_logger().info(f"\n detections:\n {proto_utils.parse_detections_proto(detections_pb)}")
             robot_belief_pb = response_robot_belief.robot_belief
             objects_found = set(robot_belief_pb.objects_found.object_ids)
             self.objects_found.update(objects_found)
-            print(f"  pose: {robot_belief_pb.pose.pose_3d}")
-            print(f"  objects found: {objects_found}")
-            print("-----------")
+            self.get_logger().info(f"\nrobot belief:\n  pose: {robot_belief_pb.pose.pose_3d}")
+            self.get_logger().info(f"\n  objects found: {objects_found}")
+            self.get_logger().info("-----------")
 
             # visualize FOV and belief
             self.get_and_visualize_belief()
@@ -608,4 +606,4 @@ class GenMOSROS2(Node):
             if objects_found == set(self.agent_config["targets"]):
                 self.get_logger().info("Done!")
                 break
-            time.sleep(100)
+            time.sleep(1)
