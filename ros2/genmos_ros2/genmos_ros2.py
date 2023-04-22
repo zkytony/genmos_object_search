@@ -38,6 +38,82 @@ SEARCH_SPACE_RESOLUTION_2D = 0.3
 
 
 class GenMOSROS2(Node):
+    def __init__(self, name="genmos_ros2", verbose=True):
+        super().__init__(name)
+        params = [("robot_id", "robot0"),
+                  ("world_frame", "graphnav_map"),
+                  ("config_file", ""),
+                  ("obs_queue_size", 200),
+                  ("obs_delay", 1.0),
+                  ("dynamic_update", False)]
+        param_names = [p[0] for p in params]
+        ros2_utils.declare_params(self, params)
+        ros2_utils.print_parameters(self, param_names)
+
+        self.name = name
+        self._genmos_client = None
+
+        # This is an example of how to get started with using the
+        # genmos_object_search grpc-based package.
+
+        # Initialize grpc client
+        self._genmos_client = GenMOSClient()
+
+        # path to config file
+        config_file = self.get_parameter("config_file").value
+        with open(config_file) as f:
+            config = yaml.safe_load(f)
+
+        self.config = config
+        self.agent_config = config["agent_config"]
+        self.planner_config = config["planner_config"]
+        self.robot_id = self.get_parameter("robot_id").value
+        if self.robot_id != self.agent_config["robot"]["id"]:
+            self.get_logger().warning("robot id {} in rosparam overrides that in config {}"\
+                                      .format(self.robot_id, self.agent_config["robot"]["id"]))
+            self.agent_config["robot"]["id"] = self.robot_id
+        self.world_frame = self.get_parameter("world_frame").value
+
+        # Initialize ROS stuff
+        self._action_pub = self.create_publisher(
+            KeyValAction, "~/action", ros2_utils.latch(depth=10))
+        self._octbelief_markers_pub = self.create_publisher(
+            MarkerArray, "~/octree_belief", ros2_utils.latch(depth=10))
+        self._fovs_markers_pub = self.create_publisher(
+            MarkerArray, "~/fovs", ros2_utils.latch(depth=10))
+        self._topo_map_3d_markers_pub = self.create_publisher(
+            MarkerArray, "~/topo_map_3d", ros2_utils.latch(depth=10))
+        self._topo_map_2d_markers_pub = self.create_publisher(
+            MarkerArray, "~/topo_map_2d", ros2_utils.latch(depth=10))
+        self._belief_2d_markers_pub = self.create_publisher(
+            MarkerArray, "~/belief_2d", ros2_utils.latch(depth=10))
+
+        # tf; need to create listener early enough before looking up to let tf propagate into buffer
+        # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
+        self.tfbuffer = tf2_ros.Buffer()
+        self.tflistener = tf2_ros.TransformListener(self.tfbuffer, self)
+
+        # Remap these topics that we subscribe to, if needed.
+        self._search_region_2d_point_cloud_topic = "~/search_region_cloud_2d"
+        self._search_region_3d_point_cloud_topic = "~/search_region_cloud_3d"
+        self._search_region_center_topic = "~/search_region_center"
+        self._robot_pose_topic = "~/robot_pose"
+        # Note for object detections, we accept 3D bounding-box-based detections.
+        self._object_detections_topic = "~/object_detections"
+        self._action_done_topic = "~/action_done"
+
+        # additional parameters
+        self.obqueue_size = self.get_parameter("obs_queue_size").value
+        self.obdelay = self.get_parameter("obs_delay").value
+        self.dynamic_update = self.get_parameter("dynamic_update").value
+
+        # object detector model's output class names
+        self.detection_class_names = self.config["ros2"]["detection_class_names"]
+
+        # Planning-related
+        self.last_action = None
+        self.objects_found = set()
+
     def server_message_callback(self, message):
         if Message.match(message) == Message.REQUEST_LOCAL_SEARCH_REGION_UPDATE:
             local_robot_id = Message.forwhom(message)
@@ -411,81 +487,6 @@ class GenMOSROS2(Node):
     def ros_visual_config(self):
         return self.agent_config.get("misc", {}).get("ros_visual", {})
 
-    def __init__(self, name="genmos_ros2", verbose=True):
-        super().__init__(name)
-        params = [("robot_id", "robot0"),
-                  ("world_frame", "graphnav_map"),
-                  ("config_file", ""),
-                  ("obs_queue_size", 200),
-                  ("obs_delay", 1.0),
-                  ("dynamic_update", False)]
-        param_names = [p[0] for p in params]
-        ros2_utils.declare_params(self, params)
-        ros2_utils.print_parameters(self, param_names)
-
-        self.name = name
-        self._genmos_client = None
-
-        # This is an example of how to get started with using the
-        # genmos_object_search grpc-based package.
-
-        # Initialize grpc client
-        self._genmos_client = GenMOSClient()
-
-        # path to config file
-        config_file = self.get_parameter("config_file").value
-        with open(config_file) as f:
-            config = yaml.safe_load(f)
-
-        self.config = config
-        self.agent_config = config["agent_config"]
-        self.planner_config = config["planner_config"]
-        self.robot_id = self.get_parameter("robot_id").value
-        if self.robot_id != self.agent_config["robot"]["id"]:
-            self.get_logger().warning("robot id {} in rosparam overrides that in config {}"\
-                                      .format(self.robot_id, self.agent_config["robot"]["id"]))
-            self.agent_config["robot"]["id"] = self.robot_id
-        self.world_frame = self.get_parameter("world_frame").value
-
-        # Initialize ROS stuff
-        self._action_pub = self.create_publisher(
-            KeyValAction, "~/action", ros2_utils.latch(depth=10))
-        self._octbelief_markers_pub = self.create_publisher(
-            MarkerArray, "~/octree_belief", ros2_utils.latch(depth=10))
-        self._fovs_markers_pub = self.create_publisher(
-            MarkerArray, "~/fovs", ros2_utils.latch(depth=10))
-        self._topo_map_3d_markers_pub = self.create_publisher(
-            MarkerArray, "~/topo_map_3d", ros2_utils.latch(depth=10))
-        self._topo_map_2d_markers_pub = self.create_publisher(
-            MarkerArray, "~/topo_map_2d", ros2_utils.latch(depth=10))
-        self._belief_2d_markers_pub = self.create_publisher(
-            MarkerArray, "~/belief_2d", ros2_utils.latch(depth=10))
-
-        # tf; need to create listener early enough before looking up to let tf propagate into buffer
-        # reference: https://answers.ros.org/question/292096/right_arm_base_link-passed-to-lookuptransform-argument-target_frame-does-not-exist/
-        self.tfbuffer = tf2_ros.Buffer()
-        self.tflistener = tf2_ros.TransformListener(self.tfbuffer, self)
-
-        # Remap these topics that we subscribe to, if needed.
-        self._search_region_2d_point_cloud_topic = "~/search_region_cloud_2d"
-        self._search_region_3d_point_cloud_topic = "~/search_region_cloud_3d"
-        self._search_region_center_topic = "~/search_region_center"
-        self._robot_pose_topic = "~/robot_pose"
-        # Note for object detections, we accept 3D bounding-box-based detections.
-        self._object_detections_topic = "~/object_detections"
-        self._action_done_topic = "~/action_done"
-
-        # additional parameters
-        self.obqueue_size = self.get_parameter("obs_queue_size").value
-        self.obdelay = self.get_parameter("obs_delay").value
-        self.dynamic_update = self.get_parameter("dynamic_update").value
-
-        # object detector model's output class names
-        self.detection_class_names = self.config["ros2"]["detection_class_names"]
-
-        # Planning-related
-        self.last_action = None
-        self.objects_found = set()
 
     def plan_action(self):
         response_plan = self._genmos_client.planAction(
