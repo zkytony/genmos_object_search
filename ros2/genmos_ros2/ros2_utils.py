@@ -31,6 +31,14 @@ from rclpy.impl import rcutils_logger
 LOGGER_NAME = "ros2_utils"
 RCUTILS_LOGGER = rcutils_logger.RcutilsLogger(name=LOGGER_NAME)
 
+def log_info(msg):
+    """msg (str): the log content"""
+    RCUTILS_LOGGER.info(msg)
+
+def log_error(msg):
+    """msg (str): the log content"""
+    RCUTILS_LOGGER.error(msg)
+
 
 ### Pose and Transforms ###
 def pose_to_tuple(pose):
@@ -134,11 +142,51 @@ def make_bbox3d_msg(center, sizes):
 
 
 ### Communication ###
-class WaitForMessagesNode(Node):
-    def __init__(self, topics, mtypes, queue_size=10, delay=0.2,
+def wait_for_messages(node, topics, mtypes, **kwargs):
+    """Waits for messages to arrive at multiple topics within a given
+    time window. Uses message_filters.ApproximateTimeSynchronizer.
+    This function blocks until receiving the messages or when a given
+    timeout expires. Assumes the given node is spinning by
+    some external executor.
+
+    Requires the user to pass in a node, since
+    message_filters.Subscriber requires a node upon construction.
+
+    More detail on why no private node is created internally: Calls to
+    this function should not lead to the creation of new nodes. Since
+    new nodes always consume the most recent message from a latched
+    topic, instead of blocking.  So let's say topic '/foo' is latched,
+    and the user calls wait_for_messages(['/foo'], ...). For the first
+    time, the user should get the most recent message from '/foo'. But
+    for the second time, the user should expect to not get anything --
+    because the newest message has been consumed by the previous
+    call. Implementing this in ROS2 requires the access of a
+    persisting node throughout those two calls.
+
+    Args:
+        node (rclpy.Node): the node being attached
+        topics (list) List of topics
+        mtypes (list) List of message types, one for each topic.
+        delay  (float) The delay in seconds for which the messages
+            could be synchronized.
+        allow_headerless (bool): Whether it's ok for there to be
+            no header in the messages.
+        sleep (float) the amount of time to wait before checking
+            whether messages are received
+        timeout (float or None): Time in seconds to wait. None if forever.
+            If exceeded timeout, self.messages will contain None for
+            each topic.
+        latched_topics (set): a set of topics for which the publisher latches (i.e.
+            sets QoS durability to transient_local).
+    """
+    return _WaitForMessages(node, topics, mtypes, **kwargs).messages
+
+class _WaitForMessages:
+    def __init__(self, node, topics, mtypes, queue_size=10, delay=0.2,
                  allow_headerless=False, sleep=0.5, timeout=None,
-                 verbose=False, exception_on_timeout=False, latched_topics=None):
-        super().__init__('wait_for_messages')
+                 verbose=False, exception_on_timeout=False,
+                 latched_topics=None):
+        self.node = node
         self.messages = None
         self.verbose = verbose
         self.topics = topics
@@ -148,84 +196,51 @@ class WaitForMessagesNode(Node):
         if latched_topics is None:
             latched_topics = set()
         self.latched_topics = latched_topics
-        self._timer_threads = {}
 
         if self.verbose:
-            self.get_logger().info("initializing message filter ApproximateTimeSynchronizer")
+            log_info("initializing message filter ApproximateTimeSynchronizer")
         self.subs = [self._message_filters_subscriber(mtype, topic)
                      for topic, mtype in zip(topics, mtypes)]
         self.ts = message_filters.ApproximateTimeSynchronizer(
             self.subs, queue_size, delay, allow_headerless=allow_headerless)
         self.ts.registerCallback(self._cb)
 
-        self._start_time = self.get_clock().now()
-        self.timer = self.create_timer(sleep, self.check_messages_received)
+        self._start_time = self.node.get_clock().now()
+        rate = self.node.create_rate(1./sleep)
+        while self.messages is None and not self.has_timed_out:
+            if self.check_messages_received():
+                break
+            rate.sleep()
 
     def _message_filters_subscriber(self, mtype, topic):
         if topic in self.latched_topics:
             return message_filters.Subscriber(
-                self, mtype, topic,
+                self.node, mtype, topic,
                 qos_profile=QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
         else:
-            return message_filters.Subscriber(self, mtype, topic)
+            return message_filters.Subscriber(self.node, mtype, topic)
 
     def check_messages_received(self):
         if self.messages is not None:
-            self.get_logger().info("WaitForMessages: Received messages! Done!")
-            return
+            log_info("WaitForMessages: Received messages! Done!")
+            return True
         if self.verbose:
-            self.get_logger().info("WaitForMessages: waiting for messages from {}".format(self.topics))
-        _dt = self.get_clock().now() - self._start_time
+            log_info("WaitForMessages: waiting for messages from {}".format(self.topics))
+        _dt = self.node.get_clock().now() - self._start_time
         if self.timeout is not None and _dt.nanoseconds*1e-9 > self.timeout:
-            self.get_logger().error("WaitForMessages: timeout waiting for messages")
+            log_error("WaitForMessages: timeout waiting for messages")
             self.messages = [None]*len(self.topics)
             self.has_timed_out = True
             if self.exception_on_timeout:
                 raise TimeoutError("WaitForMessages: timeout waiting for messages")
-            return
+        return False
 
     def _cb(self, *messages):
         if self.messages is not None:
             return
         if self.verbose:
-            self.get_logger().info("WaitForMessages: got messages!")
+            log_info("WaitForMessages: callback got messages!")
         self.messages = messages
-
-
-def wait_for_messages(*args, **kwargs):
-    """A wrapper for running WaitForMessagesNode.
-
-    deals with waiting for messages to arrive at multiple
-    topics. Uses ApproximateTimeSynchronizer. Simply returns
-    a tuple of messages that were received.
-
-    limitation of WaitForMessages that if any topic is latched, then calling
-    this method again will immediately receive the latched message again.
-
-     Args:
-         topics (list) List of topics
-         mtypes (list) List of message types, one for each topic.
-         delay  (float) The delay in seconds for which the messages
-             could be synchronized.
-         allow_headerless (bool): Whether it's ok for there to be
-             no header in the messages.
-         sleep (float) the amount of time to wait before checking
-             whether messages are received
-         timeout (float or None): Time in seconds to wait. None if forever.
-             If exceeded timeout, self.messages will contain None for
-             each topic.
-         latched_topics (set): a set of topics for which the publisher latches (i.e.
-             sets QoS durability to transient_local).
-    """
-    wfm_node = WaitForMessagesNode(*args, **kwargs)
-    try:
-        while wfm_node.messages is None and not wfm_node.has_timed_out:
-            rclpy.spin_once(wfm_node)
-    except TimeoutError as ex:
-        raise ex
-    finally:
-        wfm_node.destroy_node()
-    return wfm_node.messages
 
 
 ### TF2 ###
@@ -259,7 +274,7 @@ def tf2_transform(tf2buf, object_stamped, target_frame):
     except:
         einfo = sys.exc_info()
         msg = "{}: {}".format(einfo[0], einfo[1])
-        RCUTILS_LOGGER.error(msg)
+        log_error(msg)
     finally:
         return result_stamped
 
@@ -270,8 +285,8 @@ def tf2_lookup_transform(tf2buf, target_frame, source_frame, timestamp):
                                        tf2_frame(source_frame),
                                        timestamp)
     except tf2_ros.LookupException:
-        RCUTILS_LOGGER.error("Error looking up transform from {} to {}"\
-                             .format(target_frame, source_frame))
+        log_error("Error looking up transform from {} to {}"\
+                  .format(target_frame, source_frame))
 
 def tf2_do_transform(pose_stamped, trans):
     return tf2_geometry_msgs.do_transform_pose(pose_stamped, trans)
