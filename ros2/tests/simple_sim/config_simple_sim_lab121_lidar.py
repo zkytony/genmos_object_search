@@ -212,6 +212,10 @@ CONFIG_LOCAL2D = {
             "num_sims": 200,
             "show_progress": True
         }
+    },
+
+    "ros2": {
+        "detection_class_names": ["book", "cup"]
     }
 }
 
@@ -264,6 +268,10 @@ CONFIG_TOPO2D = {
             "num_sims": 400,
             "show_progress": True
         }
+    },
+
+    "ros2": {
+        "detection_class_names": ["book", "cup"]
     }
 }
 
@@ -345,7 +353,8 @@ CONFIG_HIER = {
 }
 
 #### SET WHICH CONFIG TO USE ###
-CONFIG = CONFIG_LOCAL
+# CONFIG = CONFIG_LOCAL  # for 3D local search
+CONFIG = CONFIG_TOPO2D  # for 2D local search
 
 GROUNDTRUTH_PRIOR = False
 OBJLOC_INDEX = 0  # this must match the objloc_index field in the SimpleSimEnv object.

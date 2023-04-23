@@ -1,6 +1,7 @@
 import random
 import uuid
 import threading
+import numpy as np
 
 import rclpy
 from rclpy.node import Node
@@ -308,9 +309,11 @@ def make_viz_marker_for_object(objid, pose, header, **kwargs):
     marker.id = hash16((_id, pose))
     loc = pose[:3]
     rot = pose[3:]
-    marker.pose.position = geometry_msgs.msg.Point(x=loc[0], y=loc[1], z=loc[2])
+    marker.pose.position = geometry_msgs.msg.Point(
+        x=float(loc[0]), y=float(loc[1]), z=float(loc[2]))
     if len(rot) > 0:
-        marker.pose.orientation = geometry_msgs.msg.Quaternion(x=rot[0], y=rot[1], z=rot[2], w=rot[3])
+        marker.pose.orientation = geometry_msgs.msg.Quaternion(
+            x=float(rot[0]), y=float(rot[1]), z=float(rot[2]), w=float(rot[3]))
     elif len(rot) != 0:
         raise ValueError("rotation in object pose is invalid. "\
                          "Should be quaternion qx, qy, qz, qw or nothing.")

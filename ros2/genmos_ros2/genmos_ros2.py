@@ -157,43 +157,43 @@ class GenMOSROS2(Node):
                 self.get_logger().error("removed local agent has an unexpected ID")
             self._local_robot_id = None
 
-#     def update_search_region_2d(self, robot_id=None):
-#         # need to get a region point cloud and a pose use that as search region
-#         if robot_id is None:
-#             robot_id = self.robot_id
-#         self.get_logger().info("Sending request to update search region (2D)")
+    def update_search_region_2d(self, robot_id=None):
+        # need to get a region point cloud and a pose use that as search region
+        if robot_id is None:
+            robot_id = self.robot_id
+        self.get_logger().info("Sending request to update search region (2D)")
 
-#         region_cloud_msg, pose_stamped_msg = ros2_utils.WaitForMessages(
-#             [self._search_region_2d_point_cloud_topic, self._search_region_center_topic],
-#             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-#             delay=10000, verbose=True).messages
+        region_cloud_msg, pose_stamped_msg = ros2_utils.wait_for_messages(
+            self, [self._search_region_2d_point_cloud_topic, self._search_region_center_topic],
+            [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
+            delay=10000, verbose=True, callback_group=self.wfm_cb_group)
 
-#         cloud_pb = ros2_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
-#         robot_pose = ros2_utils.pose_to_tuple(pose_stamped_msg.pose)
-#         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
+        cloud_pb = ros2_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
+        robot_pose = ros2_utils.pose_to_tuple(pose_stamped_msg.pose)
+        robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
 
-#         search_region_config = self.agent_config.get("search_region", {}).get("2d", {})
-#         search_region_params_2d = dict(
-#             layout_cut=search_region_config.get("layout_cut", 0.6),
-#             grid_size=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_2D),
-#             region_size=search_region_config.get("region_size", 3.0),
-#             brush_size=search_region_config.get("brush_size", 0.5),
-#             include_free=search_region_config.get("include_free", True),
-#             include_obstacles=search_region_config.get("include_obstacles", False),
-#             expansion_width=search_region_config.get("expansion_width", 0.5),
-#             debug=search_region_config.get("debug", False)
-#         )
-#         self._genmos_client.updateSearchRegion(
-#             header=cloud_pb.header,
-#             robot_id=robot_id,
-#             robot_pose=robot_pose_pb,
-#             point_cloud=cloud_pb,
-#             search_region_params_2d=search_region_params_2d)
+        search_region_config = self.agent_config.get("search_region", {}).get("2d", {})
+        search_region_params_2d = dict(
+            layout_cut=search_region_config.get("layout_cut", 0.6),
+            grid_size=search_region_config.get("res", SEARCH_SPACE_RESOLUTION_2D),
+            region_size=search_region_config.get("region_size", 3.0),
+            brush_size=search_region_config.get("brush_size", 0.5),
+            include_free=search_region_config.get("include_free", True),
+            include_obstacles=search_region_config.get("include_obstacles", False),
+            expansion_width=search_region_config.get("expansion_width", 0.5),
+            debug=search_region_config.get("debug", False)
+        )
+        self._genmos_client.updateSearchRegion(
+            header=cloud_pb.header,
+            robot_id=robot_id,
+            robot_pose=robot_pose_pb,
+            point_cloud=cloud_pb,
+            search_region_params_2d=search_region_params_2d)
 
-#     @property
-#     def search_space_res_2d(self):
-#         search_region_config = self.agent_config.get("search_region", {}).get("2d", {})
-#         return search_region_config.get("res", SEARCH_SPACE_RESOLUTION_2D)
+    @property
+    def search_space_res_2d(self):
+        search_region_config = self.agent_config.get("search_region", {}).get("2d", {})
+        return search_region_config.get("res", SEARCH_SPACE_RESOLUTION_2D)
 
     @property
     def search_space_res_3d(self):
@@ -207,7 +207,7 @@ class GenMOSROS2(Node):
         region_cloud_msg, pose_stamped_msg = ros2_utils.wait_for_messages(
             self, [self._search_region_3d_point_cloud_topic, self._search_region_center_topic],
             [sensor_msgs.PointCloud2, geometry_msgs.PoseStamped],
-            delay=100, verbose=True)
+            delay=100, verbose=True, callback_group=self.wfm_cb_group)
         cloud_pb = ros2_utils.pointcloud2_to_pointcloudproto(region_cloud_msg)
         robot_pose = ros2_utils.pose_to_tuple(pose_stamped_msg.pose)
         robot_pose_pb = proto_utils.robot_pose_proto_from_tuple(robot_pose)
@@ -348,51 +348,51 @@ class GenMOSROS2(Node):
         self._topo_map_3d_markers_pub.publish(MarkerArray(markers=markers))
         self.get_logger().info("belief visualized")
 
-#     def get_and_visualize_belief_2d(self):
-#         # First, clear existing belief messages
-#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
-#                                  frame_id=self.world_frame)
-#         clear_msg = ros2_utils.clear_markers(header, ns="")
-#         self._belief_2d_markers_pub.publish(clear_msg)
-#         self._topo_map_2d_markers_pub.publish(clear_msg)
+    def get_and_visualize_belief_2d(self):
+        # First, clear existing belief messages
+        header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
+                                 frame_id=self.world_frame)
+        clear_msg = ros2_utils.clear_markers(header, ns="")
+        self._belief_2d_markers_pub.publish(clear_msg)
+        self._topo_map_2d_markers_pub.publish(clear_msg)
 
-#         response = self._genmos_client.getObjectBeliefs(
-#             self.robot_id, header=proto_utils.make_header(self.world_frame))
-#         assert response.status == Status.SUCCESSFUL
-#         self.get_logger().info("got belief")
+        response = self._genmos_client.getObjectBeliefs(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        assert response.status == Status.SUCCESSFUL
+        self.get_logger().info("got belief")
 
-#         # height for 2d markers
-#         _pos_z = self.ros_visual_config.get("marker2d_z", 0.1)
+        # height for 2d markers
+        _pos_z = self.ros_visual_config.get("marker2d_z", 0.1)
 
-#         # visualize object belief
-#         header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
-#                                  frame_id=self.world_frame)
-#         markers = []
-#         for bobj_pb in response.object_beliefs:
-#             color = self.agent_config["objects"][bobj_pb.object_id].get(
-#                 "color", [0.2, 0.7, 0.2])[:3]
-#             msg = ros2_utils.make_object_belief2d_proto_markers_msg(
-#                 bobj_pb, header, self.search_space_res_2d,
-#                 color=color, pos_z=_pos_z)
-#             markers.extend(msg.markers)
-#             if bobj_pb.object_id not in self.objects_found:
-#                 break  # just visualize one, unless it's found
-#         self._belief_2d_markers_pub.publish(MarkerArray(markers=markers))
+        # visualize object belief
+        header = std_msgs.Header(stamp=self.get_clock().now().to_msg(),
+                                 frame_id=self.world_frame)
+        markers = []
+        for bobj_pb in response.object_beliefs:
+            color = self.agent_config["objects"][bobj_pb.object_id].get(
+                "color", [0.2, 0.7, 0.2])[:3]
+            msg = ros2_utils.make_object_belief2d_proto_markers_msg(
+                bobj_pb, header, self.search_space_res_2d,
+                color=color, pos_z=_pos_z)
+            markers.extend(msg.markers)
+            if bobj_pb.object_id not in self.objects_found:
+                break  # just visualize one, unless it's found
+        self._belief_2d_markers_pub.publish(MarkerArray(markers=markers))
 
-#         # visualize topo map in robot belief
-#         markers = []
-#         response_robot_belief = self._genmos_client.getRobotBelief(
-#             self.robot_id, header=proto_utils.make_header(self.world_frame))
-#         robot_belief_pb = response_robot_belief.robot_belief
-#         if robot_belief_pb.HasField("topo_map"):
-#             msg = ros2_utils.make_topo_map_proto_markers_msg(
-#                 robot_belief_pb.topo_map,
-#                 header, self.search_space_res_2d,
-#                 node_thickness=0.05,
-#                 pos_z=_pos_z + 0.05)
-#             markers.extend(msg.markers)
-#         self._topo_map_2d_markers_pub.publish(MarkerArray(markers=markers))
-#         self.get_logger().info("belief visualized")
+        # visualize topo map in robot belief
+        markers = []
+        response_robot_belief = self._genmos_client.getRobotBelief(
+            self.robot_id, header=proto_utils.make_header(self.world_frame))
+        robot_belief_pb = response_robot_belief.robot_belief
+        if robot_belief_pb.HasField("topo_map"):
+            msg = ros2_utils.make_topo_map_proto_markers_msg(
+                robot_belief_pb.topo_map,
+                header, self.search_space_res_2d,
+                node_thickness=0.05,
+                pos_z=_pos_z + 0.05)
+            markers.extend(msg.markers)
+        self._topo_map_2d_markers_pub.publish(MarkerArray(markers=markers))
+        self.get_logger().info("belief visualized")
 
     def get_and_visualize_belief(self):
         if self.agent_config["agent_type"] == "local":
@@ -461,8 +461,8 @@ class GenMOSROS2(Node):
 
     def wait_for_robot_pose(self):
         robot_pose_msg = ros2_utils.wait_for_messages(
-            [self._robot_pose_topic], [geometry_msgs.PoseStamped],
-            verbose=True)[0]
+            self, [self._robot_pose_topic], [geometry_msgs.PoseStamped],
+            verbose=True, callback_group=self.wfm_cb_group)[0]
         robot_pose_tuple = ros2_utils.pose_to_tuple(robot_pose_msg.pose)
         return robot_pose_tuple
 
@@ -497,7 +497,7 @@ class GenMOSROS2(Node):
                 self.clear_octree_markers()  # 2d action means there's no 3D belief.
 
             else:
-                raise NotImplementedError("Not implemented action_pb.")
+                raise NotImplementedError(f"Not implemented action_pb: {action_pb}")
 
             nav_action = self.make_nav_action(
                 dest[:3], dest[3:], action_id, nav_type)
