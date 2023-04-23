@@ -1,10 +1,15 @@
 agent_config:
   agent_class: MosAgentTopo2D
-  agent_type: local
+  agent_type: hierarchical
   belief: {}
+  belief_local:
+    visible_volume_params:
+      num_rays: 150
+      step_size: 0.4
+      voxel_res: 2
   misc:
     visual:
-      res: 25
+      res: 15
   objects:
     book:
       class: book
@@ -23,6 +28,8 @@ agent_config:
   robot:
     action:
       topo: {}
+    action_local:
+      topo: {}
     color:
     - 0.9
     - 0.1
@@ -36,6 +43,14 @@ agent_config:
           - 100000.0
           - 0.05
           sensor: fan
+    detectors_local:
+      book:
+        class: genmos_object_search.oopomdp.FrustumVoxelAlphaBeta
+        params:
+          quality:
+          - 100000.0
+          - 0.1
+          sensor: camera
     id: robot0
     no_look: true
     sensors:
@@ -44,6 +59,13 @@ agent_config:
         fov: 61
         max_range: 1.75
         min_range: 0.2
+    sensors_local:
+    - name: camera
+      params:
+        far: 1.75
+        fov: 61
+        near: 0.2
+        occlusion_enabled: true
   targets:
   - book
 object_locations:
@@ -56,15 +78,22 @@ object_locations:
     - 0.1
     - 0.5
 planner_config:
-  planner: pomdp_py.POUCT
+  planner: genmos_object_search.oopomdp.planner.hier.HierPlanner
   planner_params:
-    exploration_const: 1000
-    max_depth: 8
-    num_sims: 400
-    show_progress: true
+    global:
+      exploration_const: 1000
+      max_depth: 8
+      num_sims: 400
+      show_progress: true
+    local:
+      exploration_const: 1000
+      max_depth: 8
+      num_sims: 400
+      show_progress: true
 ros2:
   detection_class_names:
   - book
   - cup
 task_config:
   max_steps: 100
+  max_time: 5

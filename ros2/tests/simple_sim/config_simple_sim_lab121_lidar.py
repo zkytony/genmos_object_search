@@ -349,12 +349,17 @@ CONFIG_HIER = {
                 "show_progress": True
             }
         }
+    },
+
+    "ros2": {
+        "detection_class_names": ["book", "cup"]
     }
 }
 
 #### SET WHICH CONFIG TO USE ###
 # CONFIG = CONFIG_LOCAL  # for 3D local search
-CONFIG = CONFIG_TOPO2D  # for 2D local search
+# CONFIG = CONFIG_TOPO2D  # for 2D local search
+CONFIG = CONFIG_HIER
 
 GROUNDTRUTH_PRIOR = False
 OBJLOC_INDEX = 0  # this must match the objloc_index field in the SimpleSimEnv object.
