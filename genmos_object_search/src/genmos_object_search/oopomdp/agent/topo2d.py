@@ -156,7 +156,7 @@ class MosAgentTopo2D(MosAgentBasic2D):
             if self.should_resample_topo_map(object_beliefs):
                 robot_pose = robot_observation.pose
                 topo_map = self.generate_topo_map(
-                    object_beliefs, robot_pose, debug=debug)
+                    object_beliefs, robot_pose)
                 self._update_topo_map(topo_map, robot_observation, action=action)
         return _aux
 
