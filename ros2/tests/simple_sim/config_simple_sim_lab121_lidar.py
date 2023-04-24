@@ -357,9 +357,9 @@ CONFIG_HIER = {
 }
 
 #### SET WHICH CONFIG TO USE ###
-# CONFIG = CONFIG_LOCAL  # for 3D local search
+CONFIG = CONFIG_LOCAL  # for 3D local search
 # CONFIG = CONFIG_TOPO2D  # for 2D local search
-CONFIG = CONFIG_HIER
+# CONFIG = CONFIG_HIER  # for 3D hierarchical search
 
 GROUNDTRUTH_PRIOR = False
 OBJLOC_INDEX = 0  # this must match the objloc_index field in the SimpleSimEnv object.
