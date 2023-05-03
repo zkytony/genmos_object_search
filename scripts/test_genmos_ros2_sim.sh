@@ -1,6 +1,6 @@
 #!/bin/bash
 
-run_graphnav_map_publisher="ros2 launch spot_funcs graphnav_map_publisher.launch map_name:=lab121_lidar"
+run_graphnav_map_publisher="ros2 launch spot_utilities graphnav_map_publisher.launch map_name:=lab121_lidar"
 run_simple_sim_env="ros2 launch genmos_object_search_ros2 simple_sim_env_ros2.launch map_name:=lab121_lidar"
 run_local_cloud_publisher="ros2 launch genmos_object_search_ros2 local_cloud_publisher.launch robot_pose_topic:=/simple_sim_env/init_robot_pose"
 run_genmos_server="python -m genmos_object_search.grpc.server"
