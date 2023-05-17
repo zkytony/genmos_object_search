@@ -10,7 +10,7 @@ To get started, check out [this wiki page](https://github.com/zkytony/genmos_obj
 This repo is structured as follows:
 - [genmos_object_search](./genmos_object_search): a robot-independent package for object search that implements the GenMOS system.
 - [ros](./ros): a ROS package that integrates `genmos_object_search` with ROS.
-- [ros2](./ros2) a ROS 2 package that integrates `genmos_object_search` with ROS 2 (TODO)
+- [ros2](./ros2) a ROS 2 package that integrates `genmos_object_search` with ROS 2 
 - [viam](./viam): a Viam client application that integrates `genmos_object_search` with [Viam](https://www.viam.com/).
 
 Check out the README in each directory for more information.
