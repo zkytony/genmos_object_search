@@ -1,3 +1,0 @@
-<launch>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find genmos_object_search_ros)/tests/spot/grpc/simple_sim/simple_sim.rviz" />
-</launch>
